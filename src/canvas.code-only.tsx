@@ -1,13 +1,13 @@
 import { Page, Text, Segmented, Input, Status as Status0, LinkCards, useGrokTheme as useGT0, useState, useMemo, useRef, useEffect } from 'grok/canvas';
-const LIGHT = { bg: { base: '#FFFFFF', subtle: '#F4F4F6' }, border: { default: '#D9D9DE', subtle: '#E8E8EC' }, fill: { accentSubtle: '#E8F0FE' }, text: { primary: '#1D1D1F', secondary: '#5F5F66', tertiary: '#8E8E93', accent: '#0A66D6' } };
-const DARK = { bg: { base: '#1C1C1E', subtle: '#2C2C30' }, border: { default: 'rgba(255,255,255,0.22)', subtle: 'rgba(255,255,255,0.15)' }, fill: { accentSubtle: '#0F2A47' }, text: { primary: '#F5F5F7', secondary: '#C7C7CC', tertiary: '#8E8E93', accent: '#409CFF' } };
+const LIGHT = { bg: { base: '#FFFFFF', subtle: '#F4F4F6' }, border: { default: '#D9D9DE', subtle: '#E8E8EC' }, fill: { accentSubtle: '#DDE9FD' }, text: { primary: '#1D1D1F', secondary: '#4E4E55', tertiary: '#6E6E75', accent: '#0A66D6' } };
+const DARK = { bg: { base: '#1C1C1E', subtle: '#2C2C30' }, border: { default: 'rgba(255,255,255,0.28)', subtle: 'rgba(255,255,255,0.2)' }, fill: { accentSubtle: '#14365C' }, text: { primary: '#F5F5F7', secondary: '#D6D6DB', tertiary: '#A5A5AD', accent: '#409CFF' } };
 let DK = false;
 const SYS_L = ['#34C759', '#FF3B30', '#FF9F0A', '#9A9AA1'], SYS_D = ['#30D158', '#FF453A', '#FF9F0A', '#8E8E93'];
 const INK_L = ['#248A3D', '#D70015', '#B25000', '#6E6E73'], INK_D = ['#30D158', '#FF6961', '#FFB340', '#AEAEB2'];
 const SYS: string[] = [...SYS_L];
 const INK: string[] = [...INK_L];
 function setPal(d: boolean) { DK = d; SYS.splice(0, 4, ...(d ? SYS_D : SYS_L)); INK.splice(0, 4, ...(d ? INK_D : INK_L)); }
-const FLASH = () => DK ? 'rgba(64,156,255,0.28)' : 'rgba(10,102,214,0.14)';
+const FLASH = () => DK ? 'rgba(64,156,255,0.4)' : 'rgba(10,102,214,0.22)';
 function useGrokTheme(): any { const t: any = useGT0(); return { ...t, ...(DK ? DARK : LIGHT), kind: DK ? 'dark' : 'light' }; }
 const ADAPT = () => { const P: any = DK ? DARK : LIGHT; const v: any = { base: P.bg.base, subtle: P.bg.subtle, primary: P.text.primary, secondary: P.text.secondary, tertiary: P.text.tertiary }; const r = (a: string, k: string, prop: string, val: string) => `html #root [data-grok-adapt-${a}="${k}"]{${prop}:${val}!important}`; let c = ['base', 'subtle'].map((k) => r('bg', k, 'background-color', v[k])).join('') + ['primary', 'secondary', 'tertiary'].map((k) => r('ink', k, 'color', v[k])).join('') + r('border', 'default', 'border-color', P.border.default) + r('border', 'strong', 'border-color', P.border.default); ['fill', 'stroke', 'stop-color', 'flood-color'].forEach((pr) => { [['paper-base', v.base], ['paper-subtle', v.subtle], ['ink-primary', v.primary], ['ink-secondary', v.secondary], ['ink-tertiary', v.tertiary]].forEach(([k, val]) => { c += r(pr, k, pr, val); }); }); return c; };
 const THO0 = (() => { try { const v = localStorage.getItem('gd_theme'); return v === 'dark' || v === 'light' ? v : null; } catch (e) { return null; } })();
@@ -222,7 +222,7 @@ const DATA: Record<string,string> = {
 136172|856533-8|О внесении изменения в статью 39.5 Земельного кодекса Российской Федерации|1-е|0|85/0/0/365|0/0/0/350;36/0/0/1;22/0/0/2;14/0/0/6;13/0/0/4;0/0/0/2
 136173|1244161-8|О внесении изменений в статью 14 Федерального закона "О развитии малого и среднего предпринимат…|1-е|0|85/0/0/365|0/0/0/350;35/0/0/2;23/0/0/1;14/0/0/6;13/0/0/4;0/0/0/2`
 };
-const SUM: Record<string, any> = /* data omitted, see canvas.tsx */ {} as any;
+const SUM: Record<string, any> = {} as any;
 const SHORT_RAW = `136087|Порядок работы (за основу)
 136088|Порядок работы
 136089|Кожемяко: способ голосования
@@ -522,7 +522,7 @@ const SHORT_RAW = `136087|Порядок работы (за основу)
 136271|Зампред комитета по междел
 136272|Состав жилищной комиссии`;
 const SHORT: Record<string,string> = Object.fromEntries(SHORT_RAW.split('\n').map((l) => l.split('|')));
-const NV: Record<string, any> = /* data omitted, see canvas.tsx */ {} as any;
+const NV: Record<string, any> = {} as any;
 DATA['23.10.2026'] = '';
 DATA['25.10.2026'] = '';
 DATA['26.10.2026'] = '';
@@ -1555,7 +1555,7 @@ const FMT: Record<string, string> = { msword: 'DOC', pdf: 'PDF', rtf: 'RTF' };
 const CATS = ['За', 'Против', 'Воздержались', 'Не голосовали'];
 const card = (t: any) => ({ background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 16, boxShadow: DK ? 'none' : `0 1px 2px ${t.border.subtle}, 0 8px 24px ${t.border.subtle}` }) as const;
 function Exp({ on, children }: { on: boolean; children: () => any }) { const [st, setSt] = useState(on ? 2 : 0); const [o, setO] = useState(on); const fr = useRef(true); const kr = useRef<any>(null); if (on) kr.current = children(); useEffect(() => { if (fr.current) { fr.current = false; return; } setSt(1); setO(false); if (on) { const r = requestAnimationFrame(() => requestAnimationFrame(() => setO(true))); const tm = setTimeout(() => setSt(2), 320); return () => { cancelAnimationFrame(r); clearTimeout(tm); }; } const tm = setTimeout(() => setSt(0), 320); return () => clearTimeout(tm); }, [on]); if (!on && st === 0) return null; const sd = on && st === 2; return <div data-xa={sd ? undefined : '1'} style={sd ? undefined : { display: 'grid', gridTemplateRows: o ? '1fr' : '0fr', transition: 'grid-template-rows .3s ease' }}><div style={sd ? undefined : { overflow: 'clip', minHeight: 0 }}>{kr.current}</div></div>; }
-const css = (t: any) => `:root,html,body{color-scheme:${DK ? 'dark' : 'light'}!important;background:${DK ? '#000000' : '#FFFFFF'}!important;color:${DK ? '#F5F5F7' : '#1D1D1F'}}@keyframes gdIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}.gd-anim{animation:gdIn .22s cubic-bezier(.2,.8,.2,1)}.gd-row{transition:background-color .15s ease}.gd-chip:hover{filter:brightness(0.95)}.gd-chip:active{transform:scale(0.97)}.gd-row:hover{background-color:${t.bg.subtle}!important}.gd-rw{-webkit-tap-highlight-color:transparent;transition:background-color .15s ease}@media (hover:hover){.gd-rw:hover{background-color:${t.bg.subtle}}.gd-rw:hover .gd-bc{color:${t.text.accent}!important}}.gd-cl2{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.gd-cl1{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden}[data-xa] [data-fb],[data-xa] [data-ivs]{position:relative!important;top:auto!important}.gd-bt{-webkit-tap-highlight-color:transparent;transition:background-color .15s ease,border-color .15s ease}.gd-bt:focus-visible{outline:1.5px solid ${t.text.accent}}@media (hover:hover){.gd-bt:hover{background-color:${DK ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.045)'}!important;border-color:${t.border.default}!important}.gd-bt:hover>.gd-bc{color:${t.text.accent}!important}}.gd-tap{transition:background-color .15s ease,opacity .15s}.gd-tap:hover{background-color:${t.bg.subtle}!important}.gd-tap:focus-visible,.gd-row:focus-visible{outline:1.5px solid ${t.text.accent};outline-offset:2px;border-radius:12px}html,body{overflow-anchor:none}@media (prefers-reduced-motion: reduce){.gd-anim{animation:none}.gd-row,.gd-tap{transition:none}}`;
+const css = (t: any) => `:root,html,body{color-scheme:${DK ? 'dark' : 'light'}!important;background:${DK ? '#000000' : '#FFFFFF'}!important;color:${DK ? '#F5F5F7' : '#1D1D1F'}}a.gd-lnk{transition:background-color .15s,border-color .15s}a.gd-lnk:hover{background:${t.fill.accentSubtle}!important;border-color:${t.text.accent}!important}a.gd-lnk:focus-visible,button.gd-more:focus-visible{outline:2px solid ${t.text.accent};outline-offset:2px}button.gd-more:hover{border-color:${t.text.accent}!important}@keyframes gdIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}.gd-anim{animation:gdIn .22s cubic-bezier(.2,.8,.2,1)}.gd-row{transition:background-color .15s ease}.gd-chip:hover{filter:brightness(0.95)}.gd-chip:active{transform:scale(0.97)}.gd-row:hover{background-color:${t.bg.subtle}!important}.gd-rw{-webkit-tap-highlight-color:transparent;transition:background-color .15s ease}@media (hover:hover){.gd-rw:hover{background-color:${t.bg.subtle}}.gd-rw:hover .gd-bc{color:${t.text.accent}!important}}.gd-cl2{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.gd-cl1{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden}[data-xa] [data-fb],[data-xa] [data-ivs]{position:relative!important;top:auto!important}.gd-bt{-webkit-tap-highlight-color:transparent;transition:background-color .15s ease,border-color .15s ease}.gd-bt:focus-visible{outline:1.5px solid ${t.text.accent}}@media (hover:hover){.gd-bt:hover{background-color:${DK ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.045)'}!important;border-color:${t.border.default}!important}.gd-bt:hover>.gd-bc{color:${t.text.accent}!important}}.gd-tap{transition:background-color .15s ease,opacity .15s}.gd-tap:hover{background-color:${t.bg.subtle}!important}.gd-tap:focus-visible,.gd-row:focus-visible{outline:1.5px solid ${t.text.accent};outline-offset:2px;border-radius:12px}html,body{overflow-anchor:none}@media (prefers-reduced-motion: reduce){.gd-anim{animation:none}.gd-row,.gd-tap{transition:none}}`;
 
 function Donut({ v, size, center, sub }: { v: number[]; size: number; center: string; sub?: string }) {
   const t = useGrokTheme();
@@ -1667,7 +1667,7 @@ function qrMatrix(text: string): boolean[][] {
   return M;
 }
 // Фракции депутатов VIII созыва (источник: ru.wikipedia «Список депутатов ГД РФ VIII созыва», текущий состав по фракциям; пока только инициаторы 1082581-8)
-const DEP_RAW: Record<string, string> = /* data omitted, see canvas.tsx */ {} as any;
+const DEP_RAW: Record<string, string> = {} as any;
 const DEP: Record<string, string> = {};
 for (const [f, l] of Object.entries(DEP_RAW)) for (const k of l.split(',')) DEP[k.replace(/ё/g, 'е')] = f;
 const DEP8: Record<string, string> = {"Алехин А.А.": "КПРФ", "Аммосов П.Р.": "КПРФ", "Арефьев Н.В.": "КПРФ", "Артамонова В.Н.": "ЕР", "Бахарев К.М.": "ЕР", "Белик Д.А.": "ЕР", "Бутина М.В.": "ЕР", "Буцкая Т.В.": "ЕР", "Васильев Н.И.": "КПРФ", "Вторыгина Е.А.": "ЕР", "Гончаров Н.А.": "ЕР", "Горячева К.А.": "НЛ", "Гусев Д.Г.": "СРЗП", "Делягин М.Г.": "СРЗП", "Диденко А.Н.": "ЛДПР", "Дмитриева О.Г.": "НЛ", "Драпеко Е.Г.": "СРЗП", "Дрожжина Ю.Н.": "ЕР", "Езерский Н.Н.": "КПРФ", "Иванов М.А.": "ЕР", "Исаков В.П.": "КПРФ", "Каргинов С.Г.": "ЛДПР", "Корниенко А.В.": "КПРФ", "Коробова О.В.": "ЕР", "Кошелев В.А.": "ЛДПР", "Кузнецов Д.В.": "СРЗП", "Кулиева В.В.": "ЛДПР", "Лавриненко А.Ф.": "ЕР", "Лантратова Я.В.": "СРЗП", "Ларионова Т.П.": "ЕР", "Левченко С.Г.": "КПРФ", "Леонов О.Ю.": "НЛ", "Леонов С.Д.": "ЛДПР", "Марков Е.В.": "ЛДПР", "Мархаев В.М.": "КПРФ", "Марченко Е.Е.": "Вне фракций", "Матвеев М.Н.": "КПРФ", "Метелев А.П.": "ЕР", "Михайлов О.А.": "КПРФ", "Мусатов И.М.": "ЛДПР", "Наумов С.А.": "ЛДПР", "Нилов О.А.": "СРЗП", "Нилов Я.Е.": "Вне фракций", "Новиков Д.П.": "ЛДПР", "Новичков Н.В.": "СРЗП", "Обухов С.П.": "КПРФ", "Оглоблина Ю.В.": "ЕР", "Парфенов Д.А.": "КПРФ", "Певцов Д.А.": "НЛ", "Петров А.П.": "ЕР", "Плякин В.В.": "НЛ", "Поляков А.А.": "ЕР", "Прокофьев А.В.": "КПРФ", "Прусакова М.Н.": "КПРФ", "Ремезков А.А.": "СРЗП", "Савченко О.В.": "ЕР", "Самокиш В.И.": "ЕР", "Свинцов А.Н.": "ЛДПР", "Свистунов А.Н.": "ЛДПР", "Семигин Г.Ю.": "СРЗП", "Сипягин В.В.": "ЛДПР", "Скрозникова А.В.": "НЛ", "Соболев В.И.": "КПРФ", "Сулейманов Р.И.": "КПРФ", "Сухарев И.К.": "ЛДПР", "Терентьев А.В.": "СРЗП", "Ткачев А.О.": "НЛ", "Толмачев А.Р.": "ЕР", "Тумусов Ф.С.": "СРЗП", "Удальцова А.О.": "КПРФ", "Фаррахов А.З.": "ЕР", "Филатова И.А.": "КПРФ", "Хованская Г.П.": "СРЗП", "Чепа А.В.": "СРЗП", "Шаргунов С.А.": "КПРФ", "Швыткин Ю.Н.": "ЕР", "Щапов М.В.": "КПРФ", "Ющенко А.А.": "КПРФ"};
@@ -1723,7 +1723,7 @@ const iniView = (s?: string, b?: string): [string, any] | null => {
   });
   return [r.label, <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>{rows}</span>];
 };
-const INFO_RAW = /* data omitted, see canvas.tsx */ '{}';
+const INFO_RAW = '{}';
 const PLAIN: Record<string, { title?: string; sut?: string[]; who?: string; next?: string }> = {
   '136251': {"sut": ["Покупатель сможет вернуть товар надлежащего качества, купленный дистанционно (например, на маркетплейсе), любым удобным способом — за свой счет, но так, чтобы продавец мог проверить состояние товара при получении.", "Продавцов обяжут сообщать покупателю о праве на возврат, о способах возврата и о расходах на доставку товара обратно. Законопроект выполняет постановление Конституционного Суда от 17.02.2026 № 7-П."], "who": "Покупатели интернет-магазинов и маркетплейсов, а также продавцы, которые торгуют дистанционно."},
   '136252': {"sut": ["Каждый участник туррынка будет отвечать за свой этап: туроператор — за сам тур и его качество, турагент — за правильное оформление, информирование клиента и своевременный перевод денег.", "Туристы смогут обращаться с претензиями напрямую к турагенту по вопросам, за которые он отвечает. Изменения планируется ввести с 1 марта 2027 года."], "who": "Туристы, туроператоры и турагенты."},
@@ -1735,7 +1735,7 @@ const PLAIN: Record<string, { title?: string; sut?: string[]; who?: string; next
   '136257': { next: 'Дума поддержала предложение отклонить законопроект: 409 голосов за отклонение, 13 против. Законопроект, принятый в первом чтении 22.03.2022, снимается с рассмотрения.' },
   '136146': { title: 'О внесении изменений в Федеральный закон «О дополнительных мерах государственной поддержки семей, имеющих детей» (об изменении размеров материнского (семейного) капитала и предоставлении бессрочного права на его получение)', sut: ['Авторы предлагали сделать материнский капитал бессрочным и увеличить его: в последней редакции 1 399 851 рубль на второго ребенка и 1 866 468 рублей на третьего и следующих, с ежегодной индексацией.', 'На третьего ребенка семья получала бы маткапитал, даже если уже пользовалась им раньше.'], who: 'Семей, в которых рождается или усыновляется второй, третий или последующий ребенок.', next: 'Не хватило голосов для принятия: «Единая Россия» не голосовала. Законопроект внесли депутаты «Справедливой России».' },
 };
-const BP: Record<string, { sut?: string[]; who?: string }> = /* data omitted, see canvas.tsx */ {} as any;
+const BP: Record<string, { sut?: string[]; who?: string }> = {} as any;
 const PROC: Record<string, string[]> = {"135961": ["Избрана Счетная комиссия Государственной Думы — она подсчитывает голоса при тайных голосованиях и выборах.", "Депутатов Государственной Думы."], "135962": ["Создана Временная комиссия Государственной Думы по Регламенту и организации работы на период до формирования постоянных органов.", "Депутатов Государственной Думы."], "135963": ["Создан Временный секретариат Государственной Думы на первые заседания нового созыва.", "Депутатов Государственной Думы."], "135965": ["Депутаты утвердили процедуру избрания Председателя Государственной Думы.", "Депутатов Государственной Думы."], "135966": ["Депутаты решили избирать Председателя Государственной Думы открытым голосованием.", "Депутатов Государственной Думы."], "135967": ["Депутаты определили число заместителей Председателя Государственной Думы.", "Депутатов Государственной Думы."], "135968": ["Депутаты определили способ голосования при избрании заместителей Председателя Государственной Думы.", "Депутатов Государственной Думы."], "135969": ["Депутаты избрали заместителей Председателя Государственной Думы.", "Депутатов Государственной Думы."], "135970": ["Депутаты внесли изменения в Регламент Государственной Думы — правила ее работы.", "Депутатов Государственной Думы."], "135971": ["Создана комиссия Государственной Думы по контролю за достоверностью сведений о доходах, имуществе и обязательствах депутатов.", "Депутатов Государственной Думы."], "135972": ["Создана комиссия Государственной Думы по вопросам депутатской этики.", "Депутатов Государственной Думы."], "135973": ["Создана комиссия Государственной Думы по обеспечению жилищных прав граждан.", "Граждан, чьи жилищные права нарушены, и депутатов — членов комиссии."], "135974": ["Создана комиссия Государственной Думы по Регламенту и обеспечению работы Думы.", "Депутатов Государственной Думы."], "135976": ["Депутаты изменили статью 20 Регламента Государственной Думы.", "Депутатов Государственной Думы."], "135977": ["Утверждены составы комитетов Государственной Думы.", "Депутатов Государственной Думы."], "135978": ["Депутаты определили способ голосования при избрании председателей комитетов Государственной Думы.", "Депутатов Государственной Думы."], "135979": ["Депутаты избрали председателей комитетов Государственной Думы.", "Депутатов Государственной Думы."], "135980": ["Утвержден распорядок работы депутатов Государственной Думы с 30 сентября по 30 декабря 2026 года.", "Депутатов Государственной Думы."], "135981": ["Принято постановление об обеспечении деятельности депутатов Государственной Думы.", "Депутатов Государственной Думы."], "136083": ["Депутаты изменили план «правительственного часа» на осеннюю сессию 2026 года — график выступлений членов правительства в Думе.", "Членов правительства и депутатов."]};
 const INFO: Record<string, { t?: string; ini?: string; com?: string; otr?: string; am?: string; sut?: string[]; n?: string }> = (() => { try { return JSON.parse(INFO_RAW); } catch { return {}; } })();
 const FT: Record<string, string> = {}; let ftDone = false;
@@ -1906,12 +1906,14 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
     ...(b && tx ? [{ title: `Текст (${FMT[tx.fmt] || 'файл'})`, href: `https://sozd.duma.gov.ru/download/${tx.id}` }] : []),
     { title: `Голосование № ${v.id}`, href: `http://vote.duma.gov.ru/vote/${v.id}` },
   ];
+  const [more, setMore] = useState(false); const mref = useRef<HTMLButtonElement>(null);
+  const sut0 = (ctx.sut || []).map(yo) as string[]; const sen = (sut0[0] || '').split(/(?<=[.!?])\s+(?=[А-ЯA-Z«"(0-9])/); const sutS = sen.length > 2 || sut0.length > 1 ? [sen.slice(0, 2).join(' ') + (sen.length > 2 ? ' …' : '')] : sut0; const cut = sutS !== sut0;
   const CAP = ['за', 'против', 'воздержались', 'не голосовали'];
   const okC = v.ok ? ['rgba(52,199,89,0.16)', INK[0]] : ['rgba(255,59,48,0.13)', INK[1]];
   const box = { background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px', minWidth: 0 } as const;
   const h = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: (DK ? '#409CFF' : 'rgb(10,100,214)'), marginBottom: 4 } as const;
   const left = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: m ? 8 : 10, minWidth: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: m ? 10 : 12, minWidth: 0 }}>
       <div style={{ ...box, display: 'flex', alignItems: 'center', gap: m ? 12 : 16 }}>
         <div style={{ width: m ? 76 : 112, flexShrink: 0 }}><Donut v={v.total} size={m ? 76 : 112} center={String(tot)} sub="за" /></div>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: m ? 1 : 5 }}>{CATS.map((n, i) => (
@@ -1936,11 +1938,11 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
       {!m && pass.some(([, x]) => x) && <div style={{ ...box, display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '4px 12px', fontSize: 14, lineHeight: 1.45 }}>{pass.filter(([, x]) => x).map(([k, x]) => [<span key={k + 'k'} style={{ color: t.text.tertiary, maxWidth: 172 }}>{k}</span>, <span key={k} style={{ color: t.text.primary }}>{x}</span>])}</div>}
     </div>);
   const right = (
-    <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 8 : 10 }}>
-      {secs.map(([hd, ps]) => (
+    <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>
+      {secs.filter(([hd]) => hd !== 'Суть' && !hd.startsWith('Кого')).map(([hd, ps]) => (
         <div key={hd}><div style={h}>{hd}</div>{ps.map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(p)}</p>)}</div>))}
       {m && pass.some(([, x]) => x) && <div style={{ display: 'grid', gridTemplateColumns: m ? '1fr' : 'auto minmax(0, 1fr)', gap: m ? '2px 0' : '4px 12px', fontSize: 14, lineHeight: 1.45, paddingTop: 8, borderTop: `1px solid ${t.border.subtle}` }}>{pass.filter(([, x]) => x).map(([k, x]) => [<span key={k + 'k'} style={{ color: t.text.tertiary, marginTop: m ? 4 : 0 }}>{k}</span>, <span key={k} style={{ color: t.text.primary }}>{x}</span>])}</div>}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>{links.map((l, i) => <a key={i} href={l.href} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', borderRadius: 14, border: `1px solid ${t.border.default}`, fontSize: 13, color: t.text.accent, textDecoration: 'none', whiteSpace: 'nowrap' }}>{l.title} ↗</a>)}</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>{links.map((l, i) => <a key={i} className="gd-lnk" href={l.href} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', borderRadius: 14, border: `1px solid ${t.border.default}`, fontSize: 13, color: t.text.accent, textDecoration: 'none', whiteSpace: 'nowrap' }}>{l.title} ↗</a>)}</div>
       {!m && <ShareVote v={v} day={day} />}
     </div>);
   return (
@@ -1949,10 +1951,12 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
         {(!m || inl) && <span style={{ padding: '2px 9px', borderRadius: 999, fontSize: 12, fontWeight: 800, letterSpacing: '0.04em', background: okC[0], color: okC[1] }}>{v.ok ? 'ПРИНЯТ' : 'ОТКЛОНЕН'}</span>}
         <span style={{ fontSize: m ? 12 : 13, color: t.text.secondary, fontVariantNumeric: 'tabular-nums' }}>{[`${dt.getDate()} ${MON[dt.getMonth()]} ${dt.getFullYear()}, ${WDN[dt.getDay()]}`].filter(Boolean).join(' · ')}</span>
       </div>}
-      {inl ? null : <>{!m && <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.3, color: t.text.primary, letterSpacing: '-0.01em' }}>{yo(v.q)}</div>}
-      <div style={{ fontSize: m ? 14 : 15, lineHeight: 1.45, color: t.text.secondary, margin: m ? '2px 0 10px' : '4px 0 12px', maxWidth: '72rem', whiteSpace: 'normal' }}>{title}</div></>}
-      <div style={m ? { display: 'flex', flexDirection: 'column', gap: 8 } : { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12, alignItems: 'start' }}>{left}{right}</div>
-      {m && <ShareVote v={v} day={day} m />}
+      {inl ? null : <>{!m && <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.3, color: t.text.primary, letterSpacing: '-0.01em', marginBottom: 10 }}>{yo(v.q)}</div>}</>}
+      {(sut0.length > 0 || ctx.who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{sut0.length > 0 && <div><div style={h}>Суть</div>{(more ? sut0 : sutS).map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{p}</p>)}</div>}{ctx.who && <div><div style={h}>{v.ok ? 'Кого коснется' : 'Кого коснулось бы'}</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(ctx.who)}</p></div>}</div>}
+      <button ref={mref} className="gd-more" aria-expanded={more} onClick={(e) => { e.stopPropagation(); const y = mref.current ? mref.current.getBoundingClientRect().top : 0; setMore(!more); anchorTo(() => mref.current, y); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', minHeight: 40, marginTop: 12, padding: '0 12px', borderRadius: 10, border: `1px solid ${t.border.default}`, background: t.bg.base, color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>{more ? 'Скрыть подробности ▴' : 'Подробнее ▾'}</button>
+      <Exp on={more}>{() => <div style={{ paddingTop: 12 }}>{!inl && <div style={{ fontSize: m ? 14 : 15, lineHeight: 1.45, color: t.text.secondary, margin: '0 0 12px', maxWidth: '72rem', whiteSpace: 'normal' }}>{title}</div>}
+      <div style={m ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12, alignItems: 'start' }}>{left}{right}</div>
+      {m && <ShareVote v={v} day={day} m />}</div>}</Exp>
     </div>
   );
 }
@@ -2025,8 +2029,8 @@ const anchorTo = (get: () => HTMLElement | null, tgt: number, zoom = 1) => {
   const fix = () => { if (g !== anchorGen || user) return; const r = get(); if (!r) return; const d = r.getBoundingClientRect().top - tgt; if (Math.abs(d) <= 3) return;
     const sp = scrollPar(r); if (sp) sp.scrollTop += d / zoom; else { const se = document.scrollingElement || document.documentElement; window.scrollTo({ top: se.scrollTop + d, behavior: 'auto' }); }
     const d2 = r.getBoundingClientRect().top - tgt; if (Math.abs(d2) > 3 && !sp) { r.style.scrollMarginTop = tgt + 'px'; r.scrollIntoView({ block: 'start', behavior: 'auto' }); } };
-  requestAnimationFrame(() => requestAnimationFrame(fix)); [50, 200, 450].forEach((ms) => setTimeout(fix, ms));
-  setTimeout(() => { window.removeEventListener('touchmove', stop); window.removeEventListener('wheel', stop); }, 500);
+  requestAnimationFrame(() => requestAnimationFrame(fix)); [50, 200, 360, 450, 700].forEach((ms) => setTimeout(fix, ms));
+  setTimeout(() => { window.removeEventListener('touchmove', stop); window.removeEventListener('wheel', stop); }, 750);
 };
 const svScroller = (el: HTMLElement): HTMLElement | null => { for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) { const o = getComputedStyle(p).overflowY; if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight + 1) return p; } return null; };
 const svPin = () => { let b = svTop(); const bar = document.querySelector('[data-gdbar]') as HTMLElement | null; if (bar) { const r = bar.getBoundingClientRect(); if (r.height > 0 && r.top <= 1) b = Math.max(b, r.bottom); } return b; };
@@ -2109,8 +2113,8 @@ function Summary({ day, votes, m }: { day: string; votes: Vote[]; m?: boolean })
     </div>);
 }
 
-const LAWS: any = /* data omitted, see canvas.tsx */ {} as any;
-const LAWS_FIX: any = /* data omitted, see canvas.tsx */ {} as any;
+const LAWS: any = {} as any;
+const LAWS_FIX: any = {} as any;
 for (const k in LAWS_FIX) for (const i in LAWS_FIX[k]) Object.assign(LAWS.months[k][+i], LAWS_FIX[k][i]);
 const LKEYS = Object.keys(LAWS.months).sort((a, b) => (a.slice(3) + a.slice(0, 2)).localeCompare(b.slice(3) + b.slice(0, 2)));
 const LCUR = (() => { const n = new Date(); return `${String(n.getMonth() + 1).padStart(2, '0')}.${n.getFullYear()}`; })();
@@ -2183,9 +2187,9 @@ function Laws({ m, mk }: { m: boolean; mk: string }) {
 
 const COLS = '1rem 4rem 6rem minmax(7.25rem, 1fr) 6.75rem 6.5rem minmax(4.5rem, 7rem) 2.5rem 3.75rem 6rem 6.5rem';
 
-const CAL: any = /* data omitted, see canvas.tsx */ {} as any;
+const CAL: any = {} as any;
 const BUDP: Record<string, [string, string]> = { '19.11.2026': ['бюджет: второе чтение (план)', 'https://www.pnp.ru/economics/volodin-vtoroe-chtenie-proekta-byudzheta-mozhet-sostoyatsya-19-noyabrya.html'], '24.11.2026': ['бюджет: третье чтение (план)', 'https://www.pnp.ru/economics/volodin-vtoroe-chtenie-proekta-byudzheta-mozhet-sostoyatsya-19-noyabrya.html'] };
-const GOVA: Record<string, [string, string][]> = /* data omitted, see canvas.tsx */ {} as any;
+const GOVA: Record<string, [string, string][]> = {} as any;
 const CARDS: string[] = ["01.10.2026", "13.10.2026", "14.10.2026", "15.10.2026", "20.10.2026", "21.10.2026", "22.10.2026", "23.10.2026", "25.10.2026", "26.10.2026", "30.09.2026"];
 const SITE = 'https://duma-svodki.netlify.app';
 
@@ -2209,7 +2213,7 @@ const ZW = ['Семьи с детьми', 'Пенсионеры', 'Военно�
 const ZT = ['Налоги', 'Пособия и выплаты', 'Жилье и ЖКХ', 'Работа и зарплата', 'Здравоохранение', 'Образование', 'Транспорт и ПДД', 'Интернет и связь', 'Штрафы и уголовная ответственность', 'Финансы и банки', 'Миграция'];
 const ZC = ['Новая выплата или льгота', 'Новый запрет или штраф', 'Рост или снижение платежей', 'Новые права', 'Новые обязанности или документы'];
 const ZG: [string, string, string[]][] = [['w', 'Для кого', ZW], ['t', 'Тема', ZT], ['c', 'Что меняется', ZC]];
-const ZTAG: Record<string, [string[], string[], string[]]> = /* data omitted, see canvas.tsx */ {} as any;
+const ZTAG: Record<string, [string[], string[], string[]]> = {} as any;
 let ZS: Record<string, string[]> = { w: [], t: [], c: [] }; const ZL = new Set<() => void>();
 function useZS() { const [, u] = useState(0); useEffect(() => { const f = () => u((x: number) => x + 1); ZL.add(f); return () => { ZL.delete(f); }; }, []); return ZS; }
 const setZS = (n: Record<string, string[]>) => { ZS = n; ZL.forEach((f) => f()); };
@@ -2241,8 +2245,8 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
   const t = useGrokTheme();
   const rs = useRef(CSNAP && CSNAP.d === day && CSNAP.cm === cm ? CSNAP : null);
   const [ex, setEx] = useState<string | null>(rs.current ? rs.current.ex : null);
-  const [ivo, setIvo0] = useState<string | null>(null); const setIvo = (nx: string | null) => { const pv = ivo; setIvo0(nx); const num = (el: Element, k: string, d: number) => { const q = parseFloat(getComputedStyle(el).getPropertyValue(k)); return isNaN(q) ? d : q; }; const pin = (k: string, sm: boolean) => { const w = document.querySelector(`[data-ivk="${k}"]`) as HTMLElement | null; if (!w) return; const c = w.closest('[id^="ev-"]') as HTMLElement | null; const off = (num(document.documentElement, '--gd-top', 0) + (c ? num(c, '--gd-dh', 45) + num(c, '--gd-fb', 0) : 0) - 2) * GZ; const dy = w.getBoundingClientRect().top - off; if (Math.abs(dy) <= 3) return; const y = Math.max(0, window.scrollY + dy); if (sm && 'scrollBehavior' in document.documentElement.style) window.scrollTo({ top: y, behavior: 'smooth' }); else window.scrollTo(0, y); }; const k = m ? (nx || pv) : null; if (k) { const sm = !!nx; requestAnimationFrame(() => requestAnimationFrame(() => pin(k, sm))); [450, 900].forEach((ms) => setTimeout(() => pin(k, false), ms)); } if (pv && pv !== nx) requestAnimationFrame(() => requestAnimationFrame(() => { const w = document.querySelector(`[data-ivk="${pv}"]`) as HTMLElement | null; const r = w && w.firstElementChild as HTMLElement | null; if (r && r.animate) r.animate([{ backgroundColor: FLASH() }, { backgroundColor: 'rgba(10,102,214,0)' }], { duration: 1800, easing: 'ease-out' }); })); };
-  const dayGo = (el: HTMLElement | null, op: boolean) => { if (!m || !el) return; const pin = (sm: boolean) => { if (!el.isConnected) return; const off = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gd-top')) || 0) * GZ; const dy = el.getBoundingClientRect().top - off; if (Math.abs(dy) <= 3) return; const y = Math.max(0, window.scrollY + dy); if (sm && 'scrollBehavior' in document.documentElement.style) window.scrollTo({ top: y, behavior: 'smooth' }); else window.scrollTo(0, y); }; requestAnimationFrame(() => requestAnimationFrame(() => pin(op))); [450, 900].forEach((ms) => setTimeout(() => pin(false), ms)); }; const [df, setDf] = useState<'all' | 'acc' | 'rej'>('all'); useEffect(() => setDf('all'), [ex]);
+  const [ivo, setIvo0] = useState<string | null>(null); const setIvo = (nx: string | null) => { const pv = ivo; setIvo0(nx); const num = (el: Element, k: string, d: number) => { const q = parseFloat(getComputedStyle(el).getPropertyValue(k)); return isNaN(q) ? d : q; }; const pin = (k: string, sm: boolean) => { const w = document.querySelector(`[data-ivk="${k}"]`) as HTMLElement | null; if (!w) return; const c = w.closest('[id^="ev-"]') as HTMLElement | null; const off = (num(document.documentElement, '--gd-top', 0) + (c ? num(c, '--gd-dh', 45) + num(c, '--gd-fb', 0) : 0) + 5) * GZ; const dy = w.getBoundingClientRect().top - off; if (Math.abs(dy) <= 3) return; const y = Math.max(0, window.scrollY + dy); if (sm && 'scrollBehavior' in document.documentElement.style) window.scrollTo({ top: y, behavior: 'smooth' }); else window.scrollTo(0, y); }; const k = nx || pv; if (k && !m) { const q = () => document.querySelector(`[data-ivk="${k}"]`) as HTMLElement | null; const w0 = q(); const c0 = w0 && w0.closest('[id^="ev-"]') as HTMLElement | null; const off = (num(document.documentElement, '--gd-top', 0) + (c0 ? num(c0, '--gd-dh', 45) + num(c0, '--gd-fb', 0) : 0) + 5) * GZ; if (w0) anchorTo(q, Math.max(off, w0.getBoundingClientRect().top)); } else if (k) { const sm = !!nx; requestAnimationFrame(() => requestAnimationFrame(() => pin(k, sm))); [450, 900].forEach((ms) => setTimeout(() => pin(k, false), ms)); } if (pv && pv !== nx) requestAnimationFrame(() => requestAnimationFrame(() => { const w = document.querySelector(`[data-ivk="${pv}"]`) as HTMLElement | null; const r = w && w.firstElementChild as HTMLElement | null; if (r && r.animate) r.animate([{ backgroundColor: FLASH() }, { backgroundColor: 'rgba(10,102,214,0)' }], { duration: 1800, easing: 'ease-out' }); })); };
+  const dayGo = (el: HTMLElement | null, op: boolean) => { if (!el) return; if (!m) { const off = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gd-top')) || 0) * GZ; anchorTo(() => (el.isConnected ? el : null), Math.max(off, el.getBoundingClientRect().top)); return; } const pin = (sm: boolean) => { if (!el.isConnected) return; const off = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gd-top')) || 0) * GZ; const dy = el.getBoundingClientRect().top - off; if (Math.abs(dy) <= 3) return; const y = Math.max(0, window.scrollY + dy); if (sm && 'scrollBehavior' in document.documentElement.style) window.scrollTo({ top: y, behavior: 'smooth' }); else window.scrollTo(0, y); }; requestAnimationFrame(() => requestAnimationFrame(() => pin(op))); [360, 450, 900].forEach((ms) => setTimeout(() => pin(false), ms)); }; const [df, setDf] = useState<'all' | 'acc' | 'rej'>('all'); useEffect(() => setDf('all'), [ex]);
   const plv = (n: number) => { const a = n % 10, b = n % 100; return `${n} ${a === 1 && b !== 11 ? 'голосование' : a >= 2 && a <= 4 && (b < 12 || b > 14) ? 'голосования' : 'голосований'}`; };
   const qn = (cq || '').trim().toLowerCase(); useZS(); const fon = zN() > 0;
   const lv = (bn: string, d: string) => { const bv = billVote(bn, d); return bv ? parse(DATA[bv[0]]).find((z) => z.id === bv[1]) || null : null; };
@@ -2263,7 +2267,7 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
   const cks = useMemo(() => calCks(), []);
   const cell = (d: Date, inM: boolean) => {
     const s = fd(d); const p = P[s]; const g = G[s]; const has = DAYS.includes(s); const w = wk(d); const isT = s === today;
-    const isS = sd === s; const click = () => { setSd(isS ? null : s); setEx(null); if (m && !isS) requestAnimationFrame(() => requestAnimationFrame(() => { const el = document.querySelector('[data-evh]') as HTMLElement | null; if (!el) return; const off = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gd-top')) || 0) * GZ; const dy = el.getBoundingClientRect().top - off - 8; if (dy > 0) window.scrollTo({ top: window.scrollY + dy, behavior: 'smooth' }); })); };
+    const isS = sd === s; const click: (() => void) | undefined = () => { setSd(isS ? null : s); setEx(null); if (!isS) requestAnimationFrame(() => requestAnimationFrame(() => { const el = document.querySelector('[data-evh]') as HTMLElement | null; if (!el) return; const off = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gd-top')) || 0) * GZ; const dy = el.getBoundingClientRect().top - off - 8; if (dy > 0 || (!m && dy < -3)) window.scrollTo({ top: window.scrollY + dy, behavior: 'smooth' }); })); };
     const bud = p && (!!BUDP[s] || (p.a || []).some((a: any) => /^Федеральный бюджет/.test(a[1] || '')));
     const exp = p && p.s === 'expected'; const wd = d.getDay() % 6 !== 0; const com = wd && (!p || exp) && w !== 'regional';
     return (
