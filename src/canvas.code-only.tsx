@@ -1862,17 +1862,15 @@ function ShareVote({ v, day, m }: { v: Vote; day: string; m?: boolean }) {
   const [st, setSt] = useState('');
   const url = `${SITE}/?d=${day}&v=${v.id}`;
   const [imgs, setImgs] = useState<string[]>([]);
-  const show = () => {
-    if (imgs.length) { setImgs([]); setSt(''); return; }
+  useEffect(() => {
     try {
       setImgs(drawCards(v, day).map((c) => c.toDataURL('image/png')));
-      const touch = m || (typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches);
-      setSt(touch ? 'Нажмите на картинку и удерживайте → «Сохранить изображение»' : 'Правый клик по картинке → «Сохранить изображение как…»');
+      setSt(m ? 'Нажмите на картинку и удерживайте → «Сохранить изображение»' : 'Правый клик по картинке → «Сохранить изображение как…»');
     } catch { setSt('Не удалось создать картинки'); }
-  };
+  }, [v.id, day]);
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 10px', margin: m ? '10px 0 0' : '6px 0 0' }}>
-      <button type="button" className="gd-tap" aria-expanded={imgs.length > 0} onClick={show} style={{ boxSizing: 'border-box', display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 11px', borderRadius: 14, border: `1px solid ${t.border.default}`, cursor: 'pointer', fontFamily: t.font.family, fontSize: 13, fontWeight: t.weight.medium, background: 'transparent', color: t.text.accent }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>{imgs.length ? 'Скрыть картинки' : 'Сохранить голосование'}</button>
+      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: (DK ? '#409CFF' : 'rgb(10,100,214)') }}>Сохранить голосование</span>
       {st && <span style={{ fontSize: 12, color: t.text.secondary }}>{st}</span>}
       {imgs.length > 0 && <div style={{ display: 'flex', flexWrap: 'nowrap', gap: m ? 8 : 12, width: '100%', marginTop: 6 }}>{imgs.map((u, i) => <figure key={i} style={{ margin: 0, flex: '1 1 0', maxWidth: m ? undefined : 420, minWidth: 0 }}><img src={u} alt={`Картинка ${i + 1}: ${v.q.slice(0, 80)}`} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 10, border: `1px solid ${t.border.subtle}`, WebkitTouchCallout: 'default', userSelect: 'auto' } as any} /><figcaption style={{ fontSize: 12, color: t.text.tertiary, marginTop: 4 }}>Картинка {i + 1} из 2</figcaption></figure>)}</div>}
     </div>
@@ -1906,7 +1904,6 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
     ...(b && tx ? [{ title: `Текст (${FMT[tx.fmt] || 'файл'})`, href: `https://sozd.duma.gov.ru/download/${tx.id}` }] : []),
     { title: `Голосование № ${v.id}`, href: `http://vote.duma.gov.ru/vote/${v.id}` },
   ];
-  const [more, setMore] = useState(false); const mref = useRef<HTMLButtonElement>(null);
   const sut0 = (ctx.sut || []).map(yo) as string[]; const sen = (sut0[0] || '').split(/(?<=[.!?])\s+(?=[А-ЯA-Z«"(0-9])/); const sutS = sen.length > 2 || sut0.length > 1 ? [sen.slice(0, 2).join(' ') + (sen.length > 2 ? ' …' : '')] : sut0; const cut = sutS !== sut0;
   const CAP = ['за', 'против', 'воздержались', 'не голосовали'];
   const okC = v.ok ? ['rgba(52,199,89,0.16)', INK[0]] : ['rgba(255,59,48,0.13)', INK[1]];
@@ -1950,9 +1947,9 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
     <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>
       {secs.filter(([hd]) => hd !== 'Суть' && !hd.startsWith('Кого')).map(([hd, ps]) => (
         <div key={hd}><div style={h}>{hd}</div>{ps.map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(p)}</p>)}</div>))}
-      {m && pass.some(([, x]) => x) && <div style={{ display: 'grid', gridTemplateColumns: m ? '1fr' : 'auto minmax(0, 1fr)', gap: m ? '2px 0' : '4px 12px', fontSize: 14, lineHeight: 1.45, paddingTop: 8, borderTop: `1px solid ${t.border.subtle}` }}>{pass.filter(([, x]) => x).map(([k, x]) => [<span key={k + 'k'} style={{ color: t.text.tertiary, marginTop: m ? 4 : 0 }}>{k}</span>, <span key={k} style={{ color: t.text.primary }}>{x}</span>])}</div>}
+      {!inl && <div style={{ fontSize: m ? 14 : 15, lineHeight: 1.45, color: t.text.secondary, whiteSpace: 'normal', paddingTop: 8, borderTop: `1px solid ${t.border.subtle}` }}>{title}</div>}
+      {pass.some(([, x]) => x) && <div style={{ display: 'grid', gridTemplateColumns: m ? '1fr' : 'auto minmax(0, 1fr)', gap: m ? '2px 0' : '4px 12px', fontSize: 14, lineHeight: 1.45, paddingTop: 8, borderTop: `1px solid ${t.border.subtle}` }}>{pass.filter(([, x]) => x).map(([k, x]) => [<span key={k + 'k'} style={{ color: t.text.tertiary, marginTop: m ? 4 : 0 }}>{k}</span>, <span key={k} style={{ color: t.text.primary }}>{x}</span>])}</div>}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>{links.map((l, i) => <a key={i} className="gd-lnk" href={l.href} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', borderRadius: 14, border: `1px solid ${t.border.default}`, fontSize: 13, color: t.text.accent, textDecoration: 'none', whiteSpace: 'nowrap' }}>{l.title} ↗</a>)}</div>
-      {!m && <ShareVote v={v} day={day} />}
     </div>);
   return (
     <div ref={(el) => { if (el && DEEP === v.id) { DEEP = null; setTimeout(() => { const w = el.parentElement as HTMLElement | null; if (w) { const r = w.getBoundingClientRect(); if (r.top < 0 || r.top > window.innerHeight * 0.6) w.scrollIntoView({ block: 'start' }); } revealCard(v.id); }, 250); } }} data-panel={v.id} className="gd-anim" style={{ padding: m ? '10px 10px 12px' : '14px 16px 16px', background: t.bg.subtle, borderBottom: `1px solid ${t.border.subtle}` }}>
@@ -1963,10 +1960,7 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
       {inl ? null : <>{!m && <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.3, color: t.text.primary, letterSpacing: '-0.01em', marginBottom: 10 }}>{yo(v.q)}</div>}</>}
       {(sut0.length > 0 || ctx.who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{sut0.length > 0 && <div><div style={h}>Суть</div>{sut0.map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{p}</p>)}</div>}{ctx.who && <div><div style={h}>{v.ok ? 'Кого коснется' : 'Кого коснулось бы'}</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(ctx.who)}</p></div>}</div>}
       <div style={{ marginTop: (sut0.length > 0 || ctx.who) ? 12 : 0 }}>{res}</div>
-      <button ref={mref} className="gd-more" aria-expanded={more} onClick={(e) => { e.stopPropagation(); const y = mref.current ? mref.current.getBoundingClientRect().top : 0; setMore(!more); anchorTo(() => mref.current, y); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', minHeight: 40, marginTop: 12, padding: '0 12px', borderRadius: 10, border: `1px solid ${t.border.default}`, background: t.bg.base, color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>{more ? 'Скрыть подробности ▴' : 'Подробнее ▾'}</button>
-      <Exp on={more}>{() => <div style={{ paddingTop: 12 }}>{!inl && <div style={{ fontSize: m ? 14 : 15, lineHeight: 1.45, color: t.text.secondary, margin: '0 0 12px', maxWidth: '72rem', whiteSpace: 'normal' }}>{title}</div>}
-      <div style={m ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: passBox ? 'minmax(0, 1fr) minmax(0, 1fr)' : 'minmax(0, 1fr)', gap: 12, alignItems: 'start' }}>{passBox}{right}</div>
-      {m && <ShareVote v={v} day={day} m />}</div>}</Exp>
+      <div style={{ paddingTop: 12 }}>{right}<ShareVote v={v} day={day} m={m} /></div>
     </div>
   );
 }
@@ -2337,13 +2331,13 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
         {!ev.length && <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>{qn || fon ? 'Ничего не найдено' : sd ? 'В этот день событий нет' : 'Событий нет'}</div>}
         {ev.map((e) => <div key={e.k + e.d}>{(() => {
           const d = pd(e.d); const head = `${d.getDate()} ${MON[d.getMonth()]}, ${WDL[d.getDay()]}`;
-          if (e.k === 'r') return <div key={'r' + e.d} style={{ ...card(t), padding: '10px 14px', display: 'flex', flexWrap: 'wrap', gap: '4px 10px', alignItems: 'baseline', borderLeft: `3px solid ${regD}` }}><span style={{ fontWeight: t.weight.semibold }}>{e.w[0].slice(0, 5)}–{e.w[1].slice(0, 5)}</span><span>Работа в регионах (встречи с избирателями)</span>{pill('по распорядку', regD, true)}</div>;
+          if (e.k === 'r') return <div key={'r' + e.d} style={{ ...card(t), padding: '10px 14px', display: 'flex', flexWrap: 'wrap', gap: '4px 10px', alignItems: 'baseline', borderLeft: `3px solid ${regD}` }}><span style={{ fontSize: 15, fontWeight: t.weight.semibold }}>{e.w[0].slice(0, 5)}–{e.w[1].slice(0, 5)}</span><span style={{ fontSize: 15 }}>Работа в регионах (встречи с избирателями)</span>{pill('по распорядку', regD, true)}</div>;
           if (e.k === 'g') { const ga = fon ? [] : GOVA[e.d] || []; const gk = 'g' + e.d; const gon = ex === gk; return (
             <div key={gk} style={{ ...card(t), overflow: gon ? 'clip' : 'hidden', borderLeft: `3px solid ${green}`, ...(fon ? { opacity: 0.4 } : {}) }}>
               <div role={ga.length ? 'button' : undefined} tabIndex={ga.length ? 0 : undefined} aria-expanded={ga.length ? gon : undefined} onClick={(ev0: any) => { if (ga.length) { dayGo((ev0.currentTarget as HTMLElement).parentElement, !gon); setEx(gon ? null : gk); } }} onKeyDown={(k) => { if (ga.length && (k.key === 'Enter' || k.key === ' ')) { k.preventDefault(); setEx(gon ? null : gk); } }}
                 style={{ padding: '10px 14px', minHeight: 44, cursor: ga.length ? 'pointer' : 'default', display: 'flex', flexWrap: 'wrap', gap: '4px 10px', alignItems: 'center', background: gon ? `linear-gradient(${dk ? 'rgba(60,203,156,0.10)' : 'rgba(0,158,115,0.08)'}, ${dk ? 'rgba(60,203,156,0.10)' : 'rgba(0,158,115,0.08)'}), ${t.bg.base}` : 'transparent', ...(gon ? { position: 'sticky', top: 'var(--gd-top, 0px)', zIndex: 4, borderBottom: `1px solid ${t.border.subtle}`, boxShadow: `-3px -10px 0 0 ${t.bg.base}` } : {}) }}>
-                <span style={{ fontWeight: t.weight.semibold }}>{head}</span>
-                <span>Заседание Правительства РФ</span>
+                <span style={{ fontSize: 15, fontWeight: t.weight.semibold }}>{head}</span>
+                <span style={{ fontSize: 15 }}>Заседание Правительства РФ</span>
                 <a href={e.g[2]} target="_blank" rel="noreferrer" onClick={(k) => k.stopPropagation()} style={{ textDecoration: 'none', ...(m ? { order: 3 } : {}) }}>{pill(e.g[1].replace(/^Заседание Правительства \(2026 год, (№\d+)\).*$/, '$1'), green)}</a>
                 <span style={m ? { flexBasis: '100%', height: 0 } : { flex: '1 1 auto' }} />
                 <span style={{ ...(m ? { order: 2 } : {}), fontSize: 13, color: ga.length ? t.text.accent : t.text.tertiary }}>{ga.length ? `Повестка: ${ga.length} ${gon ? '▾' : '▸'}` : fon ? 'нет совпадений' : (pd(e.d) < pd(today) ? 'повестка недоступна' : 'повестка еще не опубликована')}</span>
@@ -2362,8 +2356,8 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
             <div key={'p' + p.d} id={'ev-' + p.d} style={{ ...card(t), overflow: on ? 'visible' : 'hidden', borderLeft: `3px solid ${blue}`, ...(fon && !a0.length ? { opacity: 0.4 } : {}), ...(dAcc + dRej > 0 && !qn && !fon ? {} : { '--gd-fb': '0px' }) } as any}>
               <div role={a.length ? 'button' : undefined} tabIndex={a.length ? 0 : undefined} aria-expanded={a.length ? on : undefined} ref={(el: any) => { if (el && on && el.parentElement) el.parentElement.style.setProperty('--gd-dh', el.offsetHeight + 'px'); }} onClick={(ev0: any) => { if (a.length) { dayGo((ev0.currentTarget as HTMLElement).parentElement, !on); setEx(on ? null : p.d); } }} onKeyDown={(k) => { if (a.length && (k.key === 'Enter' || k.key === ' ')) { k.preventDefault(); setEx(on ? null : p.d); } }}
                 style={{ padding: '10px 14px', minHeight: 44, cursor: a.length ? 'pointer' : 'default', display: 'flex', flexWrap: 'wrap', gap: '4px 10px', alignItems: 'center', background: on ? `linear-gradient(${t.fill.accentSubtle}, ${t.fill.accentSubtle}), ${t.bg.base}` : 'transparent', ...(on ? { position: 'sticky', top: 'var(--gd-top, 0px)', zIndex: 4, borderBottom: `1px solid ${t.border.subtle}`, boxShadow: `0 -10px 0 0 ${t.bg.base}, 0 4px 6px -4px rgba(0,0,0,.25)` } : {}) }}>{on && stuckFrame(t.bg.base, t.border.subtle, 16, 1, 3, blue)}
-                <span style={{ fontWeight: t.weight.semibold }}>{head}{p.t ? `, ${p.t}` : ''}</span>
-                <span>Пленарное заседание</span>
+                <span style={{ fontSize: 15, fontWeight: t.weight.semibold }}>{head}</span>
+                <span style={{ fontSize: 15 }}>Пленарное заседание</span>
                 {p.s !== 'expected' && p.d === today ? pill('сегодня', blue) : null}
                 {BUDP[p.d] && <a href={BUDP[p.d][1]} target="_blank" rel="noreferrer" onClick={(k) => k.stopPropagation()} style={{ textDecoration: 'none' }}>{pill(BUDP[p.d][0], amber)}</a>}
                 <span style={{ flex: '1 1 auto' }} />
