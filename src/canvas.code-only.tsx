@@ -1553,11 +1553,13 @@ const COUNT: Record<string, number> = Object.fromEntries(DAYS.map((d) => [d, DAT
 const TX: Record<string, { id: string; fmt: string }> = Object.fromEntries(TX_RAW.split('\n').map((l) => { const [b, id, fmt] = l.split('|'); return [b, { id, fmt }]; }));
 const FMT: Record<string, string> = { msword: 'DOC', pdf: 'PDF', rtf: 'RTF' };
 const CATS = ['За', 'Против', 'Воздержались', 'Не голосовали'];
+const T300 = new Set(['29.10.2026', '30.10.2026']);
+const CATS_S = ['За', 'Против', 'Воздер.', 'Не голос.'];
 const card = (t: any) => ({ background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 16, boxShadow: DK ? 'none' : `0 1px 2px ${t.border.subtle}, 0 8px 24px ${t.border.subtle}` }) as const;
 function Exp({ on, children }: { on: boolean; children: () => any }) { const [st, setSt] = useState(on ? 2 : 0); const [o, setO] = useState(on); const fr = useRef(true); const kr = useRef<any>(null); if (on) kr.current = children(); useEffect(() => { if (fr.current) { fr.current = false; return; } setSt(1); setO(false); if (on) { const r = requestAnimationFrame(() => requestAnimationFrame(() => setO(true))); const tm = setTimeout(() => setSt(2), 320); return () => { cancelAnimationFrame(r); clearTimeout(tm); }; } const tm = setTimeout(() => setSt(0), 320); return () => clearTimeout(tm); }, [on]); if (!on && st === 0) return null; const sd = on && st === 2; return <div data-xa={sd ? undefined : '1'} style={sd ? undefined : { display: 'grid', gridTemplateRows: o ? '1fr' : '0fr', transition: 'grid-template-rows .3s ease' }}><div style={sd ? undefined : { overflow: 'clip', minHeight: 0 }}>{kr.current}</div></div>; }
 const css = (t: any) => `:root,html,body{color-scheme:${DK ? 'dark' : 'light'}!important;background:${DK ? '#000000' : '#FFFFFF'}!important;color:${DK ? '#F5F5F7' : '#1D1D1F'}}a.gd-lnk{transition:background-color .15s,border-color .15s}a.gd-lnk:hover{background:${t.fill.accentSubtle}!important;border-color:${t.text.accent}!important}a.gd-lnk:focus-visible,button.gd-more:focus-visible{outline:2px solid ${t.text.accent};outline-offset:2px}button.gd-more:hover{border-color:${t.text.accent}!important}@keyframes gdIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}.gd-anim{animation:gdIn .22s cubic-bezier(.2,.8,.2,1)}.gd-row{transition:background-color .15s ease}.gd-chip:hover{filter:brightness(0.95)}.gd-chip:active{transform:scale(0.97)}.gd-row:hover{background-color:${t.bg.subtle}!important}.gd-rw{-webkit-tap-highlight-color:transparent;transition:background-color .15s ease}@media (hover:hover){.gd-rw:hover{background-color:${t.bg.subtle}}.gd-rw:hover .gd-bc{color:${t.text.accent}!important}}.gd-cl2{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.gd-cl1{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden}[data-xa] [data-fb],[data-xa] [data-ivs]{position:relative!important;top:auto!important}.gd-bt{-webkit-tap-highlight-color:transparent;transition:background-color .15s ease,border-color .15s ease}.gd-bt:focus-visible{outline:1.5px solid ${t.text.accent}}@media (hover:hover){.gd-bt:hover{background-color:${DK ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.045)'}!important;border-color:${t.border.default}!important}.gd-bt:hover>.gd-bc{color:${t.text.accent}!important}}.gd-tap{transition:background-color .15s ease,opacity .15s}.gd-tap:hover{background-color:${t.bg.subtle}!important}.gd-tap:focus-visible,.gd-row:focus-visible{outline:1.5px solid ${t.text.accent};outline-offset:2px;border-radius:12px}html,body{overflow-anchor:none}@media (prefers-reduced-motion: reduce){.gd-anim{animation:none}.gd-row,.gd-tap{transition:none}}`;
 
-function Donut({ v, size, center, sub }: { v: number[]; size: number; center: string; sub?: string }) {
+function Donut({ v, size, center, sub, nw }: { v: number[]; size: number; center: string; sub?: string; nw?: boolean }) {
   const t = useGrokTheme();
   const d = t.dataviz;
   const colors = SYS; void d;
@@ -1576,8 +1578,8 @@ function Donut({ v, size, center, sub }: { v: number[]; size: number; center: st
         const a1 = Math.min(off / sum, 0.99999);
         return <path key={i} d={arc(a0, a1)} style={{ fill: colors[i] }} />;
       })}
-      <text x="50" y={sub ? 50 : 55} textAnchor="middle" fontSize="16" fontWeight={600} style={{ fill: t.text.primary, fontFamily: t.font.family }}>{center}</text>
-      {sub && <text x="50" y="63" textAnchor="middle" fontSize="8" style={{ fill: t.text.secondary, fontFamily: t.font.family }}>{sub}</text>}
+      <text x="50" y={sub ? (nw && sub === 'за' ? 48 : 50) : 55} textAnchor="middle" fontSize="16" fontWeight={600} style={{ fill: t.text.primary, fontFamily: t.font.family }}>{center}</text>
+      {sub && <text x="50" y={nw && sub === 'за' ? 64 : 63} textAnchor="middle" fontSize={nw && sub === 'за' ? 11 : 8} fontWeight={nw && sub === 'за' ? 600 : 400} style={{ fill: t.text.secondary, fontFamily: t.font.family }}>{sub}</text>}
     </svg>
   );
 }
@@ -1787,6 +1789,7 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
   const dt = new Date(+day.slice(6, 10), +day.slice(3, 5) - 1, +day.slice(0, 2));
   const ds = `${dt.getDate()} ${MON[dt.getMonth()]} ${dt.getFullYear()}`, wd = WDN[dt.getDay()];
   const rlim = (y: number) => (y < RY ? RFULL : RLOW);
+  const nw = T300.has(day);
   const mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d')!; x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, W, H); x.textBaseline = 'top'; return [c, x] as const; };
   const rr = (x: CanvasRenderingContext2D, a: number, b: number, c: number, d: number, r: number, col: string) => { x.fillStyle = col; x.beginPath(); (x as any).roundRect ? (x as any).roundRect(a, b, c - a, d - b, r) : x.rect(a, b, c - a, d - b); x.fill(); };
   const fnt = (x: CanvasRenderingContext2D, s: number, w = 400) => { x.font = `${w} ${s}px ${FF}`; };
@@ -1820,6 +1823,28 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
   fnt(x1, 30, 400); let fl = wrap(x1, title, RFULL - L); if (fl.length > 6) { fl = fl.slice(0, 6); fl[5] = fl[5].replace(/[\s,.;:]*\S*$/, '') + '…'; }
   fl.forEach((l) => { tx(x1, l, L, y, 30, 400, MU); y += 40; });
   y += 18; tx(x1, [bn ? `№ ${bn}` : '', rw].filter(Boolean).join(' · '), L, y + 11, 26, 500, MU); y += 90;
+  if (nw) {
+    const SC = SYS_L, CS = ['за', 'против', 'воздер.', 'не голос.'];
+    const bx0 = L, bx1 = RFULL, by0 = y - 10; rr(x1, bx0, by0, bx1, by0 + (v.fr ? 760 : 380), 28, 'rgb(246,247,249)');
+    let yy0 = by0 + 30; tx(x1, 'ИТОГИ И ПО ФРАКЦИЯМ', bx0 + 34, yy0, 26, 800, BL); yy0 += 50;
+    { let lx = bx0 + 34; CATS_S.forEach((n, i) => { x1.fillStyle = SC[i]; x1.beginPath(); x1.arc(lx + 10, yy0 + 15, 10, 0, Math.PI * 2); x1.fill(); const w = tx(x1, n, lx + 28, yy0, 28, 400, MU); lx += 28 + w + 34; }); }
+    yy0 += 60;
+    { const cx = bx0 + 34 + 130, cy = yy0 + 130; donut(x1, cx, cy, 130, 38, v.total); ct(x1, String(v.total[0]), cx, cy - 52, 68, 800, TXC); ct(x1, 'за', cx, cy + 24, 38, 700, MU);
+      const lx = bx0 + 360, rx = bx1 - 40;
+      CATS_S.forEach((n, i) => { const yy = yy0 + 22 + i * 62; x1.fillStyle = SC[i]; x1.beginPath(); x1.arc(lx + 11, yy + 21, 11, 0, Math.PI * 2); x1.fill(); tx(x1, n, lx + 40, yy, 36, 400, MU); const s = String(v.total[i]); fnt(x1, 40, 800); tx(x1, s, rx - x1.measureText(s).width, yy - 2, 40, 800, SC[i]); }); }
+    yy0 += 290;
+    if (v.fr) {
+      x1.fillStyle = GRB; x1.fillRect(bx0 + 34, yy0, bx1 - bx0 - 68, 2); yy0 += 30;
+      const step = (bx1 - bx0 - 40) / 6;
+      F.forEach((n, i) => { const f = v.fr![n]; const cx = bx0 + 20 + step * i + step / 2; const vv = f.v; const sz = f.size || vv.reduce((q, w) => q + w, 0) || 1;
+        ct(x1, n, cx, yy0, 30, 800, TXC); ct(x1, `(${f.size})`, cx, yy0 + 38, 22, 400, MU);
+        const cy = yy0 + 150; donut(x1, cx, cy, 66, 16, vv); let k = 0; vv.forEach((q, j) => { if (q > vv[k]) k = j; });
+        ct(x1, `${Math.round((100 * vv[k]) / sz)}%`, cx, cy - 28, 32, 800, TXC); ct(x1, CS[k], cx, cy + 10, k === 0 ? 22 : 17, k === 0 ? 700 : 400, MU);
+        fnt(x1, 24, 800); const ws = vv.map((q) => x1.measureText(String(q)).width); const gap = 12; let sx = cx - (ws.reduce((q, w) => q + w, 0) + gap * 3) / 2;
+        vv.forEach((q, j) => { tx(x1, String(q), sx, cy + 86, 24, 800, SC[j]); sx += ws[j] + gap; }); });
+    }
+    y = by0 + (v.fr ? 760 : 380) + 40;
+  } else {
   { const cx = L + 130, cy = y + 130; donut(x1, cx, cy, 125, 40, v.total); ct(x1, String(v.total[0]), cx, cy - 46, 66, 800, TXC); ct(x1, 'за', cx, cy + 30, 26, 400, MU);
     const lx = L + 320, rx = RFULL - 20;
     CATS.forEach((n, i) => { const yy = y + 20 + i * 62; x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 11, yy + 23, 11, 0, Math.PI * 2); x1.fill(); tx(x1, n, lx + 40, yy, 34, 400, TXC); const s = String(v.total[i]); fnt(x1, 38, 800); tx(x1, s, rx - x1.measureText(s).width, yy - 2, 38, 800, i === 0 && v.total[i] ? COLS4[0] : v.total[i] ? TXC : COLS4[3]); }); }
@@ -1836,6 +1861,7 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
     y += 270;
   }
   { let lx = L; CATS.forEach((n, i) => { x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 9, y + 15, 9, 0, Math.PI * 2); x1.fill(); const w = tx(x1, n, lx + 26, y, 22, 400, TXC); lx += 26 + w + 28; }); }
+  }
   y += 50; tx(x1, 'Календарь законов', L, y, 24, 700, BL);
   // card 2
   const [c2, x2] = mk(); y = header(x2);
@@ -1855,7 +1881,24 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
     for (const p of ps) { fnt(x2, 37, 400); for (const ln of wrap(x2, p, rlim(y + 50) - L)) { if (y + 50 > 1680) break; tx(x2, ln, L, y, 37, 400, TXC); y += 50; } y += 10; }
     y += 22;
   }
-  return [c1, c2];
+  const out = [c1, c2];
+  if (nw && ctx.bs) {
+    const LIM = 1740; let cx3: CanvasRenderingContext2D | null = null; let n3 = 0;
+    const page = () => { const [c, x] = mk(); out.push(c); cx3 = x; n3++; y = header(x); fnt(x, 44, 800); wrap(x, v.q, RFULL - L).slice(0, 2).forEach((l) => { tx(x, l, L, y, 44, 800, TXC); y += 56; }); y += 6; const pc = y + 23; const pw = pill(x, pillT, L, pc, 46, 26, 24, 200, pillC[0], pillC[1]); fnt(x, 28, 500); { const mm = x.measureText('Н'); tx(x, [bn ? `№ ${bn}` : '', rw].filter(Boolean).join(' · '), L + pw + 20, pc - (mm.actualBoundingBoxDescent - mm.actualBoundingBoxAscent) / 2, 28, 500, MU); } y += 80; tx(x, n3 > 1 ? 'БЫЛО / СТАЛО (ПРОДОЛЖЕНИЕ)' : 'БЫЛО / СТАЛО', L, y, 27, 800, BL); y += 54; };
+    page();
+    ctx.bs.forEach(([was, now], k) => {
+      const blk = (lab: string, s: string) => { fnt(cx3!, 34, 400); return wrap(cx3!, s.replace(/ё/g, 'е').replace(/Ё/g, 'Е'), RFULL - L - 40).map((l) => [lab, l]); };
+      const rows = [...blk('Было:', was), ...blk('Стало:', now)];
+      const need = 40 * 2 + rows.length * 46 + 30;
+      if (k > 0 && y + need > LIM && n3 < 2) page();
+      if (k > 0) { cx3!.fillStyle = GRB; cx3!.fillRect(L, y - 14, RFULL - L, 2); y += 10; }
+      let last = '';
+      for (const [lab, l] of rows) { if (y + 46 > LIM) break; if (lab !== last) { tx(cx3!, lab, L, y, 26, 800, MU); y += 38; last = lab; } tx(cx3!, l, L + 20, y, 34, 400, TXC); y += 46; }
+      y += 30;
+    });
+    out.forEach((c, i) => { if (i < 2) return; const x = c.getContext('2d')!; tx(x, 'Календарь законов', L, 1790, 24, 700, BL); });
+  }
+  return out;
 }
 if (typeof window !== 'undefined') (window as any).gdVotePng = (d: string, id: string) => { const v = parse(DATA[d]).find((z) => z.id === id); return v ? drawCards(v, d).map((c) => c.toDataURL('image/png')) : null; };
 function ShareVote({ v, day, m }: { v: Vote; day: string; m?: boolean }) {
@@ -1873,7 +1916,7 @@ function ShareVote({ v, day, m }: { v: Vote; day: string; m?: boolean }) {
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 10px', margin: m ? '10px 0 0' : '6px 0 0' }}>
       {m && <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: (DK ? '#409CFF' : 'rgb(10,100,214)') }}>Сохранить голосование</span>}
       {st && <span style={{ fontSize: 12, color: t.text.secondary }}>{st}</span>}
-      {imgs.length > 0 && <div style={{ display: 'flex', flexWrap: 'nowrap', gap: m ? 8 : 12, width: '100%', marginTop: 6 }}>{imgs.map((u, i) => <figure key={i} style={{ margin: 0, flex: '1 1 0', maxWidth: m ? undefined : 420, minWidth: 0 }}><img src={u} alt={`Картинка ${i + 1}: ${v.q.slice(0, 80)}`} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 10, border: `1px solid ${t.border.subtle}`, WebkitTouchCallout: 'default', userSelect: 'auto' } as any} /><figcaption style={{ fontSize: 12, color: t.text.tertiary, marginTop: 4 }}>Картинка {i + 1} из 2</figcaption></figure>)}</div>}
+      {imgs.length > 0 && <div className={imgs.length > 2 ? 'gd-hs' : undefined} style={{ display: 'flex', flexWrap: 'nowrap', overflowX: imgs.length > 2 && m ? 'auto' : undefined, gap: m ? 8 : 12, width: '100%', marginTop: 6 }}>{imgs.map((u, i) => <figure key={i} style={{ margin: 0, flex: imgs.length > 2 && m ? '0 0 46%' : '1 1 0', maxWidth: m ? undefined : 420, minWidth: 0 }}><img src={u} alt={`Картинка ${i + 1}: ${v.q.slice(0, 80)}`} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 10, border: `1px solid ${t.border.subtle}`, WebkitTouchCallout: 'default', userSelect: 'auto' } as any} /><figcaption style={{ fontSize: 12, color: t.text.tertiary, marginTop: 4 }}>Картинка {i + 1} из {imgs.length}</figcaption></figure>)}</div>}
     </div>
   );
 }
@@ -1907,29 +1950,30 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
   ];
   const [shw, setShw] = useState(false);
   const sut0 = (ctx.sut || []).map(yo) as string[]; const sen = (sut0[0] || '').split(/(?<=[.!?])\s+(?=[А-ЯA-Z«"(0-9])/); const sutS = sen.length > 2 || sut0.length > 1 ? [sen.slice(0, 2).join(' ') + (sen.length > 2 ? ' …' : '')] : sut0; const cut = sutS !== sut0;
-  const CAP = ['за', 'против', 'воздержались', 'не голосовали'];
+  const nw = T300.has(day); const CATn = nw ? CATS_S : CATS;
+  const CAP = nw ? ['за', 'против', 'воздер.', 'не голос.'] : ['за', 'против', 'воздержались', 'не голосовали'];
   const okC = v.ok ? ['rgba(52,199,89,0.16)', INK[0]] : ['rgba(255,59,48,0.13)', INK[1]];
   const box = { background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px', minWidth: 0 } as const;
   const h = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: (DK ? '#409CFF' : 'rgb(10,100,214)'), marginBottom: 4 } as const;
   const fcells = v.fr ? F.map((f) => { const fv = v.fr![f].v; const p = pos(fv); let k = 0; fv.forEach((q, j) => { if (q > fv[k]) k = j; }); return (
             <div key={f} style={{ textAlign: 'center', flex: m ? '0 0 58px' : '1 0 88px', minWidth: m ? 58 : 88, scrollSnapAlign: 'start' }}>
               <div style={{ fontSize: m ? 11 : 12, fontWeight: 700, color: t.text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f}{m ? <div style={{ fontWeight: 400, color: t.text.tertiary, fontSize: 10 }}>({v.fr![f].size})</div> : <span style={{ fontWeight: 400, color: t.text.tertiary }}> ({v.fr![f].size})</span>}</div>
-              <div style={{ width: m ? 50 : 80, margin: '2px auto 0' }}><Donut v={fv} size={m ? 50 : 80} center={p.pct} sub={m ? undefined : CAP[k]} /></div>
+              <div style={{ width: m ? 50 : 80, margin: '2px auto 0' }}><Donut v={fv} size={m ? 50 : 80} center={p.pct} sub={m ? undefined : CAP[k]} nw={nw} /></div>
               <div title={fv.map((q, j) => `${CAP[j]}: ${q}`).join(', ')} style={{ display: 'flex', justifyContent: 'center', gap: m ? 3 : 6, fontSize: m ? 11 : 13, fontWeight: 700, lineHeight: 1.3, fontVariantNumeric: 'tabular-nums', marginTop: 3, whiteSpace: 'nowrap' }}>{fv.map((q, j) => <span key={j} style={{ color: SYS[j] }}>{q}</span>)}</div>
             </div>); }) : null;
   const resD = v.fr && !m ? (
     <div style={{ ...box, minWidth: 0 }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '2px 12px', fontSize: 13, color: t.text.secondary, marginBottom: 8 }}><span style={{ ...h, marginBottom: 0, marginRight: 4 }}>Итоги и по фракциям</span>{['За', 'Против', 'Воздержались', 'Не голосовали'].map((c, j) => <span key={c} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}><span style={{ width: 9, height: 9, borderRadius: 9, background: SYS[j] }} />{c}</span>)}</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '2px 12px', fontSize: 13, color: t.text.secondary, marginBottom: 8 }}><span style={{ ...h, marginBottom: 0, marginRight: 4 }}>Итоги и по фракциям</span>{CATn.map((c, j) => <span key={c} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}><span style={{ width: 9, height: 9, borderRadius: 9, background: SYS[j] }} />{c}</span>)}</div>
       <div className="gd-hs" style={{ display: 'flex', flexWrap: 'nowrap', alignItems: 'center', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x proximity', gap: 6, paddingBottom: 4 }}>
-        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 12, paddingRight: 16, marginRight: 8, borderRight: `1px solid ${t.border.subtle}`, scrollSnapAlign: 'start' }}><div style={{ width: 104, flexShrink: 0 }}><Donut v={v.total} size={104} center={String(tot)} sub="за" /></div><div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>{CATS.map((n, i) => <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, whiteSpace: 'nowrap' }}><span style={{ width: 8, height: 8, borderRadius: 8, background: SYS[i], flexShrink: 0 }} /><span style={{ color: t.text.secondary }}>{n}</span><b style={{ marginLeft: 'auto', paddingLeft: 8, fontVariantNumeric: 'tabular-nums', color: SYS[i] }}>{v.total[i]}</b></div>)}</div></div>
+        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 12, paddingRight: 16, marginRight: 8, borderRight: `1px solid ${t.border.subtle}`, scrollSnapAlign: 'start' }}><div style={{ width: 104, flexShrink: 0 }}><Donut v={v.total} size={104} center={String(tot)} sub="за" nw={nw} /></div><div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>{CATn.map((n, i) => <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, whiteSpace: 'nowrap' }}><span style={{ width: 8, height: 8, borderRadius: 8, background: SYS[i], flexShrink: 0 }} /><span style={{ color: t.text.secondary }}>{n}</span><b style={{ marginLeft: 'auto', paddingLeft: 8, fontVariantNumeric: 'tabular-nums', color: SYS[i] }}>{v.total[i]}</b></div>)}</div></div>
         {fcells}
       </div>
     </div>) : null;
   const res = resD || (
     <div style={{ display: 'flex', flexDirection: 'column', gap: m ? 10 : 12, minWidth: 0 }}>
       <div style={{ ...box, display: 'flex', alignItems: 'center', gap: m ? 12 : 16 }}>
-        <div style={{ width: m ? 76 : 112, flexShrink: 0 }}><Donut v={v.total} size={m ? 76 : 112} center={String(tot)} sub="за" /></div>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: m ? 1 : 5 }}>{CATS.map((n, i) => (
+        <div style={{ width: m ? 76 : 112, flexShrink: 0 }}><Donut v={v.total} size={m ? 76 : 112} center={String(tot)} sub="за" nw={nw} /></div>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: m ? 1 : 5 }}>{CATn.map((n, i) => (
           <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: m ? 14 : 14 }}>
             <span style={{ width: 9, height: 9, borderRadius: 9, background: SYS[i], flexShrink: 0 }} />
             <span style={{ flex: 1, color: t.text.secondary }}>{n}</span>
@@ -1939,7 +1983,7 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
       {v.fr ? (
         <div style={box}>
           <div style={h}>По фракциям</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 12px', fontSize: m ? 12 : 13, color: t.text.secondary, margin: '2px 0 8px' }}>{['За', 'Против', 'Воздержались', 'Не голосовали'].map((c, j) => <span key={c} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}><span style={{ width: 9, height: 9, borderRadius: 9, background: SYS[j] }} />{c}</span>)}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 12px', fontSize: m ? 12 : 13, color: t.text.secondary, margin: '2px 0 8px' }}>{CATn.map((c, j) => <span key={c} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}><span style={{ width: 9, height: 9, borderRadius: 9, background: SYS[j] }} />{c}</span>)}</div>
           <div className="gd-hs" style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch', gap: m ? 4 : 6, paddingBottom: 4 }}>{fcells}</div>
         </div>
       ) : <div style={{ ...box, fontSize: 13, color: t.text.secondary }}>Разбивки по фракциям в источнике нет — показан только общий итог.</div>}
