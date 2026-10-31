@@ -1912,7 +1912,7 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
   const okC = v.ok ? ['rgba(52,199,89,0.16)', INK[0]] : ['rgba(255,59,48,0.13)', INK[1]];
   const box = { background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px', minWidth: 0 } as const;
   const h = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: (DK ? '#409CFF' : 'rgb(10,100,214)'), marginBottom: 4 } as const;
-  const left = (
+  const res = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: m ? 10 : 12, minWidth: 0 }}>
       <div style={{ ...box, display: 'flex', alignItems: 'center', gap: m ? 12 : 16 }}>
         <div style={{ width: m ? 76 : 112, flexShrink: 0 }}><Donut v={v.total} size={m ? 76 : 112} center={String(tot)} sub="за" /></div>
@@ -1927,16 +1927,16 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
         <div style={box}>
           <div style={h}>По фракциям</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 12px', fontSize: m ? 12 : 13, color: t.text.secondary, margin: '2px 0 8px' }}>{['За', 'Против', 'Воздержались', 'Не голосовали'].map((c, j) => <span key={c} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}><span style={{ width: 9, height: 9, borderRadius: 9, background: SYS[j] }} />{c}</span>)}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: inl && !m ? 'repeat(auto-fit, minmax(88px, 1fr))' : 'repeat(6, minmax(0, 1fr))', gap: m ? '4px 2px' : '6px 4px' }}>{F.map((f) => { const fv = v.fr![f].v; const p = pos(fv); let k = 0; fv.forEach((q, j) => { if (q > fv[k]) k = j; }); return (
-            <div key={f} style={{ textAlign: 'center', minWidth: 0 }}>
+          <div className="gd-hs" style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch', gap: m ? 4 : 6, paddingBottom: 4 }}>{F.map((f) => { const fv = v.fr![f].v; const p = pos(fv); let k = 0; fv.forEach((q, j) => { if (q > fv[k]) k = j; }); return (
+            <div key={f} style={{ textAlign: 'center', flex: m ? '0 0 58px' : '1 0 88px', minWidth: m ? 58 : 88, scrollSnapAlign: 'start' }}>
               <div style={{ fontSize: m ? 11 : 12, fontWeight: 700, color: t.text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f}{m ? <div style={{ fontWeight: 400, color: t.text.tertiary, fontSize: 10 }}>({v.fr![f].size})</div> : <span style={{ fontWeight: 400, color: t.text.tertiary }}> ({v.fr![f].size})</span>}</div>
               <div style={{ width: m ? 50 : 80, margin: '2px auto 0' }}><Donut v={fv} size={m ? 50 : 80} center={p.pct} sub={m ? undefined : CAP[k]} /></div>
               <div title={fv.map((q, j) => `${CAP[j]}: ${q}`).join(', ')} style={{ display: 'flex', justifyContent: 'center', gap: m ? 3 : 6, fontSize: m ? 11 : 13, fontWeight: 700, lineHeight: 1.3, fontVariantNumeric: 'tabular-nums', marginTop: 3, whiteSpace: 'nowrap' }}>{fv.map((q, j) => <span key={j} style={{ color: SYS[j] }}>{q}</span>)}</div>
             </div>); })}</div>
         </div>
       ) : <div style={{ ...box, fontSize: 13, color: t.text.secondary }}>Разбивки по фракциям в источнике нет — показан только общий итог.</div>}
-      {!m && pass.some(([, x]) => x) && <div style={{ ...box, display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '4px 12px', fontSize: 14, lineHeight: 1.45 }}>{pass.filter(([, x]) => x).map(([k, x]) => [<span key={k + 'k'} style={{ color: t.text.tertiary, maxWidth: 172 }}>{k}</span>, <span key={k} style={{ color: t.text.primary }}>{x}</span>])}</div>}
     </div>);
+  const passBox = (!m && pass.some(([, x]) => x) && <div style={{ ...box, display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '4px 12px', fontSize: 14, lineHeight: 1.45 }}>{pass.filter(([, x]) => x).map(([k, x]) => [<span key={k + 'k'} style={{ color: t.text.tertiary, maxWidth: 172 }}>{k}</span>, <span key={k} style={{ color: t.text.primary }}>{x}</span>])}</div>);
   const right = (
     <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>
       {secs.filter(([hd]) => hd !== 'Суть' && !hd.startsWith('Кого')).map(([hd, ps]) => (
@@ -1953,9 +1953,10 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
       </div>}
       {inl ? null : <>{!m && <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.3, color: t.text.primary, letterSpacing: '-0.01em', marginBottom: 10 }}>{yo(v.q)}</div>}</>}
       {(sut0.length > 0 || ctx.who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{sut0.length > 0 && <div><div style={h}>Суть</div>{(more ? sut0 : sutS).map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{p}</p>)}</div>}{ctx.who && <div><div style={h}>{v.ok ? 'Кого коснется' : 'Кого коснулось бы'}</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(ctx.who)}</p></div>}</div>}
+      <div style={{ marginTop: (sut0.length > 0 || ctx.who) ? 12 : 0 }}>{res}</div>
       <button ref={mref} className="gd-more" aria-expanded={more} onClick={(e) => { e.stopPropagation(); const y = mref.current ? mref.current.getBoundingClientRect().top : 0; setMore(!more); anchorTo(() => mref.current, y); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', minHeight: 40, marginTop: 12, padding: '0 12px', borderRadius: 10, border: `1px solid ${t.border.default}`, background: t.bg.base, color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>{more ? 'Скрыть подробности ▴' : 'Подробнее ▾'}</button>
       <Exp on={more}>{() => <div style={{ paddingTop: 12 }}>{!inl && <div style={{ fontSize: m ? 14 : 15, lineHeight: 1.45, color: t.text.secondary, margin: '0 0 12px', maxWidth: '72rem', whiteSpace: 'normal' }}>{title}</div>}
-      <div style={m ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12, alignItems: 'start' }}>{left}{right}</div>
+      <div style={m ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: passBox ? 'minmax(0, 1fr) minmax(0, 1fr)' : 'minmax(0, 1fr)', gap: 12, alignItems: 'start' }}>{passBox}{right}</div>
       {m && <ShareVote v={v} day={day} m />}</div>}</Exp>
     </div>
   );
@@ -2139,11 +2140,15 @@ function LawsSw({ m, mk, setMk, ks, cnt }: { m: boolean; mk: string; setMk: (k: 
       </div>
   );
 }
+const lwTop = () => { const e = document.querySelector('[data-lcnt]') as HTMLElement | null; return e ? e.getBoundingClientRect().bottom : svTop() * GZ; };
+const MPR = ['январе', 'феврале', 'марте', 'апреле', 'мае', 'июне', 'июле', 'августе', 'сентябре', 'октябре', 'ноябре', 'декабре'];
+const plz = (n: number, a: string, b: string, c: string) => { const d = n % 100, e = n % 10; return d >= 11 && d <= 14 ? c : e === 1 ? a : e >= 2 && e <= 4 ? b : c; };
 function Laws({ m, mk }: { m: boolean; mk: string }) {
   const t = useGrokTheme();
   const now = new Date();
   const [op, setOp0] = useState<string | null>(QS && QS.get('lo') ? `${mk}#${QS.get('lo')}` : null);
-  const setOp = (nx: string | null) => { const id = nx || op; const q = () => id ? document.querySelector(`[data-lo="${id}"]`) as HTMLElement | null : null; const r0 = q(); const tg = r0 ? (m && nx && op !== nx ? svTop() : op && nx && op !== nx ? r0.getBoundingClientRect().top : Math.max(r0.getBoundingClientRect().top, svTop())) : null; setOp0(nx); if (op) requestAnimationFrame(() => { const w = document.querySelector(`[data-lo="${op}"]`) as HTMLElement | null; const r = w && w.firstElementChild as HTMLElement | null; if (r && r.animate) r.animate([{ backgroundColor: FLASH() }, { backgroundColor: 'rgba(10,102,214,0)' }], { duration: 1800, easing: 'ease-out' }); }); if (tg != null) anchorTo(q, tg); };
+  const setOp = (nx: string | null) => { const id = nx || op; const q = () => id ? document.querySelector(`[data-lo="${id}"]`) as HTMLElement | null : null; const r0 = q(); if (id) setLst(id); const tg = r0 ? (m && nx && op !== nx ? lwTop() : op && nx && op !== nx ? r0.getBoundingClientRect().top : Math.max(r0.getBoundingClientRect().top, lwTop())) : null; setOp0(nx); if (op) requestAnimationFrame(() => { const w = document.querySelector(`[data-lo="${op}"]`) as HTMLElement | null; const r = w && w.firstElementChild as HTMLElement | null; if (r && r.animate) r.animate([{ backgroundColor: FLASH() }, { backgroundColor: 'rgba(10,102,214,0)' }], { duration: 1800, easing: 'ease-out' }); }); if (tg != null) anchorTo(q, tg); };
+  const [lst, setLst] = useState<string | null>(op);
   const items: any[] = LAWS.months[mk] || [];
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const byD: Record<string, any[]> = {}; items.forEach((x, i) => { (byD[x.d] = byD[x.d] || []).push({ ...x, i }); });
@@ -2153,14 +2158,15 @@ function Laws({ m, mk }: { m: boolean; mk: string }) {
   const h = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: BLUE_(), marginBottom: 4 } as const;
   const box = { background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px', minWidth: 0 } as const;
   const tag = (p: boolean) => <span style={{ padding: '2px 9px', borderRadius: 999, fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', background: p ? (DK ? 'rgba(48,209,88,0.2)' : 'rgba(52,199,89,0.16)') : t.fill.accentSubtle, color: p ? INK[0] : t.text.accent }}>{p ? 'вступил в силу' : 'вступит в силу'}</span>;
-  return <div style={{ marginTop: 0 }}>
-    <div style={{ fontSize: 14, color: t.text.secondary, margin: '0 2px 10px' }}>{items.length ? <>{nPast > 0 && <><b style={{ color: INK[0] }}>{nPast}</b> вступили в силу</>}{nPast > 0 && nPast < items.length && ' · '}{nPast < items.length && <><b style={{ color: t.text.accent }}>{items.length - nPast}</b> вступят в силу</>}</> : null}</div>
+  const mp = mk.split('.'); const mpr = MPR[+mp[0] - 1] ? `${MPR[+mp[0] - 1]} ${mp[1]}` : lmname(mk); const nI = items.length;
+  return <div style={{ marginTop: 0, ['--gd-lt' as any]: m ? '0px' : 'var(--gd-top, 0px)' }}>
+    <div data-lcnt="1" ref={(el) => { if (!el || !el.parentElement) return; const pe = el.parentElement; const f = () => pe.style.setProperty('--gd-lc', el.offsetHeight + 'px'); f(); if (!(el as any)._ro) { (el as any)._ro = new ResizeObserver(f); (el as any)._ro.observe(el); } }} style={{ position: 'sticky', top: 'var(--gd-lt, 0px)', zIndex: 6, background: t.bg.base, margin: '0 0 8px', padding: '8px 2px', borderBottom: `1px solid ${t.border.subtle}`, fontSize: 14, color: t.text.secondary }}><div style={{ fontSize: m ? 15 : 16, fontWeight: 700, color: t.text.primary }}>В {mpr} {nI === 1 ? 'вступает' : 'вступают'} в силу: <span style={{ fontVariantNumeric: 'tabular-nums' }}>{nI}</span> {plz(nI, 'закон', 'закона', 'законов')}</div><div style={{ marginTop: 2 }}>{items.length ? <>{nPast > 0 && <><b style={{ color: INK[0] }}>{nPast}</b> вступили в силу</>}{nPast > 0 && nPast < items.length && ' · '}{nPast < items.length && <><b style={{ color: t.text.accent }}>{items.length - nPast}</b> вступят в силу</>}</> : null}</div></div>
     {!items.length && <div style={{ ...card(t), padding: '16px 18px', color: t.text.secondary }}>Данных пока нет</div>}
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
     {ds.map((d) => { const dt = pd(d); const p = past(d); return <div key={d} style={{ ...card(t), padding: 0, overflow: 'clip' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', fontSize: 13, fontWeight: t.weight.semibold, color: t.text.secondary, background: t.bg.subtle, borderBottom: `1px solid ${t.border.subtle}` }}><span style={{ flex: 1 }}>{p ? 'Вступили в силу' : 'Вступят в силу'} {dt.getDate()} {MON[dt.getMonth()]}, {WDL[dt.getDay()]}</span><span style={{ color: t.text.tertiary, fontWeight: 400 }}>{byD[d].length}</span></div>
       {byD[d].map((x) => { const id = `${mk}#${x.i}`; const on = op === id; return <div key={id} data-lo={id} style={{ borderBottom: `1px solid ${t.border.subtle}`, position: 'relative', ...(on ? { borderRadius: 12, overflow: 'clip', border: `1.5px solid ${t.text.accent}` } : {}) }}>
-        <div role="button" tabIndex={0} aria-expanded={on} className="gd-row" onClick={() => setOp(on ? null : id)} onKeyDown={(e) => { if (e.key === 'Enter') setOp(on ? null : id); }} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', minHeight: 44, cursor: 'pointer', background: on ? `linear-gradient(${t.fill.accentSubtle}, ${t.fill.accentSubtle}), ${t.bg.base}` : 'transparent', ...(on ? { position: 'sticky', top: m ? 'calc(var(--gd-top, 0px) - 1px)' : `calc(var(--gd-top, 0px) / ${GZ || 1} - 1px)`, zIndex: 4, boxShadow: `0 4px 6px -4px rgba(0,0,0,.25)` } : {}) }}>
+        <div role="button" tabIndex={0} aria-expanded={on} className="gd-row" onClick={() => setOp(on ? null : id)} onKeyDown={(e) => { if (e.key === 'Enter') setOp(on ? null : id); }} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', minHeight: 44, cursor: 'pointer', background: on ? `linear-gradient(${t.fill.accentSubtle}, ${t.fill.accentSubtle}), ${t.bg.base}` : 'transparent', ...(on ? { position: 'sticky', top: 'calc(var(--gd-lt, 0px) + var(--gd-lc, 0px) - 1px)', zIndex: 4, boxShadow: `0 4px 6px -4px rgba(0,0,0,.25)` } : {}) }}>
           <span style={{ color: t.text.tertiary, marginTop: 2, display: 'inline-block', transition: 'transform .2s', transform: on ? 'rotate(90deg)' : 'none' }}>▸</span>
           <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: m ? 16 : 15, color: t.text.primary, fontWeight: on ? t.weight.semibold : t.weight.regular }}>{x.title}</div>{x.law && <div style={{ marginTop: 3, fontSize: 13, fontFamily: t.font.mono, color: t.text.accent, overflowWrap: 'anywhere' }}>{x.law}</div>}</div>
         </div>
@@ -2180,7 +2186,7 @@ function Laws({ m, mk }: { m: boolean; mk: string }) {
         {on && <button className="gd-tap" onClick={() => setOp(null)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', minHeight: 44, border: 'none', borderTop: `1px solid ${t.border.subtle}`, background: t.fill.accentSubtle, color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: t.weight.semibold, cursor: 'pointer' }}>Свернуть ↑</button>}
       </div>; })}
     </div>; })}
-    {op && <PinSpacer q={`[data-lo="${op}"]`} />}
+    {(op || lst) && <PinSpacer q={`[data-lo="${op || lst}"]`} />}
     </div>
   </div>;
 }
