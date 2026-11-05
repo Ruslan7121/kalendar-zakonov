@@ -1965,23 +1965,22 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
   const pill = (x: CanvasRenderingContext2D, s: string, bx: number, cy: number, h: number, sz: number, padX: number, minW: number, bg: string, col: string) => { fnt(x, sz, 800); const m = x.measureText(s), mc = x.measureText('Н'); const gw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight; const pw = Math.max(minW, Math.round(gw + padX * 2)); rr(x, bx, cy - h / 2, bx + pw, cy + h / 2, h / 2, bg); x.fillStyle = col; x.fillText(s, bx + pw / 2 - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2, cy + (mc.actualBoundingBoxAscent - mc.actualBoundingBoxDescent) / 2); return pw; };
   const wrap = (x: CanvasRenderingContext2D, s: string, mw: number) => { const out: string[] = []; let line = ''; for (const w of s.split(' ')) { const t = (line + ' ' + w).trim(); if (x.measureText(t).width <= mw) line = t; else { if (line) out.push(line); line = w; } } out.push(line); return out; };
   const header = (x: CanvasRenderingContext2D) => {
-    // t308: title+date on top; QR pair on its own row, centred on the card
+    // title+date LEFT; two QR codes RIGHT, side-by-side, labels under, vertically centered
+    rr(x, L, TOP, RFULL, TOP + 230, 30, GRB);
+    tx(x, 'РАБОТА ГОСДУМЫ', L + 34, TOP + 30, 40, 800, TXC); tx(x, 'И ПРАВИТЕЛЬСТВА', L + 34, TOP + 78, 40, 800, TXC);
+    const dw = tx(x, ds + ' ', L + 34, TOP + 150, 38, 800, TXC); tx(x, wd, L + 34 + dw, TOP + 150, 38, 400, MU);
     const qrs: [string, string][] = [...(bn ? [['Законопроект', `https://sozd.duma.gov.ru/bill/${bn}`] as [string, string]] : []), ['Голосование', `http://vote.duma.gov.ru/vote/${v.id}`]];
-    const box = 156, qr = 132, gap = 22; const block = qrs.length * box + (qrs.length - 1) * gap;
-    const qrTop = TOP + 178; const hh = 360;
-    rr(x, L, TOP, RFULL, TOP + hh, 30, GRB);
-    tx(x, 'РАБОТА ГОСДУМЫ', L + 34, TOP + 28, 40, 800, TXC); tx(x, 'И ПРАВИТЕЛЬСТВА', L + 34, TOP + 76, 40, 800, TXC);
-    const dw = tx(x, ds + ' ', L + 34, TOP + 140, 38, 800, TXC); tx(x, wd, L + 34 + dw, TOP + 140, 38, 400, MU);
-    { const x0 = Math.round((L + RFULL - block) / 2);
+    { const box = 166, qr = 140, gap = 24; const block = qrs.length * box + (qrs.length - 1) * gap;
+      const right = L + Math.round((RFULL - L) * 0.52); const x0 = right + Math.round((RFULL - 20 - right - block) / 2);
       qrs.forEach(([lab, u], k) => {
         const qx = x0 + k * (box + gap); const pad = (box - qr) / 2;
-        rr(x, qx, qrTop, qx + box, qrTop + box, 16, '#FFFFFF');
+        rr(x, qx, TOP + 22, qx + box, TOP + 188, 16, '#FFFFFF');
         const M = qrMatrix(u); const n = M.length + 2, s = qr / n; x.fillStyle = BL;
-        const ox = qx + pad, oy = qrTop + pad;
+        const ox = qx + pad, oy = TOP + 22 + pad;
         M.forEach((row, r) => row.forEach((on, c) => { if (on) x.fillRect(Math.floor(ox + (c + 1) * s), Math.floor(oy + (r + 1) * s), Math.ceil(s), Math.ceil(s)); }));
-        ct(x, lab, qx + box / 2, qrTop + box + 8, 20, 800, BL);
+        ct(x, lab, qx + box / 2, TOP + 196, 21, 800, BL);
       }); }
-    return TOP + hh + 36;
+    return TOP + 270;
   };
   const pillC = v.ok ? ['rgb(220,245,226)', 'rgb(30,140,60)'] : ['rgb(253,228,228)', 'rgb(200,30,30)'];
   const pillT = v.ok ? 'ПРИНЯТ' : 'ОТКЛОНЕН';
@@ -2292,24 +2291,35 @@ function Track({ b, rd, m, ok }: { b: string; rd?: string; m: boolean; ok?: bool
     const sz = now || isFail ? 16 : 12;
     return { k, l, d, isFail, done, now, col, bg, pathCol, pathSolid, sz, i };
   });
+  const scRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!m) return;
+    const root = scRef.current; if (!root) return;
+    const focus = stages.findIndex((s) => s.now) >= 0 ? stages.findIndex((s) => s.now) : Math.max(cur, 0);
+    const el = root.querySelector(`[data-st="${focus}"]`) as HTMLElement | null;
+    if (el) {
+      const left = el.offsetLeft - Math.max(0, (root.clientWidth - el.offsetWidth) / 2);
+      root.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+    }
+  }, [m, cur, failed, b]);
   if (m) {
+    const SW = 76;
     return <div data-track="1" style={{ marginTop: 12, background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: '10px 12px', overflow: 'hidden' }}>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: ac, marginBottom: 10 }}>Путь закона</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        {stages.map((s, i) => (
-          <div key={s.k}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-              <span style={{ width: s.sz, height: s.sz, borderRadius: 999, flex: 'none', boxSizing: 'border-box', background: s.bg, border: `${s.now ? 3 : 2}px solid ${s.col}`, boxShadow: s.now ? `0 0 0 2px ${fillEmpty}` : undefined, marginTop: 2 }} />
-              <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
-                <div style={{ fontSize: 13, lineHeight: 1.35, fontWeight: s.now || s.isFail ? 700 : 500, color: s.isFail ? rdC : s.now || s.done ? t.text.primary : t.text.tertiary, wordBreak: 'break-word' }}>{s.l}</div>
-                {s.d ? <div style={{ fontSize: 11, fontWeight: 500, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums', marginTop: 1 }}>{s.d}</div> : null}
-              </div>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: ac, marginBottom: 8 }}>Путь закона</div>
+      <div ref={scRef} style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'flex-start', overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', gap: 0, paddingBottom: 4, scrollSnapType: 'x proximity' }}>
+        {stages.map((s) => (
+          <div key={s.k} data-st={s.i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: SW, minWidth: SW, maxWidth: SW, flex: 'none', textAlign: 'center', scrollSnapAlign: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', width: '100%', minHeight: 16 }}>
+              {s.i > 0 ? <span aria-hidden style={{ ...hLine(stages[s.i - 1].pathCol, stages[s.i - 1].pathSolid), flex: 1, minWidth: 6, marginLeft: 0, marginRight: 0 }} /> : <span style={{ flex: 1 }} />}
+              <span style={{ width: s.sz, height: s.sz, borderRadius: 999, flex: 'none', boxSizing: 'border-box', background: s.bg, border: `${s.now ? 3 : 2}px solid ${s.col}`, boxShadow: s.now ? `0 0 0 2px ${fillEmpty}` : undefined, position: 'relative', zIndex: 1 }} />
+              {s.i < TRK.length - 1 ? <span aria-hidden style={{ ...hLine(s.pathCol, s.pathSolid), flex: 1, minWidth: 6, marginLeft: 0 }} /> : <span style={{ flex: 1 }} />}
             </div>
-            {i < stages.length - 1 && <div aria-hidden style={vLine(s.pathCol, s.pathSolid)} />}
+            <div style={{ fontSize: 10, lineHeight: 1.25, fontWeight: s.now || s.isFail ? 700 : 500, color: s.isFail ? rdC : s.now || s.done ? t.text.primary : t.text.tertiary, textAlign: 'center', width: '100%', marginTop: 4, wordBreak: 'break-word' }}>{s.l}</div>
+            {s.d ? <div style={{ fontSize: 9, fontWeight: 500, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums', marginTop: 1 }}>{s.d}</div> : null}
           </div>
         ))}
       </div>
-      {tr.src && <div style={{ marginTop: 8, fontSize: 12, color: t.text.tertiary }}>Источник: {tr.src}</div>}
+      {tr.src && <div style={{ marginTop: 6, fontSize: 11, color: t.text.tertiary }}>Источник: {tr.src}</div>}
     </div>;
   }
   return <div data-track="1" style={{ marginTop: 12, background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: '12px 14px' }}>
