@@ -106,19 +106,33 @@ def one(n, vote_day='', vote_rd='', rejected=False, refresh=False):
     if not r['pub']:
         r['pub'] = act_date(t, r'закон опубликован') or stage(t, r'Опубликование закона')
 
-    # Отклонение на чтении = дата голосования
+    # Отклонение на чтении = дата голосования на том этапе, который голосовали
+    # (не на более раннем принятом чтении). «отклонить … принятый в первом чтении»
+    # → красный r2; «… во втором» → красный r3.
     rej = act_date(t, r'отклонить законопроект')
     if rejected and vote_day and not rej:
         rej = vote_day
     if rej:
         rd = (vote_rd or '').lower()
-        if re.search(r'2\s*чтен|2-е', rd) and not r.get('r2'):
-            r['r2'] = rej
-        elif re.search(r'3\s*чтен|3-е', rd) and not r.get('r3'):
-            r['r3'] = rej
-        elif not r.get('r1'):
-            r['r1'] = rej  # 1 чтение / по умолчанию
-        # если r1 уже есть как принятие — не затираем; отклонение позже редкость
+        # sozd: какой принятый текст отклонили
+        if re.search(r'отклонить законопроект,?\s*принятый во втором чтении', t, re.I):
+            stage_k = 'r3'
+        elif re.search(r'отклонить законопроект,?\s*принятый в первом чтении', t, re.I):
+            stage_k = 'r2'
+        elif re.search(r'3\s*чтен|3-е', rd):
+            stage_k = 'r3'
+        elif re.search(r'2\s*чтен|2-е', rd):
+            stage_k = 'r2'
+        elif re.search(r'1\s*чтен|1-е', rd) and not r.get('r1'):
+            stage_k = 'r1'
+        elif r.get('r2') and not r.get('r3'):
+            stage_k = 'r3'  # уже было 2-е принятие → отклонили на 3-м
+        elif r.get('r1') and not r.get('r2'):
+            stage_k = 'r2'  # уже было 1-е → отклонили при рассмотрении во 2-м
+        else:
+            stage_k = 'r1'
+        if not r.get(stage_k):
+            r[stage_k] = rej
 
     m = re.search(r'закон подписан (\d+-ФЗ)', t) or re.search(r'Федеральный закон.*?(\d+-ФЗ)', t)
     if not m:
@@ -220,10 +234,15 @@ if __name__ == '__main__':
         if doc == '—' or not re.match(r'\d+-\d+$', doc):
             continue
         meta = bill_meta.setdefault(doc, {'day': d, 'rd': rd, 'rejected': False})
-        meta['day'] = d
-        meta['rd'] = rd
-        if not ok and re.search(r'чтен|1-е|2-е|3-е', rd, re.I):
+        # «отклонение» / отклонённый вопрос — тоже rejected (не только 1-е/2-е/3-е)
+        is_rej = (not ok) and bool(re.search(r'чтен|1-е|2-е|3-е|отклон', rd, re.I))
+        if is_rej:
             meta['rejected'] = True
+            meta['day'] = d
+            meta['rd'] = rd
+        elif not meta['rejected']:
+            meta['day'] = d
+            meta['rd'] = rd
 
     ns = sys.argv[1:] or sorted(bill_meta)
     refresh_set = set()
