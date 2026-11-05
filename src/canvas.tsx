@@ -562,7 +562,7 @@ DATA['28.10.2026'] = `136241|—|О проекте порядка работы �
 136254|1336427-8|О внесении изменений в Федеральный закон "О промышленной политике в Российской Федерации" (об о…|1-е|1|422/0/0/28|331/0/0/19;35/0/0/2;21/0/0/3;19/0/0/0:19;14/0/0/3;2/0/0/0
 136255|1336436-8|О внесении изменений в Федеральный закон "О государственной регистрации недвижимости" (в части…|1-е|1|418/0/0/32|330/0/0/20;32/0/0/5;21/0/0/3;19/0/0/0:19;14/0/0/3;2/0/0/0
 136256|1298223-8|О внесении изменений в статьи 3 и 24 Закона Российской Федерации "О недрах" (в целях регулирова…|1-е|1|417/0/0/33|331/0/0/19;30/0/0/7;21/0/0/3;19/0/0/0:19;14/0/0/3;2/0/0/0
-136257|1180448-7|О внесении изменений в Федеральный закон "Об объектах культурного наследия (памятниках истории…|отклонение|0|409/13/0/28|330/0/0/20;36/0/0/1;21/0/0/3;19/0/0/0:19;1/13/0/3;2/0/0/0
+136257|1180448-7|О внесении изменений в Федеральный закон "Об объектах культурного наследия (памятниках истории…|2-е|0|409/13/0/28|330/0/0/20;36/0/0/1;21/0/0/3;19/0/0/0:19;1/13/0/3;2/0/0/0
 136258|Пост. 17948-9|О календаре рассмотрения вопросов Государственной Думой в ноябре 2026 года|—|1|422/0/0/28|330/0/0/20;35/0/0/2;22/0/0/2;19/0/0/0:19;14/0/0/3;2/0/0/0`;
 DATA['27.10.2026'] = `136177|—|О проекте порядка работы Государственной Думы на 27 октября 2026 года|за основу|1|416/0/0/34|327/0/0/23;37/0/0/0;20/0/0/4;17/0/0/3;13/0/0/4;2/0/0/0
 136178|—|О проекте порядка работы Государственной Думы на 27 октября 2026 года|в целом|1|417/0/0/33|328/0/0/22;37/0/0/0;20/0/0/4;17/0/0/3;13/0/0/4;2/0/0/0
@@ -2226,16 +2226,13 @@ function Track({ b, rd, m, ok }: { b: string; rd?: string; m: boolean; ok?: bool
   const hDash = (col: string) => ({
     flex: 1,
     minWidth: 8,
-    height: 2,
+    height: 0,
     marginLeft: 4,
     flexShrink: 0 as const,
     alignSelf: 'center' as const,
     boxSizing: 'border-box' as const,
-    backgroundImage: `repeating-linear-gradient(90deg, ${col} 0 5px, transparent 5px 10px)`,
-    backgroundRepeat: 'repeat-x',
-    backgroundSize: 'auto 2px',
-    backgroundPosition: 'left center',
-    border: 'none',
+    borderTop: `2px dashed ${col}`,
+    background: 'transparent',
   });
   const hSolid = (col: string) => ({
     flex: 1,
@@ -2249,16 +2246,13 @@ function Track({ b, rd, m, ok }: { b: string; rd?: string; m: boolean; ok?: bool
     border: 'none',
   });
   const vDash = (col: string) => ({
-    width: 2,
+    width: 0,
     height: 14,
     margin: '2px 0 2px 7px',
     flexShrink: 0 as const,
     boxSizing: 'border-box' as const,
-    backgroundImage: `repeating-linear-gradient(180deg, ${col} 0 4px, transparent 4px 8px)`,
-    backgroundRepeat: 'repeat-y',
-    backgroundSize: '2px auto',
-    backgroundPosition: 'center top',
-    border: 'none',
+    borderLeft: `2px dashed ${col}`,
+    background: 'transparent',
   });
   const vSolid = (col: string) => ({
     width: 2,
@@ -2278,12 +2272,11 @@ function Track({ b, rd, m, ok }: { b: string; rd?: string; m: boolean; ok?: bool
     const now = !failed && cur >= 0 && i === cur + 1;
     const col = isFail ? rdC : now ? gn : done ? gn : mute;
     const bg = isFail ? rdC : done ? gn : fillEmpty;
-    // Connector AFTER this stage: solid green between two passed; dashed green last-passed→current; grey dashed future; red to rejected.
+    // Into rejected stage (i === cur-1): GREEN solid (same as passed). Only the circle is red.
     let pathCol = mute;
     let pathSolid = false;
     if (failed) {
-      if (i < cur - 1) { pathCol = gn; pathSolid = true; }
-      else if (i === cur - 1) { pathCol = rdC; pathSolid = false; }
+      if (i < cur) { pathCol = gn; pathSolid = true; }
     } else {
       if (i < cur) { pathCol = gn; pathSolid = true; }
       else if (i === cur) { pathCol = gn; pathSolid = false; }
@@ -3110,7 +3103,7 @@ export default function App() {
       {m && <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '0 0 12px' }}>{hid && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '2px 2px 0' }}><div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text.primary }}>Календарь законов</div>{thBtn}</div>}<div role="tablist" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['c', 'Календарь'], ['l', w < 370 ? 'Законы' : 'Вступают в силу'], ['d', 'Новости']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={mode === k} onClick={() => { if (k === 'l') { CSNAP = null; setCmk(calCk(new Date())); } setMode(k); setView('v'); window.scrollTo(0, 0); }} style={{ ...mt2(mode === k), minWidth: 0, minHeight: 44, padding: '0 4px', fontSize: 14, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>{l}</button>)}</div>{mode === 'd' && <div style={{ display: 'flex', flex: 1, minWidth: 0, alignItems: 'center', gap: 8 }}><div style={{ flex: 1, minWidth: 0 }}>{dateSw}</div><FavBtn /></div>}{mode === 'l' && <LawsSw m={m} mk={lmk} setMk={setLmk} />}</div>}
       <div ref={ph} style={{ width: '100%', height: fx ? topH / Z + (m ? 4 : 14) : 0 }} />
       <div data-gdbar="1" ref={(el) => { barEl.current = el; bar(el); }} style={{ ...(m ? (mode === 'c' ? { position: 'sticky', top: 0, zIndex: 20, margin: 0, padding: '8px 0 0', background: t.bg.base } : { padding: 0, margin: 0 }) : { position: 'sticky', top: 0, zIndex: 20, margin: 0, padding: '14px 0 12px', background: t.bg.base, boxShadow: sc ? '0 6px 8px -8px rgba(0,0,0,0.25)' : 'none', transition: 'box-shadow .15s' }), ...(fx ? { position: 'fixed', top: 0, left: fx.l / Z, width: fx.w / Z, margin: 0, boxSizing: 'border-box' } : {}) } as any}>
-      {false && m && mode === 'd' && <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{mode === 'd' && votes.length > 0 && <div role="tablist" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['all', votes.length, plv(votes.length).replace(/^\d+ /, ''), t.text.primary], ['acc', nAcc, 'принято', INK[0]], ['rej', votes.length - nAcc, 'отклонено', votes.length - nAcc ? INK[1] : t.text.primary]] as const).map(([k, n, l, c]) => <button key={k} data-f={k} role="tab" aria-selected={filter === k} onClick={() => setF(k)} style={{ ...mt2(filter === k), minWidth: 0, minHeight: 44, padding: '0 2px', fontSize: w < 370 ? 13 : 14, letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis' }}><b style={{ color: c }}>{n}</b> {l}</button>)}</div>}{mode === 'd' && <div style={{ height: 44, display: 'flex' }}>{sbox}</div>}{mode === 'd' && (showHits || !votes.length) && <div style={{ fontSize: 14, color: t.text.secondary, padding: '0 2px', fontVariantNumeric: 'tabular-nums' }}>{showHits ? <>{FAV_ONLY && !qq ? 'Сохраненные: ' : 'Найдено: '}<b style={{ color: t.text.primary }}>{nHits}</b> {plv(nHits).replace(/^\d+ /, '')}{qq ? ' за все дни' : ''}</> : 'Пленарного заседания не было'}</div>}</div>}
+      
       {!m && hid && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, margin: '0 0 12px' }}><div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text.primary }}>Календарь законов</div>{thBtn}</div>}
       {!m && <div style={{ display: 'inline-grid', gap: 12 }}><div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div role="tablist" style={{ display: 'flex', flex: 1, padding: 3, height: 44, boxSizing: 'border-box', gap: 2, borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['c', 'Календарь'], ['l', 'Вступают в силу'], ['d', 'Новости']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={mode === k} onClick={() => { if (k === 'l') { CSNAP = null; setCmk(calCk(new Date())); } setMode(k); window.scrollTo(0, 0); }} style={mt2(mode === k)}>{l}</button>)}</div>
@@ -3162,53 +3155,7 @@ export default function App() {
       </div> : <>
       {<Summary key={day} day={day} votes={votes} m={m} />}
       {open && (() => { const v = votes.find((x) => x.id === open); if (!v) return null; return <div ref={box} data-vid={v.id} style={{ ...card(t), padding: 0, overflow: 'hidden', marginBottom: 8 }}><div style={{ padding: '12px 14px', borderBottom: `1px solid ${t.border.subtle}` }}><div style={{ fontSize: m ? 16 : 15, color: t.text.primary }}>{v.q}</div><div style={{ marginTop: 4, fontSize: 13, fontFamily: t.font.mono, color: t.text.accent }}>{v.doc}</div></div><Panel v={v} m={m} day={day} /><button type="button" className="gd-tap" onClick={() => setOpen(null)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', minHeight: 44, border: 'none', borderTop: `1px solid ${t.border.subtle}`, background: t.fill.accentSubtle, color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Свернуть</button></div>; })()}
-      {false && (!votes.length ? <div style={{ ...card(t), padding: '16px 18px', color: t.text.secondary }}>Голосований не было</div> : m ? <div ref={box} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowAnchor: 'none' }}>
-        {list.map((v, idx) => {
-          const on = open === v.id;
-          return (
-            <div key={v.id} data-vid={v.id} style={{ borderRadius: 12, overflow: 'clip', background: t.bg.subtle, position: 'relative' }}>{on && ring}
-              <div role="button" tabIndex={0} aria-expanded={on} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(v.id, idx); } }} onClick={() => toggle(v.id, idx)} style={{ padding: '12px 14px', minHeight: 44, cursor: 'pointer', background: on ? `linear-gradient(${t.fill.accentSubtle}, ${t.fill.accentSubtle}), ${t.bg.subtle}` : 'transparent', ...(on ? { position: 'sticky', top: 'var(--gd-top, 0px)', zIndex: 4, borderRadius: '12px 12px 0 0', boxShadow: `inset 0 2px 0 0 ${t.text.accent}, inset 2px 0 0 ${t.text.accent}, inset -2px 0 0 ${t.text.accent}, 0 4px 6px -4px rgba(0,0,0,.25)` } : {}), WebkitTapHighlightColor: 'transparent' }}>{on && pinCorners(t.bg.base)}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
-                  {v.doc !== '—' && <span style={{ fontFamily: t.font.mono, color: t.text.accent, fontSize: 13, fontWeight: 600 }}>{v.doc}</span>}
-                  {billNo(v.doc) && <span onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} style={{ flexShrink: 0, display: 'inline-flex' }}><FavStar bill={billNo(v.doc)!} big /></span>}
-                  {normRead(v.reading) !== '—' && <span style={{ fontSize: 13, color: t.text.secondary }}>· {normRead(v.reading)}</span>}
-                  <span style={{ flexShrink: 0 }}><Status tone={v.ok ? 'success' : 'danger'}>{v.ok ? 'принят' : 'отклонен'}</Status></span>
-                </div>
-                <div style={{ fontSize: 16, lineHeight: 1.35, fontWeight: on ? t.weight.semibold : t.weight.regular, color: t.text.primary, ...(on ? { overflowWrap: 'anywhere' } : {}) }} title={v.full}>{v.q}</div>
-                <div style={{ display: on ? 'block' : 'none', marginTop: 4, fontSize: 13, color: t.text.secondary, overflowWrap: 'anywhere' }}><span style={{ fontFamily: t.font.mono }}>№ {v.id}</span></div>
-                <div style={{ marginTop: 8 }}><Bar v={v.total} /></div>
-                <div style={{ marginTop: 6, display: 'flex', overflow: 'hidden', gap: w < 380 ? 6 : 8, fontSize: w < 380 ? 11 : 12, letterSpacing: '-0.01em', whiteSpace: 'nowrap', flexWrap: 'nowrap' }}>{v.total.map((x, i) => <span key={i} style={{ color: SYS[i], fontWeight: i === 0 ? t.weight.semibold : t.weight.regular }}>{['за', 'против', 'воздержались', 'не голосовали'][i]} <b style={{ fontVariantNumeric: 'tabular-nums' }}>{x}</b></span>)}</div>
-              </div>
-              {on && <><Panel v={v} m day={day} />{foldBtn(v.id, idx)}</>}
-            </div>
-          );
-        })}
-        {!list.length && <div style={{ ...card(t), padding: 14, color: t.text.secondary }}>Ничего не найдено</div>}
-        {open && <PinSpacer q={`[data-vid="${open}"]`} />}
-      </div> : <div ref={box} style={{ ...card(t), maxHeight: `calc(${100 / Z}vh - 11.5rem)`, minHeight: '18rem', overflowY: 'auto', overflowX: 'auto', overflowAnchor: 'none', position: 'relative' }}>
-        <div data-colhead="1" ref={(el) => { if (el && el.parentElement) el.parentElement.style.setProperty('--gd-th', el.offsetHeight + 'px'); }} style={{ display: 'grid', gridTemplateColumns: COLS, gap: '0 8px', alignItems: 'center', padding: '10px 16px', minWidth: '60rem', position: 'sticky', top: 0, zIndex: 5, background: t.bg.base, borderBottom: `1px solid ${t.border.default}`, fontSize: 11, fontWeight: t.weight.semibold, letterSpacing: 0, whiteSpace: 'nowrap', textTransform: 'uppercase', color: t.text.secondary }}>
-          <span /><span>№</span><span>Законопроект</span><span style={{ textAlign: 'center' }}>Краткое название</span><span>Чтение</span><span style={{ textAlign: 'center' }}>Итог</span><span style={{ textAlign: 'center' }}>Распределение</span><span style={{ textAlign: 'center' }}>За</span><span style={{ textAlign: 'center' }}>Против</span><span style={{ textAlign: 'center' }}>Воздержались</span><span style={{ textAlign: 'center' }}>Не голосовали</span>
-        </div>
-        {list.map((v, idx) => {
-          const on = open === v.id;
-          return (
-            <div key={v.id} data-vid={v.id} style={{ position: 'relative', ...(on ? { borderRadius: 12, overflow: 'clip', margin: '4px 0' } : {}) }}>{on && ringD}
-              <div className="gd-row" role="button" tabIndex={0} aria-expanded={on} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(v.id, idx); } }} onClick={() => toggle(v.id, idx)} title={v.full} style={{ display: 'grid', gridTemplateColumns: COLS, gap: '0 8px', alignItems: 'center', padding: '0 16px', minWidth: '60rem', height: 46, boxSizing: 'border-box', whiteSpace: 'nowrap', cursor: 'pointer', borderBottom: `1px solid ${t.border.subtle}`, background: on ? `linear-gradient(${t.fill.accentSubtle}, ${t.fill.accentSubtle}), ${t.bg.base}` : 'transparent', ...(on ? { position: 'sticky', top: 'var(--gd-th, 37px)', zIndex: 4, borderRadius: '12px 12px 0 0', boxShadow: `inset 0 2.5px 0 0 ${t.text.accent}, inset 2.5px 0 0 ${t.text.accent}, inset -2.5px 0 0 ${t.text.accent}` } : {}), fontSize: t.font.table.fontSize, color: t.text.primary }}>{on && pinCorners(t.bg.base, 3)}
-                <span style={{ color: t.text.tertiary, display: 'inline-block', transition: 'transform .2s ease', transform: on ? 'rotate(90deg)' : 'none' }}>▸</span>
-                <span style={{ fontFamily: t.font.mono, color: t.text.secondary }}>{v.id}</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}><span style={{ minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: t.font.mono, color: t.text.accent }}>{v.doc}</span>{billNo(v.doc) && <span onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} style={{ flexShrink: 0, display: 'inline-flex' }}><FavStar bill={billNo(v.doc)!} /></span>}</span>
-                <span style={{ minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: on ? t.weight.semibold : t.weight.regular }}>{v.q}</span>
-                <span title={normRead(v.reading)} style={{ minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: t.text.secondary }}>{normRead(v.reading)}</span>
-                <span style={{ display: 'flex', justifyContent: 'center', whiteSpace: 'nowrap' }}><Status tone={v.ok ? 'success' : 'danger'}>{v.ok ? 'принят' : 'отклонен'}</Status></span>
-                <Bar v={v.total} />
-                {v.total.map((x, i) => <span key={i} style={{ fontFamily: t.font.mono, textAlign: 'center', color: SYS[i], fontWeight: x ? t.weight.semibold : t.weight.regular }}>{x}</span>)}
-              </div>
-              {on && <div style={{ position: 'relative' }}><Panel v={v} day={day} />{foldBtn(v.id, idx)}</div>}
-            </div>
-          );
-        })}
-        {!list.length && <div style={{ padding: 12, color: t.text.secondary }}>Ничего не найдено</div>}
-      </div>)}
+      
       </>}
       </>}
       <div style={{ height: 8 }} />
