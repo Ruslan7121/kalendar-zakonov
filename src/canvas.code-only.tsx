@@ -1,3 +1,4 @@
+import React from "react";
 import { Page, Text, Segmented, Input, Status as Status0, LinkCards, useGrokTheme as useGT0, useState, useMemo, useRef, useEffect } from 'grok/canvas';
 const LIGHT = { bg: { base: '#FFFFFF', subtle: '#F4F4F6' }, border: { default: '#D9D9DE', subtle: '#E8E8EC' }, fill: { accentSubtle: '#DDE9FD' }, text: { primary: '#1D1D1F', secondary: '#4E4E55', tertiary: '#6E6E75', accent: '#0A66D6' } };
 const DARK = { bg: { base: '#1C1C1E', subtle: '#2C2C30' }, border: { default: 'rgba(255,255,255,0.28)', subtle: 'rgba(255,255,255,0.2)' }, fill: { accentSubtle: '#14365C' }, text: { primary: '#F5F5F7', secondary: '#D6D6DB', tertiary: '#A5A5AD', accent: '#409CFF' } };
@@ -1742,8 +1743,8 @@ function Key() {
 function NumRow({ v, m }: { v: number[]; m?: boolean }) {
   const t = useGrokTheme();
   // t315: never wrap digits (iPhone was splitting 324→32/4). nowrap + keep-all; on mobile shrink gap/font and allow row wider than donut, centered.
-  const gap = m ? 3 : 6;
-  const fs = m ? 10 : t.font.caption.fontSize;
+  const gap = m ? 2 : 6;
+  const fs = m ? 9 : t.font.caption.fontSize;
   return (
     <div style={{ display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center', gap, fontFamily: t.font.mono, fontSize: fs, fontWeight: 700, marginTop: 6, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', width: 'max-content', maxWidth: 'none', marginLeft: 'auto', marginRight: 'auto', wordBreak: 'keep-all', overflowWrap: 'normal' }}>
       {v.map((x, i) => <span key={i} style={{ color: SYS[i], whiteSpace: 'nowrap', wordBreak: 'keep-all', flex: 'none', display: 'inline-block' }}>{String(x)}</span>)}
@@ -2134,7 +2135,7 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
   const box = { background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px', minWidth: 0 } as const;
   const h = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: (DK ? '#409CFF' : 'rgb(10,100,214)'), marginBottom: 4 } as const;
   const fcells = v.fr ? F.map((f) => { const fv = v.fr![f].v; const p = pos(fv); let k = 0; fv.forEach((q, j) => { if (q > fv[k]) k = j; }); return (
-            <div key={f} style={{ textAlign: 'center', flex: m ? '0 0 100px' : '1 0 88px', minWidth: m ? 100 : 88, scrollSnapAlign: 'start', overflow: 'visible' }}>
+            <div key={f} style={{ textAlign: 'center', flex: m ? '1 1 calc(33.33% - 8px)' : '1 0 88px', minWidth: m ? 0 : 88, maxWidth: m ? '33.33%' : undefined, scrollSnapAlign: 'start', overflow: 'visible', boxSizing: 'border-box' as const }}>
               <div style={{ fontSize: m ? 11 : 12, fontWeight: 700, color: t.text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f}{m ? <div style={{ fontWeight: 400, color: t.text.tertiary, fontSize: 10 }}>({v.fr![f].size})</div> : <span style={{ fontWeight: 400, color: t.text.tertiary }}> ({v.fr![f].size})</span>}</div>
               <div style={{ width: m ? 50 : 80, margin: '2px auto 0' }}><Donut v={fv} size={m ? 50 : 80} center={p.pct} nw={nw} /></div>
               <NumRow v={fv} m={!!m} />
@@ -2161,7 +2162,7 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
       {v.fr ? (
         <div style={box}>
           <div style={{ ...h, marginBottom: 8 }}>По фракциям</div>
-          <div className="gd-hs" style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch', gap: m ? 4 : 6, paddingBottom: 4 }}>{fcells}</div>
+          <div className="gd-hs" style={{ display: 'flex', flexWrap: m ? 'wrap' : 'nowrap', overflowX: m ? 'hidden' : 'auto', overflowY: 'hidden', scrollSnapType: m ? undefined : 'x proximity', WebkitOverflowScrolling: m ? undefined : 'touch', gap: m ? 8 : 6, paddingBottom: 4, justifyContent: m ? 'center' : undefined }}>{fcells}</div>
         </div>
       ) : <div style={{ ...box, fontSize: 13, color: t.text.secondary }}>Разбивки по фракциям в источнике нет — показан только общий итог.</div>}
     </div>);
@@ -2215,27 +2216,86 @@ function Track({ b, rd, m, ok }: { b: string; rd?: string; m: boolean; ok?: bool
   const ac = DK ? '#409CFF' : 'rgb(10,100,214)';
   const gn = DK ? '#30D158' : '#34C759';
   const rdC = DK ? '#FF453A' : '#FF3B30';
-  const mute = t.border.default;
+  const mute = DK ? '#636366' : '#C7C7CC';
+  const fillEmpty = t.bg.base;
   let known = -1;
   TRK.forEach(([k], i) => { if (tr[k]) known = i; });
   const fromRd = readStage(rd || '');
   if (fromRd > known) known = fromRd;
   const cur = known;
   const failed = ok === false && cur >= 0;
-  return <div data-track="1" style={{ marginTop: 12, background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px' }}>
+  const hDash = (col: string) => ({
+    flex: 1,
+    minWidth: 8,
+    height: 2,
+    marginLeft: 4,
+    flexShrink: 0 as const,
+    alignSelf: 'center' as const,
+    boxSizing: 'border-box' as const,
+    backgroundImage: `repeating-linear-gradient(90deg, ${col} 0 5px, transparent 5px 10px)`,
+    backgroundRepeat: 'repeat-x',
+    backgroundSize: 'auto 2px',
+    backgroundPosition: 'left center',
+    border: 'none',
+  });
+  const vDash = (col: string) => ({
+    width: 2,
+    height: 14,
+    margin: '2px 0 2px 7px',
+    flexShrink: 0 as const,
+    boxSizing: 'border-box' as const,
+    backgroundImage: `repeating-linear-gradient(180deg, ${col} 0 4px, transparent 4px 8px)`,
+    backgroundRepeat: 'repeat-y',
+    backgroundSize: '2px auto',
+    backgroundPosition: 'center top',
+    border: 'none',
+  });
+  const stages = TRK.map(([k, l], i) => {
+    const d = tr[k] || '';
+    const isFail = failed && i === cur;
+    const done = isFail ? false : (failed ? i < cur : (i <= cur || !!d));
+    const now = !failed && cur >= 0 && i === cur + 1;
+    const col = isFail ? rdC : now ? gn : done ? gn : mute;
+    const bg = isFail ? rdC : done ? gn : fillEmpty;
+    const pathOn = failed ? i < cur : i <= cur;
+    const pathCol = pathOn ? gn : mute;
+    const sz = now || isFail ? 16 : 12;
+    return { k, l, d, isFail, done, now, col, bg, pathCol, sz, i };
+  });
+  if (m) {
+    return <div data-track="1" style={{ marginTop: 12, background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: '10px 12px', overflow: 'hidden' }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: ac, marginBottom: 10 }}>Путь закона</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {stages.map((s, i) => (
+          <div key={s.k}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <span style={{ width: s.sz, height: s.sz, borderRadius: 999, flex: 'none', boxSizing: 'border-box', background: s.bg, border: `${s.now ? 3 : 2}px solid ${s.col}`, boxShadow: s.now ? `0 0 0 2px ${fillEmpty}` : undefined, marginTop: 2 }} />
+              <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
+                <div style={{ fontSize: 13, lineHeight: 1.35, fontWeight: s.now || s.isFail ? 700 : 500, color: s.isFail ? rdC : s.now || s.done ? t.text.primary : t.text.tertiary, wordBreak: 'break-word' }}>{s.l}</div>
+                {s.d ? <div style={{ fontSize: 11, fontWeight: 500, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums', marginTop: 1 }}>{s.d}</div> : null}
+              </div>
+            </div>
+            {i < stages.length - 1 && <div aria-hidden style={vDash(s.pathCol)} />}
+          </div>
+        ))}
+      </div>
+      {tr.src && <div style={{ marginTop: 8, fontSize: 12, color: t.text.tertiary }}>Источник: {tr.src}</div>}
+    </div>;
+  }
+  return <div data-track="1" style={{ marginTop: 12, background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: '12px 14px' }}>
     <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: ac, marginBottom: 8 }}>Путь закона</div>
-    <div style={{ display: m ? 'flex' : 'grid', flexWrap: m ? 'nowrap' as const : undefined, overflowX: m ? 'auto' as const : undefined, WebkitOverflowScrolling: m ? 'touch' as const : undefined, gridTemplateColumns: m ? undefined : 'repeat(9, minmax(0, 1fr))', gap: m ? 10 : 4, paddingBottom: m ? 4 : 0 }}>{TRK.map(([k, l], i) => {
-      const d = tr[k] || '';
-      const isFail = failed && i === cur;
-      const done = isFail ? false : (failed ? i < cur : (i <= cur || !!d));
-      const now = !failed && cur >= 0 && i === cur + 1;
-      const col = isFail ? rdC : now ? gn : done ? gn : mute;
-      const bg = isFail ? rdC : done ? gn : 'transparent';
-      const pathOn = failed ? i < cur : i < cur;
-      const pathCol = pathOn ? gn : mute;
-      return <div key={k} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, minWidth: m ? 88 : 0, flex: m ? '0 0 auto' : undefined }}>
-        <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}><span style={{ width: now || isFail ? 14 : 12, height: now || isFail ? 14 : 12, borderRadius: 14, flex: 'none', boxSizing: 'border-box', background: bg, border: `2px solid ${col}` }} />{!m && i < TRK.length - 1 && <span style={{ flex: 1, height: 0, marginLeft: 2, borderTop: `2px dashed ${pathCol}` }} />}{m && i < TRK.length - 1 && <span style={{ width: 18, height: 0, marginLeft: 4, flex: 'none', borderTop: `2px dashed ${pathCol}` }} />}</div>
-        <div style={{ fontSize: 12, lineHeight: 1.3, fontWeight: now || isFail ? 700 : 500, color: isFail ? rdC : now || done ? t.text.primary : t.text.tertiary }}>{l}{d ? <div style={{ fontSize: 11, fontWeight: 500, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{d}</div> : null}</div></div>; })}</div>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(9, minmax(0, 1fr))', gap: 4 }}>
+      {stages.map((s) => (
+        <div key={s.k} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 0, textAlign: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', width: '100%', minHeight: 16 }}>
+            {s.i > 0 ? <span aria-hidden style={{ ...hDash(stages[s.i - 1].pathCol), flex: 1, marginLeft: 0, marginRight: 0 }} /> : <span style={{ flex: 1 }} />}
+            <span style={{ width: s.sz, height: s.sz, borderRadius: 999, flex: 'none', boxSizing: 'border-box', background: s.bg, border: `${s.now ? 3 : 2}px solid ${s.col}`, boxShadow: s.now ? `0 0 0 2px ${fillEmpty}` : undefined, position: 'relative', zIndex: 1 }} />
+            {s.i < TRK.length - 1 ? <span aria-hidden style={{ ...hDash(s.pathCol), flex: 1, marginLeft: 0 }} /> : <span style={{ flex: 1 }} />}
+          </div>
+          <div style={{ fontSize: 12, lineHeight: 1.3, fontWeight: s.now || s.isFail ? 700 : 500, color: s.isFail ? rdC : s.now || s.done ? t.text.primary : t.text.tertiary, textAlign: 'center', width: '100%' }}>{s.l}{s.d ? <div style={{ fontSize: 11, fontWeight: 500, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{s.d}</div> : null}</div>
+        </div>
+      ))}
+    </div>
     {tr.src && <div style={{ marginTop: 6, fontSize: 12, color: t.text.tertiary }}>Источник: {tr.src}</div>}
   </div>;
 }
@@ -2525,7 +2585,7 @@ let FAVS: Set<string> = (() => { try { const raw = localStorage.getItem(FAV_KEY)
 const FL = new Set<() => void>();
 function useFavs() { const [, u] = useState(0); useEffect(() => { const f = () => u((x: number) => x + 1); FL.add(f); return () => { FL.delete(f); }; }, []); return FAVS; }
 function persistFavs() { try { localStorage.setItem(FAV_KEY, JSON.stringify([...FAVS])); FAV_STORE = 'ls'; } catch { FAV_STORE = 'mem'; } FL.forEach((f) => f()); }
-function togFav(b: string) { if (FAVS.has(b)) FAVS.delete(b); else FAVS.add(b); FAVS = new Set(FAVS); persistFavs(); }
+function togFav(b: string) { if (!b) return; if (FAVS.has(b)) FAVS.delete(b); else FAVS.add(b); FAVS = new Set(FAVS); persistFavs(); }
 let FAV_ONLY = false;
 let onFavNav: ((on: boolean) => void) | null = null;
 function setFavOnly(v: boolean) { FAV_ONLY = v; FL.forEach((f) => f()); try { onFavNav?.(v); } catch {} }
@@ -2540,7 +2600,7 @@ function FavStar({ bill, big }: { bill: string; big?: boolean }) {
     <button type="button" data-fav-store={FAV_STORE} aria-label={on ? 'Убрать из сохраненных' : 'Сохранить'} aria-pressed={on}
       onClick={(e) => { e.stopPropagation(); e.preventDefault(); togFav(bill); }}
       onMouseDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}
-      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: big ? 28 : 22, height: big ? 28 : 22, padding: 0, margin: 0, border: 'none', background: 'transparent', cursor: 'pointer', flex: 'none', lineHeight: 0, verticalAlign: 'middle' }}>
+      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: big ? 32 : 26, height: big ? 32 : 26, padding: 0, margin: 0, border: 'none', background: 'transparent', cursor: 'pointer', flex: 'none', lineHeight: 0, verticalAlign: 'middle', pointerEvents: 'auto', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', position: 'relative', zIndex: 2 }}>
       <svg width={s} height={s} viewBox="0 0 24 24" aria-hidden fill={on ? STAR_Y : 'none'} stroke={STAR_Y} strokeWidth="2" strokeLinejoin="round"><path d="M12 3.2l2.95 5.98 6.6.96-4.78 4.66 1.13 6.58L12 18.3 6.1 21.38l1.13-6.58L2.45 10.14l6.6-.96L12 3.2z" /></svg>
     </button>
   );
@@ -2717,12 +2777,13 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
                 {a.map((x: any) => { const io = ivo === p.d + x[0]; const tapRow = () => { const sl = window.getSelection && window.getSelection(); if (sl && String(sl).length) return; if (billVote(x[0], p.d)) setIvo(io ? null : p.d + x[0]); else { setNoV(p.d + x[0]); if (noT.current) clearTimeout(noT.current); noT.current = setTimeout(() => setNoV(null), 2500); } }; const tags = ZTAG[x[0]] ? <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>{[...ZTAG[x[0]][0], ...ZTAG[x[0]][1], ...ZTAG[x[0]][2]].map((g) => { const hit = ZS.w.includes(g) || ZS.t.includes(g) || ZS.c.includes(g); return <span key={g} style={{ fontSize: 12, lineHeight: 1.4, padding: '1px 8px', borderRadius: 9999, border: `1px solid ${hit ? t.text.accent : t.border.subtle}`, background: hit ? t.fill.accentSubtle : t.bg.subtle, color: hit ? t.text.accent : t.text.secondary, fontWeight: hit ? 600 : 400 }}>{g}</span>; })}</span> : null; const hv = io ? billVote(x[0], p.d) : null; const v = hv ? parse(DATA[hv[0]]).find((z) => z.id === hv[1]) : null; return (<div key={x[0] + x[1]} data-iv={io ? '1' : undefined} data-ivk={p.d + x[0]} style={io ? { margin: m ? '6px 6px 8px' : '8px 10px 10px', borderRadius: 12, overflow: 'visible', border: `1.5px solid ${t.text.accent}` } : undefined}>
                   {io && <div data-ivs="1" onClick={() => setIvo(null)} title="Свернуть" style={{ cursor: 'pointer', WebkitTapHighlightColor: 'transparent', position: 'sticky', top: 'calc(var(--gd-top, 0px) + var(--gd-dh, 45px) + var(--gd-fb, 0px) + 5px)', zIndex: 3, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, padding: '8px 12px', minWidth: 0, background: `linear-gradient(${t.fill.accentSubtle}, ${t.fill.accentSubtle}), ${t.bg.base}`, borderBottom: `1px solid ${t.border.subtle}`, boxShadow: '0 4px 6px -4px rgba(0,0,0,.25)', fontSize: 14 }}>{stuckFrame(t.bg.base, t.text.accent, 12, 1.5, 1.5, t.text.accent, m ? 6 : 10)}
                     <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0, height: 24, boxSizing: 'border-box', padding: '0 8px', borderRadius: 9999, border: `1px solid ${t.border.subtle}`, background: t.bg.subtle, color: t.text.accent, fontFamily: t.font.mono, fontSize: 12.5, whiteSpace: 'nowrap' }}>{x[0]}</span>
+                    {billNo(x[0]) && <span onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} style={{ flexShrink: 0, display: 'inline-flex' }}><FavStar bill={billNo(x[0])!} /></span>}
                     {tchip(billType(x[0], p.d, x[2] || '', x[4] || x[1] || ''))}
                     {v && <Status b tone={v.ok ? 'success' : 'danger'}>{v.ok ? 'принят' : 'отклонен'}</Status>}
                     <span style={{ flex: m ? '1 1 0' : '1 1 12rem', minWidth: m ? '60%' : 0, overflowWrap: 'anywhere', fontWeight: t.weight.semibold, color: t.text.primary } as any}>{hlq(agShort(x[0], x[1]), qn)}</span><span aria-hidden="true" style={{ marginLeft: 'auto', flexShrink: 0, alignSelf: 'center', fontSize: 12, color: t.text.accent }}>▴</span>
                   </div>}
                   {io && (x[4] || ZTAG[x[0]]) && <div onClick={tapRow} style={{ padding: '8px 12px 10px', fontSize: 14, borderBottom: `1px solid ${t.border.subtle}`, overflowWrap: 'anywhere', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' } as any}>{x[4] && <span style={{ color: t.text.tertiary }}>— {hlq(x[4], qn)}</span>}{tags}</div>}
-                  {!io && (() => { const bv = billVote(x[0], p.d); const vv = bv ? parse(DATA[bv[0]]).find((z) => z.id === bv[1]) : null; const ty = billType(x[0], p.d, x[2] || '', x[4] || x[1] || ''); const sc = vv ? (vv.ok ? INK[0] : INK[1]) : t.text.tertiary; const nov = noV === p.d + x[0] ? <span style={{ fontSize: 12, padding: '1px 6px', borderRadius: 6, background: t.bg.subtle, color: t.text.secondary, whiteSpace: 'nowrap' }}>Голосования еще не было</span> : null; const chev = bv ? <span className="gd-bc" aria-hidden="true" style={{ flexShrink: 0, alignSelf: 'center', fontSize: 20, lineHeight: 1, color: t.text.tertiary, transition: 'color .15s' }}>›</span> : null; const num = (st: any) => <button className="gd-chip" onClick={(e) => { e.stopPropagation(); tapRow(); }} style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', fontFamily: t.font.mono, fontSize: 13, color: bv ? t.text.accent : t.text.tertiary, whiteSpace: 'nowrap', ...st }}>{x[0]}</button>; const name = <span style={{ fontWeight: t.weight.semibold, color: t.text.primary }}>{hlq(agShort(x[0], x[1]), qn)}</span>; const row = { display: 'flex', alignItems: 'flex-start', gap: m ? 10 : 14, padding: m ? '12px 12px' : '10px 14px', borderBottom: `1px solid ${t.border.subtle}`, fontSize: 14, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' } as any; const cw = m ? 108 : 116; const cb = { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: cw, height: 24, boxSizing: 'border-box', padding: '0 6px', borderRadius: 9999, fontSize: 12, fontWeight: 600, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } as any; const left = <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, flexShrink: 0, width: cw }}><span style={{ ...cb, fontFamily: t.font.mono, fontSize: 12.5, fontWeight: 400, border: `1px solid ${t.border.subtle}`, background: t.bg.subtle, color: bv ? t.text.accent : t.text.tertiary }}>{x[0]}</span>{ty && <span style={{ ...cb, background: t.bg.subtle, color: t.text.secondary, border: `1px solid ${t.border.subtle}` }}>{ty}</span>}{vv && <span style={{ ...cb, border: `1px solid ${DK ? (vv.ok ? 'rgba(48,209,88,0.45)' : 'rgba(255,105,97,0.45)') : (vv.ok ? '#9FD6AE' : '#F0ABAB')}`, background: DK ? (vv.ok ? 'rgba(48,209,88,0.18)' : 'rgba(255,69,58,0.2)') : (vv.ok ? '#E3F4E8' : '#FDE8E8'), color: DK ? (vv.ok ? '#30D158' : '#FF6961') : (vv.ok ? '#1B7A3A' : '#C42B2B') }}>{vv.ok ? 'принят' : 'отклонен'}</span>}{nov && <span style={{ fontSize: 12, color: t.text.tertiary, lineHeight: 1.3, whiteSpace: 'normal' }}>Голосования еще не было</span>}</span>; return (<div className="gd-rw" onClick={tapRow} title={x[4]} style={{ ...row, flexWrap: 'nowrap' }}>{left}<span style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}><span style={{ fontSize: 15, lineHeight: 1.35 }}>{name}</span>{x[4] && <span className="gd-cl2" style={{ fontSize: 13, lineHeight: 1.4, color: t.text.tertiary }}>{hlq(x[4], qn)}</span>}{tags}</span>{chev}</div>);})()}
+                  {!io && (() => { const bv = billVote(x[0], p.d); const vv = bv ? parse(DATA[bv[0]]).find((z) => z.id === bv[1]) : null; const ty = billType(x[0], p.d, x[2] || '', x[4] || x[1] || ''); const sc = vv ? (vv.ok ? INK[0] : INK[1]) : t.text.tertiary; const nov = noV === p.d + x[0] ? <span style={{ fontSize: 12, padding: '1px 6px', borderRadius: 6, background: t.bg.subtle, color: t.text.secondary, whiteSpace: 'nowrap' }}>Голосования еще не было</span> : null; const chev = bv ? <span className="gd-bc" aria-hidden="true" style={{ flexShrink: 0, alignSelf: 'center', fontSize: 20, lineHeight: 1, color: t.text.tertiary, transition: 'color .15s' }}>›</span> : null; const num = (st: any) => <button className="gd-chip" onClick={(e) => { e.stopPropagation(); tapRow(); }} style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', fontFamily: t.font.mono, fontSize: 13, color: bv ? t.text.accent : t.text.tertiary, whiteSpace: 'nowrap', ...st }}>{x[0]}</button>; const name = <span style={{ fontWeight: t.weight.semibold, color: t.text.primary }}>{hlq(agShort(x[0], x[1]), qn)}</span>; const row = { display: 'flex', alignItems: 'flex-start', gap: m ? 10 : 14, padding: m ? '12px 12px' : '10px 14px', borderBottom: `1px solid ${t.border.subtle}`, fontSize: 14, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' } as any; const cw = m ? 108 : 116; const cb = { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: cw, height: 24, boxSizing: 'border-box', padding: '0 6px', borderRadius: 9999, fontSize: 12, fontWeight: 600, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } as any; const left = <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, flexShrink: 0, width: cw }}><span style={{ ...cb, fontFamily: t.font.mono, fontSize: 12.5, fontWeight: 400, border: `1px solid ${t.border.subtle}`, background: t.bg.subtle, color: bv ? t.text.accent : t.text.tertiary }}>{x[0]}</span>{ty && <span style={{ ...cb, background: t.bg.subtle, color: t.text.secondary, border: `1px solid ${t.border.subtle}` }}>{ty}</span>}{vv && <span style={{ ...cb, border: `1px solid ${DK ? (vv.ok ? 'rgba(48,209,88,0.45)' : 'rgba(255,105,97,0.45)') : (vv.ok ? '#9FD6AE' : '#F0ABAB')}`, background: DK ? (vv.ok ? 'rgba(48,209,88,0.18)' : 'rgba(255,69,58,0.2)') : (vv.ok ? '#E3F4E8' : '#FDE8E8'), color: DK ? (vv.ok ? '#30D158' : '#FF6961') : (vv.ok ? '#1B7A3A' : '#C42B2B') }}>{vv.ok ? 'принят' : 'отклонен'}</span>}{nov && <span style={{ fontSize: 12, color: t.text.tertiary, lineHeight: 1.3, whiteSpace: 'normal' }}>Голосования еще не было</span>}</span>; const fav = billNo(x[0]) ? <span onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} style={{ flexShrink: 0, alignSelf: 'flex-start', marginTop: 0, display: 'inline-flex' }}><FavStar bill={billNo(x[0])!} /></span> : null; return (<div className="gd-rw" onClick={tapRow} title={x[4]} style={{ ...row, flexWrap: 'nowrap' }}>{left}{fav}<span style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}><span style={{ fontSize: 15, lineHeight: 1.35 }}>{name}</span>{x[4] && <span className="gd-cl2" style={{ fontSize: 13, lineHeight: 1.4, color: t.text.tertiary }}>{hlq(x[4], qn)}</span>}{tags}</span>{chev}</div>);})()}
                   <Exp on={!!(io && v)}>{() => <><Panel v={v!} m={m} day={hv![0]} inl /><button onClick={() => setIvo(null)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', minHeight: 44, border: 'none', borderRadius: '0 0 10.5px 10.5px', background: t.fill.accentSubtle, color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: t.weight.semibold, cursor: 'pointer' }}>Свернуть ▴</button></>}</Exp>
                 </div>); })}
                 <div style={{ padding: '6px 14px', fontSize: 12, color: t.text.tertiary }}>Источник: {p.src}</div>
@@ -2860,7 +2921,7 @@ export default function App() {
   const toggle = (id: string, idx: number) => {
     const el = box.current; const q = () => document.querySelector(`[data-vid="${id}"]`) as HTMLElement | null;
     const pin = () => { if (m || !el) return svTop(); const hd = el.querySelector('[data-colhead]') as HTMLElement | null; return Math.max(el.getBoundingClientRect().top, svTop()) + (hd ? hd.getBoundingClientRect().height : 0); };
-    const r0 = q(); const y0 = r0 ? r0.getBoundingClientRect().top : 0; const tgt = r0 ? (!m && open !== id ? y0 : open !== id ? pin() : Math.max(y0, pin())) : null;
+    const r0 = q(); const y0 = r0 ? r0.getBoundingClientRect().top : 0; const tgt = r0 ? (open !== id ? pin() : Math.max(y0, pin())) : null;
     setOpen(open === id ? null : id);
     if (open) requestAnimationFrame(() => { const w = document.querySelector(`[data-vid="${open}"]`) as HTMLElement | null; const r = w && w.firstElementChild as HTMLElement | null; if (r && r.animate) r.animate([{ backgroundColor: FLASH() }, { backgroundColor: 'rgba(10,102,214,0)' }], { duration: 1800, easing: 'ease-out' }); });
     if (tgt != null) anchorTo(q, tgt, m ? 1 : GZ);
@@ -2948,14 +3009,14 @@ export default function App() {
       <style>{css(t) + `#root,#root>div{background:${DK ? '#000000' : '#FFFFFF'}!important;color:${DK ? '#F5F5F7' : '#1D1D1F'}!important}#root>div{min-height:100vh}` + ADAPT() + (DK ? DKCSS : '')}</style>
       <div ref={measure} style={{ width: '100%', height: 0 }} />
       <div style={{ zoom: String(Z), color: t.text.primary }}>
-      {m && <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '0 0 12px' }}>{hid && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '2px 2px 0' }}><div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text.primary }}>Календарь законов</div>{thBtn}</div>}<div role="tablist" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['c', 'Календарь'], ['l', w < 370 ? 'Законы' : 'Вступают в силу'], ['d', 'Новости']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={mode === k} onClick={() => { if (k === 'l') { CSNAP = null; setCmk(calCk(new Date())); } setMode(k); setView('v'); window.scrollTo(0, 0); }} style={{ ...mt2(mode === k), minWidth: 0, minHeight: 44, padding: '0 4px', fontSize: 14, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>{l}</button>)}</div>{mode === 'd' && dateSw}{mode === 'l' && <LawsSw m={m} mk={lmk} setMk={setLmk} />}</div>}
+      {m && <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '0 0 12px' }}>{hid && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '2px 2px 0' }}><div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text.primary }}>Календарь законов</div>{thBtn}</div>}<div role="tablist" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['c', 'Календарь'], ['l', w < 370 ? 'Законы' : 'Вступают в силу'], ['d', 'Новости']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={mode === k} onClick={() => { if (k === 'l') { CSNAP = null; setCmk(calCk(new Date())); } setMode(k); setView('v'); window.scrollTo(0, 0); }} style={{ ...mt2(mode === k), minWidth: 0, minHeight: 44, padding: '0 4px', fontSize: 14, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>{l}</button>)}</div>{mode === 'd' && <div style={{ display: 'flex', flex: 1, minWidth: 0, alignItems: 'center', gap: 8 }}><div style={{ flex: 1, minWidth: 0 }}>{dateSw}</div><FavBtn /></div>}{mode === 'l' && <LawsSw m={m} mk={lmk} setMk={setLmk} />}</div>}
       <div ref={ph} style={{ width: '100%', height: fx ? topH / Z + (m ? 4 : 14) : 0 }} />
       <div data-gdbar="1" ref={(el) => { barEl.current = el; bar(el); }} style={{ ...(m ? (mode === 'c' ? { position: 'sticky', top: 0, zIndex: 20, margin: 0, padding: '8px 0 0', background: t.bg.base } : { padding: 0, margin: 0 }) : { position: 'sticky', top: 0, zIndex: 20, margin: 0, padding: '14px 0 12px', background: t.bg.base, boxShadow: sc ? '0 6px 8px -8px rgba(0,0,0,0.25)' : 'none', transition: 'box-shadow .15s' }), ...(fx ? { position: 'fixed', top: 0, left: fx.l / Z, width: fx.w / Z, margin: 0, boxSizing: 'border-box' } : {}) } as any}>
       {false && m && mode === 'd' && <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{mode === 'd' && votes.length > 0 && <div role="tablist" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['all', votes.length, plv(votes.length).replace(/^\d+ /, ''), t.text.primary], ['acc', nAcc, 'принято', INK[0]], ['rej', votes.length - nAcc, 'отклонено', votes.length - nAcc ? INK[1] : t.text.primary]] as const).map(([k, n, l, c]) => <button key={k} data-f={k} role="tab" aria-selected={filter === k} onClick={() => setF(k)} style={{ ...mt2(filter === k), minWidth: 0, minHeight: 44, padding: '0 2px', fontSize: w < 370 ? 13 : 14, letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis' }}><b style={{ color: c }}>{n}</b> {l}</button>)}</div>}{mode === 'd' && <div style={{ height: 44, display: 'flex' }}>{sbox}</div>}{mode === 'd' && (showHits || !votes.length) && <div style={{ fontSize: 14, color: t.text.secondary, padding: '0 2px', fontVariantNumeric: 'tabular-nums' }}>{showHits ? <>{FAV_ONLY && !qq ? 'Сохраненные: ' : 'Найдено: '}<b style={{ color: t.text.primary }}>{nHits}</b> {plv(nHits).replace(/^\d+ /, '')}{qq ? ' за все дни' : ''}</> : 'Пленарного заседания не было'}</div>}</div>}
       {!m && hid && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, margin: '0 0 12px' }}><div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text.primary }}>Календарь законов</div>{thBtn}</div>}
       {!m && <div style={{ display: 'inline-grid', gap: 12 }}><div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div role="tablist" style={{ display: 'flex', flex: 1, padding: 3, height: 44, boxSizing: 'border-box', gap: 2, borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['c', 'Календарь'], ['l', 'Вступают в силу'], ['d', 'Новости']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={mode === k} onClick={() => { if (k === 'l') { CSNAP = null; setCmk(calCk(new Date())); } setMode(k); window.scrollTo(0, 0); }} style={mt2(mode === k)}>{l}</button>)}</div>
-        {mode === 'd' && dateSw}
+        {mode === 'd' && <div style={{ display: 'flex', flex: 1, minWidth: 0, alignItems: 'center', gap: 8 }}><div style={{ flex: 1, minWidth: 0 }}>{dateSw}</div><FavBtn /></div>}
         {mode === 'l' && <LawsSw m={m} mk={lmk} setMk={setLmk} />}
         {mode === 'c' && !cq.trim() && !zN() && <LawsSw m={m} mk={cmk} setMk={setCmk} ks={calCks()} cnt={calCnt} />}
       </div>{false && votes.length > 0 && <div role="tablist" style={{ display: 'flex', padding: 3, gap: 2, height: 44, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['all', votes.length, plv(votes.length).replace(/^\d+ /, ''), t.text.primary], ['acc', nAcc, 'принято', INK[0]], ['rej', votes.length - nAcc, 'отклонено', votes.length - nAcc ? INK[1] : t.text.primary]] as const).map(([k, n, l, c]) => <button key={k} data-f={k} role="tab" aria-selected={filter === k} onClick={() => setF(k)} style={mt2(filter === k)}><b style={{ color: c }}>{n}</b> {l}</button>)}</div>}</div>}
@@ -2966,7 +3027,7 @@ export default function App() {
       {false && <div role="tablist" style={{ display: 'flex', marginTop: 8, padding: 3, gap: 2, borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['v', 'Голосования', votes.length], ['s', 'Сводка', null]] as const).map(([k, l, c]) => <button key={k} role="tab" aria-selected={view === k} onClick={() => { setView(k); window.scrollTo(0, 0); }} style={{ flex: 1, minWidth: 0, minHeight: 40, border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: t.font.family, fontSize: 15, fontWeight: view === k ? t.weight.semibold : t.weight.regular, background: view === k ? t.bg.base : 'transparent', boxShadow: view === k ? `0 1px 3px ${t.border.default}` : 'none', color: t.text.primary }}>{l}{c != null && <span style={{ color: t.text.tertiary }}> {c}</span>}</button>)}</div>}
       </>}
       </div>
-      {mode === 'l' ? <Laws m={m} mk={lmk} /> : mode === 'c' ? <Calendar cq={cq} m={m} day={day} openVote={openHit} cm={cmk} setCm={setCmk} openDay={(d) => { setMode('d'); go(d, true); window.scrollTo(0, 0); }} /> : <><Summary key={day} day={day} votes={votes} m={m} />{false && <>
+      {mode === 'l' ? <Laws m={m} mk={lmk} /> : mode === 'c' ? <Calendar cq={cq} m={m} day={day} openVote={openHit} cm={cmk} setCm={setCmk} openDay={(d) => { setMode('d'); go(d, true); window.scrollTo(0, 0); }} /> : <>{false && <>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 16px', alignItems: 'stretch', marginBottom: !m && !votes.length ? 12 : 0 }}>
         {true ? false && <div style={{ flex: '1 1 100%', fontSize: 14, color: t.text.secondary, padding: '0 2px', fontVariantNumeric: 'tabular-nums' }}>{votes.length ? <><b style={{ color: t.text.primary }}>{votes.length}</b> {plv(votes.length).replace(/^\d+ /, '')} · <b style={{ color: INK[0] }}>{nAcc}</b> принято · <b style={{ color: votes.length - nAcc ? INK[1] : t.text.primary }}>{votes.length - nAcc}</b> отклонено</> : 'Пленарного заседания не было'}</div> :
         <div style={{ ...card(t), padding: m ? '12px 14px' : '14px 18px', color: t.text.primary, lineHeight: 1.45, flex: m ? '1 1 100%' : '0 1 auto' }}>
@@ -2983,8 +3044,9 @@ export default function App() {
           </div>
         </div>}
       </div>
+      </>}
       {showHits ? <div data-fav-view="1" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {false && <div style={{ fontSize: 14, color: t.text.secondary, padding: '0 2px' }}>Найдено: <b style={{ color: t.text.primary }}>{nHits}</b> {plv(nHits).replace(/^\d+ /, '')} за все дни</div>}
+        <div style={{ fontSize: 14, color: t.text.secondary, padding: '0 2px', fontVariantNumeric: 'tabular-nums' }}>{FAV_ONLY && !qq ? 'Сохраненные: ' : 'Найдено: '}<b style={{ color: t.text.primary }}>{nHits}</b> {plv(nHits).replace(/^\d+ /, '')}{qq ? ' за все дни' : ''}</div>
         {listHits.map((h) => <div key={h.d} style={{ ...card(t), padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '10px 14px', fontSize: 13, fontWeight: t.weight.semibold, color: t.text.secondary, background: t.bg.subtle, borderBottom: `1px solid ${t.border.subtle}` }}>{dayLabel(h.d)}</div>
           {h.v.map((v) => <div key={v.id} role="button" tabIndex={0} className="gd-row" onClick={() => openHit(h.d, v.id)} onKeyDown={(e) => { if (e.key === 'Enter') openHit(h.d, v.id); }} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', minHeight: 44, cursor: 'pointer', borderBottom: `1px solid ${t.border.subtle}` }}>
@@ -3003,12 +3065,14 @@ export default function App() {
           return (
             <div key={v.id} data-vid={v.id} style={{ borderRadius: 12, overflow: 'clip', background: t.bg.subtle, position: 'relative' }}>{on && ring}
               <div role="button" tabIndex={0} aria-expanded={on} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(v.id, idx); } }} onClick={() => toggle(v.id, idx)} style={{ padding: '12px 14px', minHeight: 44, cursor: 'pointer', background: on ? `linear-gradient(${t.fill.accentSubtle}, ${t.fill.accentSubtle}), ${t.bg.subtle}` : 'transparent', ...(on ? { position: 'sticky', top: 'var(--gd-top, 0px)', zIndex: 4, borderRadius: '12px 12px 0 0', boxShadow: `inset 0 2px 0 0 ${t.text.accent}, inset 2px 0 0 ${t.text.accent}, inset -2px 0 0 ${t.text.accent}, 0 4px 6px -4px rgba(0,0,0,.25)` } : {}), WebkitTapHighlightColor: 'transparent' }}>{on && pinCorners(t.bg.base)}
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                  <div style={{ flex: 1, minWidth: 0, fontSize: 16, lineHeight: 1.35, fontWeight: on ? t.weight.semibold : t.weight.regular, color: t.text.primary, ...(on ? { overflowWrap: 'anywhere' } : { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }) }} title={v.full}>{v.q}</div>
-                  {billNo(v.doc) && <span onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0, marginTop: 0 }}><FavStar bill={billNo(v.doc)!} big /></span>}
-                  <div style={{ flexShrink: 0, marginTop: 1 }}><Status tone={v.ok ? 'success' : 'danger'}>{v.ok ? 'принят' : 'отклонен'}</Status></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+                  {v.doc !== '—' && <span style={{ fontFamily: t.font.mono, color: t.text.accent, fontSize: 13, fontWeight: 600 }}>{v.doc}</span>}
+                  {billNo(v.doc) && <span onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} style={{ flexShrink: 0, display: 'inline-flex' }}><FavStar bill={billNo(v.doc)!} big /></span>}
+                  {normRead(v.reading) !== '—' && <span style={{ fontSize: 13, color: t.text.secondary }}>· {normRead(v.reading)}</span>}
+                  <span style={{ flexShrink: 0 }}><Status tone={v.ok ? 'success' : 'danger'}>{v.ok ? 'принят' : 'отклонен'}</Status></span>
                 </div>
-                <div style={{ display: on ? 'block' : 'none', marginTop: 4, fontSize: 13, color: t.text.secondary, overflowWrap: 'anywhere' }}><span style={{ fontFamily: t.font.mono }}>№ {v.id}</span>{v.doc !== '—' && <> · <span style={{ fontFamily: t.font.mono, color: t.text.accent }}>{v.doc}</span></>}{normRead(v.reading) !== '—' && <> · {normRead(v.reading)}</>}</div>
+                <div style={{ fontSize: 16, lineHeight: 1.35, fontWeight: on ? t.weight.semibold : t.weight.regular, color: t.text.primary, ...(on ? { overflowWrap: 'anywhere' } : {}) }} title={v.full}>{v.q}</div>
+                <div style={{ display: on ? 'block' : 'none', marginTop: 4, fontSize: 13, color: t.text.secondary, overflowWrap: 'anywhere' }}><span style={{ fontFamily: t.font.mono }}>№ {v.id}</span></div>
                 <div style={{ marginTop: 8 }}><Bar v={v.total} /></div>
                 <div style={{ marginTop: 6, display: 'flex', overflow: 'hidden', gap: w < 380 ? 6 : 8, fontSize: w < 380 ? 11 : 12, letterSpacing: '-0.01em', whiteSpace: 'nowrap', flexWrap: 'nowrap' }}>{v.total.map((x, i) => <span key={i} style={{ color: SYS[i], fontWeight: i === 0 ? t.weight.semibold : t.weight.regular }}>{['за', 'против', 'воздержались', 'не голосовали'][i]} <b style={{ fontVariantNumeric: 'tabular-nums' }}>{x}</b></span>)}</div>
               </div>
@@ -3029,7 +3093,7 @@ export default function App() {
               <div className="gd-row" role="button" tabIndex={0} aria-expanded={on} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(v.id, idx); } }} onClick={() => toggle(v.id, idx)} title={v.full} style={{ display: 'grid', gridTemplateColumns: COLS, gap: '0 8px', alignItems: 'center', padding: '0 16px', minWidth: '60rem', height: 46, boxSizing: 'border-box', whiteSpace: 'nowrap', cursor: 'pointer', borderBottom: `1px solid ${t.border.subtle}`, background: on ? `linear-gradient(${t.fill.accentSubtle}, ${t.fill.accentSubtle}), ${t.bg.base}` : 'transparent', ...(on ? { position: 'sticky', top: 'var(--gd-th, 37px)', zIndex: 4, borderRadius: '12px 12px 0 0', boxShadow: `inset 0 2.5px 0 0 ${t.text.accent}, inset 2.5px 0 0 ${t.text.accent}, inset -2.5px 0 0 ${t.text.accent}` } : {}), fontSize: t.font.table.fontSize, color: t.text.primary }}>{on && pinCorners(t.bg.base, 3)}
                 <span style={{ color: t.text.tertiary, display: 'inline-block', transition: 'transform .2s ease', transform: on ? 'rotate(90deg)' : 'none' }}>▸</span>
                 <span style={{ fontFamily: t.font.mono, color: t.text.secondary }}>{v.id}</span>
-                <span style={{ minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: t.font.mono, color: t.text.accent, display: 'inline-flex', alignItems: 'center', gap: 4 }}>{v.doc}{billNo(v.doc) && <FavStar bill={billNo(v.doc)!} />}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}><span style={{ minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: t.font.mono, color: t.text.accent }}>{v.doc}</span>{billNo(v.doc) && <span onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} style={{ flexShrink: 0, display: 'inline-flex' }}><FavStar bill={billNo(v.doc)!} /></span>}</span>
                 <span style={{ minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: on ? t.weight.semibold : t.weight.regular }}>{v.q}</span>
                 <span title={normRead(v.reading)} style={{ minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: t.text.secondary }}>{normRead(v.reading)}</span>
                 <span style={{ display: 'flex', justifyContent: 'center', whiteSpace: 'nowrap' }}><Status tone={v.ok ? 'success' : 'danger'}>{v.ok ? 'принят' : 'отклонен'}</Status></span>
@@ -3043,7 +3107,7 @@ export default function App() {
         {!list.length && <div style={{ padding: 12, color: t.text.secondary }}>Ничего не найдено</div>}
       </div>}
       </>}
-      </>}</>}
+      </>}
       <div style={{ height: 8 }} />
       <p style={{ fontSize: 14, color: t.text.secondary, lineHeight: 1.5 }}>Источники: {['vote.duma.gov.ru', 'sozd.duma.gov.ru', 'duma.gov.ru', 'government.ru'].map((s, i) => <span key={s}>{i ? ', ' : ''}<a href={`http://${s}/`} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>{s}</a></span>)}</p>
       {m && <div style={{ height: 64 }} />}
