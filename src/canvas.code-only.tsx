@@ -1745,7 +1745,7 @@ function NumRow({ v }: { v: number[] }) {
   const colors = SYS; void d;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0 4px', fontFamily: t.font.mono, fontSize: t.font.caption.fontSize, marginTop: 4 }}>
-      {v.map((x, i) => <span key={i}>{i > 0 && <span style={{ color: t.text.tertiary }}>· </span>}<span style={{ color: SYS[i], fontWeight: x ? t.weight.semibold : t.weight.regular, opacity: x ? 1 : 0.6 }}>{x}</span></span>)}
+      {v.map((x, i) => <span key={i}>{i > 0 && <span style={{ color: t.text.tertiary }}> </span>}<span style={{ color: SYS[i], fontWeight: x ? t.weight.semibold : t.weight.regular, opacity: x ? 1 : 0.6 }}>{x}</span></span>)}
     </div>
   );
 }
@@ -1975,7 +1975,7 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
   fl.forEach((l) => { tx(x1, l, L, y, 30, 400, MU); y += 40; });
   y += 18; tx(x1, [bn ? `№ ${bn}` : '', rw].filter(Boolean).join(' · '), L, y + 11, 26, 500, MU); y += 90;
   if (nw) {
-    const SC = SYS_L, CS = ['за', 'против', 'воздер.', 'не голос.'];
+    const SC = SYS_L;
     const bx0 = L, bx1 = RFULL, by0 = y - 10; rr(x1, bx0, by0, bx1, by0 + (v.fr ? 760 : 380), 28, 'rgb(246,247,249)');
     let yy0 = by0 + 30; tx(x1, 'ИТОГИ И ПО ФРАКЦИЯМ', bx0 + 34, yy0, 26, 800, BL); yy0 += 50;
     { let lx = bx0 + 34; CATS_S.forEach((n, i) => { x1.fillStyle = SC[i]; x1.beginPath(); x1.arc(lx + 10, yy0 + 15, 10, 0, Math.PI * 2); x1.fill(); const w = tx(x1, n, lx + 28, yy0, 28, 400, MU); lx += 28 + w + 34; }); }
@@ -1990,7 +1990,9 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
       F.forEach((n, i) => { const f = v.fr![n]; const cx = bx0 + 20 + step * i + step / 2; const vv = f.v; const sz = f.size || vv.reduce((q, w) => q + w, 0) || 1;
         ct(x1, n, cx, yy0, 30, 800, TXC); ct(x1, `(${f.size})`, cx, yy0 + 38, 22, 400, MU);
         const cy = yy0 + 150; donut(x1, cx, cy, 66, 16, vv); let k = 0; vv.forEach((q, j) => { if (q > vv[k]) k = j; });
-        ct(x1, `${Math.round((100 * vv[k]) / sz)}%`, cx, cy - 28, 32, 800, TXC); ct(x1, CS[k], cx, cy + 10, k === 0 ? 22 : 17, k === 0 ? 700 : 400, MU); });
+        ct(x1, `${Math.round((100 * vv[k]) / sz)}%`, cx, cy - 28, 32, 800, TXC);
+        { const parts = vv.map(String); fnt(x1, 18, 700); const gap = 6; const ws = parts.map((s) => x1.measureText(s).width); let x = cx - (ws.reduce((a, b) => a + b, 0) + gap * (parts.length - 1)) / 2; parts.forEach((s, j) => { x1.fillStyle = SC[j]; x1.fillText(s, x, cy + 52); x += ws[j] + gap; }); }
+      });
     }
     y = by0 + (v.fr ? 760 : 380) + 40;
   } else {
@@ -2001,14 +2003,15 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
   if (v.fr) {
     x1.fillStyle = GRB; x1.fillRect(L, y - 1, RLOW - L, 2); y += 24;
     tx(x1, 'ПО ФРАКЦИЯМ', L, y, 24, 800, MU); y += 50;
-    const step = (RLOW - 5 - L) / 6; const CAP = ['за', 'против', 'воздержались', 'не голосовали'];
+    const step = (RLOW - 5 - L) / 6;
     F.forEach((n, i) => { const f = v.fr![n]; const cx = L + step * i + step / 2; const vv = f.v; const sz = f.size || vv.reduce((a, b) => a + b, 0) || 1;
       ct(x1, n, cx, y, 28, 800, TXC); ct(x1, `(${f.size})`, cx, y + 36, 20, 400, MU);
       const cy = y + 140; donut(x1, cx, cy, 66, 16, vv); let k = 0; vv.forEach((q, j) => { if (q > vv[k]) k = j; });
-      ct(x1, `${Math.round((100 * vv[k]) / sz)}%`, cx, cy - 26, 32, 800, TXC); ct(x1, CAP[k], cx, cy + 14, 15, 400, MU); });
-    y += 270;
+      ct(x1, `${Math.round((100 * vv[k]) / sz)}%`, cx, cy - 26, 32, 800, TXC);
+      { const parts = vv.map(String); fnt(x1, 18, 700); const gap = 6; const ws = parts.map((s) => x1.measureText(s).width); let x = cx - (ws.reduce((a, b) => a + b, 0) + gap * (parts.length - 1)) / 2; parts.forEach((s, j) => { x1.fillStyle = COLS4[j]; x1.fillText(s, x, cy + 52); x += ws[j] + gap; }); }
+    });
+    y += 290;
   }
-  { let lx = L; CATS.forEach((n, i) => { x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 9, y + 15, 9, 0, Math.PI * 2); x1.fill(); const w = tx(x1, n, lx + 26, y, 22, 400, TXC); lx += 26 + w + 28; }); }
   }
   y += 50; tx(x1, 'Календарь законов', L, y, 24, 700, BL);
   // card 2
@@ -2099,7 +2102,6 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
   const [shw, setShw] = useState(false);
   const sut0 = (ctx.sut || []).map(yo) as string[]; const sen = (sut0[0] || '').split(/(?<=[.!?])\s+(?=[А-ЯA-Z«"(0-9])/); const sutS = sen.length > 2 || sut0.length > 1 ? [sen.slice(0, 2).join(' ') + (sen.length > 2 ? ' …' : '')] : sut0; const cut = sutS !== sut0;
   const nw = true; const CATn = CATS;
-  const CAP = ['за', 'против', 'воздержались', 'не голосовали'];
   const okC = v.ok ? ['rgba(52,199,89,0.16)', INK[0]] : ['rgba(255,59,48,0.13)', INK[1]];
   const box = { background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px', minWidth: 0 } as const;
   const h = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: (DK ? '#409CFF' : 'rgb(10,100,214)'), marginBottom: 4 } as const;
@@ -2107,6 +2109,7 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
             <div key={f} style={{ textAlign: 'center', flex: m ? '0 0 58px' : '1 0 88px', minWidth: m ? 58 : 88, scrollSnapAlign: 'start' }}>
               <div style={{ fontSize: m ? 11 : 12, fontWeight: 700, color: t.text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f}{m ? <div style={{ fontWeight: 400, color: t.text.tertiary, fontSize: 10 }}>({v.fr![f].size})</div> : <span style={{ fontWeight: 400, color: t.text.tertiary }}> ({v.fr![f].size})</span>}</div>
               <div style={{ width: m ? 50 : 80, margin: '2px auto 0' }}><Donut v={fv} size={m ? 50 : 80} center={p.pct} nw={nw} /></div>
+              <NumRow v={fv} />
             </div>); }) : null;
   const resD = v.fr && !m ? (
     <div style={{ ...box, minWidth: 0 }}>
