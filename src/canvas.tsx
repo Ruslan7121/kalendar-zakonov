@@ -1752,8 +1752,17 @@ function Bar({ v }: { v: number[] }) {
 }
 
 const WDN = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
-const QS = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+const QS = typeof window !== 'undefined' ? (() => { const q = new URLSearchParams(window.location.search); try { const h = new URLSearchParams((window.location.hash || '').replace(/^#/, '')); h.forEach((val, k) => { if (!q.has(k)) q.set(k, val); }); } catch (e) {} return q; })() : null;
+const PIN: string | null = QS ? QS.get('v') : null;
+const CANVAS_URL = 'https://cursor.com/canvas/store-eda3f96c-041e-43fb-83d9-6a00931a0939/bf62072d-8b34-4818-be9f-ff23bf0abe68';
+/* VT:start */const VT: Record<string, string> = {};/* VT:end */
+/* TRACK:start */const TRACK: Record<string, Record<string, string>> = {"1081963-8": {"r2": "22.10.2026", "src": "sozd.duma.gov.ru"}, "1164495-8": {"r3": "14.10.2026", "sf": "28.10.2026", "sign": "02.11.2026", "pub": "02.11.2026", "law": "348-ФЗ", "src": "sozd.duma.gov.ru"}, "1182700-8": {"r2": "20.10.2026", "r3": "20.10.2026", "sf": "28.10.2026", "sign": "02.11.2026", "pub": "02.11.2026", "law": "349-ФЗ", "src": "sozd.duma.gov.ru"}, "404786-8": {"r3": "14.10.2026", "sf": "28.10.2026", "sign": "02.11.2026", "pub": "02.11.2026", "law": "350-ФЗ", "src": "sozd.duma.gov.ru"}, "443614-8": {"r2": "27.10.2026", "r3": "27.10.2026", "sf": "28.10.2026", "sign": "02.11.2026", "pub": "02.11.2026", "law": "343-ФЗ", "src": "sozd.duma.gov.ru"}};/* TRACK:end */
+/* BUDGET:start */const BUDGET: Record<string, { src: [string, string][]; t: { title: string; cols: string[]; rows: string[][]; note?: string }[] }> = {"615-9": {"src": [["Пояснительная записка (sozd.duma.gov.ru)", "https://sozd.duma.gov.ru/download/1f1bd6e8-b820-6280-9df9-5b2013674d7f"], ["Карточка законопроекта", "https://sozd.duma.gov.ru/bill/615-9"]], "t": [{"title": "Основные характеристики, млрд рублей", "cols": ["2025 (отчет)", "2026 (оценка)", "2027 по закону № 426-ФЗ", "2027 проект", "2028 проект", "2029 проект"], "rows": [["Доходы, всего", "37 283,8", "41 182,3", "42 910,4", "43 297,2", "45 834,6", "48 620,2"], ["Расходы, всего", "42 910,3", "48 527,2", "46 096,1", "48 740,4", "50 954,2", "53 865,4"], ["Дефицит (–) / профицит (+)", "-5 626,5", "-7 344,9", "-3 185,7", "-5 443,2", "-5 119,6", "-5 245,2"]], "note": "2025 — отчет об исполнении бюджета, 2026 — оценка исполнения, 2027 по закону № 426-ФЗ — действующий бюджет на 2026–2028 годы (таблица 1 пояснительной записки)."}, {"title": "Расходы по разделам, млн рублей", "cols": ["2027", "2028", "2029"], "rows": [["Национальная оборона", "17 147 370,0", "16 607 892,3", "16 295 802,7"], ["Социальная политика", "6 650 466,9", "6 951 788,0", "7 267 785,9"], ["Национальная экономика", "4 620 246,4", "4 991 253,8", "4 786 244,5"], ["Национальная безопасность и правоохранительная деятельность", "4 286 587,9", "4 421 147,1", "5 021 294,9"], ["Общегосударственные вопросы", "2 727 926,5", "2 790 616,0", "2 941 728,1"], ["Жилищно-коммунальное хозяйство", "1 829 933,2", "1 319 454,5", "1 231 917,5"], ["Здравоохранение", "1 818 066,1", "1 984 056,2", "2 131 266,3"], ["Образование", "1 777 395,9", "1 851 333,6", "1 936 682,2"], ["Охрана окружающей среды", "1 213 124,7", "1 523 126,4", "1 916 067,2"], ["Культура, кинематография", "308 301,4", "324 916,4", "351 034,2"], ["Средства массовой информации", "145 759,7", "97 711,3", "96 807,7"], ["Физическая культура и спорт", "72 234,0", "72 576,5", "76 917,9"]], "note": "Суммы по разделам за 2025 и 2026 годы в записке не приводятся; в блоке не показываются, пока не загружены из официального источника."}]}};/* BUDGET:end */
+function shareLink(day: string, id: string) { const base = ON_SITE ? window.location.origin + window.location.pathname : CANVAS_URL; return `${base}?d=${day}&v=${id}#d=${day}&v=${id}`; }
 let DEEP: string | null = QS ? QS.get('v') : null;
+const DLD: string | null = QS && QS.get('d') && QS.get('v') && DATA[QS.get('d')!] ? QS.get('d') : null;
+const DLB: string | null = DLD ? ((DATA[DLD].split('\n').find((l) => l.split('|')[0] === PIN) || '').split('|')[1] || null) : null;
+const DLK: string | null = DLB && /^\d+-\d+$/.test(DLB) ? DLD! + DLB : null;
 const ON_SITE = typeof window !== 'undefined' && /netlify\.app$/.test(window.location.hostname);
 function qrMatrix(text: string): boolean[][] {
   const data = Array.from(new TextEncoder().encode(text));
@@ -1930,7 +1939,7 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
       const i = qrs.length === 2 ? k : 1; const qx = RFULL - 34 - 150 - (1 - i) * 175;
       rr(x, qx - 8, TOP + 22, qx + 158, TOP + 178, 16, '#FFFFFF');
       const M = qrMatrix(u); const n = M.length + 2, s = 140 / n; x.fillStyle = BL;
-      M.forEach((row, r) => row.forEach((on, c) => { if (on) x.fillRect(Math.floor(qx + (c + 1) * s), Math.floor(TOP + 30 + (r + 1) * s), Math.ceil(s), Math.ceil(s)); }));
+      M.forEach((row, r) => row.forEach((on, c) => { if (on) x.fillRect(Math.floor(qx + 5 + (c + 1) * s), Math.floor(TOP + 30 + (r + 1) * s), Math.ceil(s), Math.ceil(s)); }));
       ct(x, lab, qx + 75, TOP + 188, 21, 800, BL);
     });
     return TOP + 270;
@@ -1998,29 +2007,29 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
     ...(ctx.who ? [[v.ok ? 'КОГО КОСНЕТСЯ' : 'КОГО КОСНУЛОСЬ БЫ', [ctx.who]] as [string, string[]]] : []),
     ...(ctx.next.length ? [[v.ok ? 'ЧТО ДАЛЬШЕ' : 'ПОЧЕМУ ОТКЛОНИЛИ', ctx.next] as [string, string[]]] : []),
   ];
+  // t302: whole blocks only; a block that does not fit moves to the next image
+  const out = [c1, c2]; let cx: CanvasRenderingContext2D = x2;
+  const LIM = 1740; const yo2 = (q: string) => q.replace(/ё/g, 'е').replace(/Ё/g, 'Е');
+  const page = (sec: string) => { const [c, x] = mk(); out.push(c); cx = x; y = header(x); fnt(x, 44, 800); wrap(x, v.q, RFULL - L).slice(0, 2).forEach((l) => { tx(x, l, L, y, 44, 800, TXC); y += 56; }); y += 6; const pc = y + 23; const pw = pill(x, pillT, L, pc, 46, 26, 24, 200, pillC[0], pillC[1]); fnt(x, 28, 500); { const mm = x.measureText('Н'); tx(x, [bn ? `№ ${bn}` : '', rw].filter(Boolean).join(' · '), L + pw + 20, pc - (mm.actualBoundingBoxDescent - mm.actualBoundingBoxAscent) / 2, 28, 500, MU); } y += 80; if (sec) { tx(x, sec + ' (ПРОДОЛЖЕНИЕ)', L, y, 27, 800, BL); y += 48; } };
+  const W2 = RLOW - L;
   for (const [hd, ps] of secs) {
-    if (y > 1680 - 100) break;
-    tx(x2, hd, L, y, 27, 800, BL); y += 48;
-    for (const p of ps) { fnt(x2, 37, 400); for (const ln of wrap(x2, p, rlim(y + 50) - L)) { if (y + 50 > 1680) break; tx(x2, ln, L, y, 37, 400, TXC); y += 50; } y += 10; }
+    ps.forEach((p, pi) => { fnt(cx, 37, 400); const ls = wrap(cx, p, W2); const hh = (pi === 0 ? 48 : 0) + ls.length * 50 + 10; if (y + hh > LIM && y > 700) page(pi === 0 ? '' : hd); if (pi === 0) { tx(cx, hd, L, y, 27, 800, BL); y += 48; } for (const ln of ls) { if (y + 50 > LIM) break; tx(cx, ln, L, y, 37, 400, TXC); y += 50; } y += 10; });
     y += 22;
   }
-  const out = [c1, c2];
-  if (nw && ctx.bs) {
-    const LIM = 1740; let cx3: CanvasRenderingContext2D | null = null; let n3 = 0;
-    const page = () => { const [c, x] = mk(); out.push(c); cx3 = x; n3++; y = header(x); fnt(x, 44, 800); wrap(x, v.q, RFULL - L).slice(0, 2).forEach((l) => { tx(x, l, L, y, 44, 800, TXC); y += 56; }); y += 6; const pc = y + 23; const pw = pill(x, pillT, L, pc, 46, 26, 24, 200, pillC[0], pillC[1]); fnt(x, 28, 500); { const mm = x.measureText('Н'); tx(x, [bn ? `№ ${bn}` : '', rw].filter(Boolean).join(' · '), L + pw + 20, pc - (mm.actualBoundingBoxDescent - mm.actualBoundingBoxAscent) / 2, 28, 500, MU); } y += 80; tx(x, n3 > 1 ? 'БЫЛО / СТАЛО (ПРОДОЛЖЕНИЕ)' : 'БЫЛО / СТАЛО', L, y, 27, 800, BL); y += 54; };
-    page();
+  if (ctx.bs) {
+    const HD = 'ЧТО СЕЙЧАС И ЧТО ПРЕДЛАГАЛОСЬ ИЗМЕНИТЬ';
+    page(''); tx(cx, HD, L, y, 27, 800, BL); y += 54;
     ctx.bs.forEach(([was, now], k) => {
-      const blk = (lab: string, s: string) => { fnt(cx3!, 34, 400); return wrap(cx3!, s.replace(/ё/g, 'е').replace(/Ё/g, 'Е'), RFULL - L - 40).map((l) => [lab, l]); };
-      const rows = [...blk('Было:', was), ...blk('Стало:', now)];
-      const need = 40 * 2 + rows.length * 46 + 30;
-      if (k > 0 && y + need > LIM && n3 < 2) page();
-      if (k > 0) { cx3!.fillStyle = GRB; cx3!.fillRect(L, y - 14, RFULL - L, 2); y += 10; }
+      fnt(cx, 34, 400); const rows: [string, string][] = [...wrap(cx, yo2(was), RFULL - L - 40).map((l) => ['Что сейчас:', l] as [string, string]), ...wrap(cx, yo2(now), RFULL - L - 40).map((l) => ['Что предлагалось изменить:', l] as [string, string])];
+      const need = 38 * 2 + rows.length * 46 + 40;
+      if (k > 0 && y + need > LIM) { page(HD); }
+      else if (k > 0) { cx.fillStyle = GRB; cx.fillRect(L, y - 14, RFULL - L, 2); y += 10; }
       let last = '';
-      for (const [lab, l] of rows) { if (y + 46 > LIM) break; if (lab !== last) { tx(cx3!, lab, L, y, 26, 800, MU); y += 38; last = lab; } tx(cx3!, l, L + 20, y, 34, 400, TXC); y += 46; }
+      for (const [lab, l] of rows) { if (y + 46 > LIM) break; if (lab !== last) { tx(cx, lab, L, y, 26, 800, MU); y += 38; last = lab; } tx(cx, l, L + 20, y, 34, 400, TXC); y += 46; }
       y += 30;
     });
-    out.forEach((c, i) => { if (i < 2) return; const x = c.getContext('2d')!; tx(x, 'Календарь законов', L, 1790, 24, 700, BL); });
   }
+  out.forEach((c, i) => { if (i < 2) return; const x = c.getContext('2d')!; tx(x, 'Календарь законов', L, 1790, 24, 700, BL); });
   return out;
 }
 if (typeof window !== 'undefined') (window as any).gdVotePng = (d: string, id: string) => { const v = parse(DATA[d]).find((z) => z.id === id); return v ? drawCards(v, d).map((c) => c.toDataURL('image/png')) : null; };
@@ -2073,40 +2082,39 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
   ];
   const [shw, setShw] = useState(false);
   const sut0 = (ctx.sut || []).map(yo) as string[]; const sen = (sut0[0] || '').split(/(?<=[.!?])\s+(?=[А-ЯA-Z«"(0-9])/); const sutS = sen.length > 2 || sut0.length > 1 ? [sen.slice(0, 2).join(' ') + (sen.length > 2 ? ' …' : '')] : sut0; const cut = sutS !== sut0;
-  const nw = T300.has(day); const CATn = nw ? CATS_S : CATS;
-  const CAP = nw ? ['за', 'против', 'воздер.', 'не голос.'] : ['за', 'против', 'воздержались', 'не голосовали'];
+  const nw = true; const CATn = CATS;
+  const CAP = ['за', 'против', 'воздержались', 'не голосовали'];
   const okC = v.ok ? ['rgba(52,199,89,0.16)', INK[0]] : ['rgba(255,59,48,0.13)', INK[1]];
   const box = { background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px', minWidth: 0 } as const;
   const h = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: (DK ? '#409CFF' : 'rgb(10,100,214)'), marginBottom: 4 } as const;
   const fcells = v.fr ? F.map((f) => { const fv = v.fr![f].v; const p = pos(fv); let k = 0; fv.forEach((q, j) => { if (q > fv[k]) k = j; }); return (
             <div key={f} style={{ textAlign: 'center', flex: m ? '0 0 58px' : '1 0 88px', minWidth: m ? 58 : 88, scrollSnapAlign: 'start' }}>
               <div style={{ fontSize: m ? 11 : 12, fontWeight: 700, color: t.text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f}{m ? <div style={{ fontWeight: 400, color: t.text.tertiary, fontSize: 10 }}>({v.fr![f].size})</div> : <span style={{ fontWeight: 400, color: t.text.tertiary }}> ({v.fr![f].size})</span>}</div>
-              <div style={{ width: m ? 50 : 80, margin: '2px auto 0' }}><Donut v={fv} size={m ? 50 : 80} center={p.pct} sub={m ? undefined : CAP[k]} nw={nw} /></div>
+              <div style={{ width: m ? 50 : 80, margin: '2px auto 0' }}><Donut v={fv} size={m ? 50 : 80} center={p.pct} nw={nw} /></div>
               <div title={fv.map((q, j) => `${CAP[j]}: ${q}`).join(', ')} style={{ display: 'flex', justifyContent: 'center', gap: m ? 3 : 6, fontSize: m ? 11 : 13, fontWeight: 700, lineHeight: 1.3, fontVariantNumeric: 'tabular-nums', marginTop: 3, whiteSpace: 'nowrap' }}>{fv.map((q, j) => <span key={j} style={{ color: SYS[j] }}>{q}</span>)}</div>
             </div>); }) : null;
   const resD = v.fr && !m ? (
     <div style={{ ...box, minWidth: 0 }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '2px 12px', fontSize: 13, color: t.text.secondary, marginBottom: 8 }}><span style={{ ...h, marginBottom: 0, marginRight: 4 }}>Итоги и по фракциям</span>{CATn.map((c, j) => <span key={c} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}><span style={{ width: 9, height: 9, borderRadius: 9, background: SYS[j] }} />{c}</span>)}</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '2px 12px', fontSize: 13, color: t.text.secondary, marginBottom: 8 }}><span style={{ ...h, marginBottom: 0, marginRight: 4 }}>Итоги голосования</span></div>
       <div className="gd-hs" style={{ display: 'flex', flexWrap: 'nowrap', alignItems: 'center', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x proximity', gap: 6, paddingBottom: 4 }}>
-        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 12, paddingRight: 16, marginRight: 8, borderRight: `1px solid ${t.border.subtle}`, scrollSnapAlign: 'start' }}><div style={{ width: 104, flexShrink: 0 }}><Donut v={v.total} size={104} center={String(tot)} sub="за" nw={nw} /></div><div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>{CATn.map((n, i) => <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, whiteSpace: 'nowrap' }}><span style={{ width: 8, height: 8, borderRadius: 8, background: SYS[i], flexShrink: 0 }} /><span style={{ color: t.text.secondary }}>{n}</span><b style={{ marginLeft: 'auto', paddingLeft: 8, fontVariantNumeric: 'tabular-nums', color: SYS[i] }}>{v.total[i]}</b></div>)}</div></div>
+        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 12, paddingRight: 16, marginRight: 8, borderRight: `1px solid ${t.border.subtle}`, scrollSnapAlign: 'start' }}><div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>{CATn.map((n, i) => <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, whiteSpace: 'nowrap' }}><span style={{ width: 8, height: 8, borderRadius: 8, background: SYS[i], flexShrink: 0 }} /><span style={{ color: t.text.secondary }}>{n}</span><b style={{ marginLeft: 'auto', paddingLeft: 8, fontVariantNumeric: 'tabular-nums', color: SYS[i] }}>{v.total[i]}</b></div>)}</div><div style={{ width: 104, flexShrink: 0 }}><Donut v={v.total} size={104} center={String(tot)} sub="за" nw={nw} /></div></div>
         {fcells}
       </div>
     </div>) : null;
   const res = resD || (
     <div style={{ display: 'flex', flexDirection: 'column', gap: m ? 10 : 12, minWidth: 0 }}>
-      <div style={{ ...box, display: 'flex', alignItems: 'center', gap: m ? 12 : 16 }}>
-        <div style={{ width: m ? 76 : 112, flexShrink: 0 }}><Donut v={v.total} size={m ? 76 : 112} center={String(tot)} sub="за" nw={nw} /></div>
+      <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: 6 }}><div style={{ ...h, marginBottom: 0 }}>Итоги голосования</div><div style={{ display: 'flex', alignItems: 'center', gap: m ? 12 : 16 }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: m ? 1 : 5 }}>{CATn.map((n, i) => (
           <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: m ? 14 : 14 }}>
             <span style={{ width: 9, height: 9, borderRadius: 9, background: SYS[i], flexShrink: 0 }} />
             <span style={{ flex: 1, color: t.text.secondary }}>{n}</span>
             <b style={{ fontVariantNumeric: 'tabular-nums', color: SYS[i] }}>{v.total[i]}</b>
           </div>))}</div>
-      </div>
+        <div style={{ width: m ? 76 : 112, flexShrink: 0 }}><Donut v={v.total} size={m ? 76 : 112} center={String(tot)} sub="за" nw={nw} /></div>
+      </div></div>
       {v.fr ? (
         <div style={box}>
-          <div style={h}>По фракциям</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 12px', fontSize: m ? 12 : 13, color: t.text.secondary, margin: '2px 0 8px' }}>{CATn.map((c, j) => <span key={c} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}><span style={{ width: 9, height: 9, borderRadius: 9, background: SYS[j] }} />{c}</span>)}</div>
+          <div style={{ ...h, marginBottom: 8 }}>По фракциям</div>
           <div className="gd-hs" style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch', gap: m ? 4 : 6, paddingBottom: 4 }}>{fcells}</div>
         </div>
       ) : <div style={{ ...box, fontSize: 13, color: t.text.secondary }}>Разбивки по фракциям в источнике нет — показан только общий итог.</div>}
@@ -2118,22 +2126,56 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
         <div key={hd}><div style={h}>{hd}</div>{ps.map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(p)}</p>)}</div>))}
       {!inl && <div style={{ fontSize: m ? 14 : 15, lineHeight: 1.45, color: t.text.secondary, whiteSpace: 'normal', paddingTop: 8, borderTop: `1px solid ${t.border.subtle}` }}>{title}</div>}
       {pass.some(([, x]) => x) && <div style={{ display: 'grid', gridTemplateColumns: m ? '1fr' : 'auto minmax(0, 1fr)', gap: m ? '2px 0' : '4px 12px', fontSize: 14, lineHeight: 1.45, paddingTop: 8, borderTop: `1px solid ${t.border.subtle}` }}>{pass.filter(([, x]) => x).map(([k, x]) => [<span key={k + 'k'} style={{ color: t.text.tertiary, marginTop: m ? 4 : 0 }}>{k}</span>, <span key={k} style={{ color: t.text.primary }}>{x}</span>])}</div>}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>{!m && <button type="button" className="gd-shb" aria-expanded={shw} onClick={(e) => { e.stopPropagation(); setShw(!shw); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 12px', borderRadius: 14, border: 'none', cursor: 'pointer', fontFamily: t.font.family, fontSize: 13, fontWeight: 600, color: '#FFFFFF', whiteSpace: 'nowrap' }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>Сохранить голосование {shw ? '▴' : '▾'}<style>{`.gd-shb{background:${DK ? '#0A84FF' : '#0A64D6'};transition:background 160ms}.gd-shb:hover{background:${DK ? '#409CFF' : '#0850AE'}}.gd-shb:focus-visible{outline:2px solid ${DK ? '#409CFF' : '#0A64D6'};outline-offset:2px}`}</style></button>}{links.map((l, i) => <a key={i} className="gd-lnk" href={l.href} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', borderRadius: 14, border: `1px solid ${t.border.default}`, fontSize: 13, color: t.text.accent, textDecoration: 'none', whiteSpace: 'nowrap' }}>{l.title} ↗</a>)}</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>{!m && <button type="button" className="gd-shb" aria-expanded={shw} onClick={(e) => { e.stopPropagation(); setShw(!shw); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 12px', borderRadius: 14, border: 'none', cursor: 'pointer', fontFamily: t.font.family, fontSize: 13, fontWeight: 600, color: '#FFFFFF', whiteSpace: 'nowrap' }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>Сохранить карточку {shw ? '▴' : '▾'}<style>{`.gd-shb{background:${DK ? '#0A84FF' : '#0A64D6'};transition:background 160ms}.gd-shb:hover{background:${DK ? '#409CFF' : '#0850AE'}}.gd-shb:focus-visible{outline:2px solid ${DK ? '#409CFF' : '#0A64D6'};outline-offset:2px}`}</style></button>}<ShareBtn day={day} id={v.id} m={!!m} />{links.map((l, i) => <a key={i} className="gd-lnk" href={l.href} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', borderRadius: 14, border: `1px solid ${t.border.default}`, fontSize: 13, color: t.text.accent, textDecoration: 'none', whiteSpace: 'nowrap' }}>{l.title} ↗</a>)}</div>
     </div>);
   return (
     <div ref={(el) => { if (el && DEEP === v.id) { DEEP = null; setTimeout(() => { const w = el.parentElement as HTMLElement | null; if (w) { const r = w.getBoundingClientRect(); if (r.top < 0 || r.top > window.innerHeight * 0.6) w.scrollIntoView({ block: 'start' }); } revealCard(v.id); }, 250); } }} data-panel={v.id} className="gd-anim" style={{ padding: m ? '10px 10px 12px' : '14px 16px 16px', background: t.bg.subtle, borderBottom: `1px solid ${t.border.subtle}` }}>
-      {!inl && <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px 8px', marginBottom: 4 }}>
-        {(!m || inl) && <span style={{ padding: '2px 9px', borderRadius: 999, fontSize: 12, fontWeight: 800, letterSpacing: '0.04em', background: okC[0], color: okC[1] }}>{v.ok ? 'ПРИНЯТ' : 'ОТКЛОНЕН'}</span>}
-        <span style={{ fontSize: m ? 12 : 13, color: t.text.secondary, fontVariantNumeric: 'tabular-nums' }}>{[`${dt.getDate()} ${MON[dt.getMonth()]} ${dt.getFullYear()}, ${WDN[dt.getDay()]}`].filter(Boolean).join(' · ')}</span>
+      {<div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px 8px', marginBottom: 4 }}>
+        <div data-status="1" style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, padding: '6px 10px', borderRadius: 10, border: `1px solid ${t.border.default}`, background: t.bg.base }}><span style={{ padding: '2px 9px', borderRadius: 999, fontSize: 12, fontWeight: 800, letterSpacing: '0.04em', background: okC[0], color: okC[1] }}>{v.ok ? 'принят' : 'отклонен'}</span><span style={{ fontSize: 12, color: VT[v.id] ? t.text.secondary : t.text.tertiary, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{VT[v.id] ? `Время голосования: ${VT[v.id]}` : 'Время голосования: нет данных'}</span></div>
+        {!inl && <span style={{ fontSize: m ? 12 : 13, color: t.text.secondary, fontVariantNumeric: 'tabular-nums' }}>{[`${dt.getDate()} ${MON[dt.getMonth()]} ${dt.getFullYear()}, ${WDN[dt.getDay()]}`].filter(Boolean).join(' · ')}</span>}
       </div>}
       {inl ? null : <>{!m && <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.3, color: t.text.primary, letterSpacing: '-0.01em', marginBottom: 10 }}>{yo(v.q)}</div>}</>}
-      {(sut0.length > 0 || ctx.who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{sut0.length > 0 && <div><div style={h}>Суть</div>{sut0.map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{p}</p>)}</div>}{ctx.who && <div><div style={h}>{v.ok ? 'Кого коснется' : 'Кого коснулось бы'}</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(ctx.who)}</p></div>}{ctx.bs && <div><div style={h}>Было / Стало</div>{ctx.bs.map((r, i) => <div key={i} style={{ marginTop: i ? 10 : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}><div><span style={{ color: t.text.tertiary }}>Было: </span>{yo(r[0])}</div><div><span style={{ color: t.text.tertiary }}>Стало: </span>{yo(r[1])}</div></div>)}</div>}</div>}
+      {(sut0.length > 0 || ctx.who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{sut0.length > 0 && <div><div style={h}>Суть</div>{sut0.map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{p}</p>)}</div>}{ctx.who && <div><div style={h}>{v.ok ? 'Кого коснется' : 'Кого коснулось бы'}</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(ctx.who)}</p></div>}{ctx.bs && <div><div style={h}>Что сейчас</div>{ctx.bs.map((r, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(r[0])}</p>)}</div>}{ctx.bs && <div><div style={h}>Что предлагалось изменить</div>{ctx.bs.map((r, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(r[1])}</p>)}</div>}</div>}
       <div style={{ marginTop: (sut0.length > 0 || ctx.who) ? 12 : 0 }}>{res}</div>
+      {b && <Track b={b} m={!!m} />}
+      {b && BUDGET[b] && <Budget b={b} m={!!m} />}
       <div style={{ paddingTop: 12 }}>{right}{m ? <ShareVote v={v} day={day} m /> : <Exp on={shw}>{() => <ShareVote v={v} day={day} />}</Exp>}</div>
     </div>
   );
 }
 
+function ShareBtn({ day, id, m }: { day: string; id: string; m: boolean }) {
+  const t = useGrokTheme(); const [ok, setOk] = useState(''); const tm = useRef<any>(null);
+  const toast = (s: string) => { setOk(s); clearTimeout(tm.current); tm.current = setTimeout(() => setOk(''), 2200); };
+  const go = async (e: any) => { e.stopPropagation(); const u = shareLink(day, id); const nav: any = navigator; if (m && nav.share) { try { await nav.share({ title: 'Календарь законов', url: u }); return; } catch (er: any) { if (er && er.name === 'AbortError') return; } } try { await nav.clipboard.writeText(u); toast('Ссылка скопирована'); } catch (er) { try { const ta = document.createElement('textarea'); ta.value = u; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Ссылка скопирована'); } catch (e2) { toast(u); } } };
+  return <span style={{ position: 'relative', display: 'inline-flex' }}><button type="button" className="gd-lnk" onClick={go} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 12px', borderRadius: 14, border: `1px solid ${t.border.default}`, background: 'transparent', cursor: 'pointer', fontFamily: t.font.family, fontSize: 13, fontWeight: 600, color: t.text.accent, whiteSpace: 'nowrap' }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 12v7h16v-7M12 3v12M7 8l5-5 5 5" /></svg>Поделиться карточкой</button>{ok && <span role="status" style={{ position: 'absolute', left: 0, bottom: 'calc(100% + 6px)', zIndex: 5, padding: '5px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', background: t.text.primary, color: t.bg.base, pointerEvents: 'none' }}>{ok}</span>}</span>;
+}
+const TRK: [string, string][] = [['r2', 'Второе чтение'], ['r3', 'Третье чтение'], ['sf', 'Совет Федерации'], ['sign', 'Подписание'], ['pub', 'Опубликование'], ['force', 'Вступление в силу']];
+function Track({ b, m }: { b: string; m: boolean }) {
+  const t = useGrokTheme(); const tr = TRACK[b]; if (!tr) return null;
+  const last = TRK.reduce((a, [k], i) => (tr[k] ? i : a), -1); const ac = DK ? '#409CFF' : 'rgb(10,100,214)';
+  return <div data-track="1" style={{ marginTop: 12, background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px' }}>
+    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: ac, marginBottom: 8 }}>Путь закона</div>
+    <div style={{ display: 'grid', gridTemplateColumns: m ? '1fr' : 'repeat(6, minmax(0, 1fr))', gap: m ? 6 : 4 }}>{TRK.map(([k, l], i) => { const d = tr[k]; const done = !!d; return <div key={k} style={{ display: 'flex', flexDirection: m ? 'row' : 'column', alignItems: m ? 'center' : 'flex-start', gap: m ? 8 : 4, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', width: m ? 'auto' : '100%' }}><span style={{ width: 12, height: 12, borderRadius: 12, flex: 'none', boxSizing: 'border-box', background: done ? ac : 'transparent', border: `2px solid ${done ? ac : t.border.default}` }} />{!m && i < 5 && <span style={{ flex: 1, height: 2, background: i < last ? ac : t.border.subtle }} />}</div>
+      <div style={{ fontSize: 13, lineHeight: 1.35, color: done ? t.text.primary : t.text.tertiary }}>{l}<div style={{ fontSize: 12, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{d || 'нет данных'}</div></div></div>; })}</div>
+    {tr.src && <div style={{ marginTop: 6, fontSize: 12, color: t.text.tertiary }}>Источник: {tr.src}</div>}
+  </div>;
+}
+function Budget({ b, m }: { b: string; m: boolean }) {
+  const t = useGrokTheme(); const bd = BUDGET[b]; const ac = DK ? '#409CFF' : 'rgb(10,100,214)';
+  const cs = (i: number) => ({ textAlign: (i ? 'right' : 'left') as any, padding: '4px 6px', borderBottom: `1px solid ${t.border.subtle}`, fontVariantNumeric: 'tabular-nums' as any, whiteSpace: (i ? 'nowrap' : 'normal') as any });
+  return <div data-budget="1" style={{ marginTop: 12, background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px' }}>
+    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: ac, marginBottom: 8 }}>Бюджет: основные статьи расходов</div>
+    {bd.t.map((tb, k) => <div key={k} style={{ marginTop: k ? 14 : 0 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: t.text.primary, marginBottom: 4 }}>{tb.title}</div>
+      <div style={{ overflowX: 'auto' }}><table style={{ borderCollapse: 'collapse', width: '100%', fontSize: m ? 12 : 14, color: t.text.primary }}><thead><tr>{['', ...tb.cols].map((c, i) => <th key={i} style={{ ...cs(i), fontWeight: 600, color: t.text.secondary, whiteSpace: i ? 'normal' : 'normal', verticalAlign: 'bottom', minWidth: i ? 70 : 140 }}>{c}</th>)}</tr></thead>
+      <tbody>{tb.rows.map((r) => <tr key={r[0]}>{r.map((c, i) => <td key={i} style={cs(i)}>{c}</td>)}</tr>)}</tbody></table></div>
+      {tb.note && <div style={{ marginTop: 6, fontSize: 12, color: t.text.tertiary }}>{tb.note}</div>}
+    </div>)}
+    <div style={{ marginTop: 8, fontSize: 12, color: t.text.tertiary }}>Источники: {bd.src.map(([n, u], i) => <a key={i} href={u} target="_blank" rel="noreferrer" style={{ color: t.text.secondary, marginRight: 8 }}>{n} ↗</a>)}</div>
+  </div>;
+}
 function Item({ tag, text, href, m }: { tag?: string | null; text: React.ReactNode; href?: string; key?: any; m?: boolean }) {
   const t = useGrokTheme();
   const site = (u: string) => u.replace(/^https?:\/\//, '').split('/')[0];
@@ -2427,8 +2469,8 @@ let CSNAP: null | { ex: string | null; inf: boolean; y: number; d: string; cm: s
 function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?: string; m: boolean; openDay: (d: string) => void; openVote?: (d: string, id: string) => void; cm: string; setCm: (k: string) => void; day?: string }) {
   const t = useGrokTheme();
   const rs = useRef(CSNAP && CSNAP.d === day && CSNAP.cm === cm ? CSNAP : null);
-  const [ex, setEx] = useState<string | null>(rs.current ? rs.current.ex : null);
-  const [ivo, setIvo0] = useState<string | null>(null); const setIvo = (nx: string | null) => { const pv = ivo; setIvo0(nx); const num = (el: Element, k: string, d: number) => { const q = parseFloat(getComputedStyle(el).getPropertyValue(k)); return isNaN(q) ? d : q; }; const pin = (k: string, sm: boolean) => { const w = document.querySelector(`[data-ivk="${k}"]`) as HTMLElement | null; if (!w) return; const c = w.closest('[id^="ev-"]') as HTMLElement | null; const off = (num(document.documentElement, '--gd-top', 0) + (c ? num(c, '--gd-dh', 45) + num(c, '--gd-fb', 0) : 0) + 5) * GZ; const dy = w.getBoundingClientRect().top - off; if (Math.abs(dy) <= 3) return; const y = Math.max(0, window.scrollY + dy); if (sm && 'scrollBehavior' in document.documentElement.style) window.scrollTo({ top: y, behavior: 'smooth' }); else window.scrollTo(0, y); }; const k = nx || pv; if (k && !m) { const q = () => document.querySelector(`[data-ivk="${k}"]`) as HTMLElement | null; const w0 = q(); const c0 = w0 && w0.closest('[id^="ev-"]') as HTMLElement | null; const off = (num(document.documentElement, '--gd-top', 0) + (c0 ? num(c0, '--gd-dh', 45) + num(c0, '--gd-fb', 0) : 0) + 5) * GZ; if (w0) anchorTo(q, Math.max(off, w0.getBoundingClientRect().top)); } else if (k) { const sm = !!nx; requestAnimationFrame(() => requestAnimationFrame(() => pin(k, sm))); [450, 900].forEach((ms) => setTimeout(() => pin(k, false), ms)); } if (pv && pv !== nx) requestAnimationFrame(() => requestAnimationFrame(() => { const w = document.querySelector(`[data-ivk="${pv}"]`) as HTMLElement | null; const r = w && w.firstElementChild as HTMLElement | null; if (r && r.animate) r.animate([{ backgroundColor: FLASH() }, { backgroundColor: 'rgba(10,102,214,0)' }], { duration: 1800, easing: 'ease-out' }); })); };
+  const [ex, setEx] = useState<string | null>(rs.current ? rs.current.ex : DLK ? DLD : null);
+  const [ivo, setIvo0] = useState<string | null>(DLK); const setIvo = (nx: string | null) => { const pv = ivo; setIvo0(nx); const num = (el: Element, k: string, d: number) => { const q = parseFloat(getComputedStyle(el).getPropertyValue(k)); return isNaN(q) ? d : q; }; const pin = (k: string, sm: boolean) => { const w = document.querySelector(`[data-ivk="${k}"]`) as HTMLElement | null; if (!w) return; const c = w.closest('[id^="ev-"]') as HTMLElement | null; const off = (num(document.documentElement, '--gd-top', 0) + (c ? num(c, '--gd-dh', 45) + num(c, '--gd-fb', 0) : 0) + 5) * GZ; const dy = w.getBoundingClientRect().top - off; if (Math.abs(dy) <= 3) return; const y = Math.max(0, window.scrollY + dy); if (sm && 'scrollBehavior' in document.documentElement.style) window.scrollTo({ top: y, behavior: 'smooth' }); else window.scrollTo(0, y); }; const k = nx || pv; if (k && !m) { const q = () => document.querySelector(`[data-ivk="${k}"]`) as HTMLElement | null; const w0 = q(); const c0 = w0 && w0.closest('[id^="ev-"]') as HTMLElement | null; const off = (num(document.documentElement, '--gd-top', 0) + (c0 ? num(c0, '--gd-dh', 45) + num(c0, '--gd-fb', 0) : 0) + 5) * GZ; if (w0) anchorTo(q, Math.max(off, w0.getBoundingClientRect().top)); } else if (k) { const sm = !!nx; requestAnimationFrame(() => requestAnimationFrame(() => pin(k, sm))); [450, 900].forEach((ms) => setTimeout(() => pin(k, false), ms)); } if (pv && pv !== nx) requestAnimationFrame(() => requestAnimationFrame(() => { const w = document.querySelector(`[data-ivk="${pv}"]`) as HTMLElement | null; const r = w && w.firstElementChild as HTMLElement | null; if (r && r.animate) r.animate([{ backgroundColor: FLASH() }, { backgroundColor: 'rgba(10,102,214,0)' }], { duration: 1800, easing: 'ease-out' }); })); };
   const dayGo = (el: HTMLElement | null, op: boolean) => { if (!el) return; if (!op) gdTail(el.getBoundingClientRect().height); if (!m) { const off = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gd-top')) || 0) * GZ; anchorTo(() => (el.isConnected ? el : null), Math.max(off, el.getBoundingClientRect().top)); return; } const pin = (sm: boolean) => { if (!el.isConnected) return; const off = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gd-top')) || 0) * GZ; const dy = el.getBoundingClientRect().top - off; if (Math.abs(dy) <= 3) return; const y = Math.max(0, window.scrollY + dy); if (sm && 'scrollBehavior' in document.documentElement.style) window.scrollTo({ top: y, behavior: 'smooth' }); else window.scrollTo(0, y); }; requestAnimationFrame(() => requestAnimationFrame(() => pin(op))); [360, 450, 900].forEach((ms) => setTimeout(() => pin(false), ms)); }; const [df, setDf] = useState<'all' | 'acc' | 'rej'>('all'); useEffect(() => setDf('all'), [ex]);
   const plv = (n: number) => { const a = n % 10, b = n % 100; return `${n} ${a === 1 && b !== 11 ? 'голосование' : a >= 2 && a <= 4 && (b < 12 || b > 14) ? 'голосования' : 'голосований'}`; };
   const qn = (cq || '').trim().toLowerCase(); useZS(); const fon = zN() > 0;
@@ -2456,16 +2498,16 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
     return (
       <div key={s} role="button" tabIndex={0} onClick={click} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); click(); } }}
         aria-pressed={isS} title={[p && !exp ? 'Пленарное заседание Госдумы' : '', bud ? 'Рассмотрение бюджета' : '', g ? 'Заседание Правительства РФ' : '', com ? 'Работа в комитетах' : '', w === 'regional' ? 'Работа в регионах' : '', isS ? 'Снять выбор' : 'Показать события дня'].filter(Boolean).join(' · ')}
-        style={{ position: 'relative', minWidth: 0, height: m ? 44 : 32, borderRadius: 8, cursor: 'pointer', opacity: inM ? 1 : 0, pointerEvents: inM ? 'auto' : 'none',
+        style={{ position: 'relative', minWidth: 0, height: m ? 52 : 56, borderRadius: 8, cursor: 'pointer', opacity: inM ? 1 : 0, pointerEvents: inM ? 'auto' : 'none',
           background: isS ? SELB : wd ? (w === 'regional' ? reg : neu) : 'transparent',
           boxShadow: isS ? `inset 0 0 0 2px ${SELC}${isT ? `, inset 0 0 0 3.5px ${blue}` : ''}` : isT ? `inset 0 0 0 1.5px ${blue}` : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: m ? 14 : 15, fontWeight: isT ? t.weight.semibold : t.weight.regular, color: isS ? SELC : wd ? t.text.primary : t.text.tertiary, ...(isS ? { fontWeight: 700 } : {}), fontVariantNumeric: 'tabular-nums' }}>{d.getDate()}</span>
-        {(com || (wd && w === 'regional') || p || g || bud) && <span style={{ position: 'absolute', bottom: 3, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: m ? 2 : 3 }}>
-          {wd && w === 'regional' && <i style={{ width: 12, height: 5, borderRadius: 1.5, flex: 'none', background: regD }} />}
-          {com && <i style={{ width: 12, height: 5, borderRadius: 1.5, flex: 'none', background: comD }} />}
-          {p && !exp && <i style={{ width: 12, height: 5, borderRadius: 1.5, flex: 'none', background: blue }} />}
-          {g && <i style={{ width: 12, height: 5, borderRadius: 1.5, flex: 'none', background: green }} />}
-          {bud && <i style={{ width: 12, height: 5, borderRadius: 1.5, flex: 'none', background: amber }} />}
+        <span style={{ marginBottom: m ? 12 : 14, fontSize: m ? 14 : 15, fontWeight: isT ? t.weight.semibold : t.weight.regular, color: isS ? SELC : wd ? t.text.primary : t.text.tertiary, ...(isS ? { fontWeight: 700 } : {}), fontVariantNumeric: 'tabular-nums' }}>{d.getDate()}</span>
+        {(com || (wd && w === 'regional') || p || g || bud) && <span style={{ position: 'absolute', bottom: 5, left: 2, right: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: m ? 2 : 3 }}>
+          {wd && w === 'regional' && <i style={{ width: m ? 9 : 11, height: 5, borderRadius: 1.5, flex: 'none', background: regD }} />}
+          {com && <i style={{ width: m ? 9 : 11, height: 5, borderRadius: 1.5, flex: 'none', background: comD }} />}
+          {p && !exp && <i style={{ width: m ? 9 : 11, height: 5, borderRadius: 1.5, flex: 'none', background: blue }} />}
+          {g && <i style={{ width: m ? 9 : 11, height: 5, borderRadius: 1.5, flex: 'none', background: green }} />}
+          {bud && <i style={{ width: m ? 9 : 11, height: 5, borderRadius: 1.5, flex: 'none', background: amber }} />}
         </span>}
       </div>);
   };
@@ -2475,7 +2517,7 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
     for (let i = 0; i < off; i++) ds.push([new Date(first.getFullYear(), first.getMonth(), i - off + 1), false]);
     for (let i = 1; i <= n; i++) ds.push([new Date(first.getFullYear(), first.getMonth(), i), true]);
     return (
-      <div key={first.getMonth()} style={{ ...card(t), padding: m ? '14px 12px' : '14px 16px', flex: m ? '1 1 100%' : '1 1 22rem', minWidth: 0 }}>
+      <div key={first.getMonth()} style={{ ...card(t), padding: m ? '14px 12px' : '14px 16px', flex: m ? '1 1 100%' : '1 1 26rem', minWidth: 0 }}>
         {!m && <div style={{ fontWeight: t.weight.semibold, fontSize: 15, marginBottom: 8, color: t.text.primary }}>{MONN[first.getMonth()]} {first.getFullYear()}</div>}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4 }}>
           {WDS.map((x, i) => <span key={x} style={{ fontSize: 12, textAlign: 'center', color: i > 4 ? t.text.tertiary : t.text.secondary, paddingBottom: 2 }}>{x}</span>)}
@@ -2487,11 +2529,12 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
   const sq = (st: any) => <i style={{ width: 12, height: 12, borderRadius: 3, display: 'inline-block', ...st }} />;
   const isCur = cm === ck(now); const inM = (d: string, e?: string) => ck(pd(d)) === cm || (!!e && ck(pd(e)) === cm);
   const nk = (k: string) => ck(new Date(+k.slice(3), +k.slice(0, 2), 1));
-  const evOf = (mk: string): any[] => { const okD = (d: string, e?: string) => ck(pd(d)) === mk || (!!e && ck(pd(e)) === mk); return [
+  const lim = (() => { const x = new Date(now.getFullYear(), now.getMonth(), now.getDate()); let n = 0; while (n < 2) { x.setDate(x.getDate() + 1); if (x.getDay() % 6 !== 0) n++; } return x; })();
+  const evOf = (mk: string): any[] => { const cur = mk === ck(now); const okD = (d: string, e?: string) => { const a = pd(d); if (a > lim) return false; return ck(a) === mk || (!!e && ck(pd(e)) === mk) || (cur && a > now); }; return [
     ...CAL.p.filter((p: any) => okD(p.d)).map((p: any) => ({ d: p.d, k: 'p', p })),
     ...CAL.g.filter((g: any) => okD(g[0])).map((g: any) => ({ d: g[0], k: 'g', g })),
     ...CAL.w.filter((w: any) => w[2] === 'regional' && okD(w[0], w[1])).map((w: any) => ({ d: w[0], k: 'r', w })),
-  ].sort((a, b) => +pd(b.d) - +pd(a.d)); };
+  ].filter((e: any) => mk === ck(now) || ck(pd(e.d)) === mk || e.k === 'r').sort((a, b) => +pd(b.d) - +pd(a.d) || (a.k === 'r' ? -1 : b.k === 'r' ? 1 : 0)); };
   const tchip = (ty: string) => ty ? <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: 9999, fontSize: 12, fontWeight: 600, lineHeight: 1.4, whiteSpace: 'nowrap', background: t.bg.subtle, color: t.text.secondary, border: `1px solid ${t.border.subtle}` }}>{ty}</span> : null;
   const pill = (txt: string, c: string, dashed?: boolean) => <span style={{ fontSize: 12, padding: '1px 8px', borderRadius: 10, border: `1px ${dashed ? 'dashed' : 'solid'} ${c}`, color: c, whiteSpace: 'nowrap' }}>{txt}</span>;
   const evList = (mk: string, dv?: boolean) => { const ev = evOf(mk).filter((e: any) => (!qn || (e.k === 'p' && (e.p.a || []).some(mq))) && (!fon || (e.k === 'p' && (e.p.a || []).some((x: any) => mq(x) && zOk(x[0]))))).filter((e: any) => dv || !sd || (e.k === 'r' ? pd(e.w[0]) <= pd(sd) && pd(sd) <= pd(e.w[1]) : e.d === sd)); if (dv && !ev.length) return null; return <div key={'e' + mk} style={{ flex: m ? '1 1 100%' : '1 1 22rem', minWidth: 0 }}>
@@ -2634,11 +2677,11 @@ export default function App() {
   };
   const m = w <= 700;
   const Z = m ? 1 : 0.8; GZ = Z;
-  const [mode, setMode] = useState<'d' | 'c' | 'l'>(QS && QS.get('tab') === 'l' ? 'l' : QS && QS.get('tab') === 'd' ? 'd' : 'c');
+  const [mode, setMode] = useState<'d' | 'c' | 'l'>(QS && QS.get('tab') === 'l' ? 'l' : DLK ? 'c' : QS && (QS.get('tab') === 'd' || (QS.get('v') && QS.get('d') && DAYS.includes(QS.get('d')!))) ? 'd' : 'c');
   const [lmk, setLmk] = useState(LMK0);
-  const [cmk, setCmk] = useState(() => calCk(new Date()));
+  const [cmk, setCmk] = useState(() => calCk(DLK ? new Date(+DLD!.slice(6), +DLD!.slice(3, 5) - 1, +DLD!.slice(0, 2)) : new Date()));
   useEffect(() => { const h = () => { if (CSNAP) setMode('c'); }; window.addEventListener('popstate', h); return () => window.removeEventListener('popstate', h); }, []);
-  const [view, setView] = useState<'v' | 's'>(COUNT[day] ? 'v' : 's');
+  const [view, setView] = useState<'v' | 's'>(PIN && QS && QS.get('d') === day ? 'v' : COUNT[day] ? 'v' : 's');
   const [topH, setTopH] = useState(0);
   const [hid, setHid] = useState(false);
   useMemo(() => setTimeout(() => { const h = Array.from(document.querySelectorAll('h1')).find((e) => (e.textContent || '').trim() === 'Календарь законов') as HTMLElement | undefined; if (!h) { setHid(false); return; } h.style.display = 'none'; setHid(true); }, 0), [m]);
@@ -2663,7 +2706,7 @@ export default function App() {
     window.addEventListener('scroll', on, true); window.addEventListener('resize', on); on();
     return () => { window.removeEventListener('scroll', on, true); window.removeEventListener('resize', on); };
   }, []);
-  const votes = useMemo(() => parse(DATA[day]), [day]);
+  const votes = useMemo(() => { const a = parse(DATA[day]); const i = PIN ? a.findIndex((z) => z.id === PIN) : -1; return i > 0 ? [a[i], ...a.slice(0, i), ...a.slice(i + 1)] : a; }, [day]);
   const list = useMemo(() => votes.filter((v) =>
     (filter === 'all' || (filter === 'acc') === v.ok) &&
     true), [votes, filter]);
@@ -2763,10 +2806,10 @@ export default function App() {
       <style>{css(t) + `#root,#root>div{background:${DK ? '#000000' : '#FFFFFF'}!important;color:${DK ? '#F5F5F7' : '#1D1D1F'}!important}#root>div{min-height:100vh}` + ADAPT() + (DK ? DKCSS : '')}</style>
       <div ref={measure} style={{ width: '100%', height: 0 }} />
       <div style={{ zoom: String(Z), color: t.text.primary }}>
-      {m && <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '0 0 12px' }}>{hid && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '2px 2px 0' }}><div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text.primary }}>Календарь законов</div>{thBtn}</div>}<div role="tablist" style={{ display: 'flex', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['c', 'Календарь'], ['l', w < 370 ? 'Законы' : 'Вступают в силу'], ['d', 'Новости']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={mode === k} onClick={() => { if (k === 'l') { CSNAP = null; setCmk(calCk(new Date())); } setMode(k); setView('v'); window.scrollTo(0, 0); }} style={{ ...mt2(mode === k), minWidth: 0, minHeight: 44, padding: '0 4px', fontSize: 14, letterSpacing: '-0.01em' }}>{l}</button>)}</div>{mode === 'd' && dateSw}{mode === 'l' && <LawsSw m={m} mk={lmk} setMk={setLmk} />}</div>}
+      {m && <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '0 0 12px' }}>{hid && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '2px 2px 0' }}><div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text.primary }}>Календарь законов</div>{thBtn}</div>}<div role="tablist" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['c', 'Календарь'], ['l', w < 370 ? 'Законы' : 'Вступают в силу'], ['d', 'Новости']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={mode === k} onClick={() => { if (k === 'l') { CSNAP = null; setCmk(calCk(new Date())); } setMode(k); setView('v'); window.scrollTo(0, 0); }} style={{ ...mt2(mode === k), minWidth: 0, minHeight: 44, padding: '0 4px', fontSize: 14, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>{l}</button>)}</div>{mode === 'd' && dateSw}{mode === 'l' && <LawsSw m={m} mk={lmk} setMk={setLmk} />}</div>}
       <div ref={ph} style={{ width: '100%', height: fx ? topH / Z + (m ? 4 : 14) : 0 }} />
       <div data-gdbar="1" ref={(el) => { barEl.current = el; bar(el); }} style={{ ...(m ? (mode === 'c' ? { position: 'sticky', top: 0, zIndex: 20, margin: 0, padding: '8px 0 0', background: t.bg.base } : { padding: 0, margin: 0 }) : { position: 'sticky', top: 0, zIndex: 20, margin: 0, padding: '14px 0 12px', background: t.bg.base, boxShadow: sc ? '0 6px 8px -8px rgba(0,0,0,0.25)' : 'none', transition: 'box-shadow .15s' }), ...(fx ? { position: 'fixed', top: 0, left: fx.l / Z, width: fx.w / Z, margin: 0, boxSizing: 'border-box' } : {}) } as any}>
-      {false && m && mode === 'd' && <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{mode === 'd' && votes.length > 0 && <div role="tablist" style={{ display: 'flex', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['all', votes.length, plv(votes.length).replace(/^\d+ /, ''), t.text.primary], ['acc', nAcc, 'принято', INK[0]], ['rej', votes.length - nAcc, 'отклонено', votes.length - nAcc ? INK[1] : t.text.primary]] as const).map(([k, n, l, c]) => <button key={k} data-f={k} role="tab" aria-selected={filter === k} onClick={() => setF(k)} style={{ ...mt2(filter === k), minWidth: 0, minHeight: 44, padding: '0 2px', fontSize: w < 370 ? 13 : 14, letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis' }}><b style={{ color: c }}>{n}</b> {l}</button>)}</div>}{mode === 'd' && <div style={{ height: 44, display: 'flex' }}>{sbox}</div>}{mode === 'd' && (!!qq || !votes.length) && <div style={{ fontSize: 14, color: t.text.secondary, padding: '0 2px', fontVariantNumeric: 'tabular-nums' }}>{qq ? <>Найдено: <b style={{ color: t.text.primary }}>{nHits}</b> {plv(nHits).replace(/^\d+ /, '')} за все дни</> : 'Пленарного заседания не было'}</div>}</div>}
+      {false && m && mode === 'd' && <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{mode === 'd' && votes.length > 0 && <div role="tablist" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['all', votes.length, plv(votes.length).replace(/^\d+ /, ''), t.text.primary], ['acc', nAcc, 'принято', INK[0]], ['rej', votes.length - nAcc, 'отклонено', votes.length - nAcc ? INK[1] : t.text.primary]] as const).map(([k, n, l, c]) => <button key={k} data-f={k} role="tab" aria-selected={filter === k} onClick={() => setF(k)} style={{ ...mt2(filter === k), minWidth: 0, minHeight: 44, padding: '0 2px', fontSize: w < 370 ? 13 : 14, letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis' }}><b style={{ color: c }}>{n}</b> {l}</button>)}</div>}{mode === 'd' && <div style={{ height: 44, display: 'flex' }}>{sbox}</div>}{mode === 'd' && (!!qq || !votes.length) && <div style={{ fontSize: 14, color: t.text.secondary, padding: '0 2px', fontVariantNumeric: 'tabular-nums' }}>{qq ? <>Найдено: <b style={{ color: t.text.primary }}>{nHits}</b> {plv(nHits).replace(/^\d+ /, '')} за все дни</> : 'Пленарного заседания не было'}</div>}</div>}
       {!m && hid && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, margin: '0 0 12px' }}><div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text.primary }}>Календарь законов</div>{thBtn}</div>}
       {!m && <div style={{ display: 'inline-grid', gap: 12 }}><div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div role="tablist" style={{ display: 'flex', flex: 1, padding: 3, height: 44, boxSizing: 'border-box', gap: 2, borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['c', 'Календарь'], ['l', 'Вступают в силу'], ['d', 'Новости']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={mode === k} onClick={() => { if (k === 'l') { CSNAP = null; setCmk(calCk(new Date())); } setMode(k); window.scrollTo(0, 0); }} style={mt2(mode === k)}>{l}</button>)}</div>
