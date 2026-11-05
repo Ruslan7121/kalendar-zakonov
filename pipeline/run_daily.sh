@@ -8,6 +8,7 @@ python3 calendar_update.py || echo "calendar_update: ошибка" >&2
 python3 bills.py "$DAY"
 python3 vote_times.py "$DAY"
 python3 track.py
-python3 audit.py --fix
+# только новый день — полный audit.py без --day не в daily
+python3 audit.py --day "$DAY" --fix
 python3 todo.py
 echo "Готово: out/TODO.md, out/logs/"

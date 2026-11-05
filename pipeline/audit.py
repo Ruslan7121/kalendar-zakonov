@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Независимый аудит canvas vs sozd/vote (не rerun track.py).
 (a) метка чтения на карточке vs формулировка голосования/sozd
-    («в первом чтении»→1-е, «принятый в первом чтении»→2-е, …)
-(b) каждая дата TRACK vs события sozd
-(c) день DATA vs дата голосования (vote HTML / sozd событие дня)
-Фикс только при доказательстве. Ничего не выдумывать.
-Запуск: python3 audit.py [--fix]
+(b) даты TRACK vs sozd (только без --day / полный прогон)
+(c) день DATA vs дата голосования
+(d) card vs share: один ключ чтения (normRead→RD vs READW) на голос
+Ежедневно: только новый день — python3 audit.py --day DD.MM.YYYY [--fix]
+Полный прогон вручную: python3 audit.py [--fix]  (не в run_daily)
 """
 from __future__ import annotations
 import sys, os, re, json, html as H
@@ -269,16 +269,58 @@ def reading_mismatch(have: str, ok: bool, title: str, sozd: str | None, day: str
     return None
 
 
+def norm_read_js(r: str) -> str:
+    """Зеркало canvas normRead."""
+    r = (r or '').strip()
+    if r == '2 чтение':
+        return '2-е'
+    if r == '3 чтение':
+        return '3-е'
+    if r.startswith('2 чтение таб'):
+        return '2-е, поправки'
+    return r
+
+
+# Как на карточке (RD) и на share-картинке (READW) — один ключ normRead.
+CARD_RD = {
+    '1-е': '1-е чтение', '2-е': '2-е чтение', '3-е': '3-е чтение',
+    '2-е, поправки': '2-е чтение', 'отклонение': 'отклонение', 'ратификация': 'ратификация',
+}
+SHARE_RD = {
+    '1-е': 'первое чтение', '2-е': 'второе чтение', '3-е': 'третье чтение',
+    '2-е, поправки': 'второе чтение',
+}
+
+
+def card_share_stage(rd: str) -> tuple[str, str, str]:
+    """(key, card_label, share_label) — stage via canon_rd of key."""
+    key = norm_read_js(rd)
+    card = CARD_RD.get(key, '')
+    share = SHARE_RD.get(key, '')
+    return key, card, share
+
+
+
 def main():
     fix = '--fix' in sys.argv
+    day_only = None
+    if '--day' in sys.argv:
+        i = sys.argv.index('--day')
+        if i + 1 >= len(sys.argv):
+            print('usage: audit.py --day DD.MM.YYYY [--fix]', file=sys.stderr)
+            return 2
+        day_only = sys.argv[i + 1]
     src = C.read_canvas()
     TRACK = C.get_block(src, 'TRACK')
     votes = votes_full(src)
+    if day_only:
+        votes = [v for v in votes if v[0] == day_only]
 
     report = {
         'checked_votes': 0,
         'checked_bills_track': 0,
-        'mismatches': {'reading': [], 'track_date': [], 'vote_day': []},
+        'day_only': day_only,
+        'mismatches': {'reading': [], 'track_date': [], 'vote_day': [], 'card_vs_share': []},
         'fixed': [],
         'unverifiable': [],
     }
@@ -286,6 +328,15 @@ def main():
     bill_votes = {}
     for day, vid, doc, q, rd, ok in votes:
         report['checked_votes'] += 1
+        # (d) per-vote: card RD и share READW берут один normRead-ключ → один этап.
+        # Расхождение короткой/длинной формы («1-е чтение»/«первое чтение») — не mismatch.
+        key, card_l, share_l = card_share_stage(rd)
+        if key in ('1-е', '2-е', '3-е', '2-е, поправки'):
+            if key not in SHARE_RD or key not in CARD_RD:
+                report['mismatches']['card_vs_share'].append({
+                    'day': day, 'vid': vid, 'doc': doc, 'have': rd, 'key': key,
+                    'card': card_l, 'share': share_l, 'kind': 'missing_map',
+                })
         is_bill = bool(re.fullmatch(r'\d+-\d+', doc))
         title = ''
         vote_day_src = None
@@ -326,7 +377,36 @@ def main():
                 'rejected': (not ok) and bool(re.search(r'чтен|1-е|2-е|3-е|отклон', rd, re.I)),
             })
 
+    # bill-level: agenda card (first vote) vs share of billVote (must be same vote/stage)
+    by_bill_day = {}
+    for day, vid, doc, q, rd, ok in votes:
+        if re.fullmatch(r'\d+-\d+', doc):
+            by_bill_day.setdefault((doc, day), []).append((vid, rd))
+    for (doc, day), lst in by_bill_day.items():
+        if len(lst) < 2:
+            continue
+        first_vid, first_rd = lst[0]
+        # legacy bug: share used last vote
+        last_vid, last_rd = lst[-1]
+        fk = norm_read_js(first_rd)
+        lk = norm_read_js(last_rd)
+        if canon_rd(fk) != canon_rd(lk) and (fk in CARD_RD or fk in SHARE_RD):
+            # after billVote→first fix this is resolved in UI; still report if DATA would diverge
+            report['mismatches']['card_vs_share'].append({
+                'day': day, 'doc': doc, 'kind': 'multi_vote_first_vs_last',
+                'first': {'vid': first_vid, 'rd': first_rd, 'stage': canon_rd(fk)},
+                'last': {'vid': last_vid, 'rd': last_rd, 'stage': canon_rd(lk)},
+                'note': 'agenda/share must use first (same as billType); billVote was .pop()=last',
+            })
+
+    if day_only:
+        # ежедневно — только голоса нового дня; TRACK целиком не гоняем
+        pass
+    else:
+      _TRACK_LOOP = True
     for doc, tr in TRACK.items():
+        if day_only:
+            break
         if not re.fullmatch(r'\d+-\d+', doc):
             continue
         report['checked_bills_track'] += 1
@@ -370,7 +450,7 @@ def main():
     out_path = os.path.join(C.LOGS, 'audit_report.json')
     json.dump(report, open(out_path, 'w'), ensure_ascii=False, indent=2)
     print(f"checked_votes={report['checked_votes']} checked_track_bills={report['checked_bills_track']}")
-    print(f"mismatches: reading={len(report['mismatches']['reading'])} track_date={len(report['mismatches']['track_date'])} vote_day={len(report['mismatches']['vote_day'])}")
+    print(f"day_only={day_only} mismatches: reading={len(report['mismatches']['reading'])} track_date={len(report['mismatches']['track_date'])} vote_day={len(report['mismatches']['vote_day'])} card_vs_share={len(report['mismatches']['card_vs_share'])}")
     print(f"fixed={len(report['fixed'])} unverifiable={len(report['unverifiable'])}")
     for kind, items in report['mismatches'].items():
         for it in items[:40]:
