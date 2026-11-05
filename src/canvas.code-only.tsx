@@ -1741,11 +1741,10 @@ function Key() {
 
 function NumRow({ v }: { v: number[] }) {
   const t = useGrokTheme();
-  const d = t.dataviz;
-  const colors = SYS; void d;
+  // t308: INK (brighter/saturated) both themes; always bold; no opacity fade; flex gap only — no separator char (fixes «0.»)
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0 4px', fontFamily: t.font.mono, fontSize: t.font.caption.fontSize, marginTop: 4 }}>
-      {v.map((x, i) => <span key={i}>{i > 0 && <span style={{ color: t.text.tertiary }}> </span>}<span style={{ color: SYS[i], fontWeight: x ? t.weight.semibold : t.weight.regular, opacity: x ? 1 : 0.6 }}>{x}</span></span>)}
+    <div style={{ display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center', gap: 6, fontFamily: t.font.mono, fontSize: t.font.caption.fontSize, fontWeight: 700, marginTop: 8, fontVariantNumeric: 'tabular-nums' }}>
+      {v.map((x, i) => <span key={i} style={{ color: INK[i] }}>{String(x)}</span>)}
     </div>
   );
 }
@@ -1944,24 +1943,28 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
   const tx = (x: CanvasRenderingContext2D, s: string, a: number, b: number, sz: number, w: number, col: string) => { fnt(x, sz, w); x.fillStyle = col; x.fillText(s, a, b); return x.measureText(s).width; };
   const ct = (x: CanvasRenderingContext2D, s: string, cx: number, b: number, sz: number, w: number, col: string) => { fnt(x, sz, w); x.fillStyle = col; x.fillText(s, cx - x.measureText(s).width / 2, b); };
   const capMid = (x: CanvasRenderingContext2D, top: number, sz: number, w: number) => { fnt(x, sz, w); const m = x.measureText('Н'); return top + (m.actualBoundingBoxDescent - m.actualBoundingBoxAscent) / 2; };
+  const ctMid = (x: CanvasRenderingContext2D, s: string, cx: number, cy: number, sz: number, w: number, col: string) => { fnt(x, sz, w); const m = x.measureText(s); const asc = m.actualBoundingBoxAscent || sz * 0.8; const desc = m.actualBoundingBoxDescent || sz * 0.2; x.fillStyle = col; x.fillText(s, cx - m.width / 2, cy - (asc - desc) / 2); };
+  const frCounts = (x: CanvasRenderingContext2D, vv: number[], cx: number, cy: number, r: number) => { const parts = vv.map(String); fnt(x, 18, 800); const gap = 8; const ws = parts.map((s) => x.measureText(s).width); let xx = cx - (ws.reduce((a, b) => a + b, 0) + gap * (parts.length - 1)) / 2; const y = cy + r + 14; parts.forEach((s, j) => { x.fillStyle = COLS4[j]; x.fillText(s, xx, y); xx += ws[j] + gap; }); };
   const pill = (x: CanvasRenderingContext2D, s: string, bx: number, cy: number, h: number, sz: number, padX: number, minW: number, bg: string, col: string) => { fnt(x, sz, 800); const m = x.measureText(s), mc = x.measureText('Н'); const gw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight; const pw = Math.max(minW, Math.round(gw + padX * 2)); rr(x, bx, cy - h / 2, bx + pw, cy + h / 2, h / 2, bg); x.fillStyle = col; x.fillText(s, bx + pw / 2 - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2, cy + (mc.actualBoundingBoxAscent - mc.actualBoundingBoxDescent) / 2); return pw; };
   const wrap = (x: CanvasRenderingContext2D, s: string, mw: number) => { const out: string[] = []; let line = ''; for (const w of s.split(' ')) { const t = (line + ' ' + w).trim(); if (x.measureText(t).width <= mw) line = t; else { if (line) out.push(line); line = w; } } out.push(line); return out; };
   const header = (x: CanvasRenderingContext2D) => {
-    rr(x, L, TOP, RFULL, TOP + 230, 30, GRB);
-    tx(x, 'РАБОТА ГОСДУМЫ', L + 34, TOP + 30, 40, 800, TXC); tx(x, 'И ПРАВИТЕЛЬСТВА', L + 34, TOP + 78, 40, 800, TXC);
-    const dw = tx(x, ds + ' ', L + 34, TOP + 150, 38, 800, TXC); tx(x, wd, L + 34 + dw, TOP + 150, 38, 400, MU);
+    // t308: title+date on top; QR pair on its own row, centred on the card
     const qrs: [string, string][] = [...(bn ? [['Законопроект', `https://sozd.duma.gov.ru/bill/${bn}`] as [string, string]] : []), ['Голосование', `http://vote.duma.gov.ru/vote/${v.id}`]];
-    { const box = 166, qr = 140, gap = 24; const block = qrs.length * box + (qrs.length - 1) * gap;
-      const right = L + Math.round((RFULL - L) * 0.52); const x0 = right + Math.round((RFULL - 20 - right - block) / 2);
+    const box = 156, qr = 132, gap = 22; const block = qrs.length * box + (qrs.length - 1) * gap;
+    const qrTop = TOP + 178; const hh = 360;
+    rr(x, L, TOP, RFULL, TOP + hh, 30, GRB);
+    tx(x, 'РАБОТА ГОСДУМЫ', L + 34, TOP + 28, 40, 800, TXC); tx(x, 'И ПРАВИТЕЛЬСТВА', L + 34, TOP + 76, 40, 800, TXC);
+    const dw = tx(x, ds + ' ', L + 34, TOP + 140, 38, 800, TXC); tx(x, wd, L + 34 + dw, TOP + 140, 38, 400, MU);
+    { const x0 = Math.round((L + RFULL - block) / 2);
       qrs.forEach(([lab, u], k) => {
         const qx = x0 + k * (box + gap); const pad = (box - qr) / 2;
-        rr(x, qx, TOP + 22, qx + box, TOP + 188, 16, '#FFFFFF');
+        rr(x, qx, qrTop, qx + box, qrTop + box, 16, '#FFFFFF');
         const M = qrMatrix(u); const n = M.length + 2, s = qr / n; x.fillStyle = BL;
-        const ox = qx + pad, oy = TOP + 22 + pad;
+        const ox = qx + pad, oy = qrTop + pad;
         M.forEach((row, r) => row.forEach((on, c) => { if (on) x.fillRect(Math.floor(ox + (c + 1) * s), Math.floor(oy + (r + 1) * s), Math.ceil(s), Math.ceil(s)); }));
-        ct(x, lab, qx + box / 2, TOP + 196, 21, 800, BL);
+        ct(x, lab, qx + box / 2, qrTop + box + 8, 20, 800, BL);
       }); }
-    return TOP + 270;
+    return TOP + hh + 36;
   };
   const pillC = v.ok ? ['rgb(220,245,226)', 'rgb(30,140,60)'] : ['rgb(253,228,228)', 'rgb(200,30,30)'];
   const pillT = v.ok ? 'ПРИНЯТ' : 'ОТКЛОНЕН';
@@ -1978,11 +1981,11 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
     const SC = SYS_L;
     const bx0 = L, bx1 = RFULL, by0 = y - 10; rr(x1, bx0, by0, bx1, by0 + (v.fr ? 760 : 380), 28, 'rgb(246,247,249)');
     let yy0 = by0 + 30; tx(x1, 'ИТОГИ И ПО ФРАКЦИЯМ', bx0 + 34, yy0, 26, 800, BL); yy0 += 50;
-    { let lx = bx0 + 34; CATS_S.forEach((n, i) => { x1.fillStyle = SC[i]; x1.beginPath(); x1.arc(lx + 10, yy0 + 15, 10, 0, Math.PI * 2); x1.fill(); const w = tx(x1, n, lx + 28, yy0, 28, 400, MU); lx += 28 + w + 34; }); }
+    { let lx = bx0 + 34; CATS_S.forEach((n, i) => { x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 10, yy0 + 15, 10, 0, Math.PI * 2); x1.fill(); const w = tx(x1, n, lx + 28, yy0, 28, 400, MU); lx += 28 + w + 34; }); }
     yy0 += 60;
     { const cx = bx0 + 34 + 130, cy = yy0 + 130; donut(x1, cx, cy, 130, 38, v.total); ct(x1, String(v.total[0]), cx, cy - 52, 68, 800, TXC); ct(x1, 'за', cx, cy + 24, 38, 700, MU);
       const lx = bx0 + 360, rx = bx1 - 40;
-      CATS_S.forEach((n, i) => { const yy = yy0 + 22 + i * 62; x1.fillStyle = SC[i]; x1.beginPath(); x1.arc(lx + 11, yy + 21, 11, 0, Math.PI * 2); x1.fill(); tx(x1, n, lx + 40, yy, 36, 400, MU); const s = String(v.total[i]); fnt(x1, 40, 800); tx(x1, s, rx - x1.measureText(s).width, yy - 2, 40, 800, SC[i]); }); }
+      CATS_S.forEach((n, i) => { const yy = yy0 + 22 + i * 62; x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 11, yy + 21, 11, 0, Math.PI * 2); x1.fill(); tx(x1, n, lx + 40, yy, 36, 400, MU); const s = String(v.total[i]); fnt(x1, 40, 800); tx(x1, s, rx - x1.measureText(s).width, yy - 2, 40, 800, COLS4[i]); }); }
     yy0 += 290;
     if (v.fr) {
       x1.fillStyle = GRB; x1.fillRect(bx0 + 34, yy0, bx1 - bx0 - 68, 2); yy0 += 30;
@@ -1990,15 +1993,15 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
       F.forEach((n, i) => { const f = v.fr![n]; const cx = bx0 + 20 + step * i + step / 2; const vv = f.v; const sz = f.size || vv.reduce((q, w) => q + w, 0) || 1;
         ct(x1, n, cx, yy0, 30, 800, TXC); ct(x1, `(${f.size})`, cx, yy0 + 38, 22, 400, MU);
         const cy = yy0 + 150; donut(x1, cx, cy, 66, 16, vv); let k = 0; vv.forEach((q, j) => { if (q > vv[k]) k = j; });
-        ct(x1, `${Math.round((100 * vv[k]) / sz)}%`, cx, cy - 28, 32, 800, TXC);
-        { const parts = vv.map(String); fnt(x1, 18, 700); const gap = 6; const ws = parts.map((s) => x1.measureText(s).width); let x = cx - (ws.reduce((a, b) => a + b, 0) + gap * (parts.length - 1)) / 2; parts.forEach((s, j) => { x1.fillStyle = SC[j]; x1.fillText(s, x, cy + 52); x += ws[j] + gap; }); }
+        ctMid(x1, `${Math.round((100 * vv[k]) / sz)}%`, cx, cy, 32, 800, TXC);
+        frCounts(x1, vv, cx, cy, 66);
       });
     }
     y = by0 + (v.fr ? 760 : 380) + 40;
   } else {
   { const cx = L + 130, cy = y + 130; donut(x1, cx, cy, 125, 40, v.total); ct(x1, String(v.total[0]), cx, cy - 46, 66, 800, TXC); ct(x1, 'за', cx, cy + 30, 26, 400, MU);
     const lx = L + 320, rx = RFULL - 20;
-    CATS.forEach((n, i) => { const yy = y + 20 + i * 62; x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 11, yy + 23, 11, 0, Math.PI * 2); x1.fill(); tx(x1, n, lx + 40, yy, 34, 400, TXC); const s = String(v.total[i]); fnt(x1, 38, 800); tx(x1, s, rx - x1.measureText(s).width, yy - 2, 38, 800, i === 0 && v.total[i] ? COLS4[0] : v.total[i] ? TXC : COLS4[3]); }); }
+    CATS.forEach((n, i) => { const yy = y + 20 + i * 62; x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 11, yy + 23, 11, 0, Math.PI * 2); x1.fill(); tx(x1, n, lx + 40, yy, 34, 400, TXC); const s = String(v.total[i]); fnt(x1, 38, 800); tx(x1, s, rx - x1.measureText(s).width, yy - 2, 38, 800, COLS4[i]); }); }
   y += 290;
   if (v.fr) {
     x1.fillStyle = GRB; x1.fillRect(L, y - 1, RLOW - L, 2); y += 24;
@@ -2007,8 +2010,8 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
     F.forEach((n, i) => { const f = v.fr![n]; const cx = L + step * i + step / 2; const vv = f.v; const sz = f.size || vv.reduce((a, b) => a + b, 0) || 1;
       ct(x1, n, cx, y, 28, 800, TXC); ct(x1, `(${f.size})`, cx, y + 36, 20, 400, MU);
       const cy = y + 140; donut(x1, cx, cy, 66, 16, vv); let k = 0; vv.forEach((q, j) => { if (q > vv[k]) k = j; });
-      ct(x1, `${Math.round((100 * vv[k]) / sz)}%`, cx, cy - 26, 32, 800, TXC);
-      { const parts = vv.map(String); fnt(x1, 18, 700); const gap = 6; const ws = parts.map((s) => x1.measureText(s).width); let x = cx - (ws.reduce((a, b) => a + b, 0) + gap * (parts.length - 1)) / 2; parts.forEach((s, j) => { x1.fillStyle = COLS4[j]; x1.fillText(s, x, cy + 52); x += ws[j] + gap; }); }
+      ctMid(x1, `${Math.round((100 * vv[k]) / sz)}%`, cx, cy, 32, 800, TXC);
+      frCounts(x1, vv, cx, cy, 66);
     });
     y += 290;
   }
@@ -2516,16 +2519,16 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
     return (
       <div key={s} role="button" tabIndex={0} onClick={click} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); click(); } }}
         aria-pressed={isS} title={[p && !exp ? 'Пленарное заседание Госдумы' : '', bud ? 'Рассмотрение бюджета' : '', g ? 'Заседание Правительства РФ' : '', com ? 'Работа в комитетах' : '', w === 'regional' ? 'Работа в регионах' : '', isS ? 'Снять выбор' : 'Показать события дня'].filter(Boolean).join(' · ')}
-        style={{ position: 'relative', minWidth: 0, height: m ? 56 : 78, borderRadius: 8, cursor: 'pointer', opacity: inM ? 1 : 0, pointerEvents: inM ? 'auto' : 'none',
+        style={{ position: 'relative', minWidth: 0, height: m ? 56 : 48, borderRadius: 8, cursor: 'pointer', opacity: inM ? 1 : 0, pointerEvents: inM ? 'auto' : 'none',
           background: isS ? SELB : wd ? (w === 'regional' ? reg : neu) : 'transparent',
           boxShadow: isS ? `inset 0 0 0 2px ${SELC}${isT ? `, inset 0 0 0 3.5px ${blue}` : ''}` : isT ? `inset 0 0 0 1.5px ${blue}` : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ marginBottom: m ? 14 : 22, fontSize: m ? 14 : 15, fontWeight: isT ? t.weight.semibold : t.weight.regular, color: isS ? SELC : wd ? t.text.primary : t.text.tertiary, ...(isS ? { fontWeight: 700 } : {}), fontVariantNumeric: 'tabular-nums' }}>{d.getDate()}</span>
-        {(com || (wd && w === 'regional') || p || g || bud) && <span style={{ position: 'absolute', bottom: 5, left: 2, right: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: m ? 2 : 3 }}>
-          {wd && w === 'regional' && <i style={{ width: m ? 9 : 11, height: 5, borderRadius: 1.5, flex: 'none', background: regD }} />}
-          {com && <i style={{ width: m ? 9 : 11, height: 5, borderRadius: 1.5, flex: 'none', background: comD }} />}
-          {p && !exp && <i style={{ width: m ? 9 : 11, height: 5, borderRadius: 1.5, flex: 'none', background: blue }} />}
-          {g && <i style={{ width: m ? 9 : 11, height: 5, borderRadius: 1.5, flex: 'none', background: green }} />}
-          {bud && <i style={{ width: m ? 9 : 11, height: 5, borderRadius: 1.5, flex: 'none', background: amber }} />}
+        <span style={{ marginBottom: m ? 14 : 12, fontSize: m ? 14 : 15, fontWeight: isT ? t.weight.semibold : t.weight.regular, color: isS ? SELC : wd ? t.text.primary : t.text.tertiary, ...(isS ? { fontWeight: 700 } : {}), fontVariantNumeric: 'tabular-nums' }}>{d.getDate()}</span>
+        {(com || (wd && w === 'regional') || p || g || bud) && <span style={{ position: 'absolute', bottom: 4, left: 2, right: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: m ? 2 : 2 }}>
+          {wd && w === 'regional' && <i style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: regD }} />}
+          {com && <i style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: comD }} />}
+          {p && !exp && <i style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: blue }} />}
+          {g && <i style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: green }} />}
+          {bud && <i style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: amber }} />}
         </span>}
       </div>);
   };
@@ -2535,7 +2538,7 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
     for (let i = 0; i < off; i++) ds.push([new Date(first.getFullYear(), first.getMonth(), i - off + 1), false]);
     for (let i = 1; i <= n; i++) ds.push([new Date(first.getFullYear(), first.getMonth(), i), true]);
     return (
-      <div key={first.getMonth()} style={{ ...card(t), padding: m ? '14px 12px' : '14px 16px', flex: m ? '1 1 100%' : '1 1 26rem', minWidth: 0 }}>
+      <div key={first.getMonth()} style={{ ...card(t), padding: m ? '14px 12px' : '12px 12px', flex: m ? '1 1 100%' : '0 0 auto', width: m ? undefined : '100%', maxWidth: m ? undefined : 300, minWidth: 0 }}>
         {!m && <div style={{ fontWeight: t.weight.semibold, fontSize: 15, marginBottom: 8, color: t.text.primary }}>{MONN[first.getMonth()]} {first.getFullYear()}</div>}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4 }}>
           {WDS.map((x, i) => <span key={x} style={{ fontSize: 12, textAlign: 'center', color: i > 4 ? t.text.tertiary : t.text.secondary, paddingBottom: 2 }}>{x}</span>)}
@@ -2618,7 +2621,7 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
     <div>
       {m && !(fon || !!qn) && <div style={{ display: 'flex', marginBottom: 12 }}><LawsSw m mk={cm} setMk={setCm} ks={cks} cnt={calCnt} /></div>}
       <div style={!m ? { display: 'flex', gap: 20, alignItems: 'flex-start' } : undefined}>
-      <div style={fon || !!qn ? { display: 'none' } : !m ? { flex: '0 0 300px', position: 'sticky', top: 'calc(var(--gd-top, 0px) + 8px)', maxHeight: 'calc(100vh - var(--gd-top, 0px) - 16px)', overflowY: 'auto', alignSelf: 'flex-start' } : undefined}>
+      <div style={fon || !!qn ? { display: 'none' } : !m ? { flex: '0 0 300px', maxWidth: 300, position: 'sticky', top: 'calc(var(--gd-top, 0px) + 8px)', maxHeight: 'calc(100vh - var(--gd-top, 0px) - 16px)', overflowY: 'auto', alignSelf: 'flex-start' } : undefined}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 10 }}>{[cm].map((k) => grid(new Date(+k.slice(3), +k.slice(0, 2) - 1, 1)))}</div>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: inf ? 8 : 16, transition: 'margin .25s ease' }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6, fontSize: m ? 13 : 12, lineHeight: '16px', color: t.text.secondary, paddingTop: m ? 14 : 6 }}>
