@@ -1925,8 +1925,8 @@ function cardText(v: Vote, day: string) {
   const bs = bpx.bs && bpx.bs.length ? bpx.bs : null;
   return { sut, who, next, bs };
 }
-const READW: Record<string, string> = { '1-е': 'первое чтение', '2-е': 'второе чтение', '3-е': 'третье чтение', '2-е, поправки': 'второе чтение, поправки' };
-const readWord = (r: string) => { const n = normRead(r); return READW[n] || (n && n !== '—' ? n : ''); };
+const READW: Record<string, string> = { '1-е': 'первое чтение', '2-е': 'второе чтение', '3-е': 'третье чтение', '2-е, поправки': 'второе чтение' };
+const readWord = (r: string) => { const n = normRead(r); return (n && READW[n]) || ''; };
 function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
   const W = 1080, H = 1920, L = 80, TOP = 290, RFULL = 1000, RLOW = 915, RY = 1200;
   const FF = 'Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, "DejaVu Sans", sans-serif';
@@ -2656,8 +2656,8 @@ const calCnt = (k: string) => CAL.p.filter((x: any) => calCk(pd(x.d)) === k).len
 const AGSH: Record<string, string> = { '1291843-8': 'Больничные для иностранцев', '1205970-8': 'Сервис рассрочки', '1246473-8': 'Централизованная кадровая работа', '332027-8': 'Продажа вина через Почту России', '332033-8': 'Дистанционная продажа вина', '1327114-8': 'Архивное дело', '1249111-8': 'Ответственность почты за платежки', '1240307-8': 'Права на секреты производства' };
 let SHB: Record<string, string> | null = null;
 function agShort(bn: string, raw: string): string { if (!SHB) { SHB = {}; for (const d of Object.keys(DATA)) for (const l of DATA[d].split('\n')) { const p = l.split('|'); if (p[1] && SHORT[p[0]] && !SHB[p[1]]) SHB[p[1]] = SHORT[p[0]]; } } return SHB[bn] || AGSH[bn] || raw; }
-function billVote(bn: string, pref?: string): [string, string] | null { const f = (d: string) => { const l = (DATA[d] || '').split('\n').filter((x) => x.split('|')[1] === bn).pop(); return l ? [d, l.split('|')[0]] as [string, string] : null; }; if (pref && DATA[pref]) { const r = f(pref); if (r) return r; } for (const d of [...DAYS].reverse()) { const r = f(d); if (r) return r; } return null; }
-const RD: Record<string, string> = { '1-е': '1-е чтение', '2-е': '2-е чтение', '3-е': '3-е чтение', '2-е, поправки': 'поправки, 2-е чтение', 'отклонение': 'отклонение', 'ратификация': 'ратификация' };
+function billVote(bn: string, pref?: string): [string, string] | null { const f = (d: string) => { const l = (DATA[d] || '').split('\n').find((x) => x.split('|')[1] === bn); return l ? [d, l.split('|')[0]] as [string, string] : null; }; if (pref && DATA[pref]) { const r = f(pref); if (r) return r; } for (const d of [...DAYS].reverse()) { const r = f(d); if (r) return r; } return null; }
+const RD: Record<string, string> = { '1-е': '1-е чтение', '2-е': '2-е чтение', '3-е': '3-е чтение', '2-е, поправки': '2-е чтение', 'отклонение': 'отклонение', 'ратификация': 'ратификация' };
 const RSTAT: Record<string, number> = {};
 function billType(bn: string, d: string, ag: string, full: string): string { const ls = (DATA[d] || '').split('\n').map((l) => l.split('|')).filter((z) => z[1] === bn); for (const z of ls) { const r = RD[normRead(z[3] || '')]; if (r) { RSTAT[bn + d] = 1; return r; } } if (RD[ag]) { RSTAT[bn + d] = 2; return RD[ag]; } if (/^О ратификации/.test(full || '')) { RSTAT[bn + d] = 3; return 'ратификация'; } RSTAT[bn + d] = 0; return ''; }
 if (typeof window !== 'undefined') (window as any).gdRStat = RSTAT;
