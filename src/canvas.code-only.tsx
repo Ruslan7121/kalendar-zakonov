@@ -1741,10 +1741,10 @@ function Key() {
 
 function NumRow({ v }: { v: number[] }) {
   const t = useGrokTheme();
-  // t308: INK (brighter/saturated) both themes; always bold; no opacity fade; flex gap only — no separator char (fixes «0.»)
+  // t310: same SYS colours as big-donut legend (za/protiv/vozderzh/ne golos); bold; full opacity including zeros; no INK
   return (
     <div style={{ display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center', gap: 6, fontFamily: t.font.mono, fontSize: t.font.caption.fontSize, fontWeight: 700, marginTop: 8, fontVariantNumeric: 'tabular-nums' }}>
-      {v.map((x, i) => <span key={i} style={{ color: INK[i] }}>{String(x)}</span>)}
+      {v.map((x, i) => <span key={i} style={{ color: SYS[i] }}>{String(x)}</span>)}
     </div>
   );
 }
@@ -1943,8 +1943,20 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
   const tx = (x: CanvasRenderingContext2D, s: string, a: number, b: number, sz: number, w: number, col: string) => { fnt(x, sz, w); x.fillStyle = col; x.fillText(s, a, b); return x.measureText(s).width; };
   const ct = (x: CanvasRenderingContext2D, s: string, cx: number, b: number, sz: number, w: number, col: string) => { fnt(x, sz, w); x.fillStyle = col; x.fillText(s, cx - x.measureText(s).width / 2, b); };
   const capMid = (x: CanvasRenderingContext2D, top: number, sz: number, w: number) => { fnt(x, sz, w); const m = x.measureText('Н'); return top + (m.actualBoundingBoxDescent - m.actualBoundingBoxAscent) / 2; };
-  const ctMid = (x: CanvasRenderingContext2D, s: string, cx: number, cy: number, sz: number, w: number, col: string) => { fnt(x, sz, w); const m = x.measureText(s); const asc = m.actualBoundingBoxAscent || sz * 0.8; const desc = m.actualBoundingBoxDescent || sz * 0.2; x.fillStyle = col; x.fillText(s, cx - m.width / 2, cy - (asc - desc) / 2); };
-  const frCounts = (x: CanvasRenderingContext2D, vv: number[], cx: number, cy: number, r: number) => { const parts = vv.map(String); fnt(x, 18, 800); const gap = 8; const ws = parts.map((s) => x.measureText(s).width); let xx = cx - (ws.reduce((a, b) => a + b, 0) + gap * (parts.length - 1)) / 2; const y = cy + r + 14; parts.forEach((s, j) => { x.fillStyle = COLS4[j]; x.fillText(s, xx, y); xx += ws[j] + gap; }); };
+  const ctMid = (x: CanvasRenderingContext2D, s: string, cx: number, cy: number, sz: number, w: number, col: string) => {
+    fnt(x, sz, w);
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    const m = x.measureText(s);
+    const asc = m.actualBoundingBoxAscent || 0;
+    const desc = m.actualBoundingBoxDescent || 0;
+    // with middle baseline, ink centre is at y - (asc - desc) / 2 — shift so ink centre == (cx, cy)
+    x.fillStyle = col;
+    x.fillText(s, cx, cy + (asc - desc) / 2);
+    x.textAlign = 'start';
+    x.textBaseline = 'top'; // rest of drawCards assumes top
+  };
+  const frCounts = (x: CanvasRenderingContext2D, vv: number[], cx: number, cy: number, r: number) => { const parts = vv.map(String); fnt(x, 22, 800); const gap = 8; const ws = parts.map((s) => x.measureText(s).width); let xx = cx - (ws.reduce((a, b) => a + b, 0) + gap * (parts.length - 1)) / 2; const y = cy + r + 16; parts.forEach((s, j) => { x.fillStyle = COLS4[j]; x.globalAlpha = 1; x.fillText(s, xx, y); xx += ws[j] + gap; }); };
   const pill = (x: CanvasRenderingContext2D, s: string, bx: number, cy: number, h: number, sz: number, padX: number, minW: number, bg: string, col: string) => { fnt(x, sz, 800); const m = x.measureText(s), mc = x.measureText('Н'); const gw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight; const pw = Math.max(minW, Math.round(gw + padX * 2)); rr(x, bx, cy - h / 2, bx + pw, cy + h / 2, h / 2, bg); x.fillStyle = col; x.fillText(s, bx + pw / 2 - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2, cy + (mc.actualBoundingBoxAscent - mc.actualBoundingBoxDescent) / 2); return pw; };
   const wrap = (x: CanvasRenderingContext2D, s: string, mw: number) => { const out: string[] = []; let line = ''; for (const w of s.split(' ')) { const t = (line + ' ' + w).trim(); if (x.measureText(t).width <= mw) line = t; else { if (line) out.push(line); line = w; } } out.push(line); return out; };
   const header = (x: CanvasRenderingContext2D) => {
