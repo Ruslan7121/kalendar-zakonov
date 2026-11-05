@@ -1739,12 +1739,14 @@ function Key() {
   );
 }
 
-function NumRow({ v }: { v: number[] }) {
+function NumRow({ v, m }: { v: number[]; m?: boolean }) {
   const t = useGrokTheme();
-  // t310: same SYS colours as big-donut legend (za/protiv/vozderzh/ne golos); bold; full opacity including zeros; no INK
+  // t315: never wrap digits (iPhone was splitting 324→32/4). nowrap + keep-all; on mobile shrink gap/font and allow row wider than donut, centered.
+  const gap = m ? 3 : 6;
+  const fs = m ? 10 : t.font.caption.fontSize;
   return (
-    <div style={{ display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center', gap: 6, fontFamily: t.font.mono, fontSize: t.font.caption.fontSize, fontWeight: 700, marginTop: 8, fontVariantNumeric: 'tabular-nums' }}>
-      {v.map((x, i) => <span key={i} style={{ color: SYS[i] }}>{String(x)}</span>)}
+    <div style={{ display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center', gap, fontFamily: t.font.mono, fontSize: fs, fontWeight: 700, marginTop: 6, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', width: 'max-content', maxWidth: 'none', marginLeft: 'auto', marginRight: 'auto', wordBreak: 'keep-all', overflowWrap: 'normal' }}>
+      {v.map((x, i) => <span key={i} style={{ color: SYS[i], whiteSpace: 'nowrap', wordBreak: 'keep-all', flex: 'none', display: 'inline-block' }}>{String(x)}</span>)}
     </div>
   );
 }
@@ -2122,10 +2124,10 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
   const box = { background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px', minWidth: 0 } as const;
   const h = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: (DK ? '#409CFF' : 'rgb(10,100,214)'), marginBottom: 4 } as const;
   const fcells = v.fr ? F.map((f) => { const fv = v.fr![f].v; const p = pos(fv); let k = 0; fv.forEach((q, j) => { if (q > fv[k]) k = j; }); return (
-            <div key={f} style={{ textAlign: 'center', flex: m ? '0 0 58px' : '1 0 88px', minWidth: m ? 58 : 88, scrollSnapAlign: 'start' }}>
+            <div key={f} style={{ textAlign: 'center', flex: m ? '0 0 100px' : '1 0 88px', minWidth: m ? 100 : 88, scrollSnapAlign: 'start', overflow: 'visible' }}>
               <div style={{ fontSize: m ? 11 : 12, fontWeight: 700, color: t.text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f}{m ? <div style={{ fontWeight: 400, color: t.text.tertiary, fontSize: 10 }}>({v.fr![f].size})</div> : <span style={{ fontWeight: 400, color: t.text.tertiary }}> ({v.fr![f].size})</span>}</div>
               <div style={{ width: m ? 50 : 80, margin: '2px auto 0' }}><Donut v={fv} size={m ? 50 : 80} center={p.pct} nw={nw} /></div>
-              <NumRow v={fv} />
+              <NumRow v={fv} m={!!m} />
             </div>); }) : null;
   const resD = v.fr && !m ? (
     <div style={{ ...box, minWidth: 0 }}>
