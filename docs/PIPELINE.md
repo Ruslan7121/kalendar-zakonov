@@ -8,7 +8,7 @@
 | calendar_update.py, embed_calendar.py | календарь (CAL) | out/calendar.json, canvas |
 | bills.py [дни] | все законопроекты: sozd + пояснительная записка (docx/pdf) | out/extracts/bills/*.json, logs/bills_fail.log |
 | vote_times.py [дни] | время голосования с vote.duma.gov.ru | блок VT, logs/vote_time_fail.log |
-| track.py [номера] | этапы закона с sozd, дата вступления в силу с kremlin.ru (только при совпадении номера и даты) | блок TRACK, LAWS (auto), logs/track_fail.log, logs/laws_auto.log |
+| track.py [номера] [--refresh] | все этапы (in/kom/r1/r2/r3/sf/sign/pub/force) с sozd; отклонение = дата голосования; force с kremlin.ru при совпадении номера и даты. Без аргументов — все bills из DATA. TRACK_QUICK=1 — только локальный кэш duma/bills. | блок TRACK, LAWS (auto), logs/track_fail.log, logs/laws_auto.log |
 | budget.py [номер] [docx] | бюджетный блок из пояснительной записки | блок BUDGET |
 | todo.py | список текстов для бота | out/TODO.md |
 | bp_merge.py | перенос текстов бота (out/days/*.json) в BP/PROC | canvas |
