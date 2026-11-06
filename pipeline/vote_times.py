@@ -49,6 +49,18 @@ def fetch_deputy(page=1, day_from='', day_to='', tries=3):
             time.sleep(1.5 * (attempt + 1))
     return ''
 
+def fetch_vote_direct(vid):
+    """Запасной способ: прямой запрос к /vote/{id}."""
+    for scheme in ('http', 'https'):
+        url = f'{scheme}://vote.duma.gov.ru/vote/{vid}'
+        out = f'/tmp/vt_{vid}_{scheme}.html'
+        if C.fetch(url, out, 60):
+            html = open(out, errors='ignore').read()
+            m = re.search(r'(\d\d\.\d\d\.\d{4}).{0,80}?(\d\d:\d\d:\d\d)', html)
+            if m:
+                return m.group(1), m.group(2)
+    return None, None
+
 def load_all(need_days=None):
     """Paginate deputy pages; optionally narrow by from/to covering need_days."""
     day_from = day_to = ''
@@ -89,7 +101,17 @@ if __name__ == '__main__':
     if mp is None:
         C.log('vote_time_fail.log', f'ABORT: {status}')
         print('FAIL:', status)
-        sys.exit(1)
+        # запасной режим: пробуем по одному голосованию
+        mp = {}
+        for vid, want_day in need.items():
+            day, tm = fetch_vote_direct(vid)
+            if day and tm and day == want_day:
+                mp[vid] = (day, tm)
+            else:
+                C.log('vote_time_fail.log', f'{want_day} {vid}: нет данных (прямой запрос)')
+        if not mp:
+            sys.exit(1)
+        status = 'fallback direct'
     n = 0
     for vid, want_day in need.items():
         if vid not in mp:
