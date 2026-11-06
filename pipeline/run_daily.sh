@@ -4,11 +4,19 @@
 set -u
 cd "$(dirname "$0")"
 DAY="${1:-$(date +%d.%m.%Y)}"
+echo "[календарь] $DAY"
 python3 calendar_update.py || echo "calendar_update: ошибка" >&2
+echo "[законопроекты] $DAY"
 python3 bills.py "$DAY"
+echo "[время голосований] $DAY"
 python3 vote_times.py "$DAY"
+echo "[путь закона]"
 python3 track.py
-# только новый день — полный audit.py без --day не в daily
+echo "[аудит] $DAY"
 python3 audit.py --day "$DAY" --fix
+echo "[список задач]"
 python3 todo.py
+echo ""
+echo "=== Сводка ==="
+bash summary.sh "$DAY"
 echo "Готово: out/TODO.md, out/logs/"
