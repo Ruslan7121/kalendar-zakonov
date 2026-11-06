@@ -5,20 +5,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Календарь законов</title>
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #1a1a1a; }
-    h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
-    .subtitle { color: #555; margin-bottom: 2rem; }
-    a.button { display: inline-block; background: #1a5fb4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; }
-    a.button:hover { background: #164a8c; }
-    .note { margin-top: 2rem; font-size: 0.9rem; color: #666; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #fff; color: #1a1a1a; }
+    header { border-bottom: 1px solid #e5e5e5; padding: 16px 24px; display: flex; align-items: center; gap: 24px; }
+    header h1 { font-size: 1.2rem; margin: 0; font-weight: 600; }
+    .container { display: flex; max-width: 1200px; margin: 0 auto; min-height: calc(100vh - 60px); }
+    .sidebar { width: 260px; padding: 16px; border-right: 1px solid #e5e5e5; overflow-y: auto; }
+    .main { flex: 1; padding: 24px 32px; }
+    .day { padding: 10px 8px; cursor: pointer; border-radius: 6px; margin-bottom: 2px; }
+    .day:hover { background: #f5f5f5; }
+    .day.selected { background: #e8f0fe; }
+    .day-date { font-weight: 600; font-size: 0.9rem; }
+    .day-count { font-size: 0.8rem; color: #666; }
+    .vote { border: 1px solid #e5e5e5; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+    .vote-title { font-weight: 500; margin-bottom: 6px; line-height: 1.4; }
+    .vote-meta { font-size: 0.85rem; color: #555; }
+    .status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; margin-left: 8px; }
+    .status.ok { background: #e8f5e9; color: #2e7d32; }
+    .status.no { background: #ffebee; color: #c62828; }
+    .empty { color: #999; padding: 60px 20px; text-align: center; }
+    h2 { margin: 0 0 16px; font-size: 1.3rem; }
   </style>
 </head>
 <body>
-  <h1>Календарь законов</h1>
-  <p class="subtitle">Помогает быть в курсе новых законопроектов, результатов голосований и дат вступления законов в силу.</p>
-  
-  <a class="button" href="https://golosovaniya-gosdumy-22-10-2026-54jr.pages.grok.bot">Открыть календарь</a>
-  
-  <p class="note">Актуальная версия страницы работает на Grok Pages. Исходный код — в этом репозитории.</p>
+  <header>
+    <h1>Календарь законов</h1>
+  </header>
+  <div class="container">
+    <aside class="sidebar" id="days"></aside>
+    <main class="main" id="content">
+      <div class="empty">Загрузка данных...</div>
+    </main>
+  </div>
+  <script>
+    let DATA = {};
+    fetch('data.json').then(r => r.json()).then(d => {
+      DATA = d;
+      renderDays();
+      const days = Object.keys(DATA).sort().reverse();
+      if (days.length) selectDay(days[0]);
+    }).catch(() => {
+      document.getElementById('content').innerHTML = '<div class="empty">Данные не найдены. Файл data.json отсутствует.</div>';
+    });
+
+    function renderDays() {
+      const days = Object.keys(DATA).sort().reverse();
+      document.getElementById('days').innerHTML = days.map(d => {
+        const n = DATA[d].length;
+        return `<div class="day" data-day="${d}"><div class="day-date">${d}</div><div class="day-count">${n} голосований</div></div>`;
+      }).join('');
+      document.querySelectorAll('.day').forEach(el => {
+        el.onclick = () => selectDay(el.dataset.day);
+      });
+    }
+
+    function selectDay(day) {
+      document.querySelectorAll('.day').forEach(el => el.classList.remove('selected'));
+      const sel = document.querySelector(`[data-day="${day}"]`);
+      if (sel) sel.classList.add('selected');
+      const votes = DATA[day] || [];
+      const el = document.getElementById('content');
+      if (!votes.length) {
+        el.innerHTML = `<h2>${day}</h2><div class="empty">Нет голосований</div>`;
+        return;
+      }
+      el.innerHTML = `<h2>${day}</h2>` + votes.map(v => {
+        const ok = String(v.ok) === '1';
+        return `<div class="vote">
+          <div class="vote-title">${v.title}</div>
+          <div class="vote-meta">${v.doc && v.doc !== '—' ? v.doc + ' · ' : ''}<span class="status ${ok ? 'ok' : 'no'}">${ok ? 'Принят' : 'Отклонён'}</span></div>
+        </div>`;
+      }).join('');
+    }
+  </script>
 </body>
 </html>
