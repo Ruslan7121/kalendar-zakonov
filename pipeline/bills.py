@@ -3,7 +3,8 @@
 Для каждого номера: страница sozd (сохраняется), пояснительная записка (docx/pdf -> текст).
 Улучшения: concurrency + polite rate limit, retries/backoff, timeouts, resume, alt endpoints, cache.
 Ошибки: out/logs/bills_fail.log (номер, причина). Итог: out/extracts/bills/<номер>.json
-Запуск: python3 bills.py [DD.MM.YYYY ...]   (без аргументов — все дни из canvas)"""
+Запуск: python3 bills.py [DD.MM.YYYY ...]   (без аргументов — все дни из canvas)
+         python3 bills.py --one 123456-8   (ручная догрузка одного)"""
 import sys, os, re, json, zipfile, subprocess, time, threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 sys.path.insert(0, os.path.dirname(__file__)); import common as C
@@ -101,6 +102,13 @@ def one(n, day, vid):
     return 'ok'
 
 if __name__ == '__main__':
+    if len(sys.argv) >= 3 and sys.argv[1] == '--one':
+        n = sys.argv[2]
+        print(f'Ручная догрузка: {n}')
+        r = one(n, 'manual', '0')
+        print(n, r)
+        sys.exit(0 if r != 'fail' else 1)
+
     src = C.read_canvas(); days = sys.argv[1:]
     items = [(d, v, n) for d, v, n, q, r in C.votes(src) if re.fullmatch(r'\d+-\d+', n) and (not days or d in days)]
     seen = {}
