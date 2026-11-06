@@ -3,6 +3,20 @@
 Помогает людям быть в курсе новых законопроектов, результатов голосований и дат вступления законов в силу.  
 Пользователь может посмотреть, как закон выглядел раньше и что изменилось.
 
+## Открыть страницу
+
+**Актуальная версия:** [golosovaniya-gosdumy-22-10-2026-54jr.pages.grok.bot](https://golosovaniya-gosdumy-22-10-2026-54jr.pages.grok.bot)
+
+### GitHub Pages
+
+1. Открой репозиторий → **Settings** → **Pages**
+2. В разделе Source выбери **Deploy from a branch**
+3. Выбери ветку `main` и папку `/` (root)
+4. Нажми **Save**
+
+Через минуту страница будет доступна по адресу:  
+`https://ruslan7121.github.io/kalendar-zakonov`
+
 ## Быстрый запуск в браузере (GitHub Codespaces)
 
 1. Открой репозиторий: [github.com/Ruslan7121/kalendar-zakonov](https://github.com/Ruslan7121/kalendar-zakonov)
