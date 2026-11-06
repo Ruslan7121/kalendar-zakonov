@@ -4,9 +4,10 @@
 
 | Скрипт | Что делает | Пишет |
 |---|---|---|
-| run_daily.sh [ДД.ММ.ГГГГ] | прогон за день: calendar → bills → vote_times → track → **audit.py --day** → todo. Полный `audit.py` без `--day` в daily не входит. | — |
+| run_daily.sh [ДД.ММ.ГГГГ] | прогон за день с прогрессом: calendar → bills → vote_times → track → **audit.py --day** → todo + сводка. | — |
 | calendar_update.py, embed_calendar.py | календарь (CAL) | out/calendar.json, canvas |
 | bills.py [дни] | все законопроекты: sozd + пояснительная записка (docx/pdf). **Ускорено:** 10 воркеров, задержка 0.12 с. | out/extracts/bills/*.json, logs/bills_fail.log |
+| bills.py --one <номер> | ручная догрузка одного законопроекта | out/extracts/bills/<номер>.json |
 | vote_times.py [дни] | время голосования с vote.duma.gov.ru. **Запасной способ:** прямой запрос к /vote/{id}. | блок VT, logs/vote_time_fail.log |
 | track.py [номера] [--refresh] | все этапы (in/kom/r1/r2/r3/sf/sign/pub/force) с sozd; отклонение = дата голосования; force с kremlin.ru при совпадении номера и даты. Без аргументов — все bills из DATA. TRACK_QUICK=1 — только локальный кэш duma/bills. | блок TRACK, LAWS (auto), logs/track_fail.log, logs/laws_auto.log |
 | audit.py [--day ДД.ММ.ГГГГ] [--fix] | независимый аудит canvas vs sozd/vote: метка чтения, TRACK-даты (только полный прогон), день DATA vs дата голосования, card_vs_share (карточка и шаринг — одна SoT чтения). В daily — только `--day`. | out/logs/audit_*.json |
@@ -14,6 +15,7 @@
 | todo.py | список текстов для бота | out/TODO.md |
 | bp_merge.py | перенос текстов бота (out/days/*.json) в BP/PROC | canvas |
 | strip_code_only.py | src/canvas.code-only.tsx | out/canvas.code-only.tsx |
+| summary.sh [день] | сводка по логам парсинга | — |
 | fetch.sh, testdom.sh | загрузка через RU-прокси, проверка прокси | — |
 
 Блоки в canvas.tsx, которые переписывает программа: `/* VT:start */…/* VT:end */`, `/* TRACK:start */…/* TRACK:end */`, `/* BUDGET:start */…/* BUDGET:end */`.
