@@ -10,9 +10,9 @@ sys.path.insert(0, os.path.dirname(__file__)); import common as C
 D = os.path.join(C.EXTR, 'bills'); os.makedirs(D, exist_ok=True)
 CACHE = os.path.join(C.EXTR, 'bills_html'); os.makedirs(CACHE, exist_ok=True)
 
-# polite: max N in flight, min gap between fetch starts
-WORKERS = int(os.environ.get('BILLS_WORKERS', '3'))
-MIN_GAP = float(os.environ.get('BILLS_GAP', '0.35'))
+# ускорено: больше воркеров, меньше задержка
+WORKERS = int(os.environ.get('BILLS_WORKERS', '10'))
+MIN_GAP = float(os.environ.get('BILLS_GAP', '0.12'))
 _lock = threading.Lock()
 _last = [0.0]
 
