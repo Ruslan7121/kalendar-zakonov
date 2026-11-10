@@ -10,6 +10,8 @@ echo "[законопроекты] $DAY"
 python3 bills.py "$DAY"
 echo "[время голосований] $DAY"
 python3 vote_times.py "$DAY"
+echo "[органы власти: СФ, Минфин, Минтруд, Минюст, ЦБ] $DAY"
+python3 organs.py --day "$DAY" --embed || echo "organs: ошибка (см. out/organs/status.json)" >&2
 echo "[путь закона]"
 python3 track.py
 echo "[аудит] $DAY"
