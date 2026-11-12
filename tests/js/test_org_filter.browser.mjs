@@ -1,4 +1,4 @@
-// Правило 12 в настоящем браузере (12.11.2026): в выпадающем фильтре органов календаря есть «Убрать все» (снимает все галочки)
+// Правило 12 в настоящем браузере (12.11.2026; с П9 органы — первая группа общей панели «Фильтры»): есть «Убрать все» (снимает все галочки)
 // и «Все» (отмечает все органы); после «Убрать все» календарь показывает подсказку [data-cofempty], список остаётся открытым,
 // отдельная галочка по-прежнему переключается. 390 px (мобильный, touch) и 1366 px.
 // Как test_share_scroll.browser.mjs: сборка во временную папку, локальный сервер, Chrome по DevTools; без Chrome — SKIP
@@ -37,7 +37,7 @@ const cmd = (method, params = {}, sessionId) => new Promise((ok, no) => { const 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const ST = `(() => { const g = document.querySelector('[data-calorg] [role=group]'); const bx = g ? [...g.querySelectorAll('input[type=checkbox]')] : [];
-  const tg = document.querySelector('[data-calorg] [aria-haspopup]');
+  const tg = document.querySelector('[data-cofsum]');
   return { open: !!g, n: bx.length, on: bx.filter((b) => b.checked).length, none: !!(g && g.querySelector('[data-cofnone]')), allP: g ? g.querySelector('button[aria-pressed]:not([data-cofnone])')?.getAttribute('aria-pressed') : null,
     noneP: g ? g.querySelector('[data-cofnone]')?.getAttribute('aria-pressed') : null, empty: !!document.querySelector('[data-cofempty]'), label: tg ? tg.textContent : '' }; })()`;
 const CLICK = (sel) => `(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return false; e.click(); return true; })()`;
@@ -52,11 +52,11 @@ try {
     if (W.mobile) await cmd('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, s);
     await cmd('Page.navigate', { url: `${BASE}/` }, s);
     const ev = async (x) => (await cmd('Runtime.evaluate', { expression: x, returnByValue: true }, s)).result.value;
-    const t0 = Date.now(); while (!(await ev('!!document.querySelector("[data-calorg] [aria-haspopup]")')) && Date.now() - t0 < 15000) await sleep(300);
+    const t0 = Date.now(); while (!(await ev('!!document.querySelector("[data-zbar-open]")')) && Date.now() - t0 < 15000) await sleep(300);
     const tag = `${W.w}px`; const chk = (c, msg) => { if (!c) fails.push(`${tag}: ${msg}`); };
     const shot = async (n) => { if (!process.env.GD_SHOTS) return; await cmd('Runtime.evaluate', { expression: `document.querySelector('[data-calorg]').scrollIntoView({block:'start'}); window.scrollBy(0, -${W.mobile ? 160 : 140})` }, s); await sleep(300);
       const p = await cmd('Page.captureScreenshot', { format: 'png' }, s); fs.mkdirSync(process.env.GD_SHOTS, { recursive: true }); fs.writeFileSync(path.join(process.env.GD_SHOTS, `orgfilter_${W.w}_${n}.png`), Buffer.from(p.data, 'base64')); };
-    chk(await ev(CLICK('[data-calorg] [aria-haspopup]')), 'нет кнопки «Фильтр»'); await sleep(400);
+    chk(await ev(CLICK('[data-zbar-open]')), 'нет кнопки «Фильтры»'); await sleep(400);
     let r = await ev(ST); rep.push(`${tag} открыт: ${JSON.stringify(r)}`);
     chk(r.open && r.n === 8 && r.on === 8 && r.none, `список не открылся или нет «Убрать все» ${JSON.stringify(r)}`);
     chk(await ev(`[...document.querySelectorAll('[data-calorg] [role=group] button')].some((b) => /^Убрать все/.test(b.textContent))`), 'нет текста «Убрать все»');
