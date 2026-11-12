@@ -2974,6 +2974,55 @@ function buildFS0(day: string, votes: Vote[]): Record<string, FSub[]> {
   const G: FSub[] = gov.length ? [['Главное за день', gov.map((g) => [`${g[0]}: ${g[1]}`, S.nv ? g[2] : `http://government.ru/news/${g[2]}/`] as [string, string])]] : [];
   return { 'Госдума': D, 'Правительство': G };
 }
+/* 12.11.2026: раздел «Новости» — лента официальных новостей по дням (новые сверху) с фильтром по источнику;
+   вместо переключателя дня и «Сводки дня». Месяцы подгружаются кнопкой «Показать ранее». */
+const NSRC: [string, string][] = [['gd', 'Госдума'], ['gov', 'Правительство'], ['sf', 'Совет Федерации'], ['cbr', 'Банк России'], ['minfin', 'Минфин'], ['mintrud', 'Минтруд'], ['minjust', 'Минюст']];
+type NItem = { o: string; sec: string; tag: string | null; text: string; sub: string; u: string };
+function newsItems(d: string): NItem[] {
+  const out: NItem[] = []; const fs = buildFS(d, DATA[d] ? parse(DATA[d]) : []);
+  ([['gd', fs['Госдума'] || []], ['gov', fs['Правительство'] || []]] as [string, FSub[]][]).forEach(([o, subs]) => subs.forEach(([h, it]) => it.forEach(([x, u]) => {
+    const [tg, tx] = /Главное|Постановления|Законопроекты/.test(h) ? splitTag(x) : [null, x];
+    out.push({ o, sec: /^Главное/.test(h) ? '' : h, tag: tg, text: tx, sub: '', u: u || '' }); })));
+  ORGK.forEach((o) => newsOrg(o, d).forEach((x: any) => out.push({ o, sec: '', tag: null, text: x.st || x.t || '', sub: x.sut || x.x || '', u: x.u || '' })));
+  return out;
+}
+function NewsFeed({ m, months, more, focus }: { m: boolean; months: string[]; more: null | (() => void); focus?: string }) {
+  const t = useGrokTheme(); useGDV(); const dk = t.kind === 'dark';
+  const fd0 = useRef(false); useEffect(() => { if (fd0.current || !focus) return; const el = document.querySelector(`[data-newsday="${focus}"]`) as HTMLElement | null; if (!el) return; fd0.current = true; const go = () => { const e2 = document.querySelector(`[data-newsday="${focus}"]`) as HTMLElement | null; if (!e2) return; const top = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gd-top')) || 0) * GZ; window.scrollTo({ top: window.scrollY + e2.getBoundingClientRect().top - top - 8 }); }; go(); setTimeout(go, 400); setTimeout(go, 1200); });
+  const [src, setSrc] = useState<string>('all');
+  const col = (o: string) => (o === 'gd' ? t.text.accent : o === 'gov' ? (dk ? '#3CCB9C' : '#009E73') : orgCol(o, dk));
+  const name = (o: string) => (NSRC.find((x) => x[0] === o) || [o, ORGN[o] || o])[1];
+  const keys = new Set<string>([...Object.keys(FULL), ...Object.keys(SUM), ...Object.keys(SFN), ...ORGNEWS.map((x: any) => x.d)]);
+  const days = [...keys].filter((d) => /^\d\d\.\d\d\.\d{4}$/.test(d) && months.includes(d.slice(3))).sort((a, b) => +pd(b) - +pd(a));
+  const all = days.map((d) => [d, newsItems(d)] as [string, NItem[]]).filter(([, a]) => a.length > 0);
+  const cnt: Record<string, number> = {}; all.forEach(([, a]) => a.forEach((x) => { cnt[x.o] = (cnt[x.o] || 0) + 1; }));
+  const total = Object.values(cnt).reduce((a, b) => a + b, 0);
+  const shown = all.map(([d, a]) => [d, src === 'all' ? a : a.filter((x) => x.o === src)] as [string, NItem[]]).filter(([, a]) => a.length > 0);
+  const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return 'источник'; } };
+  const chip = (k: string, l: string, n: number) => { const on = src === k; return <button key={k} data-nsrc={k} aria-pressed={on} onClick={(e: any) => { setSrc(k); try { e.currentTarget.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); } catch (x) {} }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, minHeight: 34, padding: '0 12px', borderRadius: 9999, border: `1px solid ${on ? t.text.accent : t.border.default}`, background: on ? t.fill.accentSubtle : t.bg.base, color: on ? t.text.accent : t.text.primary, fontFamily: t.font.family, fontSize: 14, fontWeight: on ? 600 : 400, cursor: 'pointer', whiteSpace: 'nowrap' }}>{k !== 'all' && <i aria-hidden style={{ width: 8, height: 8, borderRadius: 2, background: col(k) }} />}{l}<span style={{ fontSize: 12, color: on ? t.text.accent : t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{n}</span></button>; };
+  return <div data-newsfeed="1" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: m ? 4 : 16 }}>
+    <div><div style={{ fontSize: m ? 20 : 22, fontWeight: 700, letterSpacing: '-0.01em', color: t.text.primary }}>Новости</div>
+      <div style={{ marginTop: 2, fontSize: 14, color: t.text.secondary }}>Официальные ленты новостей органов власти, по дням. Документы и голосования — во вкладке «Календарь».</div></div>
+    <div style={{ display: 'flex', gap: 6, flexWrap: m ? 'nowrap' : 'wrap', overflowX: m ? 'auto' : undefined, scrollbarWidth: 'none', margin: m ? '0 -14px' : 0, padding: m ? '0 14px' : 0 } as any}>
+      {chip('all', 'Все', total)}{NSRC.filter(([k]) => cnt[k]).map(([k, l]) => chip(k, l, cnt[k]))}
+    </div>
+    {!shown.length && <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>{all.length ? 'У этого источника новостей за эти дни нет' : 'Загружаю новости…'}</div>}
+    {shown.map(([d, a]) => { const dd = pd(d); return <section key={d} data-newsday={d} style={{ ...card(t), padding: 0, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, padding: m ? '12px 14px 8px' : '12px 18px 8px' }}><span style={{ fontSize: m ? 17 : 16, fontWeight: 700, color: t.text.primary }}>{dd.getDate()} {MON[dd.getMonth()]}, {WDL[dd.getDay()]}</span><span style={{ fontSize: 13, color: t.text.tertiary }}>{a.length}</span></div>
+      {a.map((x, i) => <article key={i} data-newsitem={x.o} style={{ display: 'flex', gap: 12, padding: m ? '10px 14px 12px' : '12px 18px 14px', borderTop: `1px solid ${t.border.subtle}` }}>
+        <i aria-hidden style={{ flex: 'none', width: 3, borderRadius: 2, background: col(x.o) }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: col(x.o), marginBottom: 3 }}>{name(x.o)}{x.sec ? <span style={{ fontWeight: 400, color: t.text.tertiary }}> · {x.sec}</span> : null}</div>
+          <div style={{ fontSize: m ? 16 : 15, lineHeight: 1.5, color: t.text.primary, overflowWrap: 'anywhere' }}>{x.tag ? <b style={{ fontWeight: 600 }}>{x.tag}: </b> : null}{x.text}</div>
+          {x.sub ? <div className="gd-cl2" style={{ marginTop: 4, fontSize: 14, lineHeight: 1.45, color: t.text.secondary }}>{x.sub}</div> : null}
+          {x.u ? <a href={x.u} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 6, fontSize: 13, color: t.text.accent, textDecoration: 'none' }}>{host(x.u)} ↗</a> : null}
+        </div>
+      </article>)}
+    </section>; })}
+    {more && <button data-newsmore="1" onClick={more} style={{ alignSelf: 'center', minHeight: 42, padding: '0 20px', borderRadius: 12, border: `1px solid ${t.border.default}`, background: t.bg.base, color: t.text.accent, fontFamily: t.font.family, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>Показать ранее</button>}
+  </div>;
+}
+
 function Summary({ day, votes, m }: { day: string; votes: Vote[]; m?: boolean }) {
   const t = useGrokTheme();
   const FS = buildFS(day, votes);
@@ -3726,7 +3775,10 @@ function CalendarApp() {
   onFavNav = (on) => { if (on) { (window as any).__gdFavBack = mode; setMode('d'); setQ(''); setView('v'); setOpen(null); } else { setOpen(null); const b = (window as any).__gdFavBack as 'd' | 'c' | 'l' | undefined; (window as any).__gdFavBack = null; if (b === 'd' || b === 'c' || b === 'l') setMode(b); } };
   const qq = normQ(q.trim());
   /* п. 10: месяцы, нужные экрану; поиск, «Избранное» и фильтры законопроектов в календаре идут по всем месяцам. */
-  const gdSt = gdNeed(qq || FAV_ONLY || (mode === 'c' && (!!cq.trim() || zN() > 0)) ? null : mode === 'c' ? [cmk] : mode === 'd' ? [gdMk(day)] : []); void dv;
+  const NMS = useMemo(() => [...new Set<string>((GDX ? GDX.M.DAYS : Object.keys(DATA)).map((d: string) => d.slice(3)))].sort((a, b) => (a.slice(3) + a.slice(0, 2)).localeCompare(b.slice(3) + b.slice(0, 2))), []);
+  const NDQ = QS ? QS.get('d') || '' : ''; /* ссылка ?d= — лента сразу подгружает месяц этого дня и прокручивается к нему */
+  const [nmk, setNmk] = useState(() => { const i = NMS.indexOf(NDQ.slice(3)); return i >= 0 ? NMS.length - i : 1; }); const nms = NMS.slice(Math.max(0, NMS.length - nmk));
+  const gdSt = gdNeed(qq || FAV_ONLY || (mode === 'c' && (!!cq.trim() || zN() > 0)) ? null : mode === 'c' ? [cmk] : mode === 'd' ? nms : []); void dv;
   const hits = useMemo(() => { if (!qq) return []; const out: { d: string; v: Vote[] }[] = []; for (const d of [...DAYS].reverse()) { const vs = parse(DATA[d]).filter((v) => normQ([v.id, v.doc, v.q, v.full, (PLAIN[v.id] || {}).title || ''].join(' ')).includes(qq)); if (vs.length) out.push({ d, v: vs }); } return out; }, [qq, dv]);
   const favHits = useMemo(() => { if (!FAV_ONLY || !FAVS.size) return [] as { d: string; v: Vote[] }[]; const out: { d: string; v: Vote[] }[] = []; const seen = new Set<string>(); for (const d of [...DAYS].reverse()) { const vs = parse(DATA[d]).filter((v) => { const b = billNo(v.doc); if (!b || !FAVS.has(b) || seen.has(b + '@' + v.id)) return false; seen.add(b + '@' + v.id); return true; }); if (vs.length) out.push({ d, v: vs }); } return out; }, [FAV_ONLY, FAVS.size, dv]);
   const favLaws = useMemo(() => { if (!FAV_ONLY || !FAVS.size) return [] as { mk: string; law: string; title: string; d: string }[]; const out: { mk: string; law: string; title: string; d: string }[] = []; try { for (const mk of Object.keys(LAWS.months || {})) { for (const x of (LAWS.months[mk] || [])) { const k = lawNo(x.law || ''); if (k && FAVS.has(k)) out.push({ mk, law: x.law, title: x.title, d: x.d }); } } } catch {} return out; }, [FAV_ONLY, FAVS.size, dv]);
@@ -3827,7 +3879,7 @@ function CalendarApp() {
       <style>{css(t) + `#root,#root>div{background:${DK ? '#000000' : '#FFFFFF'}!important;color:${DK ? '#F5F5F7' : '#1D1D1F'}!important}#root>div{min-height:100vh}` + ADAPT() + (DK ? DKCSS : '')}</style>
       <div ref={measure} style={{ width: '100%', height: 0 }} />
       <div style={{ zoom: String(Z), color: t.text.primary }}>
-      {m && <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '0 0 12px' }}>{hid && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '2px 2px 0' }}><div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text.primary }}>Календарь законов</div>{thBtn}</div>}<div role="tablist" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['c', 'Календарь'], ['l', 'Вступают в силу'], ['d', 'Новости']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={mode === k} onClick={() => { if (k === 'l') { CSNAP = null; setCmk(calCk(new Date())); } setMode(k); setView('v'); window.scrollTo(0, 0); }} style={{ ...mt2(mode === k), minWidth: 0, minHeight: 44, padding: '0 4px', fontSize: 14, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>{l}</button>)}</div>{mode === 'd' && <div style={{ display: 'flex', flex: 1, minWidth: 0, alignItems: 'center', gap: 8 }}><div style={{ flex: 1, minWidth: 0 }}>{dateSw}</div><FavBtn /></div>}{mode === 'l' && <LawsSw m={m} mk={lmk} setMk={setLmk} />}</div>}
+      {m && <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '0 0 12px' }}>{hid && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '2px 2px 0' }}><div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text.primary }}>Календарь законов</div>{thBtn}</div>}<div role="tablist" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['c', 'Календарь'], ['l', 'Вступают в силу'], ['d', 'Новости']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={mode === k} onClick={() => { if (k === 'l') { CSNAP = null; setCmk(calCk(new Date())); } setMode(k); setView('v'); window.scrollTo(0, 0); }} style={{ ...mt2(mode === k), minWidth: 0, minHeight: 44, padding: '0 4px', fontSize: 14, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>{l}</button>)}</div>{mode === 'l' && <LawsSw m={m} mk={lmk} setMk={setLmk} />}</div>}
       <div ref={ph} style={{ width: '100%', height: fx ? topH / Z + (m ? 4 : 14) : 0 }} />
       <div data-gdbar="1" ref={(el) => { barEl.current = el; bar(el); }} style={{ ...(m ? (mode === 'c' ? { position: 'sticky', top: 0, zIndex: 20, margin: 0, padding: '8px 0 0', background: DK ? '#000000' : t.bg.base } : { padding: 0, margin: 0 }) : { position: 'sticky', top: 0, zIndex: 20, margin: 0, padding: '14px 0 12px', background: DK ? '#000000' : t.bg.base, boxShadow: sc ? '0 6px 8px -8px rgba(0,0,0,0.25)' : 'none', transition: 'box-shadow .15s' }), ...(fx ? { position: 'fixed', top: 0, left: fx.l / Z, width: fx.w / Z, margin: 0, boxSizing: 'border-box' } : {}), transition: 'transform .2s ease, box-shadow .15s', ...(bhid && mode === 'c' ? { transform: 'translateY(-110%)', pointerEvents: 'none' } : {}) } as any} data-gdbar-hidden={bhid && mode === 'c' ? '1' : undefined}>
       {false && m && mode === 'd' && <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{mode === 'd' && votes.length > 0 && <div role="tablist" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['all', votes.length, plv(votes.length).replace(/^\d+ /, ''), t.text.primary], ['acc', nAcc, 'принято', INK[0]], ['rej', votes.length - nAcc, 'отклонено', votes.length - nAcc ? INK[1] : t.text.primary]] as const).map(([k, n, l, c]) => <button key={k} data-f={k} role="tab" aria-selected={filter === k} onClick={() => setF(k)} style={{ ...mt2(filter === k), minWidth: 0, minHeight: 44, padding: '0 2px', fontSize: w < 370 ? 13 : 14, letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis' }}><b style={{ color: c }}>{n}</b> {l}</button>)}</div>}{mode === 'd' && <div style={{ height: 44, display: 'flex' }}>{sbox}</div>}{mode === 'd' && (showHits || !votes.length) && <div style={{ fontSize: 14, color: t.text.secondary, padding: '0 2px', fontVariantNumeric: 'tabular-nums' }}>{showHits ? <>{FAV_ONLY && !qq ? 'Сохраненные: ' : 'Найдено: '}<b style={{ color: t.text.primary }}>{nHits}</b> {plv(nHits).replace(/^\d+ /, '')}{qq ? ' за все дни' : ''}</> : 'Пленарного заседания не было'}</div>}</div>}
@@ -3836,7 +3888,7 @@ function CalendarApp() {
       {!m && <div data-gdtop="1" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}><div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
         {hid && <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 'none', marginRight: 6 }}><svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="8" width="56" height="52" rx="10" fill={t.text.accent} /><rect x="16" y="2" width="6" height="14" rx="3" fill={t.text.accent} /><rect x="42" y="2" width="6" height="14" rx="3" fill={t.text.accent} /><text x="32" y="50" fontFamily="Georgia,serif" fontSize="30" fontWeight="700" textAnchor="middle" fill="#fff">§</text></svg><div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text.primary, whiteSpace: 'nowrap' }}>Календарь законов</div></div>}
         <div role="tablist" style={{ display: 'flex', flex: 'none', padding: 3, height: 44, boxSizing: 'border-box', gap: 2, borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['c', 'Календарь'], ['l', 'Вступают в силу'], ['d', 'Новости']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={mode === k} onClick={() => { if (k === 'l') { CSNAP = null; setCmk(calCk(new Date())); } setMode(k); window.scrollTo(0, 0); }} style={mt2(mode === k)}>{l}</button>)}</div>
-        {mode === 'd' && <div style={{ display: 'flex', flex: 1, minWidth: 0, alignItems: 'center', gap: 8 }}><div style={{ flex: 1, minWidth: 0 }}>{dateSw}</div><FavBtn /></div>}
+        
         {mode === 'l' && <LawsSw m={m} mk={lmk} setMk={setLmk} />}
         <span style={{ flex: '1 1 0' }} />
         {mode === 'c' && <div style={{ flex: '0 1 380px', minWidth: 220 }}>{cbox}</div>}
@@ -3885,7 +3937,7 @@ function CalendarApp() {
         {FAV_ONLY && !qq && !listHits.length && !favLaws.length && <div data-fav-empty="1" style={{ ...card(t), padding: 14, color: t.text.secondary }}>Нажмите ☆ у законопроекта, чтобы сохранить</div>}
         {!FAV_ONLY && !listHits.length && <div style={{ ...card(t), padding: 14, color: t.text.secondary }}>Ничего не найдено</div>}
       </div> : <>
-      {<Summary key={day} day={day} votes={votes} m={m} />}
+      {<NewsFeed m={m} months={nms} focus={NDQ} more={nmk < NMS.length ? () => setNmk(nmk + 1) : null} />}
       {open && (() => { const v = votes.find((x) => x.id === open); if (!v) return null; return <div ref={box} data-vid={v.id} style={{ ...card(t), padding: 0, overflow: 'hidden', marginBottom: 8 }}><div style={{ padding: '12px 14px', borderBottom: `1px solid ${t.border.subtle}` }}><div style={{ fontSize: m ? 16 : 15, color: t.text.primary }}>{v.q}</div><div style={{ marginTop: 4, fontSize: 13, fontFamily: t.font.mono, color: t.text.accent }}>{v.doc}</div></div><Panel v={v} m={m} day={day} /><button type="button" className="gd-tap" onClick={() => setOpen(null)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', minHeight: 44, border: 'none', borderTop: `1px solid ${t.border.subtle}`, background: t.fill.accentSubtle, color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Свернуть</button></div>; })()}
       {false && (!votes.length ? <div style={{ ...card(t), padding: '16px 18px', color: t.text.secondary }}>Голосований не было</div> : m ? <div ref={box} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowAnchor: 'none' }}>
         {list.map((v, idx) => {

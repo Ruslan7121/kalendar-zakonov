@@ -51,7 +51,7 @@ try {
       if (got.includes('m-2026-09')) fails.push(tag(`/: сентябрь загружен без запроса: ${got}`));
       rep.push(tag(`/: запрошено ${got.join(', ')}`)); await p.close(); }
     // 2) день другого месяца
-    { const p = await open('/?d=30.09.2026&tab=d'); const ok = await until(p.s, `/(Сводка дня|Пленарное заседание) 30\.09\.2026/.test(document.body.innerText) && document.body.innerText.includes('Госдума')`);
+    { const p = await open('/?d=30.09.2026&tab=d'); const ok = await until(p.s, `!!document.querySelector('[data-newsday="30.09.2026"]') && document.querySelector('[data-newsday="30.09.2026"]').innerText.includes('Госдума')`); // раздел «Новости» — лента по дням
       if (!ok) fails.push(tag('?d=30.09.2026&tab=d: день 30.09.2026 не показан ' + JSON.stringify(await ev(p.s, `document.body.innerText.slice(0, 300)`))));
       if (!months().includes('m-2026-09')) fails.push(tag(`?d=30.09.2026: сентябрь не запрошен: ${months()}`));
       rep.push(tag(`?d=30.09.2026&tab=d: ${months().join(', ')}`)); await p.close(); }
