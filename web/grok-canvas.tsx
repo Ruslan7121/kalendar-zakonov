@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 export { useState, useMemo, useRef, useEffect };
+export { createPortal } from 'react-dom';
 const T = {
   bg: { base: '#FFFFFF', subtle: '#F4F4F6' },
   border: { default: '#D9D9DE', subtle: '#E8E8EC' },

@@ -16,7 +16,8 @@ import { loadCanvas, ROOT } from './load_canvas.mjs';
 import { siteServer } from './site_server.mjs';
 
 const CASES = ['11.11.2026:136361', '10.11.2026:136304', '11.11.2026:136349', '11.11.2026:136378', '10.11.2026:136283', '10.11.2026:136277', '22.10.2026:136156'];
-const WIDTHS = [{ w: 390, h: 844, mobile: true, dpr: 3 }, { w: 1366, h: 900, mobile: false, dpr: 1 }];
+// 1100 px — широкая версия с карточкой внутри списка; 1366 px — от 1200 px карточка открывается в панели справа (П12).
+const WIDTHS = [{ w: 390, h: 844, mobile: true, dpr: 3 }, { w: 1100, h: 900, mobile: false, dpr: 1 }, { w: 1366, h: 900, mobile: false, dpr: 1 }];
 
 const which = (c) => { try { return execFileSync('sh', ['-c', `command -v ${c}`]).toString().trim(); } catch { return ''; } };
 const CHROME = process.env.CHROME || ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser'].map(which).find(Boolean);
@@ -40,8 +41,10 @@ const cmd = (method, params = {}, sessionId) => new Promise((ok, no) => { const 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const MEASURE = (k) => `(() => {
-  const w = document.querySelector('[data-ivk="${k}"]'); if (!w) return { err: 'нет карточки [data-ivk=${k}]' };
-  const h = w.querySelector('[data-ivs]'); if (!h) return { err: 'карточка не раскрыта (нет [data-ivs])' };
+  let w = document.querySelector('[data-ivk="${k}"]'); if (!w) return { err: 'нет карточки [data-ivk=${k}]' }; let h, side = false;
+  if (w.hasAttribute('data-ivside')) { const pc = document.querySelector('[data-cardpane] [data-panecard]'); if (!pc) return { err: 'строка выбрана, но карточки в панели справа нет' };
+    const rr = w.getBoundingClientRect(); if (rr.bottom <= 0 || rr.top >= innerHeight) return { err: 'выбранная строка списка вне окна' }; side = true; w = pc; h = pc.firstElementChild; }
+  else { h = w.querySelector('[data-ivs]'); if (!h) return { err: 'карточка не раскрыта (нет [data-ivs])' }; }
   const hr = h.getBoundingClientRect(), wr = w.getBoundingClientRect(); let cover = 0, by = '';
   for (const el of document.querySelectorAll('body *')) {
     if (el === h || h.contains(el) || el.contains(h)) continue; const cs = getComputedStyle(el);
@@ -58,7 +61,7 @@ const MEASURE = (k) => `(() => {
   const lk = bs.filter((e) => /^(Законопроект|Голосование)/.test(tx(e)));
   const sr = s0 && s0.getBoundingClientRect(); const pr = p && p.getBoundingClientRect();
   const share = s0 ? { n: sh.length, bottom: !!s0.closest('[data-share-bottom]'), inRow: lk.some((l) => Math.abs(l.getBoundingClientRect().top - sr.top) < 4), last: lk.every((l) => l.getBoundingClientRect().bottom <= sr.top + 1), gap: pr.bottom - sr.bottom } : null;
-  return { hTop: hr.top, hBot: hr.bottom, wTop: wr.top, wH: wr.height, cover, by, vh: innerHeight, y: scrollY, copy, raw, share, links: lk.length };
+  return { side, hTop: hr.top, hBot: hr.bottom, wTop: wr.top, wH: wr.height, cover, by, vh: innerHeight, y: scrollY, copy, raw, share, links: lk.length };
 })()`;
 
 const fails = []; const rep = [];
@@ -76,9 +79,11 @@ try {
     for (;;) { r = (await cmd('Runtime.evaluate', { expression: MEASURE(d + b), returnByValue: true }, s)).result.value; if (!r.err || Date.now() - t0 > 15000) break; await sleep(300); }
     const err = (await cmd('Runtime.evaluate', { expression: 'document.getElementById("root").childElementCount', returnByValue: true }, s)).result.value ? '' : ' (страница не отрисовалась)';
     const tag = `${W.w}px ${c} (${b})`;
+    if (!r.err && W.w >= 1200 && !r.side) fails.push(`${tag}: на широком экране карточка не в панели справа`);
+    if (!r.err && W.w < 1200 && r.side) fails.push(`${tag}: панель справа на узком экране`);
     if (r.err) fails.push(`${tag}: ${r.err}${err}`);
     else {
-      rep.push(`${tag}: шапка ${r.hTop.toFixed(0)}–${r.hBot.toFixed(0)}, закреплено до ${r.cover.toFixed(0)}, верх карточки ${r.wTop.toFixed(0)}, высота ${r.wH.toFixed(0)}, scrollY ${r.y.toFixed(0)}`);
+      rep.push(`${tag}${r.side ? ' [панель справа]' : ''}: шапка ${r.hTop.toFixed(0)}–${r.hBot.toFixed(0)}, закреплено до ${r.cover.toFixed(0)}, верх карточки ${r.wTop.toFixed(0)}, высота ${r.wH.toFixed(0)}, scrollY ${r.y.toFixed(0)}`);
       if (r.hTop < r.cover - 1) fails.push(`${tag}: шапка карточки (${r.hTop.toFixed(1)}) под закреплённым ${r.by} (до ${r.cover.toFixed(1)})`);
       if (r.hTop < 0 || r.hBot > r.vh + 0.5) fails.push(`${tag}: шапка карточки не целиком в окне (${r.hTop.toFixed(1)}–${r.hBot.toFixed(1)}, окно ${r.vh})`);
       if (Math.abs(r.wTop - r.hTop) > 4) fails.push(`${tag}: открыто не с начала карточки — верх карточки ${r.wTop.toFixed(1)}, шапка ${r.hTop.toFixed(1)}`);
