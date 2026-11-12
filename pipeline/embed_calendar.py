@@ -4,7 +4,7 @@ cal = {'u': c['updated'], 'w': [[w['from'], w['to'], w['type']] for w in c['week
        'p': [{'d': d['date'], 's': d['status'], 't': d.get('time'), 'src': d['source'], 'a': [[a['doc'], a['short'], a.get('reading'), a['url'], a['title']] for a in d['agenda']]} for d in c['days']],
        'g': [[g['date'], g['title'], g['url']] for g in c['gov_meetings']], 'n': []}
 cards = sorted(f[:-4] for f in os.listdir('/workspace/social/out') if f.endswith('.2026.png'))
-CALC = "const CAL: any = " + json.dumps(cal, ensure_ascii=False) + ";\nconst CARDS: string[] = " + json.dumps(cards) + ";\nconst SITE = 'https://duma-svodki.netlify.app';\n"
+CALC = "const CAL: any = " + json.dumps(cal, ensure_ascii=False) + ";\nconst CARDS: string[] = " + json.dumps(cards) + ";\nconst SITE = 'https://ruslan7121.github.io/kalendar-zakonov';\n"
 COMP = r'''
 const WDS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const WDL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
