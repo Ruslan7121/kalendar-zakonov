@@ -2180,6 +2180,27 @@ let DEEP: string | null = QS ? QS.get('v') : null;
 const DLD: string | null = QS && QS.get('d') && QS.get('v') && DATA[QS.get('d')!] ? QS.get('d') : null;
 const DLB: string | null = DLD ? ((DATA[DLD].split('\n').find((l) => l.split('|')[0] === PIN) || '').split('|')[1] || null) : null;
 const DLK: string | null = DLB && /^\d+-\d+$/.test(DLB) ? DLD! + DLB : null;
+/* 12.11.2026, правило 11: ссылка «Поделиться» (?d=&v=) на голосование по законопроекту открывает карточку законопроекта в календаре.
+   Раньше выравнивал Panel по DEEP (scrollIntoView блока внутри карточки) — экран оказывался на середине карточки, а для 2-го/3-го голосования того же законопроекта не прокручивал вовсе.
+   Теперь DEEP для этого пути гасим, а прокручиваем к началу карточки [data-ivk]: её верх ставим ровно туда, где прилипает её шапка (под шапкой сайта, строкой дня и фильтрами),
+   и повторяем выравнивание, пока раскрытие/подгрузка меняют высоту выше карточки; любое действие пользователя (колесо, касание, клавиша) выравнивание останавливает. */
+if (DLK) DEEP = null;
+let DLA = !!DLK;
+const alignDeep = (k: string) => {
+  if (typeof window === 'undefined') return;
+  try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
+  let stop = false; const st = () => { stop = true; }; const evs = ['wheel', 'touchstart', 'keydown', 'mousedown'];
+  evs.forEach((e) => window.addEventListener(e, st, { passive: true }));
+  const go = () => {
+    if (stop) return; const w = document.querySelector(`[data-ivk="${k}"]`) as HTMLElement | null; if (!w) return;
+    const hd = w.querySelector('[data-ivs]') as HTMLElement | null;
+    let off = hd ? parseFloat(getComputedStyle(hd).top) : NaN;
+    if (isNaN(off)) { const c = w.closest('[id^="ev-"]') as HTMLElement | null; const num = (el: Element, n: string, d: number) => { const q = parseFloat(getComputedStyle(el).getPropertyValue(n)); return isNaN(q) ? d : q; }; off = num(document.documentElement, '--gd-top', 0) + (c ? num(c, '--gd-dh', 45) + num(c, '--gd-fb', 0) : 0) + 5; }
+    const dy = w.getBoundingClientRect().top - off * GZ; if (Math.abs(dy) > 2) window.scrollTo(0, Math.max(0, window.scrollY + dy));
+  };
+  requestAnimationFrame(() => requestAnimationFrame(go)); [120, 300, 600, 1000, 1500, 2200, 3000].forEach((ms) => setTimeout(go, ms));
+  setTimeout(() => evs.forEach((e) => window.removeEventListener(e, st)), 3100);
+};
 const ON_SITE = typeof window !== 'undefined' && /(^|\.)github\.io$|^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
 function qrMatrix(text: string): boolean[][] {
   const data = Array.from(new TextEncoder().encode(text));
@@ -3328,6 +3349,7 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
   const rs = useRef(CSNAP && CSNAP.d === day && CSNAP.cm === cm ? CSNAP : null);
   const [gai, setGai] = useState<any>(null);
   const [ex, setEx] = useState<string | null>(rs.current ? rs.current.ex : DLK ? DLD : null);
+  useEffect(() => { if (DLA && DLK) { DLA = false; alignDeep(DLK); } }, []);
   const [ivo, setIvo0] = useState<string | null>(DLK); const setIvo = (nx: string | null) => { const pv = ivo; setIvo0(nx); const num = (el: Element, k: string, d: number) => { const q = parseFloat(getComputedStyle(el).getPropertyValue(k)); return isNaN(q) ? d : q; }; const pin = (k: string, sm: boolean, up = false) => { const w = document.querySelector(`[data-ivk="${k}"]`) as HTMLElement | null; if (!w) return; const c = w.closest('[id^="ev-"]') as HTMLElement | null; const off = (num(document.documentElement, '--gd-top', 0) + (c ? num(c, '--gd-dh', 45) + num(c, '--gd-fb', 0) : 0) + 5) * GZ; const dy = w.getBoundingClientRect().top - off; if (Math.abs(dy) <= 3 || (up && dy > 0)) return; const y = Math.max(0, window.scrollY + dy); if (sm && 'scrollBehavior' in document.documentElement.style) window.scrollTo({ top: y, behavior: 'smooth' }); else window.scrollTo(0, y); }; const k = nx || pv; if (pv && !nx) { pin(pv, false, true); [340, 700].forEach((ms) => setTimeout(() => pin(pv, false, true), ms)); } if (k && nx) { const sm = !m; requestAnimationFrame(() => requestAnimationFrame(() => pin(k, sm))); [450, 900].forEach((ms) => setTimeout(() => pin(k, false), ms)); } if (pv && pv !== nx) requestAnimationFrame(() => requestAnimationFrame(() => { const w = document.querySelector(`[data-ivk="${pv}"]`) as HTMLElement | null; const r = w && w.firstElementChild as HTMLElement | null; if (r && r.animate) r.animate([{ backgroundColor: FLASH() }, { backgroundColor: 'rgba(10,102,214,0)' }], { duration: 1800, easing: 'ease-out' }); })); };
   const dayGo = (el: HTMLElement | null, op: boolean) => { if (!el) return; if (!op) gdTail(el.getBoundingClientRect().height); if (!m) { const off = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gd-top')) || 0) * GZ; anchorTo(() => (el.isConnected ? el : null), Math.max(off, el.getBoundingClientRect().top)); return; } const pin = (sm: boolean) => { if (!el.isConnected) return; const off = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gd-top')) || 0) * GZ; const dy = el.getBoundingClientRect().top - off; if (Math.abs(dy) <= 3) return; const y = Math.max(0, window.scrollY + dy); if (sm && 'scrollBehavior' in document.documentElement.style) window.scrollTo({ top: y, behavior: 'smooth' }); else window.scrollTo(0, y); }; requestAnimationFrame(() => requestAnimationFrame(() => pin(op))); [360, 450, 900].forEach((ms) => setTimeout(() => pin(false), ms)); }; const [df, setDf] = useState<'all' | 'acc' | 'rej'>('all'); useEffect(() => setDf('all'), [ex]);
   const plv = (n: number) => { const a = n % 10, b = n % 100; return `${n} ${a === 1 && b !== 11 ? 'голосование' : a >= 2 && a <= 4 && (b < 12 || b > 14) ? 'голосования' : 'голосований'}`; };
