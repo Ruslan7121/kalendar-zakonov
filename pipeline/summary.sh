@@ -19,6 +19,12 @@ else
   echo "bills_fail.log: нет"
 fi
 
+if [ -f "$LOGS/votes_day_fail.log" ]; then
+  echo "votes_day_fail.log: $(wc -l < "$LOGS/votes_day_fail.log") записей${DAY:+, за день: $(grep -c "$DAY" "$LOGS/votes_day_fail.log")}"
+else
+  echo "votes_day_fail.log: нет"
+fi
+
 if [ -f "$LOGS/vote_time_fail.log" ]; then
   fails=$(wc -l < "$LOGS/vote_time_fail.log")
   echo "vote_time_fail.log: $fails ошибок"

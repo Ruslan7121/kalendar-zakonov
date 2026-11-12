@@ -107,7 +107,9 @@ npm run serve        # http://localhost:8000
 ## Сбор данных
 
 ```bash
-./pipeline/run_daily.sh                     # ежедневный прогон
+./pipeline/run_daily.sh                     # ежедневный прогон (шаг 1 — votes_day.py)
+python3 pipeline/votes_day.py 11.11.2026    # голосования дня с vote.duma.gov.ru → days/*.json → DATA (+ VT)
+python3 pipeline/votes_day.py 11.11.2026 --dry-run   # то же без записи canvas, отчёт в out/logs/votes_day_<день>.json
 python3 pipeline/bills.py --one 1322095-8   # один законопроект
 python3 pipeline/track_fast.py              # «Путь закона»
 python3 pipeline/organs.py --embed          # документы органов

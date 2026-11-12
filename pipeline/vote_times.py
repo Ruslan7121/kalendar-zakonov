@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Время голосования (до секунды) со страницы депутата Абакарова на vote.duma.gov.ru.
-Источник: http://vote.duma.gov.ru/?convocation=AAAAAAA9&deputy=99113478 (пагинация page=,
-фильтр from/to). Не выдумывать: если сайт недоступен — лог и выход.
+"""Время голосования (до секунды) для блока VT. Порядок источников (все официальные, vote.duma.gov.ru):
+  1) days/<день>.json, записанный votes_day.py (время со страницы самого голосования /vote/<id>);
+  2) страница самого голосования http://vote.duma.gov.ru/vote/<id> (поле даты/времени справки);
+  3) ЗАПАСНОЙ путь — страница депутата Абакарова ?convocation=AAAAAAA9&deputy=99113478 (пагинация page=,
+     фильтр from/to); работает, только если депутат был в списке (если отсутствовал — времени там нет).
+Не выдумывать: если ни один источник не дал время с совпадающей датой — лог vote_time_fail.log.
 Запуск: python3 vote_times.py [DD.MM.YYYY ...]"""
 import sys, os, re, time
 sys.path.insert(0, os.path.dirname(__file__)); import common as C
@@ -49,18 +52,6 @@ def fetch_deputy(page=1, day_from='', day_to='', tries=3):
             time.sleep(1.5 * (attempt + 1))
     return ''
 
-def fetch_vote_direct(vid):
-    """Запасной способ: прямой запрос к /vote/{id}."""
-    for scheme in ('http', 'https'):
-        url = f'{scheme}://vote.duma.gov.ru/vote/{vid}'
-        out = f'/tmp/vt_{vid}_{scheme}.html'
-        if C.fetch(url, out, 60):
-            html = open(out, errors='ignore').read()
-            m = re.search(r'(\d\d\.\d\d\.\d{4}).{0,80}?(\d\d:\d\d:\d\d)', html)
-            if m:
-                return m.group(1), m.group(2)
-    return None, None
-
 def load_all(need_days=None):
     """Paginate deputy pages; optionally narrow by from/to covering need_days."""
     day_from = day_to = ''
@@ -88,6 +79,28 @@ def load_all(need_days=None):
     mp = {vid: (day, tm) for day, vid, tm in all_rows}
     return mp, f'ok pages~{max_page} rows={len(all_rows)} unique={len(mp)}'
 
+def from_vote_pages(need):
+    """1) days/*.json от votes_day.py; 2) /vote/<id>. → {vid: (day, time, src)}"""
+    import json, votes_day as V
+    mp = {}
+    for d in set(need.values()):
+        jp = os.path.join(V.DAYS_DIR, f'{d}.json')
+        if os.path.exists(jp):
+            try:
+                for v in json.load(open(jp)).get('votes', []):
+                    if v.get('time') and v['id'] in need:
+                        mp[v['id']] = (d, v['time'], 'days/' + d + '.json')
+            except ValueError:
+                C.log('vote_time_fail.log', f'{jp}: битый json')
+    rest = [vid for vid in need if vid not in mp]
+    if rest:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=6) as ex:
+            for vid, r in zip(rest, ex.map(V.fetch_vote, rest)):
+                if r:
+                    mp[vid] = (r['day'], r['time'], 'vote/' + vid)
+    return mp
+
 if __name__ == '__main__':
     src = C.read_canvas()
     VT = C.get_block(src, 'VT')
@@ -97,33 +110,36 @@ if __name__ == '__main__':
         if days and d not in days:
             continue
         need[vid] = d
-    mp, status = load_all(set(need.values()) if need else None)
-    if mp is None:
-        C.log('vote_time_fail.log', f'ABORT: {status}')
-        print('FAIL:', status)
-        # запасной режим: пробуем по одному голосованию
-        mp = {}
-        for vid, want_day in need.items():
-            day, tm = fetch_vote_direct(vid)
-            if day and tm and day == want_day:
+    mp = {}
+    if need:
+        for vid, (day, tm, srcname) in from_vote_pages(need).items():
+            if day == need[vid]:
                 mp[vid] = (day, tm)
             else:
-                C.log('vote_time_fail.log', f'{want_day} {vid}: нет данных (прямой запрос)')
-        if not mp:
-            sys.exit(1)
-        status = 'fallback direct'
+                C.log('vote_time_fail.log', f'{need[vid]} {vid}: на странице голосования дата {day}')
+    miss = {vid: d for vid, d in need.items() if vid not in mp}
+    status = f'страницы голосований: {len(mp)}/{len(need)}'
+    if miss:
+        # запасной путь: страница депутата
+        dep, st = load_all(set(miss.values()))
+        status += f'; запасной (депутат): {st}'
+        if dep is None:
+            C.log('vote_time_fail.log', f'запасной путь (депутат) недоступен: {st}')
+        else:
+            for vid, want_day in miss.items():
+                if vid in dep and dep[vid][0] == want_day:
+                    mp[vid] = dep[vid]
     n = 0
     for vid, want_day in need.items():
         if vid not in mp:
-            C.log('vote_time_fail.log', f'{want_day} {vid}: нет на странице депутата')
+            C.log('vote_time_fail.log', f'{want_day} {vid}: нет данных (страница голосования и страница депутата)')
             continue
         day, tm = mp[vid]
-        if day != want_day:
-            C.log('vote_time_fail.log', f'{want_day} {vid}: день на странице {day} ≠ {want_day}')
-            continue
         if VT.get(vid) != tm:
             VT[vid] = tm
             n += 1
     C.write_canvas(C.set_block(src, 'VT', 'const VT: Record<string, string>', VT))
     print('status:', status)
-    print('новых/обновленных времен:', n, 'всего VT:', len(VT), 'нужно было:', len(need))
+    print('новых/обновленных времен:', n, 'всего VT:', len(VT), 'нужно было:', len(need), 'без времени:', len(need) - len(mp))
+    if need and not mp:
+        sys.exit(1)
