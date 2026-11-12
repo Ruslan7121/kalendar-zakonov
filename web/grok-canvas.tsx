@@ -32,7 +32,7 @@ export function Status({ tone, children }: any) {
 export function LinkCards({ links }: any) {
   return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{links.map((l: any, i: number) => <a key={i} href={l.href} target="_blank" rel="noreferrer" style={{ flex: '1 1 14rem', display: 'block', padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border.subtle}`, background: T.bg.base, textDecoration: 'none', color: T.text.primary }}><div style={{ fontWeight: 600, fontSize: 14 }}>{l.title} ↗</div><div style={{ fontSize: 12, color: T.text.secondary }}>{l.site}</div></a>)}</div>;
 }
-// Not surfaced by CalendarApp (used only by hidden ShablonApp); minimal stand-ins so the bundle resolves.
+// Not used by CalendarApp; stand-ins kept for the paused maket (maket/maket.tsx), should it be restored.
 export function Section({ children }: any) { return <section>{children}</section>; }
 export function Table(_p: any) { return null; }
 export function Rows(_p: any) { return null; }

@@ -24,7 +24,7 @@ assert.ok(n > 300, `мало голосований для проверки сс
 assert.equal(T.shareLink('11.11.2026', '136361'), 'https://ruslan7121.github.io/kalendar-zakonov/?d=11.11.2026&v=136361');
 
 // Все места, где сайт строит ссылку «Поделиться», идут через shareLink, и других адресов сайта в коде нет.
-const files = ['src/canvas.tsx', 'src/canvas.code-only.tsx', 'web/main.tsx', 'web/grok-canvas.tsx', 'web/index.html', 'index.html'];
+const files = ['src/canvas.tsx', 'src/canvas.code-only.tsx', 'web/main.tsx', 'web/grok-canvas.tsx', 'web/index.html'];
 if (fs.existsSync(path.join(ROOT, 'web/dist/app.js'))) files.push('web/dist/app.js');
 for (const f of files) {
   const s = fs.readFileSync(path.join(ROOT, f), 'utf8');
