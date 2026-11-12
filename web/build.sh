@@ -16,5 +16,5 @@ cp web/index.html web/dist/index.html
 cp -r web/static/. web/dist/
 # П11, П13: страницы законопроектов bill/, RSS feed/, календари ics/, sitemap.xml — из data/*.json
 node web/extras.mjs web/dist
-( cd web/dist && find . -type f ! -name app.js ! -name index.html ! -name extras.txt ! -path './data/*' | sed 's#^\./##' | sort > extras.txt )
+( cd web/dist && find . -type f ! -path ./app.js ! -path ./index.html ! -path ./extras.txt ! -path './data/*' | sed 's#^\./##' | sort > extras.txt )
 ls -la web/dist web/dist/data
