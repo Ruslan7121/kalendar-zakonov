@@ -26,6 +26,24 @@
 
 Изменение по сравнению с прежней раскладкой: раньше `GD_ROOT` по умолчанию был `/workspace`, и скрипты писали в `/workspace/out/canvas.tsx` — устаревшую копию (≈1,28 МБ против ≈1,8 МБ канона). Теперь **по умолчанию `votes_day.py` и все остальные шаги пишут в `src/canvas.tsx` клона**. `/workspace/out/canvas.tsx` переименован в `canvas.tsx.STALE-20261112` и нигде не используется. Старая копия скриптов `/workspace/duma/pipeline/` выведена (`pipeline.STALE-20261112`): единственный конвейер — `pipeline/` в клоне.
 
+## Проверка пропусков DATA/CAL (с 12.11.2026, пункт 7)
+`pipeline/gap_check.py` — только детектор и отчёт: canvas не меняется, ничего не дозаполняется.
+- **Рабочий день:** пн–пт, кроме нерабочих праздников ст. 112 ТК РФ (1–8 января, 23 февраля, 8 марта, 1 и 9 мая, 12 июня, 4 ноября). Переносы выходных не моделируются — лишние дни можно исключить `--skip ДД.ММ.ГГГГ`. Пленарные/региональные недели и пленарные дни — только из того, что уже есть в canvas (`CAL.w`, `CAL.p`) и из официальных источников (`$GD_DAYS/*.json` от votes_day.py, vote.duma.gov.ru при `--online`).
+- **Окно:** от начала покрытия (самая ранняя дата в `DATA`/`CAL.p`, либо `--from`) до сегодняшней даты по Москве (`--to`). В отчёте также «последний день с DATA и CAL.p».
+- **Пропуск DATA:** официальный список показывает голосования, а в `DATA` их нет/меньше; день `CAL.p` held/confirmed прошёл, а голосований в `DATA` нет; прошедший рабочий день без ключа `DATA` и без подтверждения «голосований не было» (`NV`, `days/<день>.json` с `novotes`, «ничего не найдено» на vote.duma.gov.ru). Сегодняшний день без DATA — «ещё не собран».
+- **Пропуск CAL:** день вне всех недель `CAL.w`; день с голосованиями без записи `CAL.p`.
+- **Предупреждения** (на код выхода не влияют): `CAL.p` прошедшего дня в статусе expected/confirmed; рабочая неделя без заседания Правительства в `CAL.g`.
+- Источник недоступен → «не проверено: источник недоступен», дальнейшие сетевые проверки в этом прогоне пропускаются, DATA не дополняется.
+- Отчёт: stdout + `out/logs/gaps_<ГГГГ-ММ-ДД>.txt` и `.json` (в git не идут). Выход: 0 — пропусков нет, 1 — есть, 2 — canvas не прочитан.
+- Закрытие пропусков — отдельным запуском: `votes_day.py ДЕНЬ` (DATA), `calendar_update.py` + `cal_merge.py` (CAL).
+- Тест без сети: `python3 tests/test_gap_check.py`.
+
+```bash
+python3 pipeline/gap_check.py                       # без сети: canvas + $GD_DAYS/*.json
+python3 pipeline/gap_check.py --online              # + 1-я страница списка дня vote.duma.gov.ru для дней без DATA
+python3 pipeline/gap_check.py --from 01.11.2026 --to 12.11.2026 --skip 31.12.2026
+```
+
 ## Ежедневный прогон
 ```bash
 cd "$GD_ROOT" && git pull --ff-only
@@ -34,6 +52,7 @@ bash pipeline/run_daily.sh [ДД.ММ.ГГГГ]
 Порядок шагов `run_daily.sh`:
 1. **`votes_day.py ДЕНЬ`** — голосования дня с vote.duma.gov.ru → `$GD_DAYS/ДД.ММ.ГГГГ.json` → `DATA` + `VT`.
 2. `calendar_update.py` → `out/calendar.json`; при успехе **`cal_merge.py`** → строка `CAL` в canvas (объединение, ничего не теряется).
+   Затем **`gap_check.py --to ДЕНЬ --online`** — отчёт о рабочих днях без DATA/CAL (`out/logs/gaps_*.txt`); прогон не останавливает, только предупреждает; `GAP_ONLINE=0` — без сети.
 3. `bills.py ДЕНЬ` — sozd + пояснительные записки → `extracts/bills/`.
 4. `vote_times.py ДЕНЬ` — недостающее время → `VT`.
 5. `organs.py --day ДЕНЬ --embed` — СФ, Минфин, Минтруд, Минюст, ЦБ → `ORG`/`ORGX`.
@@ -56,9 +75,10 @@ bash pipeline/run_daily.sh [ДД.ММ.ГГГГ]
 ## Скрипты
 | Скрипт | Что делает | Пишет |
 |---|---|---|
-| run_daily.sh [ДД.ММ.ГГГГ] | прогон за день: **votes_day (шаг 1)** → calendar_update + cal_merge → bills → vote_times → organs → track → **audit.py --day** → todo → strip_code_only → сводка (см. выше). | — |
+| run_daily.sh [ДД.ММ.ГГГГ] | прогон за день: **votes_day (шаг 1)** → calendar_update + cal_merge → gap_check → bills → vote_times → organs → track → **audit.py --day** → todo → strip_code_only → сводка (см. выше). | — |
 | votes_day.py ДД.ММ.ГГГГ [ДД.ММ.ГГГГ] [--dry-run] [--canvas файл] | **шаг 1.** Голосования дня с vote.duma.gov.ru: список `?from=&to=` (все страницы `page=`) + страница каждого голосования `/vote/<id>` (итог, поимённо → фракции, дата и время). Пишет days/ДД.ММ.ГГГГ.json, затем аддитивно DATA: новые id вставляются по порядку, существующие строки не меняются (расхождения цифр — в отчёт), Суть/TRACK/ZTAG/постановления не трогаются. VT — время со страницы голосования. День без голосований (официально «ничего не найдено») в DATA не добавляется. Код выхода: 0 — ок, 1 — есть пробелы (голосования не попали в DATA), 2 — список дня недоступен, DATA не изменён. | $GD_DAYS/ДД.ММ.ГГГГ.json, DATA, блок VT, out/cache/vote/<id>.html, out/logs/votes_day_<день>.json, out/logs/votes_day_fail.log |
 | calendar_update.py | календарь пленарных дней (sozd), заседаний Правительства, распорядок из `$GD_DUMA/calendar_static.json`; canvas не трогает | out/calendar.json, `$GD_DUMA/cal_cache/` |
+| gap_check.py [--from Д] [--to Д] [--online] [--skip Д…] | проверка пропусков: рабочие дни окна без DATA и/или CAL (правило — см. «Проверка пропусков»); только отчёт, canvas не меняет; выход 1 — есть пропуски | out/logs/gaps_<дата>.txt/.json, out/logs/gap_check_fail.log |
 | cal_merge.py [canvas] | шаг CAL: объединяет `out/calendar.json` со строкой `CAL` в canvas — старые пункты повесток и short сохраняются, статус дня не понижается, проверка «ничего не потеряно»; нет calendar.json — выход 1 без изменений | строка `CAL` |
 | bills.py [дни] | все законопроекты: sozd + пояснительная записка (docx/pdf). **Ускорено:** 10 воркеров, задержка 0.12 с. | extracts/bills/*.json, `$GD_DUMA/bills/*.html` (единый кэш), out/logs/bills_fail.log |
 | bills.py --one <номер> [--force] | ручная догрузка одного законопроекта (`--force` — мимо TTL; полученный текст не затирается) | extracts/bills/<номер>.json |

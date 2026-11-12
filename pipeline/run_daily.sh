@@ -25,6 +25,16 @@ if python3 calendar_update.py; then
 else
   echo "calendar_update: ошибка — CAL не изменён" >&2
 fi
+echo "[проверка пропусков DATA/CAL по рабочим дням] до $DAY"
+# Только отчёт (out/logs/gaps_<дата>.txt): canvas не меняется, прогон не останавливается. Дни без DATA — votes_day.py ДЕНЬ,
+# без CAL — calendar_update.py + cal_merge.py. GAP_ONLINE=0 — без запросов к vote.duma.gov.ru.
+GAP_ARGS="--to $DAY"; [ "${GAP_ONLINE:-1}" = 0 ] || GAP_ARGS="$GAP_ARGS --online"
+python3 gap_check.py $GAP_ARGS; rc=$?
+case $rc in
+  0) ;;
+  1) echo "gap_check: ВНИМАНИЕ — есть дни без DATA и/или CAL, см. out/logs/gaps_*.txt (дозагрузка не выполнялась)" >&2;;
+  *) echo "gap_check: ОШИБКА — проверка пропусков не выполнена" >&2;;
+esac
 echo "[законопроекты] $DAY"
 python3 bills.py "$DAY"
 echo "[время голосований] $DAY"
