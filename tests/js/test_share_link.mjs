@@ -35,4 +35,7 @@ const src = fs.readFileSync(path.join(ROOT, 'src/canvas.tsx'), 'utf8');
 assert.equal((src.match(/[?&]d=\$\{/g) || []).length, 1, 'ссылка ?d=…&v=… должна собираться только в shareLink');
 assert.ok(/navigator\.clipboard\.writeText\(url\)/.test(src) && /const url = shareLink\(day, v\.id\)/.test(src), 'кнопка копирования ссылки не использует shareLink');
 assert.ok(/const u = shareLink\(day, id\)/.test(src), 'кнопка «Поделиться» не использует shareLink');
+// Правило 11, мобильная версия: копирование ссылки и сырой адрес — только на широкой версии; на телефоне «Поделиться карточкой» внизу карточки.
+assert.ok(/\{!m && <div[^\n]*\n\s*<button type="button" onClick=\{copyLink\}/.test(src), 'кнопка «Скопировать ссылку на голосование» должна быть только на широкой версии (!m)');
+assert.ok(/\{!m && <ShareBtn /.test(src) && /data-share-bottom="1"[^\n]*<ShareBtn day=\{day\} id=\{v\.id\} m \/>/.test(src), '«Поделиться карточкой»: на широкой версии в ряду ссылок, на телефоне внизу карточки');
 console.log(`OK test_share_link: ${n} ссылок по формату, без Cursor/Netlify в ${files.length} файлах`);

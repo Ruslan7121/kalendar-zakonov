@@ -1,6 +1,7 @@
 // Правило 11 в настоящем браузере (12.11.2026, пункт 8): ссылка «Поделиться» ?d=&v= открывает карточку законопроекта
 // с начала — шапка карточки [data-ivs] целиком в видимой области ниже всех закреплённых шапок, а верх карточки [data-ivk]
 // совпадает с шапкой (не середина карточки). 390 px (мобильный, touch) и 1366 px.
+// Там же — кнопки карточки: на телефоне «Поделиться карточкой» внизу, без «Скопировать ссылку на голосование» и сырого адреса.
 // Сайт собирается из src/canvas.tsx теми же параметрами, что web/build.sh, во временную папку и раздаётся локально (127.0.0.1).
 // Нужен Chrome/Chromium: $CHROME или google-chrome / chromium в PATH; без браузера тест пропускается (код 0, «SKIP»),
 // при GD_REQUIRE_BROWSER=1 (CI) — падает. Зависимостей нет: протокол DevTools через встроенный WebSocket Node ≥ 22.
@@ -14,7 +15,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { build } from 'esbuild';
 import { loadCanvas, ROOT } from './load_canvas.mjs';
 
-const CASES = ['11.11.2026:136361', '11.11.2026:136349', '11.11.2026:136378', '10.11.2026:136283', '10.11.2026:136277', '22.10.2026:136156'];
+const CASES = ['11.11.2026:136361', '10.11.2026:136304', '11.11.2026:136349', '11.11.2026:136378', '10.11.2026:136283', '10.11.2026:136277', '22.10.2026:136156'];
 const WIDTHS = [{ w: 390, h: 844, mobile: true, dpr: 3 }, { w: 1366, h: 900, mobile: false, dpr: 1 }];
 
 const which = (c) => { try { return execFileSync('sh', ['-c', `command -v ${c}`]).toString().trim(); } catch { return ''; } };
@@ -55,7 +56,15 @@ const MEASURE = (k) => `(() => {
     if (r.right <= hr.left || r.left >= hr.right) continue;
     if (r.bottom > cover) { cover = r.bottom; by = el.tagName + (el.id ? '#' + el.id : '') + ' ' + (el.textContent || '').slice(0, 40); }
   }
-  return { hTop: hr.top, hBot: hr.bottom, wTop: wr.top, wH: wr.height, cover, by, vh: innerHeight, y: scrollY };
+  const p = w.querySelector('[data-panel]'); const vis = (e) => !!e.offsetParent; const tx = (e) => (e.textContent || '').trim();
+  const bs = p ? [...p.querySelectorAll('button,a')].filter(vis) : [];
+  const copy = bs.filter((e) => /Скопировать ссылку|Ссылка скопирована/.test(tx(e))).length;
+  const raw = p ? [...p.querySelectorAll('*')].filter((e) => vis(e) && !e.children.length && /^https:\\/\\/ruslan7121\\.github\\.io\\/kalendar-zakonov\\/\\?d=/.test(tx(e))).length : 0;
+  const sh = bs.filter((e) => /Поделиться карточкой/.test(tx(e))); const s0 = sh[0];
+  const lk = bs.filter((e) => /^(Законопроект|Голосование)/.test(tx(e)));
+  const sr = s0 && s0.getBoundingClientRect(); const pr = p && p.getBoundingClientRect();
+  const share = s0 ? { n: sh.length, bottom: !!s0.closest('[data-share-bottom]'), inRow: lk.some((l) => Math.abs(l.getBoundingClientRect().top - sr.top) < 4), last: lk.every((l) => l.getBoundingClientRect().bottom <= sr.top + 1), gap: pr.bottom - sr.bottom } : null;
+  return { hTop: hr.top, hBot: hr.bottom, wTop: wr.top, wH: wr.height, cover, by, vh: innerHeight, y: scrollY, copy, raw, share, links: lk.length };
 })()`;
 
 const fails = []; const rep = [];
@@ -79,6 +88,16 @@ try {
       if (r.hTop < r.cover - 1) fails.push(`${tag}: шапка карточки (${r.hTop.toFixed(1)}) под закреплённым ${r.by} (до ${r.cover.toFixed(1)})`);
       if (r.hTop < 0 || r.hBot > r.vh + 0.5) fails.push(`${tag}: шапка карточки не целиком в окне (${r.hTop.toFixed(1)}–${r.hBot.toFixed(1)}, окно ${r.vh})`);
       if (Math.abs(r.wTop - r.hTop) > 4) fails.push(`${tag}: открыто не с начала карточки — верх карточки ${r.wTop.toFixed(1)}, шапка ${r.hTop.toFixed(1)}`);
+      // Правило 11, мобильная версия (12.11.2026): на телефоне нет «Скопировать ссылку на голосование» и сырого адреса,
+      // «Поделиться карточкой» — одна кнопка внизу карточки, ниже ссылок «Законопроект»/«Голосование», не в их ряду;
+      // на широкой версии кнопка остаётся в ряду ссылок, как раньше.
+      if (!r.share) fails.push(`${tag}: нет кнопки «Поделиться карточкой»`);
+      else if (W.mobile) {
+        if (r.copy) fails.push(`${tag}: на телефоне видна «Скопировать ссылку на голосование»`);
+        if (r.raw) fails.push(`${tag}: на телефоне виден сырой адрес ссылки`);
+        if (r.share.n !== 1 || !r.share.bottom || r.share.inRow || !r.share.last || r.share.gap > 40) fails.push(`${tag}: «Поделиться карточкой» не внизу карточки ${JSON.stringify(r.share)}`);
+      } else if (r.share.bottom || !r.share.inRow) fails.push(`${tag}: на широкой версии «Поделиться карточкой» не в ряду ссылок ${JSON.stringify(r.share)}`);
+      if (!r.links) fails.push(`${tag}: нет ссылок «Законопроект»/«Голосование»`);
     }
     await cmd('Target.closeTarget', { targetId });
   }
