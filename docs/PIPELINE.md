@@ -40,8 +40,10 @@ bash pipeline/run_daily.sh [ДД.ММ.ГГГГ]
 ## Публикация
 - Публичный сайт — **только GitHub Pages**: https://ruslan7121.github.io/kalendar-zakonov/ (ветка `gh-pages`).
 - Страницу Cursor не редактировать (EditCanvas/WriteCanvas не использовать). Netlify (duma-svodki.netlify.app) — не публичный сайт, туда не выкладывать.
-- Сейчас публикация — ручной шаг после `commit.sh`: `npm run build` (`web/build.sh`: `src/canvas.tsx` → `web/dist/index.html`, `web/dist/app.js`), затем в отдельном worktree ветки `gh-pages` заменить `index.html` и `app.js` содержимым `web/dist/`, обычный коммит «Сборка из main <sha>: …» и `git push` (без --force). Проверка: страница отдаёт 200 и новый `app.js`; кэш Pages до 10 минут.
-- `commit.sh` коммитит только `main` и сайт не публикует. Скрипт публикации с хешированным `app.js` — следующий шаг (пункт 5), здесь не сделан.
+- Публикация — одна команда после `commit.sh` (он коммитит и отправляет main): `./pipeline/publish.sh "что изменилось"`. Скрипт: проверяет, что main чистый и уже в `origin/main`; собирает `web/build.sh` (`src/canvas.tsx` → `web/dist/`); переименовывает JS в `app.<hash>.js` (первые 10 знаков sha256 содержимого) и подставляет его в `index.html`; во временном worktree от `origin/gh-pages` кладёт `index.html`, `app.<hash>.js`, копию в `app.js`, README ветки; удаляет хешированные файлы старше трёх прошлых сборок; отказывается коммитить, если в коммит попали другие файлы; делает обычный коммит «Сборка из main <sha>: … (app.<hash>.js)» и `git push` без --force (не fast-forward → ошибка); ждёт до 10 минут, пока живой `index.html` начнёт ссылаться на новый `app.<hash>.js`, и проверяет, что файл отдаёт 200. Если сборка не изменилась — коммита нет.
+- Варианты: `./pipeline/publish.sh --dry-run` — собрать и показать, что уйдёт в gh-pages, без коммита; `PUBLISH_NO_VERIFY=1` — не ждать живую страницу; `PUBLISH_KEEP=N` — сколько прежних `app.<hash>.js` хранить.
+- Кэш: GitHub Pages отдаёт все файлы с `Cache-Control: max-age=600`, заголовки настроить нельзя (meta-теги браузер для HTTP-кэша не учитывает). Хешированное имя JS гарантирует, что новый `index.html` не возьмёт старый JS из кэша. Остаётся только кэш самого `index.html`: тот, кто открывал сайт за последние 10 минут до выкладки, может до 10 минут видеть прежнюю версию целиком (старый `index.html` + свой старый `app.<hash>.js`, он в ветке сохранён), но не «смесь». Жёсткое обновление больше не нужно — через ≤10 минут обычная перезагрузка подхватит новую сборку. `app.js` без хеша — копия последней сборки только для `index.html`, закэшированных до перехода на хеши; новый `index.html` на него не ссылается.
+- `commit.sh` коммитит только `main` и сайт не публикует. Ветку `gh-pages` руками не править.
 
 ## Скрипты
 | Скрипт | Что делает | Пишет |
@@ -60,6 +62,7 @@ bash pipeline/run_daily.sh [ДД.ММ.ГГГГ]
 | bp_merge.py [canvas] [days/*.json] | перенос текстов бота (out/days/*.json) в BP/PROC | canvas |
 | strip_code_only.py | производные копии канона | src/canvas.code-only.tsx, out/canvas.tsx, out/canvas.code-only.tsx |
 | commit.sh [сообщение] | clean_yo → strip_code_only → обычный коммит и push в `main`; сайт не публикует | git |
+| publish.sh [сообщение] [--dry-run] | сборка → `app.<hash>.js` + `index.html` → обычный коммит в `gh-pages` → push без --force → проверка живого сайта | gh-pages |
 | clean_yo.py | «ё» → «е» в out/days/*.json и блоках BP/PROC/ORG/ORGX | canvas, out/days |
 | track_fast.py | быстрый «Путь закона» по дню | блок TRACK |
 | summary.sh [день] | сводка по логам парсинга | — |

@@ -32,7 +32,7 @@
    bash pipeline/commit.sh "Обновление календаря за ДД.ММ"
    ```
    (сам запускает clean_yo.py и strip_code_only.py; сайт не публикует).
-5. Публикация на GitHub Pages: `npm run build` → содержимое `web/dist/` (index.html, app.js) в ветку `gh-pages`, коммит «Сборка из main <sha>: …», `git push`. Проверить https://ruslan7121.github.io/kalendar-zakonov/ (кэш до 10 минут). Подробно — docs/PIPELINE.md, раздел «Публикация».
+5. Публикация на GitHub Pages: после `commit.sh` — `./pipeline/publish.sh "что изменилось"` (сборка, `app.<hash>.js`, коммит в `gh-pages`, push, проверка живого сайта). Ветку `gh-pages` руками не править. Подробно — docs/PIPELINE.md, раздел «Публикация».
 6. Короткий отчет: что обновлено, что осталось «нет данных» и почему (по out/logs/*.log), SHA main и gh-pages.
 
 ## Правила

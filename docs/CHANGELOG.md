@@ -2,6 +2,11 @@
 
 ## 12.11.2026
 
+### Публикация: `pipeline/publish.sh` с хешированным JS (12.11.2026)
+- Новый `pipeline/publish.sh`: сборка `web/build.sh` → `app.<hash>.js` (sha256 содержимого, 10 знаков) + `index.html` со ссылкой на него → обычный коммит в `gh-pages` через временный worktree → `git push` без --force → ожидание, пока живой `index.html` сошлётся на новый файл. Проверки: main чистый и уже в `origin/main`; в коммит gh-pages попадают только файлы сайта; без изменений сборки коммита нет.
+- Кэш GitHub Pages (`max-age=600`) больше не даёт «старый JS при новой странице»: имя JS меняется вместе с содержимым; три прошлых `app.<hash>.js` хранятся для закэшированных страниц, `app.js` — копия последней сборки для `index.html` до перехода на хеши.
+- `web/build.sh`, код и данные сайта не менялись; README, `docs/PIPELINE.md`, `BOT_PROMPT.md` — команда публикации.
+
 ### Конвейер: один канон путей — git-клон и `src/canvas.tsx` (12.11.2026)
 - `common.py`: `GD_ROOT` по умолчанию — корень клона (каталог над `pipeline/`), а не `/workspace`; `CANVAS` = `$GD_ROOT/src/canvas.tsx` (можно переопределить переменной `CANVAS`); `GD_DUMA` (по умолчанию `/workspace/duma`) — только вспомогательный каталог (прокси, кэши). Раньше по умолчанию писался устаревший `/workspace/out/canvas.tsx`. **`votes_day.py` и остальные шаги теперь по умолчанию пишут в `src/canvas.tsx` клона.**
 - `strip_code_only.py`: читает канон, пишет `src/canvas.code-only.tsx` и синхронизирует `out/canvas.tsx`, `out/canvas.code-only.tsx` (без `import React`); на текущем коде результат побайтно совпадает с закоммиченными копиями. Вызывается в конце `run_daily.sh` и в `commit.sh`.
