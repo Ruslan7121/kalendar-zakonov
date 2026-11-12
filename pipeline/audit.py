@@ -11,9 +11,10 @@ from __future__ import annotations
 import sys, os, re, json, html as H
 sys.path.insert(0, os.path.dirname(__file__))
 import common as C
+import sozd_cache as S
 
 STAGES = ('in', 'kom', 'r1', 'r2', 'r3', 'sf', 'sign', 'pub', 'force')
-BILLS = os.path.join(C.DUMA, 'bills')
+BILLS = S.DIR  # единый кэш HTML sozd (sozd_cache.py)
 VOTE_DIRS = [
     os.path.join(C.DUMA, 'sep'),
     os.path.join(C.DUMA, 'chk'),

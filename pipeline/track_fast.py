@@ -7,14 +7,16 @@
    нужна дорожная карта: принят (любое чтение), ратифицирован, отклонен после 1-го чтения.
    Отклоненные в 1-м чтении берутся только из кэша (флаг --all загружает и их).
 2. Загрузка — ThreadPool (по умолчанию 10 потоков, пауза 0.12 с между запусками),
-   свежая страница пишется в duma/bills/<номер>.html только при успехе (старый кэш не затирается).
+   страница берётся из единого кэша sozd_cache ($GD_DUMA/bills/<номер>.html): моложе TTL (48 ч) — без сети;
+   иначе перезапрос, при неудаче — прошлая хорошая страница остаётся (--refresh — мимо TTL).
 3. track.py запускается с TRACK_QUICK=1 (только кэш) порциями по 20 законопроектов —
    блок TRACK записывается после каждой порции. Даты не придумываются: нет в sozd — нет в TRACK.
 """
 import os, sys, time, json, argparse, subprocess, shutil, tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import common as C
-HERE = os.path.dirname(os.path.abspath(__file__)); BILLS = os.path.join(C.DUMA, 'bills')
+import sozd_cache as S
+HERE = os.path.dirname(os.path.abspath(__file__)); BILLS = S.DIR
 
 def day_bills(src, days, all_):
     need, cache_only = [], []
@@ -33,31 +35,29 @@ def day_bills(src, days, all_):
         (need if (w or all_) else cache_only).append(n)
     return need, cache_only
 
-def fetch_one(n, i, delay):
+def fetch_one(n, i, delay, refresh=False):
+    if S.fresh(n) and not refresh:
+        return n, 'fresh', 0.0
     time.sleep(i * delay)
-    fd, tmp = tempfile.mkstemp(suffix='.html'); os.close(fd)
-    t0 = time.time(); ok = C.fetch(f'https://sozd.duma.gov.ru/bill/{n}', tmp, 150)
-    if ok:
-        os.makedirs(BILLS, exist_ok=True); shutil.move(tmp, os.path.join(BILLS, f'{n}.html'))
-    else:
-        os.remove(tmp); C.log('track_fail.log', f'{n}: sozd не ответил (track_fast)')
-    return n, ok, time.time() - t0
+    t0 = time.time(); _, st = S.get(n, refresh=refresh, deadline=150, log='track_fail.log')
+    return n, st or 'нет', time.time() - t0
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument('--day', action='append', required=True)
     ap.add_argument('--workers', type=int, default=10); ap.add_argument('--delay', type=float, default=0.12)
     ap.add_argument('--all', action='store_true'); ap.add_argument('--skip-fetch', action='store_true')
+    ap.add_argument('--refresh', action='store_true')
     a = ap.parse_args(); t0 = time.time()
     need, cache_only = day_bills(C.read_canvas(), a.day, a.all)
     print(f'нужна дорожная карта: {len(need)}; только кэш: {len(cache_only)}', flush=True)
     fails = []
     if not a.skip_fetch:
         with ThreadPoolExecutor(a.workers) as ex:
-            fs = [ex.submit(fetch_one, n, i % a.workers, a.delay) for i, n in enumerate(need)]
+            fs = [ex.submit(fetch_one, n, i % a.workers, a.delay, a.refresh) for i, n in enumerate(need)]
             for f in as_completed(fs):
-                n, ok, dt_ = f.result(); print(f'  sozd {n}: {"ok" if ok else "НЕТ"} ({dt_:.0f} с)', flush=True)
-                if not ok: fails.append(n)
-    have = [n for n in need + cache_only if os.path.exists(os.path.join(BILLS, f'{n}.html'))]
+                n, st, dt_ = f.result(); print(f'  sozd {n}: {st} ({dt_:.0f} с)', flush=True)
+                if st not in ('fresh', 'fetched'): fails.append(n)
+    have = [n for n in need + cache_only if S.cached(n)]
     env = dict(os.environ, TRACK_QUICK='1')
     for i in range(0, len(have), 20):
         part = have[i:i + 20]

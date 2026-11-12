@@ -7,9 +7,10 @@
 """
 import sys, os, re, json
 sys.path.insert(0, os.path.dirname(__file__)); import common as C
+import sozd_cache as S
 MON = {m: i + 1 for i, m in enumerate('января февраля марта апреля мая июня июля августа сентября октября ноября декабря'.split())}
 STAGES = ('in', 'kom', 'r1', 'r2', 'r3', 'sf', 'sign', 'pub', 'force')
-BILLS_DIR = os.path.join(C.DUMA, 'bills')
+BILLS_DIR = S.DIR  # единый кэш HTML sozd (sozd_cache.py)
 # sozd: "19.09.2023 19.09.23 16:30 действие" или "22.10.2026 22.10.26 действие"
 DT = r'(\d\d\.\d\d\.\d{4}) \d\d\.\d\d\.\d\d(?: \d\d:\d\d)?'
 
@@ -47,31 +48,17 @@ def force_date(n_law, pub, sign=''):
     return '', url
 
 
-def load_sozd(n, refresh=False):
-    local = os.path.join(BILLS_DIR, f'{n}.html')
-    h = f'/tmp/sozd_{n}.html'
-    raw = None
+def load_sozd(n, refresh=False, day=''):
+    """HTML sozd из единого кэша sozd_cache ($GD_DUMA/bills/, общий с bills.py): моложе TTL — без сети,
+    старше — перезапрос; при 504 — последняя хорошая страница. TRACK_QUICK=1 — только кэш, без сети."""
     quick = bool(os.environ.get('TRACK_QUICK'))
-    if not refresh and os.path.exists(local) and os.path.getsize(local) > 2000:
-        raw = open(local, errors='ignore').read()
-    elif quick and not refresh:
-        # bulk: не ждать сеть — только кэш; дыры в track_fail.log
-        C.log('track_fail.log', f'{n}: нет локального sozd html (TRACK_QUICK)')
+    raw, st = S.get(n, refresh=refresh, offline=quick and not refresh, deadline=120, log='track_fail.log',
+                    ttl=S.ttl_for_day(day))
+    if not raw:
+        C.log('track_fail.log', f'{n}: ' + ('нет локального sozd html (TRACK_QUICK)' if quick and not refresh else 'sozd не ответил, кэша нет'))
         return None
-    else:
-        if C.fetch(f'https://sozd.duma.gov.ru/bill/{n}', h):
-            raw = open(h, errors='ignore').read()
-            try:
-                os.makedirs(BILLS_DIR, exist_ok=True)
-                open(local, 'w').write(raw)
-            except OSError:
-                pass
-        elif os.path.exists(local) and os.path.getsize(local) > 2000:
-            C.log('track_fail.log', f'{n}: sozd fetch fail, using cache')
-            raw = open(local, errors='ignore').read()
-        else:
-            C.log('track_fail.log', f'{n}: sozd не ответил')
-            return None
+    if st == 'stale' and not quick:
+        C.log('track_fail.log', f'{n}: sozd fetch fail, using cache')
     t = re.sub(r'\s+', ' ', C.text(raw))
     if 'По событиям' in t:
         t = t[t.find('По событиям'):]
@@ -79,7 +66,7 @@ def load_sozd(n, refresh=False):
 
 
 def one(n, vote_day='', vote_rd='', rejected=False, refresh=False):
-    t = load_sozd(n, refresh=refresh)
+    t = load_sozd(n, refresh=refresh, day=vote_day)
     if t is None:
         return None
     r = {}
