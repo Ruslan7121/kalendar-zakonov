@@ -2291,14 +2291,18 @@ const FT: Record<string, string> = {}; let ftDone = false;
 function ftScan(o: any): void { if (Array.isArray(o)) { if (typeof o[0] === 'string' && /^\d+-\d$/.test(o[0]) && typeof o[4] === 'string' && !/…$/.test(o[4]) && o[4].length > (FT[o[0]] || '').length) FT[o[0]] = o[4]; else o.forEach(ftScan); } else if (o && typeof o === 'object') Object.values(o).forEach(ftScan); }
 function fullT(b: string | null | undefined, ...c: (string | undefined)[]): string { const cs = c.filter(Boolean) as string[]; const ok = cs.find((x) => !/(…|\.\.\.)$/.test(x)); if (ok) return ok; if (!ftDone) { ftDone = true; try { ftScan(CAL); } catch (e) {} } return (b && FT[b]) || cs[0] || ''; }
 const FFULL: Record<string, string> = { 'ЕР': '«Единая Россия»', 'КПРФ': 'КПРФ', 'ЛДПР': 'ЛДПР', 'НЛ': '«Новые люди»', 'СРЗП': '«Справедливая Россия — За правду»' };
+/* «Суть» / «Кого коснётся» законопроекта из уже имеющихся текстов PLAIN по другим голосованиям того же законопроекта (ничего не дописывается). */
+let PLB: Record<string, { sut?: string[]; who?: string }> | null = null;
+function plainBill(b: string): { sut?: string[]; who?: string } { if (!PLB) { PLB = {}; for (const d of Object.keys(DATA)) for (const l of (DATA[d] || '').split('\n')) { const p = l.split('|'); const q = PLAIN[p[0]]; const bn = p[1] ? billNo(p[1]) : null; if (!q || !bn || /^Таблица поправок/.test(SHORT[p[0]] || '')) continue; const o = (PLB[bn] = PLB[bn] || {}); if (!o.sut && q.sut && q.sut.length) o.sut = q.sut; if (!o.who && q.who) o.who = q.who; } } return PLB[b] || {}; }
 function cardText(v: Vote, day: string) {
   const b = billNo(v.doc);
   const pl = PLAIN[v.id] || {}; const bpx = BP[b || ''] || {}; const inf = INFO[b || ''] || {}; const pr = PROC[v.id];
   const isOrder = !b && /порядка работы/.test(v.full);
   const r = normRead(v.reading);
   const title = fullT(b, pl.title, inf.t, v.full);
-  const sut = pl.sut || bpx.sut || (pr ? [pr[0]] : null) || (isOrder ? [`Депутаты утвердили перечень и очередность вопросов заседания ${day}.`] : null) || (inf.sut && inf.sut.length ? inf.sut : null);
-  const who = pl.who || bpx.who || (pr ? pr[1] : null) || (isOrder ? 'Депутатов и авторов законопроектов из повестки.' : null);
+  const pb = b ? plainBill(b) : {};
+  const sut = pl.sut || bpx.sut || (pr ? [pr[0]] : null) || (isOrder ? [`Депутаты утвердили перечень и очередность вопросов заседания ${day}.`] : null) || (inf.sut && inf.sut.length ? inf.sut : null) || pb.sut || null;
+  const who = pl.who || bpx.who || (pr ? pr[1] : null) || (isOrder ? 'Депутатов и авторов законопроектов из повестки.' : null) || pb.who || null;
   let next: string[] = [];
   if (pl.next) next = [pl.next];
   else if (v.ok) {
@@ -2510,7 +2514,7 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
   const ctx = cardText(v, day);
   const secs: [string, string[]][] = [
     ...(ctx.sut ? [['Суть', ctx.sut.map(yo)] as [string, string[]]] : []),
-    ...(ctx.who ? [[v.ok ? 'Кого коснется' : 'Кого коснулось бы', [yo(ctx.who)]] as [string, string[]]] : []),
+    ...(ctx.who ? [['Кого коснётся', [yo(ctx.who)]] as [string, string[]]] : []),
     ...(ctx.next.length ? [[v.ok ? 'Что дальше' : 'Почему отклонили', ctx.next.map(yo)] as [string, string[]]] : []),
   ];
   const ini = yo(inf.ini || INI_ADD[b || '']) as string | undefined;
@@ -2577,7 +2581,7 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
         {!inl && <span style={{ fontSize: m ? 12 : 13, color: t.text.secondary, fontVariantNumeric: 'tabular-nums' }}>{[`${dt.getDate()} ${MON[dt.getMonth()]} ${dt.getFullYear()}, ${WDN[dt.getDay()]}`].filter(Boolean).join(' · ')}</span>}
       </div>}
       {inl ? null : <>{!m && <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.3, color: t.text.primary, letterSpacing: '-0.01em', marginBottom: 10 }}>{yo(v.q)}</div>}</>}
-      {(sut0.length > 0 || ctx.who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{sut0.length > 0 && <div><div style={h}>Суть</div>{sut0.map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{p}</p>)}</div>}{ctx.who && <div><div style={h}>{v.ok ? 'Кого коснется' : 'Кого коснулось бы'}</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(ctx.who)}</p></div>}{ctx.bs && <div><div style={h}>Что сейчас</div>{ctx.bs.map((r, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(r[0])}</p>)}</div>}{ctx.bs && <div><div style={h}>Что предлагалось изменить</div>{ctx.bs.map((r, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(r[1])}</p>)}</div>}</div>}
+      {(sut0.length > 0 || ctx.who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{sut0.length > 0 && <div><div style={h}>Суть</div>{sut0.map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{p}</p>)}</div>}{ctx.who && <div><div style={h}>Кого коснётся</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(ctx.who)}</p></div>}{ctx.bs && <div><div style={h}>Что сейчас</div>{ctx.bs.map((r, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(r[0])}</p>)}</div>}{ctx.bs && <div><div style={h}>Что предлагалось изменить</div>{ctx.bs.map((r, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(r[1])}</p>)}</div>}</div>}
       <div style={{ marginTop: (sut0.length > 0 || ctx.who) ? 12 : 0 }}>{res}</div>
       {b && <Track b={b} rd={v.reading} m={!!m} ok={v.ok} />}
       {b && BUDGET[b] && <Budget b={b} m={!!m} />}
@@ -2681,6 +2685,8 @@ function Track({ b, rd, m, ok, plan }: { b: string; rd?: string; m: boolean; ok?
     const sz = now || isFail ? 16 : 12;
     return { k, l, d, isFail, done, now, col, bg, pathCol, pathSolid, sz, i };
   });
+  // Между двумя пройденными этапами линия всегда сплошная зеленая (в т.ч. если дата одного из этапов в TRACK пропущена).
+  stages.forEach((s, i) => { const nx = stages[i + 1]; if (nx && s.done && nx.done && !nx.isFail) { s.pathCol = gn; s.pathSolid = true; } if (nx && s.done && nx.isFail) { s.pathCol = gn; s.pathSolid = true; } });
   const scRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!m) return;
@@ -2700,9 +2706,9 @@ function Track({ b, rd, m, ok, plan }: { b: string; rd?: string; m: boolean; ok?
         {stages.map((s) => (
           <div key={s.k} data-st={s.i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: SW, minWidth: SW, maxWidth: SW, flex: 'none', textAlign: 'center', scrollSnapAlign: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', width: '100%', minHeight: 16 }}>
-              {s.i > 0 ? <span aria-hidden style={{ ...hLine(stages[s.i - 1].pathCol, stages[s.i - 1].pathSolid), flex: 1, minWidth: 6, marginLeft: 0, marginRight: 0 }} /> : <span style={{ flex: 1 }} />}
+              {s.i > 0 ? <span aria-hidden data-seg={stages[s.i - 1].pathSolid ? 'solid' : 'dash'} style={{ ...hLine(stages[s.i - 1].pathCol, stages[s.i - 1].pathSolid), flex: 1, minWidth: 6, marginLeft: 0, marginRight: 0 }} /> : <span style={{ flex: 1 }} />}
               <span style={{ width: s.sz, height: s.sz, borderRadius: 999, flex: 'none', boxSizing: 'border-box', background: s.bg, border: `${s.now ? 3 : 2}px solid ${s.col}`, boxShadow: s.now ? `0 0 0 2px ${fillEmpty}` : undefined, position: 'relative', zIndex: 1 }} />
-              {s.i < TRK.length - 1 ? <span aria-hidden style={{ ...hLine(s.pathCol, s.pathSolid), flex: 1, minWidth: 6, marginLeft: 0 }} /> : <span style={{ flex: 1 }} />}
+              {s.i < TRK.length - 1 ? <span aria-hidden data-seg={s.pathSolid ? 'solid' : 'dash'} style={{ ...hLine(s.pathCol, s.pathSolid), flex: 1, minWidth: 6, marginLeft: 0 }} /> : <span style={{ flex: 1 }} />}
             </div>
             <div style={{ fontSize: 10, lineHeight: 1.25, fontWeight: s.now || s.isFail ? 700 : 500, color: s.isFail ? rdC : s.now || s.done ? t.text.primary : t.text.tertiary, textAlign: 'center', width: '100%', marginTop: 4, wordBreak: 'break-word' }}>{s.l}</div>
             {s.d ? <div style={{ fontSize: 9, fontWeight: 500, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums', marginTop: 1 }}>{s.d}</div> : null}
@@ -2714,15 +2720,15 @@ function Track({ b, rd, m, ok, plan }: { b: string; rd?: string; m: boolean; ok?
   }
   return <div data-track="1" style={{ marginTop: 12, background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: '12px 14px' }}>
     <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: ac, marginBottom: 8 }}>Путь закона</div>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(9, minmax(0, 1fr))', gap: 4 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(9, minmax(0, 1fr))', columnGap: 0, rowGap: 4 }}>
       {stages.map((s) => (
-        <div key={s.k} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 0, textAlign: 'center' }}>
+        <div key={s.k} data-st={s.i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 0, textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', minHeight: 16 }}>
-            {s.i > 0 ? <span aria-hidden style={{ ...hLine(stages[s.i - 1].pathCol, stages[s.i - 1].pathSolid), flex: 1, marginLeft: 0, marginRight: 0 }} /> : <span style={{ flex: 1 }} />}
+            {s.i > 0 ? <span aria-hidden data-seg={stages[s.i - 1].pathSolid ? 'solid' : 'dash'} style={{ ...hLine(stages[s.i - 1].pathCol, stages[s.i - 1].pathSolid), flex: 1, marginLeft: 0, marginRight: 0 }} /> : <span style={{ flex: 1 }} />}
             <span style={{ width: s.sz, height: s.sz, borderRadius: 999, flex: 'none', boxSizing: 'border-box', background: s.bg, border: `${s.now ? 3 : 2}px solid ${s.col}`, boxShadow: s.now ? `0 0 0 2px ${fillEmpty}` : undefined, position: 'relative', zIndex: 1 }} />
-            {s.i < TRK.length - 1 ? <span aria-hidden style={{ ...hLine(s.pathCol, s.pathSolid), flex: 1, marginLeft: 0 }} /> : <span style={{ flex: 1 }} />}
+            {s.i < TRK.length - 1 ? <span aria-hidden data-seg={s.pathSolid ? 'solid' : 'dash'} style={{ ...hLine(s.pathCol, s.pathSolid), flex: 1, marginLeft: 0 }} /> : <span style={{ flex: 1 }} />}
           </div>
-          <div style={{ fontSize: 12, lineHeight: 1.3, fontWeight: s.now || s.isFail ? 700 : 500, color: s.isFail ? rdC : s.now || s.done ? t.text.primary : t.text.tertiary, textAlign: 'center', width: '100%' }}>{s.l}{s.d ? <div style={{ fontSize: 11, fontWeight: 500, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{s.d}</div> : null}</div>
+          <div style={{ fontSize: 12, lineHeight: 1.3, fontWeight: s.now || s.isFail ? 700 : 500, color: s.isFail ? rdC : s.now || s.done ? t.text.primary : t.text.tertiary, textAlign: 'center', width: '100%', padding: '0 2px', boxSizing: 'border-box' }}>{s.l}{s.d ? <div style={{ fontSize: 11, fontWeight: 500, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{s.d}</div> : null}</div>
         </div>
       ))}
     </div>
@@ -2733,9 +2739,9 @@ function PreVote({ b, rd, day, m }: { b: string; rd?: string; day?: string; m: b
   const t = useGrokTheme();
   const yo = (x: any) => typeof x === 'string' ? x.replace(/ё/g, 'е').replace(/Ё/g, 'Е') : x;
   const bp = BP[b] || {};
-  const sut = ((bp.sut || []) as any[]).map(yo).filter(Boolean) as string[];
-  const who = yo(bp.who || '') as string;
-  const inf = INFO[b] || {};
+  const inf = INFO[b] || {}; const pb = plainBill(b);
+  const sut = ((bp.sut && bp.sut.length ? bp.sut : inf.sut && inf.sut.length ? inf.sut : pb.sut || []) as any[]).map(yo).filter(Boolean) as string[];
+  const who = yo(bp.who || pb.who || '') as string;
   const ini = yo(inf.ini || INI_ADD[b] || '') as string;
   const iv = iniView(ini, b || undefined);
   const iniMeta = ini ? iniInfo(ini) : null;
@@ -2748,7 +2754,7 @@ function PreVote({ b, rd, day, m }: { b: string; rd?: string; day?: string; m: b
   const h = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: (DK ? '#409CFF' : 'rgb(10,100,214)'), marginBottom: 4 } as const;
   return (
     <div data-pre-vote="1" className="gd-anim" style={{ padding: m ? '10px 10px 12px' : '14px 16px 16px', background: t.bg.subtle, borderBottom: `1px solid ${t.border.subtle}` }}>
-      {(sut.length > 0 || who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{sut.length > 0 && <div><div style={h}>Суть</div>{sut.map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{p}</p>)}</div>}{who && <div><div style={h}>Кого может коснуться</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{who}</p></div>}</div>}
+      {(sut.length > 0 || who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{sut.length > 0 && <div><div style={h}>Суть</div>{sut.map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{p}</p>)}</div>}{who && <div><div style={h}>Кого коснётся</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{who}</p></div>}</div>}
       {hasTrack && <Track b={b} m={!!m} plan={readStage(rd || '') >= 0 ? { rd, day } : undefined} />}
       {(!!iniVal || !!com) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16, marginTop: hasTrack || sut.length > 0 || !!who ? 12 : 0 }}>{!!iniVal && <div data-pre-vote-ini="1"><div style={h}>Инициатор</div><div style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{iniVal}</div></div>}{!!com && <div data-pre-vote-com="1"><div style={h}>Ответственный комитет</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{com}</p></div>}</div>}
       {!!billNo(b) && <div data-pre-vote-sozd="1" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: has ? 12 : 0 }}><a className="gd-lnk" href={`https://sozd.duma.gov.ru/bill/${billNo(b)}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', borderRadius: 14, border: `1px solid ${t.border.default}`, fontSize: 13, color: t.text.accent, textDecoration: 'none', whiteSpace: 'nowrap' }}>Законопроект ↗</a></div>}
@@ -2916,13 +2922,28 @@ function Summary({ day, votes, m }: { day: string; votes: Vote[]; m?: boolean })
     <div data-svroot="1" style={{ marginBottom: 12 }}>
       <div style={{ ...card(t), marginBottom: 8, padding: m ? '14px 14px' : '14px 18px', letterSpacing: '-0.01em', fontFamily: t.font.family, fontSize: t.font.body1.fontSize, color: t.text.primary, fontWeight: t.weight.semibold }}>Сводка дня {day}</div>
       <div style={{ display: 'grid', gridTemplateColumns: m ? '1fr' : '1fr 1fr', gap: 12, alignItems: so ? 'start' : 'stretch' }}>
-        {([['Госдума', D], ['Правительство', G]] as const).map(([n, s]) => <div key={n} style={{ ...card(t), minWidth: 0, padding: m ? '12px 14px 6px' : '12px 16px 6px', fontFamily: t.font.family, fontSize: m ? 16 : t.font.table.fontSize }}>
+        {([['Госдума', D], ['Правительство', G]] as const).map(([n, s]) => <div key={n} data-newsorg={n} style={{ ...card(t), minWidth: 0, padding: m ? '12px 14px 6px' : '12px 16px 6px', fontFamily: t.font.family, fontSize: m ? 16 : t.font.table.fontSize }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 6, borderBottom: `1px solid ${t.border.subtle}` }}><span style={{ flex: 1, color: BLUE_(), fontWeight: t.weight.semibold, fontSize: t.font.body1.fontSize }}>{n}</span><SvPill n={cnt(s as FSub[])} /></div>
           {(s as FSub[]).length ? <SvSection key={day + n} subs={s as FSub[]} m={m} idp={n} cur={so} setCur={setSo} /> : <div style={{ padding: '10px 2px', color: t.text.secondary }}>Подробности не раскрыты.</div>}
         </div>)}
+        {ORGK.filter((o) => ORG.some((x: any) => x.o === o && x.d === day)).map((o) => <OrgNews key={o} o={o} items={ORG.filter((x: any) => x.o === o && x.d === day)} m={m} cur={so} setCur={setSo} />)}
       </div>
-      <OrgFeed m={m} />
     </div>);
+}
+/* Новости: каждый орган — отдельная карточка в том же оформлении, что «Госдума» и «Правительство» (заголовок, счетчик, разделы-аккордеоны). */
+const ORGTY: [string, string][] = [['заседание', 'Заседания'], ['решение', 'Решения и документы'], ['разъяснение', 'Разъяснения и рекомендации']];
+function OrgNews({ o, items, m, cur, setCur }: { o: string; items: any[]; m?: boolean; cur: string | null; setCur: (k: string | null) => void }) {
+  const t = useGrokTheme();
+  const secs: [string, any[]][] = [...ORGTY.map(([k, l]) => [l, items.filter((x: any) => x.ty === k)] as [string, any[]]), ['Другое', items.filter((x: any) => !ORGTY.some(([k]) => k === x.ty))] as [string, any[]]].filter(([, a]) => a.length > 0);
+  return <div data-newsorg={o} style={{ ...card(t), minWidth: 0, padding: m ? '12px 14px 6px' : '12px 16px 6px', fontFamily: t.font.family, fontSize: m ? 16 : t.font.table.fontSize }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 6, borderBottom: `1px solid ${t.border.subtle}` }}><span style={{ flex: 1, color: BLUE_(), fontWeight: t.weight.semibold, fontSize: t.font.body1.fontSize }}>{ORGN[o]}</span><SvPill n={items.length} /></div>
+    {secs.map(([l, a], k) => { const id = o + '#' + k; const op = cur === id; return <div key={id} style={{ borderBottom: k === secs.length - 1 && !op ? 'none' : `1px solid ${t.border.subtle}` }}>
+      <button aria-expanded={op} onClick={() => setCur(op ? null : id)} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: m ? 48 : 42, padding: m ? '10px 2px' : '8px 2px', background: t.bg.base, border: 'none', cursor: 'pointer', fontFamily: t.font.family, fontSize: m ? 16 : t.font.table.fontSize, fontWeight: t.weight.semibold, color: op ? BLUE_() : t.text.primary, textAlign: 'left' }}>
+        <span style={{ flex: 1, minWidth: 0 }}>{l}</span><SvPill n={a.length} /><span aria-hidden style={{ color: t.text.tertiary, width: 14, textAlign: 'center', transition: 'transform .2s', transform: op ? 'rotate(90deg)' : 'none' }}>›</span>
+      </button>
+      {op && <div className="gd-anim" style={{ paddingBottom: 6 }}>{a.map((x: any, i: number) => <OrgItem key={x.u + i} x={x} m={m} />)}<SvFold onClick={() => setCur(null)} /></div>}
+    </div>; })}
+  </div>;
 }
 const OBOX = (t: any, m?: boolean) => ({ background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px', minWidth: 0 }) as const;
 const OH = () => ({ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: (DK ? '#409CFF' : 'rgb(10,100,214)'), marginBottom: 4 }) as const;
@@ -2930,7 +2951,7 @@ const OBODY = (t: any, m?: boolean) => ({ padding: m ? '10px 10px 12px' : '14px 
 const orgNo = (x: any) => { const r = /№\s*([^\s,;:]+)/.exec(x.no || x.st || x.t || ''); return r ? '№ ' + r[1] : ''; };
 function OrgItem({ x, m }: { x: any; m?: boolean }) {
   const t = useGrokTheme(); const [op, setOp] = useState(false);
-  const dl: string[][] = x.dl || []; const no = orgNo(x); const kind = x.kind || x.k || x.ty; const desc = x.sut ? '' : x.x || '';
+  const dl: string[][] = x.dl || []; const no = orgNo(x); const kind = x.kind || x.k || x.ty; const desc = x.sut ? '' : x.x || ''; const sutO = x.sut || x.x || '';
   const p15 = { margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary } as const; const h = OH(); const box = OBOX(t, m);
   const cw = m ? 108 : 116; const cb = { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: cw, minHeight: 24, boxSizing: 'border-box', padding: '3px 6px', borderRadius: 12, fontSize: 12, fontWeight: 600, lineHeight: 1.25, textAlign: 'center', whiteSpace: 'normal', overflowWrap: 'anywhere', background: t.bg.subtle, color: t.text.secondary, border: `1px solid ${t.border.subtle}` } as any;
   const tog = () => { const sl = window.getSelection && window.getSelection(); if (sl && String(sl).length) return; setOp(!op); };
@@ -2951,14 +2972,14 @@ function OrgItem({ x, m }: { x: any; m?: boolean }) {
         <span className="gd-bc" aria-hidden="true" style={{ flexShrink: 0, alignSelf: 'center', fontSize: 20, lineHeight: 1, color: op ? t.text.accent : t.text.tertiary, transition: 'transform .2s', transform: op ? 'rotate(90deg)' : 'none' }}>›</span>
       </div>
       <Exp on={op}>{() => <div data-orgbody="1" style={OBODY(t, m)}>
-        {(!!x.sut || !!x.who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{x.sut && <div><div style={h}>Суть</div><p style={p15}>{x.sut}</p></div>}{x.who && <div><div style={h}>Кого может коснуться</div><p style={p15}>{x.who}</p></div>}</div>}
-        {(!!x.no || !!x.full || dl.length > 0 || !!x.nb) && <div data-orgdoc="1" style={{ ...box, marginTop: x.sut || x.who ? 12 : 0 }}><div style={h}>Документ и даты</div>
+        {(!!sutO || !!x.who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{sutO && <div><div style={h}>Суть</div><p style={p15}>{sutO}</p></div>}{x.who && <div><div style={h}>Кого коснётся</div><p style={p15}>{x.who}</p></div>}</div>}
+        {(!!x.no || !!x.full || dl.length > 0 || !!x.nb) && <div data-orgdoc="1" style={{ ...box, marginTop: sutO || x.who ? 12 : 0 }}><div style={h}>Документ и даты</div>
           {x.no && <p style={{ ...p15, fontWeight: t.weight.semibold }}>{x.no}</p>}
           {x.full && <p style={{ ...p15, marginTop: x.no ? 4 : 0, fontSize: 14, color: t.text.secondary }}>{x.full}</p>}
           {dl.length > 0 && <div style={{ marginTop: x.no || x.full ? 8 : 0, display: 'flex', flexDirection: 'column', gap: 2 }}>{dl.map(([a, b], i) => <div key={i} style={{ display: 'flex', flexWrap: 'wrap', gap: '0 8px', fontSize: 14 }}><span style={{ color: t.text.secondary }}>{a}:</span><span style={{ color: t.text.primary, fontVariantNumeric: 'tabular-nums' }}>{b}</span></div>)}</div>}
           {x.nb && <p style={{ ...p15, marginTop: 8, fontSize: 13, color: t.text.tertiary }}>{x.nb}</p>}
         </div>}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: x.sut || x.who || x.no || x.full || dl.length || x.nb ? 12 : 0 }}><a className="gd-lnk" href={x.u} target="_blank" rel="noopener noreferrer" onClick={(k) => k.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', borderRadius: 14, border: `1px solid ${t.border.default}`, fontSize: 13, color: t.text.accent, textDecoration: 'none', whiteSpace: 'nowrap' }}>Источник: {host} ↗</a></div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: sutO || x.who || x.no || x.full || dl.length || x.nb ? 12 : 0 }}><a className="gd-lnk" href={x.u} target="_blank" rel="noopener noreferrer" onClick={(k) => k.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', borderRadius: 14, border: `1px solid ${t.border.default}`, fontSize: 13, color: t.text.accent, textDecoration: 'none', whiteSpace: 'nowrap' }}>Источник: {host} ↗</a></div>
       </div>}</Exp>
     </div>);
 }
@@ -3041,10 +3062,10 @@ function Laws({ m, mk }: { m: boolean; mk: string }) {
           <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.3, color: t.text.primary }}>{x.title}</div>
           <div style={{ fontSize: 15, color: t.text.secondary, margin: '4px 0 12px' }}>{x.law || 'Номер закона в источнике не указан'}</div>
           <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: '60rem' }}>
-            <div><div style={h}>Суть</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{x.sut}</p></div>
+            {x.sut && <div><div style={h}>Суть</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{x.sut}</p></div>}
             {x.was && <div><div style={h}>Как было</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{x.was}</p></div>}
             {x.now && <div><div style={h}>Что изменили</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{x.now}</p></div>}
-            <div><div style={h}>{p ? 'Кого коснулось' : 'Кого коснется'}</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{x.who}</p></div>
+            {x.who && <div><div style={h}>Кого коснётся</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{x.who}</p></div>}
             {x.note && <div style={{ fontSize: 13, color: t.text.tertiary }}>{x.note}</div>}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>{x.src.map((l: any, i: number) => <a key={i} href={l.u} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', height: 28, padding: '0 10px', borderRadius: 14, border: `1px solid ${t.border.default}`, fontSize: 13, color: t.text.accent, textDecoration: 'none', whiteSpace: 'nowrap' }}>{l.t} ↗</a>)}<a href="http://publication.pravo.gov.ru/" target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', height: 28, padding: '0 10px', borderRadius: 14, border: `1px solid ${t.border.default}`, fontSize: 13, color: t.text.accent, textDecoration: 'none' }}>pravo.gov.ru ↗</a></div>
           </div>
@@ -3127,6 +3148,8 @@ ORG.forEach((x: any) => { const e = ORGX[x.o + ':' + x.u + '#' + x.d]; if (e) Ob
 const ORGN: Record<string, string> = { sf: 'Совет Федерации', minfin: 'Минфин', mintrud: 'Минтруд', minjust: 'Минюст', cbr: 'Банк России' };
 const ORGK = ['sf', 'minfin', 'mintrud', 'minjust', 'cbr'];
 const ORGC = (dk: boolean) => (dk ? '#4FC3D9' : '#0B7C93');
+const ORGCC: Record<string, [string, string]> = { sf: ['#0B7C93', '#4FC3D9'], minfin: ['#7F5AB5', '#B69CE6'], mintrud: ['#8A6E00', '#D9BE45'], minjust: ['#5E6E2E', '#A8BF6A'], cbr: ['#C2570C', '#FF9A57'] };
+const orgCol = (o: string, dk: boolean) => (ORGCC[o] ? ORGCC[o][dk ? 1 : 0] : ORGC(dk));
 const CARDS: string[] = ["01.10.2026", "13.10.2026", "14.10.2026", "15.10.2026", "20.10.2026", "21.10.2026", "22.10.2026", "23.10.2026", "25.10.2026", "26.10.2026", "30.09.2026"];
 const SITE = 'https://duma-svodki.netlify.app';
 
@@ -3166,7 +3189,10 @@ let onFavNav: ((on: boolean) => void) | null = null;
 function setFavOnly(v: boolean) { FAV_ONLY = v; FL.forEach((f) => f()); try { onFavNav?.(v); } catch {} }
 function lawNo(s: string) { if (!s) return null; const b = billNo(s); if (b) return b; const m = s.match(/№\s*(\d+-ФЗ)/i) || s.match(/\b(\d+-ФЗ)\b/i); return m ? m[1] : null; }
 const STAR_Y = '#F5C400';
+/* 12.11.2026: сохранение без регистрации не работает — кнопка «Сохраненные» и звездочки скрыты (код оставлен). */
+const NOFAV = true;
 function FavStar({ bill, big }: { bill: string; big?: boolean }) {
+  if (NOFAV) return null;
   useFavs();
   if (!bill) return null;
   const on = FAVS.has(bill);
@@ -3181,6 +3207,7 @@ function FavStar({ bill, big }: { bill: string; big?: boolean }) {
   );
 }
 function FavBtn() {
+  if (NOFAV) return null;
   useFavs();
   const t = useGrokTheme();
   const n = FAVS.size;
@@ -3274,18 +3301,18 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
     const exp = p && p.s === 'expected'; const wd = d.getDay() % 6 !== 0; const com = wd && (!p || exp) && w !== 'regional';
     return (
       <div key={s} role="button" tabIndex={0} onClick={click} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); click(); } }}
-        aria-pressed={isS} title={[gdOn && p && !exp ? 'Пленарное заседание Госдумы' : '', gdOn && bud ? 'Рассмотрение бюджета' : '', g ? 'Заседание Правительства РФ' : '', og ? 'Органы власти и Банк России' : '', gdOn && com ? 'Работа в комитетах' : '', gdOn && w === 'regional' ? 'Работа в регионах' : '', isS ? 'Снять выбор' : 'Показать события дня'].filter(Boolean).join(' · ')}
+        aria-pressed={isS} title={[gdOn && p && !exp ? 'Пленарное заседание Госдумы' : '', gdOn && bud ? 'Рассмотрение бюджета' : '', g ? 'Заседание Правительства РФ' : '', og ? [...new Set(og.map((x: any) => x.o))].map((o: any) => ORGN[o] || o).join(' · ') : '', gdOn && com ? 'Работа в комитетах' : '', gdOn && w === 'regional' ? 'Работа в регионах' : '', isS ? 'Снять выбор' : 'Показать события дня'].filter(Boolean).join(' · ')}
         style={{ position: 'relative', minWidth: 0, height: m ? 56 : 48, borderRadius: 8, cursor: 'pointer', opacity: inM ? 1 : 0, pointerEvents: inM ? 'auto' : 'none',
           background: isS ? SELB : wd ? (w === 'regional' ? reg : neu) : 'transparent',
           boxShadow: isS ? `inset 0 0 0 2px ${SELC}${isT ? `, inset 0 0 0 3.5px ${blue}` : ''}` : isT ? `inset 0 0 0 1.5px ${blue}` : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <span style={{ marginBottom: m ? 14 : 12, fontSize: m ? 14 : 15, fontWeight: isT ? t.weight.semibold : t.weight.regular, color: isS ? SELC : wd ? t.text.primary : t.text.tertiary, ...(isS ? { fontWeight: 700 } : {}), fontVariantNumeric: 'tabular-nums' }}>{d.getDate()}</span>
         {((gdOn && (com || (wd && w === 'regional') || p || bud)) || g || og) && <span style={{ position: 'absolute', bottom: 4, left: 2, right: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: m ? 2 : 2 }}>
-          {gdOn && wd && w === 'regional' && <i style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: regD }} />}
-          {gdOn && com && <i style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: comD }} />}
-          {gdOn && p && !exp && <i style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: blue }} />}
-          {og && <i style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: orgC }} />}
-          {g && <i style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: green }} />}
-          {gdOn && bud && <i style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: amber }} />}
+          {gdOn && wd && w === 'regional' && <i data-mk="reg" style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: regD }} />}
+          {gdOn && com && <i data-mk="com" style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: comD }} />}
+          {gdOn && p && !exp && <i data-mk="pl" style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: blue }} />}
+          {og && ORGK.filter((o) => og.some((x: any) => x.o === o)).map((o) => <i key={o} data-mk={o} style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: orgCol(o, dk) }} />)}
+          {g && <i data-mk="gov" style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: green }} />}
+          {gdOn && bud && <i data-mk="bud" style={{ width: 9, height: 5, borderRadius: 1.5, flex: 'none', background: amber }} />}
         </span>}
       </div>);
   };
@@ -3295,9 +3322,9 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
     for (let i = 0; i < off; i++) ds.push([new Date(first.getFullYear(), first.getMonth(), i - off + 1), false]);
     for (let i = 1; i <= n; i++) ds.push([new Date(first.getFullYear(), first.getMonth(), i), true]);
     return (
-      <div key={first.getMonth()} style={{ ...card(t), padding: m ? '14px 12px' : '12px 12px', flex: m ? '1 1 100%' : '0 0 auto', width: m ? undefined : '100%', maxWidth: m ? undefined : 300, minWidth: 0 }}>
+      <div key={first.getMonth()} data-calgrid="1" style={{ ...card(t), boxSizing: 'border-box', padding: m ? '12px 8px' : '12px 10px', flex: m ? '1 1 100%' : '0 0 auto', width: '100%', maxWidth: m ? undefined : 300, minWidth: 0 }}>
         {!m && <div style={{ fontWeight: t.weight.semibold, fontSize: 15, marginBottom: 8, color: t.text.primary }}>{MONN[first.getMonth()]} {first.getFullYear()}</div>}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: m ? 3 : 4 }}>
           {WDS.map((x, i) => <span key={x} style={{ fontSize: 12, textAlign: 'center', color: i > 4 ? t.text.tertiary : t.text.secondary, paddingBottom: 2 }}>{x}</span>)}
           {ds.map(([d, inM]) => cell(d, inM))}
         </div>
@@ -3320,11 +3347,11 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
       {dv ? <div style={{ fontSize: 13, fontWeight: t.weight.semibold, color: t.text.secondary, margin: '6px 2px 8px' }}>{`${MONN[+mk.slice(0, 2) - 1]} ${mk.slice(3)}`}</div> : <div data-evh="1" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px 12px', marginBottom: 8 }}><span style={{ fontWeight: t.weight.semibold, fontSize: 17, color: t.text.primary }}>{sd ? `События ${pd(sd).getDate()} ${MON[pd(sd).getMonth()]}, ${WDL[pd(sd).getDay()]}` : `События ${MON[+mk.slice(0, 2) - 1]}`}</span>{sd && <button className="gd-tap" onClick={() => setSd(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 24, boxSizing: 'border-box', padding: '0 8px 0 10px', borderRadius: 9999, border: `1px solid ${t.border.default}`, background: t.bg.subtle, color: t.text.secondary, fontFamily: t.font.family, fontSize: 13, fontWeight: t.weight.medium, lineHeight: 1, cursor: 'pointer', alignSelf: 'center' }}>Сбросить<span aria-hidden style={{ fontSize: 12, lineHeight: 1, opacity: 0.7 }}>×</span></button>}<CalOrgFilter m={m} /></div>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {!ev.length && <div data-cofempty={COF.length ? undefined : '1'} style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>{!COF.length ? 'Выберите хотя бы один орган' : qn || fon ? 'Ничего не найдено' : sd ? 'В этот день событий нет' : 'Событий нет'}</div>}
-        {(() => { const one = (e: any, gin?: boolean, tr?: boolean) => <div key={e.k + e.d + (e.og || '')}>{(() => {
+        {(() => { const one = (e: any, gin?: boolean, tr?: boolean, nd?: boolean) => <div key={e.k + e.d + (e.og || '')}>{(() => {
           const d = pd(e.d); const head = `${d.getDate()} ${MON[d.getMonth()]}, ${WDL[d.getDay()]}`;
           if (e.k === 'r') return <div key={'r' + e.d} style={{ ...card(t), padding: '10px 14px', display: 'flex', flexWrap: 'wrap', gap: '4px 10px', alignItems: 'baseline', borderLeft: `3px solid ${regD}` }}><span style={{ fontSize: 15, fontWeight: t.weight.semibold }}>{e.w[0].slice(0, 5)}–{e.w[1].slice(0, 5)}</span><span style={{ fontSize: 15 }}>Работа в регионах (встречи с избирателями)</span>{pill('по распорядку', regD, true)}</div>;
           if (e.k === 'o' && tr) return <div key={'o' + e.d + e.og} data-orgworks={e.og}>{e.o.map((x: any, i: number) => <OrgItem key={x.u + i} x={x} m={m} />)}</div>;
-          if (e.k === 'o') { const okk = e.og + '#' + e.d; const oon = !!gin || !!oop[okk]; const tg = () => setOop({ ...oop, [okk]: !oop[okk] }); return <div key={'o' + e.d + e.og} data-orgblk={okk} style={{ ...card(t), padding: gin ? '10px 14px 4px' : oon ? '0 14px 4px' : '0 14px', borderLeft: `3px solid ${orgC}` }}>
+          if (e.k === 'o') { const okk = e.og + '#' + e.d; const oon = !!gin || !!oop[okk]; const tg = () => setOop({ ...oop, [okk]: !oop[okk] }); return <div key={'o' + e.d + e.og} data-orgblk={okk} style={{ ...card(t), padding: gin ? '10px 14px 4px' : oon ? '0 14px 4px' : '0 14px', borderLeft: `3px solid ${orgCol(e.og, dk)}` }}>
             {gin ? <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px', alignItems: 'baseline' }}><span style={{ fontSize: 15, fontWeight: t.weight.semibold }}>{head}</span><span style={{ fontSize: 15 }}>{ORGN[e.og]}</span><SvPill n={e.o.length} /></div>
             : <div role="button" tabIndex={0} aria-expanded={oon} onClick={tg} onKeyDown={(k) => { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); tg(); } }} style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px', alignItems: 'center', minHeight: 44, padding: '10px 0', boxSizing: 'border-box', cursor: 'pointer' }}><span style={{ fontSize: 15, fontWeight: t.weight.semibold }}>{head}</span><span style={{ fontSize: 15 }}>{ORGN[e.og]}</span><SvPill n={e.o.length} /><span style={{ flex: '1 1 auto' }} /><span aria-hidden style={{ fontSize: 13, color: t.text.accent }}>{oon ? '▾' : '▸'}</span></div>}
             {oon && e.o.map((x: any, i: number) => <OrgItem key={x.u + i} x={x} m={m} />)}
@@ -3373,12 +3400,12 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
             <div key={'p' + p.d} id={'ev-' + p.d} style={{ ...card(t), overflow: on ? 'visible' : 'hidden', borderLeft: `3px solid ${blue}`, ...(fon && !a0.length ? { opacity: 0.4 } : {}), ...(dAcc + dRej > 0 && !qn && !fon ? {} : { '--gd-fb': '0px' }), ...(tr ? { '--gd-dh': '0px' } : {}) } as any}>
               {!tr && <div role={a.length ? 'button' : undefined} tabIndex={a.length ? 0 : undefined} aria-expanded={a.length ? on : undefined} ref={(el: any) => { if (el && on && el.parentElement) el.parentElement.style.setProperty('--gd-dh', el.offsetHeight + 'px'); }} onClick={(ev0: any) => { if (a.length) { dayGo((ev0.currentTarget as HTMLElement).parentElement, !on); setEx(on ? null : p.d); } }} onKeyDown={(k) => { if (a.length && (k.key === 'Enter' || k.key === ' ')) { k.preventDefault(); setEx(on ? null : p.d); } }}
                 style={{ padding: '10px 14px', minHeight: 44, cursor: a.length ? 'pointer' : 'default', display: 'flex', flexWrap: 'wrap', gap: '4px 10px', alignItems: 'center', background: on ? `linear-gradient(${t.fill.accentSubtle}, ${t.fill.accentSubtle}), ${t.bg.base}` : 'transparent', ...(on ? { position: 'sticky', top: 'var(--gd-top, 0px)', zIndex: 4, borderBottom: `1px solid ${t.border.subtle}`, boxShadow: `0 -10px 0 0 ${t.bg.base}, 0 4px 6px -4px rgba(0,0,0,.25)` } : {}) }}>{on && stuckFrame(t.bg.base, t.border.subtle, 16, 1, 3, blue)}
-                <span style={{ fontSize: 15, fontWeight: t.weight.semibold }}>{head}</span>
-                <span style={{ fontSize: 15 }}>Пленарное заседание</span>
+                {!nd && <span style={{ fontSize: 15, fontWeight: t.weight.semibold }}>{head}</span>}
+                <span data-plen="1" style={{ fontSize: 15, fontWeight: nd ? t.weight.semibold : undefined }}>Пленарное заседание Госдумы</span>
                 {p.s !== 'expected' && p.d === today ? pill('сегодня', blue) : null}
                 {BUDP[p.d] && <a href={BUDP[p.d][1]} target="_blank" rel="noreferrer" onClick={(k) => k.stopPropagation()} style={{ textDecoration: 'none' }}>{pill(BUDP[p.d][0], amber)}</a>}
                 <span style={{ flex: '1 1 auto' }} />
-                <span style={{ fontSize: 13, color: a.length ? t.text.accent : t.text.tertiary }}>{a.length ? `Повестка: ${a.length} ${on ? '▾' : '▸'}` : fon && (p.a || []).length ? 'нет совпадений' : (pd(p.d) < pd(today) ? 'повестка недоступна' : 'повестка еще не опубликована')}</span>
+                <span style={{ fontSize: 13, color: a.length ? t.text.accent : t.text.tertiary }}>{a.length ? `${nd ? '' : 'Повестка: '}${a.length} ${on ? '▾' : '▸'}` : fon && (p.a || []).length ? 'нет совпадений' : (pd(p.d) < pd(today) ? 'повестка недоступна' : 'повестка еще не опубликована')}</span>
                 {!a.length && pd(p.d) < pd(today) && DAYS.includes(p.d) && <button onClick={(k) => { k.stopPropagation(); openDay(p.d); }} style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', fontSize: 13, color: t.text.accent, fontFamily: t.font.family }}>Сводка дня ›</button>}
               </div>}
               {tr && !a.length && !(p.a || []).length && <div data-gdnoag="1" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '4px 10px', padding: '10px 14px', fontSize: 14, color: t.text.secondary }}><span>{pd(p.d) < pd(today) ? 'Повестка недоступна' : 'Повестка еще не опубликована'}</span>{pd(p.d) < pd(today) && DAYS.includes(p.d) && <button onClick={(k) => { k.stopPropagation(); openDay(p.d); }} style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', fontSize: 13, color: t.text.accent, fontFamily: t.font.family }}>Сводка дня ›</button>}</div>}
@@ -3414,7 +3441,7 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
           const tgD = (s: string) => { const o = dOn(s); if (o) { const n: Record<string, boolean> = {}; Object.keys(tro).forEach((q) => { if (!q.startsWith(s + '|')) n[q] = tro[q]; }); setTro(n); clr(s); } setDyo({ ...dyo, [s]: !o }); };
           const tgO = (s: string, k: string) => { const o = oOn(s, k); if (o) clr(s, k); setTro({ ...tro, [s + '|' + k]: !o }); };
           const kd = (f: () => void) => (k: any) => { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); f(); } };
-          return days.map(({ s, es, sv }) => { const d = pd(s); const dO = dOn(s); const ks = COK.filter((k) => es.some((e: any) => gk(e) === k)); return <div key={'day' + s} data-day={s} data-dayopen={dO ? '1' : undefined} style={{ ...card(t), padding: 0, overflow: 'visible' }}>
+          return days.map(({ s, es, sv }) => { const d = pd(s); const dO = dOn(s); const ks = COK.filter((k) => es.some((e: any) => gk(e) === k) || (k === 'gd' && sv.length > 0)); return <div key={'day' + s} data-day={s} data-dayopen={dO ? '1' : undefined} style={{ ...card(t), padding: 0, overflow: 'visible' }}>
             <div data-dayhdr="1" role="button" tabIndex={0} aria-expanded={dO} onClick={() => tgD(s)} onKeyDown={kd(() => tgD(s))} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px 10px', minHeight: m ? 52 : 46, padding: '8px 14px', boxSizing: 'border-box', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' } as any}>
               <span style={{ fontSize: m ? 16 : 15, fontWeight: t.weight.semibold, color: dO ? t.text.accent : t.text.primary }}>{`${d.getDate()} ${MON[d.getMonth()]}, ${WDL[d.getDay()]}`}</span>
               {s === today && pill('сегодня', blue)}
@@ -3422,10 +3449,9 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
               <span aria-hidden style={{ fontSize: 20, lineHeight: 1, color: dO ? t.text.accent : t.text.tertiary, transition: 'transform .2s', transform: dO ? 'rotate(90deg)' : 'none' }}>›</span>
             </div>
             {dO && <div data-daybody="1" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: m ? '0 6px 8px' : '0 8px 8px' }}>
-              {sv.map(([c, l, r]) => <div key={c} data-daysvc={c} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '4px 10px', padding: '8px 12px', borderRadius: 10, background: t.bg.subtle, borderLeft: `3px solid ${c === 'r' ? regD : comD}`, fontSize: 14, color: t.text.secondary }}><span>{l}</span>{r && <span style={{ fontVariantNumeric: 'tabular-nums' }}>{r}</span>}{pill('по распорядку', c === 'r' ? regD : comD, true)}</div>)}
-              {ks.map((k) => { const ek = es.filter((e: any) => gk(e) === k); const n = ek.reduce((q: number, e: any) => q + cn(e), 0); const op = oOn(s, k); const ge = k === 'gov' ? ek[0] : null; return <div key={k} data-dayorg={k} style={{ border: `1px solid ${op ? t.border.default : t.border.subtle}`, borderRadius: 12, background: t.bg.base, overflow: 'visible' }}>
+              {ks.map((k) => { const ek = es.filter((e: any) => gk(e) === k); const n = ek.reduce((q: number, e: any) => q + cn(e), 0) + (k === 'gd' ? sv.length : 0); const op = oOn(s, k); const ge = k === 'gov' ? ek[0] : null; return <div key={k} data-dayorg={k} style={{ border: `1px solid ${op ? t.border.default : t.border.subtle}`, borderLeft: `3px solid ${k === 'gd' ? blue : k === 'gov' ? green : orgCol(k, dk)}`, borderRadius: 12, background: t.bg.base, overflow: 'visible' }}>
                 <div data-orghdr="1" role="button" tabIndex={0} aria-expanded={op} onClick={() => tgO(s, k)} onKeyDown={kd(() => tgO(s, k))} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px 10px', minHeight: m ? 50 : 44, padding: '6px 12px', boxSizing: 'border-box', cursor: 'pointer', fontSize: m ? 16 : 15, fontWeight: t.weight.semibold, color: op ? t.text.accent : t.text.primary, WebkitTapHighlightColor: 'transparent' } as any}>
-                  <span style={{ flex: '1 1 10rem', minWidth: 0 }}>{k === 'gd' ? 'Пленарное заседание (Госдума)' : CON[k]}</span>
+                  <span style={{ flex: '1 1 10rem', minWidth: 0 }}>{CON[k]}</span>
                   {k === 'gd' && BUDP[s] && pill(BUDP[s][0], amber)}
                   {ge && pill(ge.g[1].replace(/^Заседание Правительства \(2026 год, (№\d+)\).*$/, '$1'), green)}
                   {n > 0 && <SvPill n={n} />}
@@ -3433,7 +3459,7 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
                 </div>
                 {op && <div data-orgworks-wrap={k} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: m ? '0 4px 6px' : '0 8px 8px' }}>
                   {k === 'gd' && BUDP[s] && <a href={BUDP[s][1]} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', alignSelf: 'flex-start', marginLeft: 4 }}>{pill(BUDP[s][0] + ' ↗', amber)}</a>}
-                  {ek.map((e: any) => one(e, true, true))}
+                  {k === 'gd' ? <>{ek.map((e: any) => one(e, true, false, true))}{sv.map(([c, l, r]) => <div key={c} data-daysvc={c} style={{ ...card(t), boxShadow: 'none', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 10px', minHeight: 44, padding: '10px 14px', boxSizing: 'border-box', borderLeft: `3px solid ${c === 'r' ? regD : comD}`, fontSize: 15, color: t.text.primary }}><span style={{ fontWeight: t.weight.semibold }}>{l}</span>{r && <span style={{ fontVariantNumeric: 'tabular-nums', color: t.text.secondary }}>{r}</span>}<span style={{ flex: '1 1 auto' }} />{pill('по распорядку', c === 'r' ? regD : comD, true)}</div>)}</> : ek.map((e: any) => one(e, true, true))}
                 </div>}
               </div>; })}
             </div>}
@@ -3444,16 +3470,18 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
     <div>
       {m && !(fon || !!qn) && <div style={{ display: 'flex', marginBottom: 12 }}><LawsSw m mk={cm} setMk={setCm} ks={cks} cnt={calCnt} /></div>}
       <div style={!m ? { display: 'flex', gap: 20, alignItems: 'flex-start' } : undefined}>
-      <div style={fon || !!qn ? { display: 'none' } : !m ? { flex: '0 0 300px', maxWidth: 300, position: 'sticky', top: 'calc(var(--gd-top, 0px) + 8px)', maxHeight: 'calc(100vh - var(--gd-top, 0px) - 16px)', overflowY: 'auto', alignSelf: 'flex-start' } : undefined}>
+      <div data-calcol="1" style={fon || !!qn ? { display: 'none' } : !m ? { flex: '0 0 300px', maxWidth: 300, minWidth: 0, overflowX: 'hidden', position: 'sticky', top: 'calc(var(--gd-top, 0px) + 8px)', maxHeight: 'calc(100vh - var(--gd-top, 0px) - 16px)', overflowY: 'auto', alignSelf: 'flex-start' } : undefined}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 10 }}>{[cm].map((k) => grid(new Date(+k.slice(3), +k.slice(0, 2) - 1, 1)))}</div>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: inf ? 8 : 16, transition: 'margin .25s ease' }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6, fontSize: m ? 13 : 12, lineHeight: '16px', color: t.text.secondary, paddingTop: m ? 14 : 6 }}>
-        {lg(<i style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: regD }} />, 'Работа в регионах')}
-        {lg(<i style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: comD }} />, 'Работа в комитетах')}
-        {lg(<i style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: amber }} />, 'Рассмотрение бюджета')}
-        {lg(<i style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: green }} />, 'Заседание Правительства РФ')}
-        {ORG.length > 0 && lg(<i style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: orgC }} />, 'Органы власти и Банк России')}
-        {lg(<i style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: blue }} />, 'Пленарное заседание Госдумы')}
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.text.tertiary }}>Госдума</span>
+        {lg(<i data-lg="pl" style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: blue }} />, 'Пленарное заседание')}
+        {lg(<i data-lg="com" style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: comD }} />, 'Работа в комитетах')}
+        {lg(<i data-lg="reg" style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: regD }} />, 'Работа в регионах')}
+        {lg(<i data-lg="bud" style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: amber }} />, 'Рассмотрение бюджета')}
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.text.tertiary, marginTop: 4 }}>Другие органы</span>
+        {lg(<i data-lg="gov" style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: green }} />, 'Правительство РФ')}
+        {ORGK.filter((o) => ORG.some((x: any) => x.o === o)).map((o) => <span key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><i data-lg={o} style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: orgCol(o, dk) }} />{ORGN[o]}</span>)}
         </div>
         <button aria-expanded={inf} aria-label="Что означают отметки" onClick={() => setInf(!inf)} style={{ flex: 'none', minWidth: 44, minHeight: m ? 44 : 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 26, padding: '0 10px', borderRadius: 13, border: `1px solid ${inf ? blue : t.border.default}`, color: inf ? blue : t.text.secondary, background: inf ? t.fill.accentSubtle : t.bg.base, fontFamily: t.font.family, fontSize: 12, fontWeight: t.weight.semibold, whiteSpace: 'nowrap', transition: 'all .2s ease' }}>Что это?<span style={{ display: 'inline-block', transition: 'transform .25s ease', transform: inf ? 'rotate(180deg)' : 'none' }}>▾</span></span>
@@ -3466,9 +3494,9 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
             <div>Работа в регионах: региональная неделя, депутаты встречаются с избирателями.</div>
             <div>Работа в комитетах: в остальные будни готовят законопроекты в комитетах и фракциях.</div>
             <div>Рассмотрение бюджета: дни, когда в повестке федеральный бюджет.</div>
-            <div>Заседание Правительства РФ: на нем принимают постановления и распоряжения.</div>
-            {ORG.length > 0 && <div>Органы власти и Банк России: заседания Совета Федерации, приказы и проекты Минфина, Минтруда, Минюста, решения, указания и разъяснения Банка России.</div>}
+            <div>Правительство РФ: на заседании принимают постановления и распоряжения.</div>
             <div>Пленарное заседание: депутаты голосуют в зале.</div>
+            {ORG.length > 0 && <div>Совет Федерации, Минфин, Минтруд, Минюст, Банк России: у каждого органа свой цвет — заседания, приказы, указания и разъяснения.</div>}
           </div>
         </div>
       </div>
@@ -3633,10 +3661,10 @@ function CalendarApp() {
     </label>);
   const mt2 = (x: boolean) => ({ ...mt(x), flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' as const });
   const dateSw = (
-      <div style={{ display: 'flex', flex: 1, verticalAlign: 'middle', flexWrap: 'nowrap', gap: 2, alignItems: 'center', marginBottom: 0, padding: 3, height: m ? 50 : 44, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}`, maxWidth: '100%' }}>
-        <button className="gd-tap" aria-label="Предыдущий день" disabled={di <= 0} onClick={() => go(DAYS[di - 1])} style={{ ...btn(di <= 0), ...(m ? { width: 44, height: 44 } : { height: 36 }) }}>‹</button>
+      <div data-datesw="1" style={{ display: 'flex', flex: 1, verticalAlign: 'middle', flexWrap: 'nowrap', gap: 2, alignItems: 'center', marginBottom: 0, padding: 3, height: m ? 50 : 44, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}`, maxWidth: '100%' }}>
+        <button className="gd-tap" aria-label="Предыдущий день" disabled={di <= 0} onClick={() => go(DAYS[di - 1])} style={{ ...btn(di <= 0), ...(m ? { width: 44, height: 42 } : { height: 36 }) }}>‹</button>
         <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
-          <button aria-label="Дата" aria-haspopup="listbox" aria-expanded={dd} onClick={() => setDd(!dd)} style={{ width: '100%', minWidth: m ? 0 : 168, height: m ? 44 : 36, padding: '0 12px', borderRadius: 9, fontFamily: t.font.family, fontSize: m ? 16 : t.font.table.fontSize, fontWeight: t.weight.semibold, border: 'none', background: t.bg.base, boxShadow: `0 1px 3px ${t.border.default}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: t.text.primary, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <button aria-label="Дата" aria-haspopup="listbox" aria-expanded={dd} onClick={() => setDd(!dd)} style={{ width: '100%', minWidth: m ? 0 : 168, height: m ? 42 : 36, padding: '0 12px', borderRadius: 9, fontFamily: t.font.family, fontSize: m ? 16 : t.font.table.fontSize, fontWeight: t.weight.semibold, border: 'none', background: t.bg.base, boxShadow: `0 1px 3px ${t.border.default}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: t.text.primary, cursor: 'pointer', whiteSpace: 'nowrap' }}>
             <span>{dayLabel(day)}</span>{badge(COUNT[day])}
           </button>
           {dd && <>
@@ -3651,7 +3679,7 @@ function CalendarApp() {
             </div>
           </>}
         </div>
-        <button className="gd-tap" aria-label="Следующий день" disabled={di >= DAYS.length - 1} onClick={() => go(DAYS[di + 1])} style={{ ...btn(di >= DAYS.length - 1), ...(m ? { width: 44, height: 44 } : { height: 36 }) }}>›</button>
+        <button className="gd-tap" aria-label="Следующий день" disabled={di >= DAYS.length - 1} onClick={() => go(DAYS[di + 1])} style={{ ...btn(di >= DAYS.length - 1), ...(m ? { width: 44, height: 42 } : { height: 36 }) }}>›</button>
       </div>);
   const thBtn = <button aria-label={DK ? 'Светлая тема' : 'Темная тема'} title={DK ? 'Светлая тема' : 'Темная тема'} onClick={() => { const n = DK ? 'light' : 'dark'; setTho(n); try { localStorage.setItem('gd_theme', n); } catch (e) {} }} style={{ flexShrink: 0, width: 32, height: 32, padding: 0, borderRadius: 9999, border: `1px solid ${t.border.default}`, background: t.bg.subtle, color: t.text.primary, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>{DK ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="12" cy="12" r="4.5" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>}</button>;
   return (
