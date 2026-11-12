@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ruslan7121.github.io/kalendar-zakonov/sitemap.xml

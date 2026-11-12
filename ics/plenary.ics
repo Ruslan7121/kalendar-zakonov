@@ -1,0 +1,245 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Пленарные заседания Госдумы
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:gd-20260930@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20260930
+DTEND;VALUE=DATE:20261001
+SUMMARY:Пленарное заседание Госдумы
+DESCRIPTION:Источник: vote.duma.gov.ru
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=30.09.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261001@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Пленарное заседание Госдумы
+DESCRIPTION:Законопроектов в повестке: 8\nИсто
+ чник: vote.duma.gov.ru
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=01.10.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261013@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261013
+DTEND;VALUE=DATE:20261014
+SUMMARY:Пленарное заседание Госдумы
+DESCRIPTION:Законопроектов в повестке: 3\nИсто
+ чник: vote.duma.gov.ru
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=13.10.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261014@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261014
+DTEND;VALUE=DATE:20261015
+SUMMARY:Пленарное заседание Госдумы
+DESCRIPTION:Законопроектов в повестке: 17\nИст
+ очник: vote.duma.gov.ru
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=14.10.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261015@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261015
+DTEND;VALUE=DATE:20261016
+SUMMARY:Пленарное заседание Госдумы
+DESCRIPTION:Законопроектов в повестке: 38\nИст
+ очник: vote.duma.gov.ru
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=15.10.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261020@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261020
+DTEND;VALUE=DATE:20261021
+SUMMARY:Пленарное заседание Госдумы
+DESCRIPTION:Законопроектов в повестке: 14\nИст
+ очник: vote.duma.gov.ru
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=20.10.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261021@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261021
+DTEND;VALUE=DATE:20261022
+SUMMARY:Пленарное заседание Госдумы
+DESCRIPTION:Законопроектов в повестке: 10\nИст
+ очник: vote.duma.gov.ru
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=21.10.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261022@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261022
+DTEND;VALUE=DATE:20261023
+SUMMARY:Пленарное заседание Госдумы
+DESCRIPTION:Законопроектов в повестке: 67\nИст
+ очник: vote.duma.gov.ru
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=22.10.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261027@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261027
+DTEND;VALUE=DATE:20261028
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Законопроектов в повестке: 59\nИст
+ очник: duma.gov.ru/press/events/\; порядок работы оп
+ убликован на sozd 26.10.2026
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=27.10.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261028@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261028
+DTEND;VALUE=DATE:20261029
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Законопроектов в повестке: 17\nИст
+ очник: duma.gov.ru/press/events/\; порядок работы оп
+ убликован на sozd 26.10.2026
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=28.10.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261029@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261029
+DTEND;VALUE=DATE:20261030
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Законопроектов в повестке: 7\nИсто
+ чник: duma.gov.ru/press/events/\; duma.gov.ru/news/64340/ (бюдж
+ ет в 1-м чтении)
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=29.10.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261110@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:Пленарное заседание Госдумы
+DESCRIPTION:Законопроектов в повестке: 48\nИст
+ очник: vote.duma.gov.ru
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=10.11.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261111@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261111
+DTEND;VALUE=DATE:20261112
+SUMMARY:Пленарное заседание Госдумы
+DESCRIPTION:Законопроектов в повестке: 63\nИст
+ очник: vote.duma.gov.ru
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=11.11.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261112@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261112
+DTEND;VALUE=DATE:20261113
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Законопроектов в повестке: 1\nИсто
+ чник: duma.gov.ru/news/64422/: 12 ноября ГД планируе
+ т обсудить доклад главы ЦБ об Основных 
+ направлениях ДКП
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=12.11.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261117@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261117
+DTEND;VALUE=DATE:20261118
+SUMMARY:Пленарное заседание Госдумы (ожида
+ ется по распорядку)
+DESCRIPTION:Источник: по распорядку\; повестк
+ а не опубликована
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=17.11.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261118@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261118
+DTEND;VALUE=DATE:20261119
+SUMMARY:Пленарное заседание Госдумы (ожида
+ ется по распорядку)
+DESCRIPTION:Источник: по распорядку\; повестк
+ а не опубликована
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=18.11.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261119@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261119
+DTEND;VALUE=DATE:20261120
+SUMMARY:Пленарное заседание Госдумы (ожида
+ ется по распорядку)
+DESCRIPTION:Источник: по распорядку\; повестк
+ а не опубликована
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=19.11.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261124@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261124
+DTEND;VALUE=DATE:20261125
+SUMMARY:Пленарное заседание Госдумы (ожида
+ ется по распорядку)
+DESCRIPTION:Источник: по распорядку\; повестк
+ а не опубликована
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=24.11.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261125@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261125
+DTEND;VALUE=DATE:20261126
+SUMMARY:Пленарное заседание Госдумы (ожида
+ ется по распорядку)
+DESCRIPTION:Законопроектов в повестке: 1\nИсто
+ чник: по распорядку\; повестка не опубли
+ кована\; «правительственный час» 25.11 — 
+ постановление ГД (голосование 136300\, 10.11.2
+ 026)
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=25.11.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261126@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261126
+DTEND;VALUE=DATE:20261127
+SUMMARY:Пленарное заседание Госдумы (ожида
+ ется по распорядку)
+DESCRIPTION:Источник: по распорядку\; повестк
+ а не опубликована
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=26.11.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

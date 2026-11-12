@@ -1,0 +1,570 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Законы вступают в силу
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-20260901-federalnyy-zakon-ot-25-04-2026-108-fz-0@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20260901
+DTEND;VALUE=DATE:20260902
+SUMMARY:Вступает в силу: Бойцов СВО защитят 
+ от сокращения
+DESCRIPTION:Федеральный закон от 25.04.2026 № 108-Ф
+ З\nУчастники СВО\, вернувшиеся на прежне
+ е место работы\, получают преимуществен
+ ное право остаться на работе при сокращ
+ ении штата.\nКого коснётся: Ветераны СВО
+  и их работодатели.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20260901-federalnyy-zakon-ot-09-04-2026-90-fz-1@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20260901
+DTEND;VALUE=DATE:20260902
+SUMMARY:Вступает в силу: Доп. выходной и отп
+ уск пострадавшим при ЧС
+DESCRIPTION:Федеральный закон от 09.04.2026 № 90-ФЗ
+ \nПострадавшие от ЧС могут получить опл
+ ачиваемый выходной и до пяти дней отпус
+ ка без сохранения зарплаты\; заявление 
+ можно подать электронно.\nКого коснётся
+ : Работники\, проживающие в зоне ЧС и пот
+ ерявшие имущество.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20260901-federalnyy-zakon-ot-10-06-2026-162-fz-2@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20260901
+DTEND;VALUE=DATE:20260902
+SUMMARY:Вступает в силу: Медосвидетельство
+ вание мигрантов — за 30 дней
+DESCRIPTION:Федеральный закон от 10.06.2026 № 162-Ф
+ З\nСрок обязательного медосвидетельств
+ ования для иностранцев\, приехавших бол
+ ее чем на три месяца\, сокращен с 90 до 30 д
+ ней\; при опасной инфекции — депортация
+ .\nКого коснётся: Иностранные граждане и
+  работодатели мигрантов.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20260901-federalnyy-zakon-ot-29-12-2025-551-fz-3@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20260901
+DTEND;VALUE=DATE:20260902
+SUMMARY:Вступает в силу: Запрет продажи вей
+ пов и табака на остановках
+DESCRIPTION:Федеральный закон от 29.12.2025 № 551-Ф
+ З\nТабачную и никотинсодержащую продук
+ цию нельзя продавать на остановках общ
+ ественного транспорта.\nКого коснётся: 
+ Продавцы табака и никотиновой продукци
+ и.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20260901-federalnyy-zakon-ot-02-05-2026-125-fz-4@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20260901
+DTEND;VALUE=DATE:20260902
+SUMMARY:Вступает в силу: Передвижные аптечн
+ ые пункты
+DESCRIPTION:Федеральный закон от 02.05.2026 № 125-Ф
+ З\nЛекарства разрешено продавать через 
+ передвижные аптечные пункты в населенн
+ ых пунктах без стационарных аптек.\nКог
+ о коснётся: Жители сел и удаленных терр
+ иторий\, аптечные организации.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20260901-federalnyy-zakon-ot-29-12-2025-575-fz-5@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20260901
+DTEND;VALUE=DATE:20260902
+SUMMARY:Вступает в силу: Самозапрет на азар
+ тные игры
+DESCRIPTION:Федеральный закон от 29.12.2025 № 575-Ф
+ З\nГражданин может оформить самозапрет 
+ на участие в азартных играх через МФЦ и
+ ли Госуслуги\; реклама игр будет с преду
+ преждением о зависимости.\nКого коснётс
+ я: Граждане\, букмекеры и рекламодатели.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20260901-federalnye-zakony-ot-09-04-2026-92-fz-i-ot-26-06-2026-21
+ 0-fz-6@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20260901
+DTEND;VALUE=DATE:20260902
+SUMMARY:Вступает в силу: Верификация страни
+ ц НКО и учет платежных карт
+DESCRIPTION:Федеральные законы от 09.04.2026 № 92-Ф
+ З и от 26.06.2026 № 210-ФЗ\nСтраницы НКО в соцс
+ етях можно подтвердить через Госуслуги
+ \; заработает единая система учета плат
+ ежных карт против дропперства.\nКого ко
+ снётся: НКО\, банки\, держатели карт.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261001-federalnyy-zakon-ot-31-07-2025-289-fz-7@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: Закон о платформен
+ ной экономике
+DESCRIPTION:Федеральный закон от 31.07.2025 № 289-Ф
+ З\nВпервые комплексно регулируются мар
+ кетплейсы: договоры с продавцами и ПВЗ\,
+  карточки товаров\, скидки\, рассмотрени
+ е жалоб.\nКого коснётся: Маркетплейсы\, п
+ родавцы\, владельцы ПВЗ\, покупатели.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261001-federalnyy-zakon-ot-31-07-2025-290-fz-8@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: Претензии к товару 
+ — прямо на маркетплейсе
+DESCRIPTION:Федеральный закон от 31.07.2025 № 290-Ф
+ З\nПокупатель может предъявить требова
+ ния о недостатках товара продавцу прям
+ о на платформе\; оператор обязан обеспе
+ чить возврат денег и товара.\nКого коснё
+ тся: Покупатели маркетплейсов\, продавц
+ ы\, операторы платформ.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261001-federalnyy-zakon-ot-04-08-2026-295-fz-9@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: Штрафы для операто
+ ров платформ
+DESCRIPTION:Федеральный закон от 04.08.2026 № 295-Ф
+ З\nВ КоАП появилась ст. 14.69: например\, за 
+ снижение цены за счет продавца без прав
+ ил — штраф до 300 тыс. рублей для юрлиц.\nК
+ ого коснётся: Операторы маркетплейсов.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261001-federalnyy-zakon-ot-04-07-2026-218-fz-10@kalendar-zakono
+ v
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: НДС 10% на детские то
+ вары — только с документами
+DESCRIPTION:Федеральный закон от 04.07.2026 № 218-Ф
+ З\nЛьготная ставка НДС на детские товар
+ ы применяется только при наличии серти
+ фиката или декларации о соответствии.\n
+ Кого коснётся: Производители\, импортер
+ ы и продавцы детских товаров.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261001-federalnyy-zakon-ot-04-08-2026-293-fz-11@kalendar-zakono
+ v
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: НДС при смене налог
+ овых правил по ходу договора
+DESCRIPTION:Федеральный закон от 04.08.2026 № 293-Ф
+ З\nЕсли в ходе договора появилась обяза
+ нность платить НДС\, а цена не изменена\,
+  налог считается расчетным путем от цен
+ ы договора.\nКого коснётся: Организации 
+ и ИП\, работающие по долгосрочным догов
+ орам.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261001-federalnyy-zakon-ot-26-07-2026-241-fz-otdelnye-polozheni
+ ya-12@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: Контроль доходов т
+ рудовых мигрантов
+DESCRIPTION:Федеральный закон от 26.07.2026 № 241-Ф
+ З (отдельные положения)\nНалоговая буде
+ т сообщать в МВД\, сколько заработали тр
+ удовые мигранты\, а МВД — проверять\, ес
+ ть ли у них доход и какого уровня.\nКого 
+ коснётся: Трудовые мигранты и их работо
+ датели.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261001-federalnyy-zakon-ot-29-12-2025-545-fz-ch-5-st-4-13@kalen
+ dar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: Ограничение третье
+ го «дорогого» микрозайма
+DESCRIPTION:Федеральный закон от 29.12.2025 № 545-Ф
+ З (ч. 5 ст. 4)\nМФО не могут выдать третий з
+ аем с полной стоимостью более 200% годовы
+ х\, если у заемщика уже два таких займа\; 
+ действует до 1 апреля 2027 года.\nКого косн
+ ётся: Заемщики и микрофинансовые орган
+ изации.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261001-federalnyy-zakon-ot-04-08-2026-278-fz-14@kalendar-zakono
+ v
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: Закупки школ и детс
+ адов через маркетплейсы
+DESCRIPTION:Федеральный закон от 04.08.2026 № 278-Ф
+ З\nСтартует эксперимент: школы\, детсады
+  и другие организации могут делать заку
+ пки малого объема через маркетплейсы\; 
+ до 30.09.2028.\nКого коснётся: Бюджетные учре
+ ждения и поставщики.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261024-federalnyy-zakon-ot-26-07-2026-263-fz-15@kalendar-zakono
+ v
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261024
+DTEND;VALUE=DATE:20261025
+SUMMARY:Вступает в силу: Изменения в закон о
+  госрегистрации недвижимости
+DESCRIPTION:Федеральный закон от 26.07.2026 № 263-Ф
+ З\nС публичной кадастровой карты можно 
+ убрать сведения о зданиях и сооружения
+ х важных\, режимных\, критически важных 
+ и опасных объектов — например\, энергет
+ ики и транспорта.\nКого коснётся: Собств
+ енники недвижимости\, Росреестр.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261024-federalnyy-zakon-ot-26-07-2026-256-fz-16@kalendar-zakono
+ v
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261024
+DTEND;VALUE=DATE:20261025
+SUMMARY:Вступает в силу: Изменения в закон о
+  присяжных заседателях
+DESCRIPTION:Федеральный закон от 26.07.2026 № 256-Ф
+ З\nСписки кандидатов в присяжные можно 
+ публиковать на сайтах и подписывать эл
+ ектронной подписью\, а гражданин может 
+ электронно попросить исключить его из 
+ списка или исправить ошибку.\nКого косн
+ ётся: Граждане\, включаемые в списки при
+ сяжных\, суды.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261101-federalnyy-zakon-ot-04-07-2026-231-fz-17@kalendar-zakono
+ v
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261101
+DTEND;VALUE=DATE:20261102
+SUMMARY:Вступает в силу: Висковый дистиллят
+  — под контроль как спирт
+DESCRIPTION:Федеральный закон от 04.07.2026 № 231-Ф
+ З\nПроизводство вискового дистиллята п
+ одчиняется правилам госрегулирования 
+ для этилового спирта\; новым лицензиата
+ м нужен уставный капитал от 100 млн рубле
+ й.\nКого коснётся: Производители виски и
+  алкоголя.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261101-federalnyy-zakon-ot-04-08-2026-312-fz-18@kalendar-zakono
+ v
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261101
+DTEND;VALUE=DATE:20261102
+SUMMARY:Вступает в силу: Платежи государств
+ у — в ГИС ГМП за час
+DESCRIPTION:Федеральный закон от 04.08.2026 № 312-Ф
+ З\nСведения об уплате налогов\, пошлин и 
+ штрафов должны поступать в ГИС ГМП не п
+ озднее часа после приема платежа\; прав
+ ительство может расширять перечень пла
+ тежей.\nКого коснётся: Граждане и компан
+ ии\, платящие налоги и штрафы\; банки.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261101-federalnyy-zakon-ot-28-11-2025-425-fz-otdelnye-polozheni
+ ya-19@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261101
+DTEND;VALUE=DATE:20261102
+SUMMARY:Вступает в силу: Вычет по НДПИ на га
+ з на Ямале
+DESCRIPTION:Федеральный закон от 28.11.2025 № 425-Ф
+ З (отдельные положения)\nДля отдельных д
+ обытчиков газа на полуострове Ямал вво
+ дится налоговый вычет по НДПИ\, коэффиц
+ иент снижается до 0\,03.\nКого коснётся: Га
+ зодобывающие компании.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261103-federalnyy-zakon-ot-04-08-2026-294-fz-20@kalendar-zakono
+ v
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261103
+DTEND;VALUE=DATE:20261104
+SUMMARY:Вступает в силу: Выше штрафы для ино
+ странцев за миграционные нарушения
+DESCRIPTION:Федеральный закон от 04.08.2026 № 294-Ф
+ З\nЗа нарушение правил въезда или пребы
+ вания штраф составит 4–7 тыс. рублей с в
+ озможным выдворением\, при повторе — 7–
+ 9 тыс. с обязательным выдворением.\nКого 
+ коснётся: Иностранные граждане и лица б
+ ез гражданства.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261126-federalnyy-zakon-ot-07-06-2025-137-fz-otdelnye-polozheni
+ ya-21@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261126
+DTEND;VALUE=DATE:20261127
+SUMMARY:Вступает в силу: Приставы смогут за
+ прашивать кредитную историю
+DESCRIPTION:Федеральный закон от 07.06.2025 № 137-Ф
+ З (отдельные положения)\nБюро кредитных 
+ историй по запросу судебных приставов 
+ будет предоставлять сведения\, необход
+ имые для проверки фактов превышения ко
+ ллекторами полномочий\; ответ — через с
+ истему межведомственного электронного
+  взаимодействия.\nКого коснётся: Судебн
+ ые приставы\, бюро кредитных историй\, к
+ оллекторы и должники.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261201-federalnyy-zakon-ot-26-06-2026-195-fz-otdelnye-polozheni
+ ya-22@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261201
+DTEND;VALUE=DATE:20261202
+SUMMARY:Вступает в силу: Изменения в Бюджет
+ ный кодекс
+DESCRIPTION:Федеральный закон от 26.06.2026 № 195-Ф
+ З (отдельные положения)\nНовый технолог
+ ический сбор с электроники целиком\, на 
+ 100%\, зачисляется в федеральный бюджет.\n
+ Кого коснётся: Органы власти\, получате
+ ли бюджетных средств.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261201-federalnyy-zakon-ot-28-11-2025-425-fz-otdelnye-polozheni
+ ya-23@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261201
+DTEND;VALUE=DATE:20261202
+SUMMARY:Вступает в силу: Налоговые поправки
+ : очередной этап
+DESCRIPTION:Федеральный закон от 28.11.2025 № 425-Ф
+ З (отдельные положения)\nИмпортеры и про
+ изводители электроники и электронных к
+ омпонентов платят технологический сбо
+ р — не больше 5000 рублей за единицу\; без 
+ уплаты маркируемый товар нельзя ввести
+  в оборот.\nКого коснётся: Налогоплатель
+ щики — организации и граждане.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261207-federalnyy-zakon-ot-10-06-2026-178-fz-24@kalendar-zakono
+ v
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261207
+DTEND;VALUE=DATE:20261208
+SUMMARY:Вступает в силу: Изменение условий 
+ содержания под стражей
+DESCRIPTION:Федеральный закон от 10.06.2026 № 178-Ф
+ З\nСотрудников аппаратов судов\, взятых 
+ под стражу\, будут содержать отдельно о
+ т остальных арестованных — так же\, как 
+ судей.\nКого коснётся: Подозреваемые\, о
+ бвиняемые\, СИЗО.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261215-federalnyy-zakon-ot-15-12-2025-459-fz-25@kalendar-zakono
+ v
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261215
+DTEND;VALUE=DATE:20261216
+SUMMARY:Вступает в силу: Упразднение Беловс
+ кого районного суда
+DESCRIPTION:Федеральный закон от 15.12.2025 № 459-Ф
+ З\nБеловский районный суд Кемеровской о
+ бласти упраздняется\; его дела переходя
+ т Беловскому городскому суду\, который 
+ будет рассматривать дела и города Бело
+ во\, и Беловского района.\nКого коснётся:
+  Жители и участники дел в Кемеровской о
+ бласти.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261223-federalnyy-zakon-ot-26-06-2026-192-fz-otdelnye-polozheni
+ ya-26@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261223
+DTEND;VALUE=DATE:20261224
+SUMMARY:Вступает в силу: Поправки в закон «О
+ б обороне»
+DESCRIPTION:Федеральный закон от 26.06.2026 № 192-Ф
+ З (отдельные положения)\nДля закрытых во
+ енных городков вводится особый режим —
+  пропуска\, ограничения въезда и прожив
+ ания\, проверка документов\; военные пол
+ учают право глушить\, перехватывать и с
+ бивать беспилотники у объектов Минобор
+ оны.\nКого коснётся: Военнослужащие\, ор
+ ганы военного управления.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261223-federalnyy-zakon-ot-26-06-2026-215-fz-otdelnye-polozheni
+ ya-27@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261223
+DTEND;VALUE=DATE:20261224
+SUMMARY:Вступает в силу: Изменения в отдель
+ ные законодательные акты
+DESCRIPTION:Федеральный закон от 26.06.2026 № 215-Ф
+ З (отдельные положения)\nБанки будут выд
+ авать Минюсту справки по счетам иноаге
+ нтов только в электронном виде и за 3 ра
+ бочих дня.\nКого коснётся: Определяется 
+ текстом закона.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261231-federalnyy-zakon-ot-04-07-2026-225-fz-28@kalendar-zakono
+ v
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Вступает в силу: Пенсии силовиков: и
+ зменение ст. 50
+DESCRIPTION:Федеральный закон от 04.07.2026 № 225-Ф
+ З\nПенсионерам Минобороны\, МВД\, ФСИН\, Ф
+ ССП\, ФСБ\, прокуратуры и СК\, получающим 
+ пенсию по закону № 4468-I\, будут выдавать 
+ пенсионное удостоверение\; его образец 
+ и порядок выдачи утвердит ведомство\, к
+ оторое платит пенсию.\nКого коснётся: Во
+ енные и силовые пенсионеры и их семьи.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261231-federalnyy-zakon-ot-04-07-2026-224-fz-29@kalendar-zakono
+ v
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Вступает в силу: Поправки в закон о 
+ Следственном комитете
+DESCRIPTION:Федеральный закон от 04.07.2026 № 224-Ф
+ З\nСемьи сотрудников Следственного ком
+ итета\, погибших в связи с СВО\, получат 
+ жилищную выплату не позднее года со дня
+  гибели\; за ними и за рядом сотрудников 
+ сохраняется право жить в служебном жил
+ ье.\nКого коснётся: Сотрудники СК России
+ .
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261231-federalnyy-zakon-ot-04-07-2026-236-fz-otdelnye-polozheni
+ ya-30@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Вступает в силу: Поправки в закон «О
+ б оружии»
+DESCRIPTION:Федеральный закон от 04.07.2026 № 236-Ф
+ З (отдельные положения)\nОхотникам разр
+ ешат охотничью пневматику мощнее 25 Дж 
+ — до 5 единиц\; контрольный отстрел наре
+ зного оружия обязателен только для изг
+ отовленного в России или купленного за 
+ границей.\nКого коснётся: Владельцы ору
+ жия\, продавцы\, Росгвардия.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:law-20261231-federalnyy-zakon-ot-13-02-2025-9-fz-31@kalendar-zakonov
+DTSTAMP:20261112T195008Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Вступает в силу: Займы — в бюро кред
+ итных историй сразу
+DESCRIPTION:Федеральный закон от 13.02.2025 № 9-ФЗ\
+ nБанки и МФО обязаны незамедлительно пе
+ редавать в БКИ сведения о договорах пот
+ ребительского кредита для борьбы с мош
+ енничеством.\nКого коснётся: Заемщики\, 
+ банки\, МФО.
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR
