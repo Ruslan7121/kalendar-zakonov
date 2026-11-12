@@ -37,12 +37,14 @@ cd "$ROOT"
 die() { echo "publish.sh: $*" >&2; exit 1; }
 
 # 1. main: чистое дерево и коммит уже в origin (в gh-pages пишем, из какого коммита собрано)
-[ "$(git rev-parse --abbrev-ref HEAD)" = main ] || die "нужна ветка main"
+# PUBLISH_SRC_BRANCH — исходная ветка (по умолчанию main); другая — только для разовой выкладки по прямому решению владельца
+SRCB=${PUBLISH_SRC_BRANCH:-main}
+[ "$(git rev-parse --abbrev-ref HEAD)" = "$SRCB" ] || die "нужна ветка $SRCB"
 [ -z "$(git status --porcelain --untracked-files=no)" ] || die "в main есть незакоммиченные изменения — сначала commit.sh"
-git fetch -q "$REMOTE" main "$BRANCH"
+git fetch -q "$REMOTE" "$SRCB" "$BRANCH"
 SRC_SHA=$(git rev-parse HEAD); SRC_SHORT=$(git rev-parse --short HEAD)
 if [ $DRY -eq 0 ]; then
-  git merge-base --is-ancestor "$SRC_SHA" "$REMOTE/main" || die "коммит $SRC_SHORT ещё не отправлен в $REMOTE/main — сначала git push"
+  git merge-base --is-ancestor "$SRC_SHA" "$REMOTE/$SRCB" || die "коммит $SRC_SHORT ещё не отправлен в $REMOTE/$SRCB — сначала git push"
 fi
 
 # 2. сборка (П6: сначала проверка схемы данных — битые данные не публикуются)
@@ -101,7 +103,7 @@ cat > README.md <<MD
 - **Сайт:** <$SITE>
 - **Исходный код и описание:** ветка [\`main\`](https://github.com/Ruslan7121/kalendar-zakonov/tree/main)
 
-Сборка из \`main\` $SRC_SHORT ($(date +%d.%m.%Y)) командой \`./pipeline/publish.sh\` (ветка main).
+Сборка из \`$SRCB\` $SRC_SHORT ($(date +%d.%m.%Y)) командой \`./pipeline/publish.sh\` (ветка main).
 Вручную ветку не править.
 
 - \`index.html\` ссылается на \`$JS\` — имя по хешу содержимого, поэтому после выкладки браузер не может взять старый JS из кэша.
@@ -121,7 +123,7 @@ fi
 echo "В gh-pages уйдёт:"; git diff --cached --stat
 if [ $DRY -eq 1 ]; then echo "--dry-run: коммит и push не делаю"; exit 0; fi
 
-git commit -q -m "Сборка из main $SRC_SHORT: ${MSG:-публикация} ($JS)"
+git commit -q -m "Сборка из $SRCB $SRC_SHORT: ${MSG:-публикация} ($JS)"
 PUB_SHA=$(git rev-parse HEAD)
 git push -q "$REMOTE" "HEAD:refs/heads/$BRANCH"     # без --force: не fast-forward → ошибка
 cd "$ROOT"
