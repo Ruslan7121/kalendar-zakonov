@@ -6,7 +6,7 @@
     "build": "bash web/build.sh",
     "serve": "python3 -m http.server 8000 --directory web/dist",
     "test": "bash tests/run_all.sh",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "node pipeline/split_data.mjs --check >/dev/null && tsc -p tsconfig.json"
   },
   "dependencies": {
     "react": "19.3.1",
