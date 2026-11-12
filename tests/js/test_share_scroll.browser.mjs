@@ -16,7 +16,7 @@ import { loadCanvas, ROOT } from './load_canvas.mjs';
 import { siteServer } from './site_server.mjs';
 
 const CASES = ['11.11.2026:136361', '10.11.2026:136304', '11.11.2026:136349', '11.11.2026:136378', '10.11.2026:136283', '10.11.2026:136277', '22.10.2026:136156'];
-// 1100 px — широкая версия с карточкой внутри списка; 1366 px — от 1200 px карточка открывается в панели справа (П12).
+// 390 / 1100 / 1366 px: карточка раскрывается внутри списка (панель справа отключена по решению владельца).
 const WIDTHS = [{ w: 390, h: 844, mobile: true, dpr: 3 }, { w: 1100, h: 900, mobile: false, dpr: 1 }, { w: 1366, h: 900, mobile: false, dpr: 1 }];
 
 const which = (c) => { try { return execFileSync('sh', ['-c', `command -v ${c}`]).toString().trim(); } catch { return ''; } };
@@ -79,8 +79,7 @@ try {
     for (;;) { r = (await cmd('Runtime.evaluate', { expression: MEASURE(d + b), returnByValue: true }, s)).result.value; if (!r.err || Date.now() - t0 > 15000) break; await sleep(300); }
     const err = (await cmd('Runtime.evaluate', { expression: 'document.getElementById("root").childElementCount', returnByValue: true }, s)).result.value ? '' : ' (страница не отрисовалась)';
     const tag = `${W.w}px ${c} (${b})`;
-    if (!r.err && W.w >= 1200 && !r.side) fails.push(`${tag}: на широком экране карточка не в панели справа`);
-    if (!r.err && W.w < 1200 && r.side) fails.push(`${tag}: панель справа на узком экране`);
+    if (!r.err && r.side) fails.push(`${tag}: карточка открылась в панели справа — она должна раскрываться в списке`);
     if (r.err) fails.push(`${tag}: ${r.err}${err}`);
     else {
       rep.push(`${tag}${r.side ? ' [панель справа]' : ''}: шапка ${r.hTop.toFixed(0)}–${r.hBot.toFixed(0)}, закреплено до ${r.cover.toFixed(0)}, верх карточки ${r.wTop.toFixed(0)}, высота ${r.wH.toFixed(0)}, scrollY ${r.y.toFixed(0)}`);
