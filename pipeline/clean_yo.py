@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Автоочистка «ё» → «е» в готовых текстах бота.
-Обрабатывает out/days/*.json и блоки BP/PROC в canvas.tsx.
+Обрабатывает out/days/*.json и блоки BP/PROC/ORG в canvas.tsx.
 Запуск: python3 clean_yo.py"""
 import os, json, glob, re, sys
 sys.path.insert(0, os.path.dirname(__file__)); import common as C
@@ -32,12 +32,12 @@ for f in sorted(glob.glob(os.path.join(C.OUT, 'days', '*.json'))):
 # очистка блоков в canvas
 src = C.read_canvas()
 changed = False
-for name in ('BP', 'PROC'):
+for name in ('BP', 'PROC', 'ORG', 'ORGX'):
     try:
         block = C.get_block(src, name)
         cleaned = clean_obj(block)
         if cleaned != block:
-            src = C.set_block(src, name, f'const {name}: Record<string, any>', cleaned)
+            src = C.set_block(src, name, 'const ORG: any[]' if name == 'ORG' else f'const {name}: Record<string, any>', cleaned)
             changed = True
             print(f'cleaned block: {name}')
     except Exception:

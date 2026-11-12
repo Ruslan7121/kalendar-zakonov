@@ -1,0 +1,61 @@
+{
+ "run": "10.11.2026 09:29 МСК",
+ "window": [
+  "05.11.2026",
+  "10.11.2026"
+ ],
+ "ahead_to": "13.11.2026",
+ "sources": {
+  "cbr_news": {
+   "url": "https://www.cbr.ru/rss/RssNews",
+   "status": "ok",
+   "n": 15
+  },
+  "cbr_events": {
+   "url": "https://www.cbr.ru/rss/eventrss",
+   "status": "ok",
+   "n": 7
+  },
+  "mintrud_docs": {
+   "url": "https://mintrud.gov.ru/document/rss",
+   "status": "ok",
+   "n": 65
+  },
+  "minjust_events": {
+   "url": "https://minjust.gov.ru/ru/events/list/",
+   "status": "ok",
+   "n": 3
+  },
+  "minfin_pravo": {
+   "url": "http://publication.pravo.gov.ru/documents/foiv283/monthly",
+   "status": "snapshot:minfin_pravo_monthly.webfetch.md",
+   "n": 2
+  },
+  "sf_meetings": {
+   "url": "http://council.gov.ru/activity/meetings/",
+   "status": "snapshot:sf_meetings.webfetch.md",
+   "n": 6
+  },
+  "minfin_projects": {
+   "url": "https://minfin.gov.ru/ru/document/npa_projects/",
+   "status": "blocked:HTTP 503, страница ограничения доступа"
+  },
+  "mintrud_profstandards": {
+   "url": "https://regulation.gov.ru/",
+   "status": "not-collected",
+   "why": "проекты профстандартов публикуются на regulation.gov.ru — с этой машины нет соединения"
+  },
+  "minjust_projects": {
+   "url": "https://minjust.gov.ru/ru/documents/projects/",
+   "status": "not-collected",
+   "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
+  },
+  "minjust_registration": {
+   "url": "http://publication.pravo.gov.ru/",
+   "status": "not-collected",
+   "why": "реестр регистрации НПА (publication.pravo.gov.ru, pravo.minjust.ru) — с этой машины нет соединения/HTTP 500"
+  }
+ },
+ "new": 0,
+ "total": 13
+}
