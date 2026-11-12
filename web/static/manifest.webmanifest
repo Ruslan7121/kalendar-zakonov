@@ -1,0 +1,19 @@
+{
+  "name": "Календарь законов",
+  "short_name": "Законы",
+  "description": "Заседания и голосования Госдумы и работа органов власти по официальным источникам",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

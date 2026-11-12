@@ -9,6 +9,9 @@ cd "$(dirname "$0")"
 export GD_ROOT="${GD_ROOT:-$(cd .. && pwd)}"
 export CANVAS="${CANVAS:-$GD_ROOT/src/canvas.tsx}"
 [ -f "$CANVAS" ] || { echo "run_daily: нет canvas $CANVAS (GD_ROOT=$GD_ROOT)" >&2; exit 2; }
+# П6 (12.11.2026): один прогон за раз — второй запуск не пишет canvas параллельно с первым
+mkdir -p "$GD_ROOT/out/cache"; exec 9>"$GD_ROOT/out/cache/run_daily.lock"
+flock -n 9 || { echo "run_daily: уже идёт другой прогон (out/cache/run_daily.lock) — выход" >&2; exit 3; }
 echo "[канон] GD_ROOT=$GD_ROOT CANVAS=$CANVAS GD_DUMA=${GD_DUMA:-/workspace/duma}"
 DAY="${1:-$(date +%d.%m.%Y)}"
 echo "[голосования vote.duma.gov.ru → days/$DAY.json → DATA, VT] $DAY"
@@ -52,6 +55,7 @@ python3 strip_code_only.py || echo "strip_code_only: ошибка" >&2
 echo "[данные сайта по месяцам: data/core.json, data/months/*.json, data/index.json]"
 # 12.11.2026 (п. 10): сайт берёт данные не из JS, а из data/*.json — после любых правок canvas их пересобирает split_data.mjs.
 node split_data.mjs || echo "split_data: ОШИБКА — data/*.json не обновлены, публиковать нельзя (docs/PIPELINE.md)" >&2
+node validate_data.mjs || echo "validate_data: ОШИБКА — данные не прошли проверку схемы, публиковать нельзя (out/logs/validate_data.txt)" >&2
 echo ""
 echo "=== Сводка ==="
 bash summary.sh "$DAY"

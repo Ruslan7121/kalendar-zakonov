@@ -1,0 +1,19 @@
+{
+  "//": "П15 (12.11.2026): проверка типов кода сайта — npm run typecheck (в CI перед тестами). Сборку делает esbuild (web/build.sh), tsc ничего не пишет.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": [],
+    "baseUrl": ".",
+    "paths": { "grok/canvas": ["web/grok-canvas.tsx"] }
+  },
+  "files": ["src/canvas.tsx", "web/gdx.ts", "web/grok-canvas.tsx"]
+}

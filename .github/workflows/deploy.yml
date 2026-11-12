@@ -1,0 +1,41 @@
+# П1 (12.11.2026): автопубликация сайта. После зелёных тестов на main (workflow «tests») собирает сайт
+# и публикует его в ветку gh-pages тем же pipeline/publish.sh, что и при ручной выкладке
+# (app.<hash>.js, data/*.<hash>.json, статика, обычный коммит без --force, проверка живой страницы).
+# Вручную: Actions → deploy → Run workflow. Если сборка не изменилась, publish.sh коммит не делает.
+name: deploy
+on:
+  workflow_run:
+    workflows: [tests]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: deploy-gh-pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: Europe/Moscow
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: npm install (react, esbuild — версии закреплены в package.json)
+        run: npm install --no-audit --no-fund
+      - name: Автор коммита в gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Публикация (pipeline/publish.sh)
+        run: |
+          MSG="$(git log -1 --format=%s | cut -c1-120)"
+          bash pipeline/publish.sh "$MSG"

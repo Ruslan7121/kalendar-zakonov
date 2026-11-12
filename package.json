@@ -5,14 +5,18 @@
   "scripts": {
     "build": "bash web/build.sh",
     "serve": "python3 -m http.server 8000 --directory web/dist",
-    "test": "bash tests/run_all.sh"
+    "test": "bash tests/run_all.sh",
+    "typecheck": "node pipeline/split_data.mjs --check >/dev/null && tsc -p tsconfig.json"
   },
   "dependencies": {
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
   "devDependencies": {
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "typescript": "5.6.3",
+    "@types/react": "19.0.10",
+    "@types/react-dom": "19.0.4"
   },
   "engines": {
     "node": ">=22"

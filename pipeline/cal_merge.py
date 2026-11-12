@@ -39,4 +39,4 @@ for k,o in O.items():
 for x in old['g']: assert x[0] in g
 new=s[:i]+pre+json.dumps(cal,ensure_ascii=False,separators=(',',':'))+';'+s[e:]
 if new==s: print('CAL: без изменений'); sys.exit(0)
-open(P,'w').write(new); print('CAL ok: days',len(cal['p']),'items',sum(len(p['a']) for p in cal['p']),'gov',len(cal['g']))
+C.write_canvas(new, P); print('CAL ok: days',len(cal['p']),'items',sum(len(p['a']) for p in cal['p']),'gov',len(cal['g']))

@@ -12,4 +12,9 @@ npx esbuild web/main.tsx --bundle --minify --charset=utf8 --format=iife --jsx=au
   --alias:grok/canvas=./web/grok-canvas.tsx --define:process.env.NODE_ENV='"production"' \
   --outfile=web/dist/app.js --log-level=warning
 cp web/index.html web/dist/index.html
+# статические файлы (П5): favicon, превью для ссылок, manifest; extras.txt — список для pipeline/publish.sh
+cp -r web/static/. web/dist/
+# П11, П13: страницы законопроектов bill/, RSS feed/, календари ics/, sitemap.xml — из data/*.json
+node web/extras.mjs web/dist
+( cd web/dist && find . -type f ! -path ./app.js ! -path ./index.html ! -path ./extras.txt ! -path './data/*' | sed 's#^\./##' | sort > extras.txt )
 ls -la web/dist web/dist/data

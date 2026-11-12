@@ -35,5 +35,7 @@ jobs:
           CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
           test -n "$CHROME" && "$CHROME" --version
           echo "CHROME=$CHROME" >> "$GITHUB_ENV"
+      - name: Проверка типов (npm run typecheck, П15)
+        run: npm run typecheck
       - name: Тесты (bash tests/run_all.sh)
         run: bash tests/run_all.sh

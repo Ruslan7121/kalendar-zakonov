@@ -29,7 +29,7 @@ if (fs.existsSync(path.join(ROOT, 'web/dist/app.js'))) files.push('web/dist/app.
 for (const f of files) {
   const s = fs.readFileSync(path.join(ROOT, f), 'utf8');
   const bad = s.match(BAD); assert.equal(bad, null, `${f}: найден запрещённый адрес «${bad && bad[0]}» (Cursor/Netlify)`);
-  for (const m of s.matchAll(/https?:\/\/[^\s'"`)<>]*github\.io[^\s'"`)<>]*/g)) assert.match(m[0], /^https:\/\/ruslan7121\.github\.io\/kalendar-zakonov\/?$/, `${f}: чужой адрес github.io ${m[0]}`);
+  for (const m of s.matchAll(/https?:\/\/[^\s'"`)<>]*github\.io[^\s'"`)<>]*/g)) assert.match(m[0], /^https:\/\/ruslan7121\.github\.io\/kalendar-zakonov(\/[A-Za-z0-9._\/-]*)?$/, `${f}: чужой адрес github.io ${m[0]}`);
 }
 const src = fs.readFileSync(path.join(ROOT, 'src/canvas.tsx'), 'utf8');
 assert.equal((src.match(/[?&]d=\$\{/g) || []).length, 1, 'ссылка ?d=…&v=… должна собираться только в shareLink');

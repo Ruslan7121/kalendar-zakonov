@@ -37,15 +37,18 @@ cd "$ROOT"
 die() { echo "publish.sh: $*" >&2; exit 1; }
 
 # 1. main: чистое дерево и коммит уже в origin (в gh-pages пишем, из какого коммита собрано)
-[ "$(git rev-parse --abbrev-ref HEAD)" = main ] || die "нужна ветка main"
+# PUBLISH_SRC_BRANCH — исходная ветка (по умолчанию main); другая — только для разовой выкладки по прямому решению владельца
+SRCB=${PUBLISH_SRC_BRANCH:-main}
+[ "$(git rev-parse --abbrev-ref HEAD)" = "$SRCB" ] || die "нужна ветка $SRCB"
 [ -z "$(git status --porcelain --untracked-files=no)" ] || die "в main есть незакоммиченные изменения — сначала commit.sh"
-git fetch -q "$REMOTE" main "$BRANCH"
+git fetch -q "$REMOTE" "$SRCB" "$BRANCH"
 SRC_SHA=$(git rev-parse HEAD); SRC_SHORT=$(git rev-parse --short HEAD)
 if [ $DRY -eq 0 ]; then
-  git merge-base --is-ancestor "$SRC_SHA" "$REMOTE/main" || die "коммит $SRC_SHORT ещё не отправлен в $REMOTE/main — сначала git push"
+  git merge-base --is-ancestor "$SRC_SHA" "$REMOTE/$SRCB" || die "коммит $SRC_SHORT ещё не отправлен в $REMOTE/$SRCB — сначала git push"
 fi
 
-# 2. сборка
+# 2. сборка (П6: сначала проверка схемы данных — битые данные не публикуются)
+node pipeline/validate_data.mjs >/dev/null || die "данные не прошли проверку схемы (out/logs/validate_data.txt)"
 bash web/build.sh >/dev/null
 [ -s web/dist/app.js ] && [ -s web/dist/index.html ] || die "сборка не дала web/dist/app.js и index.html"
 [ -z "$(git status --porcelain -- data/)" ] || die "data/*.json не совпадают с src/canvas.tsx (сборка их пересобрала) — сначала pipeline/commit.sh, затем git push"
@@ -64,6 +67,9 @@ cp web/dist/app.js "$STAGE/$JS"
 mkdir -p "$STAGE/data"; for f in $DATA_FILES; do cp "web/dist/data/$f" "$STAGE/data/$f"; done
 sed "s#<script src=\"app.js\"></script>#<script src=\"$JS\"></script>#" web/dist/index.html > "$STAGE/index.html"
 grep -q "<script src=\"$JS\"></script>" "$STAGE/index.html" || die "не удалось подставить $JS в index.html"
+# статические файлы сайта (П5, П11, П13): web/dist/extras.txt — список путей (favicon, превью, страницы законопроектов, RSS, .ics)
+EXTRAS=$( [ -s web/dist/extras.txt ] && cat web/dist/extras.txt || true )
+for f in $EXTRAS; do [ -s "web/dist/$f" ] || die "сборка не дала web/dist/$f"; mkdir -p "$STAGE/x/$(dirname "$f")"; cp "web/dist/$f" "$STAGE/x/$f"; done
 
 # 3. временный worktree ветки gh-pages (точно на $REMOTE/gh-pages, без локальных правок)
 git worktree add -q --detach "$WT" "$REMOTE/$BRANCH"
@@ -75,6 +81,9 @@ cp "$STAGE/index.html" index.html
 cp "$STAGE/$JS" app.js            # мост для закэшированного старого index.html
 mkdir -p data; cp "$STAGE"/data/*.json data/   # имена по хешу содержимого: прежние файлы не перезаписываются
 touch .nojekyll
+# каталоги статики пересоздаются целиком (удалённые законопроекты/ленты не остаются), отдельные файлы — перезаписываются
+for d in bill feed ics; do [ -d "$d" ] && { git rm -q -r --cached "$d" >/dev/null 2>&1 || true; rm -rf "$d"; }; done
+[ -d "$STAGE/x" ] && cp -r "$STAGE/x/." .
 # прежние хешированные файлы: оставить последние KEEP (кроме текущего), остальные удалить
 OLD=$(git log --format= --name-only --diff-filter=A -- 'app.*.js' | grep -E '^app\.[0-9a-f]{10}\.js$' | grep -vx "$JS" | awk '!s[$0]++' || true)
 n=0
@@ -94,7 +103,7 @@ cat > README.md <<MD
 - **Сайт:** <$SITE>
 - **Исходный код и описание:** ветка [\`main\`](https://github.com/Ruslan7121/kalendar-zakonov/tree/main)
 
-Сборка из \`main\` $SRC_SHORT ($(date +%d.%m.%Y)) командой \`./pipeline/publish.sh\` (ветка main).
+Сборка из \`$SRCB\` $SRC_SHORT ($(date +%d.%m.%Y)) командой \`./pipeline/publish.sh\` (ветка main).
 Вручную ветку не править.
 
 - \`index.html\` ссылается на \`$JS\` — имя по хешу содержимого, поэтому после выкладки браузер не может взять старый JS из кэша.
@@ -106,15 +115,15 @@ MD
 git add -A
 CHANGED=$(git diff --cached --name-only)
 # в коммите допустимы только файлы сайта
-BAD=$(echo "$CHANGED" | grep -v -E '^(index\.html|app\.js|app\.[0-9a-f]{10}\.js|README\.md|\.nojekyll|data/(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json)$' || true)
+BAD=$(echo "$CHANGED" | grep -v -E '^(index\.html|404\.html|app\.js|app\.[0-9a-f]{10}\.js|README\.md|\.nojekyll|favicon\.svg|og\.png|manifest\.webmanifest|sw\.js|robots\.txt|sitemap\.xml|(bill|feed|ics)/[A-Za-z0-9._/-]+|data/(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json)$' || true)
 [ -z "$BAD" ] || die "в коммит gh-pages попали неожиданные файлы: $BAD"
-if git diff --cached --quiet -- index.html "$JS"; then
+if git diff --cached --quiet -- . ':(exclude)README.md'; then
   echo "publish.sh: сайт не изменился ($JS уже опубликован), коммит не нужен"; exit 0
 fi
 echo "В gh-pages уйдёт:"; git diff --cached --stat
 if [ $DRY -eq 1 ]; then echo "--dry-run: коммит и push не делаю"; exit 0; fi
 
-git commit -q -m "Сборка из main $SRC_SHORT: ${MSG:-публикация} ($JS)"
+git commit -q -m "Сборка из $SRCB $SRC_SHORT: ${MSG:-публикация} ($JS)"
 PUB_SHA=$(git rev-parse HEAD)
 git push -q "$REMOTE" "HEAD:refs/heads/$BRANCH"     # без --force: не fast-forward → ошибка
 cd "$ROOT"

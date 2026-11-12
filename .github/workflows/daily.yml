@@ -1,0 +1,77 @@
+# П8 (12.11.2026): ежедневный прогон конвейера по расписанию — будни в 21:17 по Москве (после пленарных заседаний).
+# Шаги: pipeline/run_daily.sh за сегодняшний день (голосования, календарь, законопроекты, органы, путь закона, аудит)
+# → проверка схемы данных (validate_data.mjs) → тесты → pipeline/commit.sh (коммит и push в main)
+# → pipeline/publish.sh (сайт в gh-pages). Тексты «Суть» / «Кого коснётся» по-прежнему пишет бот отдельным шагом
+# (BOT_PROMPT.md): после автоматического прогона новые голосования видны на сайте сразу, тексты — после бота.
+# Вручную: Actions → daily → Run workflow (можно указать день ДД.ММ.ГГГГ).
+# Доступ к сайтам с ограничением по региону — через pipeline/fetch.sh (списки RU-прокси обновляются сами);
+# кэш sozd и списки прокси переносятся между запусками через actions/cache. Если источник недоступен,
+# run_daily.sh пишет об этом в логи и не трогает данные — коммит и публикация тогда просто не нужны.
+name: daily
+on:
+  schedule:
+    - cron: '17 18 * * 1-5'   # 18:17 UTC = 21:17 МСК, пн–пт
+  workflow_dispatch:
+    inputs:
+      day:
+        description: 'День ДД.ММ.ГГГГ (пусто — сегодня по Москве)'
+        required: false
+permissions:
+  contents: write
+concurrency:
+  group: daily-run
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      TZ: Europe/Moscow
+      GD_DUMA: ${{ github.workspace }}/../duma
+      GD_REQUIRE_BROWSER: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Зависимости (pdftotext для пояснительных записок, npm)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils >/dev/null
+          npm install --no-audit --no-fund
+          mkdir -p "$GD_DUMA/lists" "$GD_DUMA/bills" "$GD_DUMA/days"
+      - name: Кэш конвейера (страницы sozd, списки прокси, days/)
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/../duma
+          key: duma-${{ github.run_id }}
+          restore-keys: duma-
+      - name: Автор коммитов
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Прогон (pipeline/run_daily.sh)
+        id: run
+        run: |
+          DAY="${{ github.event.inputs.day }}"; [ -n "$DAY" ] || DAY="$(date +%d.%m.%Y)"
+          echo "day=$DAY" >> "$GITHUB_OUTPUT"
+          bash pipeline/run_daily.sh "$DAY" 2>&1 | tee daily.log
+      - name: Проверка схемы данных
+        run: node pipeline/validate_data.mjs
+      - name: Проверка типов и тесты
+        run: |
+          npm run typecheck
+          bash tests/run_all.sh
+      - name: Коммит в main (pipeline/commit.sh)
+        run: bash pipeline/commit.sh "Ежедневный прогон ${{ steps.run.outputs.day }} (автоматически)"
+      - name: Публикация (pipeline/publish.sh)
+        run: bash pipeline/publish.sh "Ежедневный прогон ${{ steps.run.outputs.day }}"
+      - name: Сводка
+        if: always()
+        run: |
+          { echo "### Прогон ${{ steps.run.outputs.day }}"; echo '```'; tail -n 60 daily.log 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

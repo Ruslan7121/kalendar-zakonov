@@ -51,12 +51,12 @@ try {
       if (got.includes('m-2026-09')) fails.push(tag(`/: сентябрь загружен без запроса: ${got}`));
       rep.push(tag(`/: запрошено ${got.join(', ')}`)); await p.close(); }
     // 2) день другого месяца
-    { const p = await open('/?d=30.09.2026&tab=d'); const ok = await until(p.s, `/(Сводка дня|Пленарное заседание) 30\.09\.2026/.test(document.body.innerText) && document.body.innerText.includes('Госдума')`);
+    { const p = await open('/?d=30.09.2026&tab=d'); const ok = await until(p.s, `!!document.querySelector('[data-newsday="30.09.2026"]') && document.querySelector('[data-newsday="30.09.2026"]').innerText.includes('Госдума')`); // раздел «Новости» — лента по дням
       if (!ok) fails.push(tag('?d=30.09.2026&tab=d: день 30.09.2026 не показан ' + JSON.stringify(await ev(p.s, `document.body.innerText.slice(0, 300)`))));
       if (!months().includes('m-2026-09')) fails.push(tag(`?d=30.09.2026: сентябрь не запрошен: ${months()}`));
       rep.push(tag(`?d=30.09.2026&tab=d: ${months().join(', ')}`)); await p.close(); }
     // 3) октябрьская карточка и законопроекты вне повестки
-    { const p = await open('/?d=22.10.2026&v=136156'); const ok = await until(p.s, `!!document.querySelector('[data-ivk="22.10.2026851582-8"] [data-ivs]')`);
+    { const p = await open('/?d=22.10.2026&v=136156'); const ok = await until(p.s, `!!document.querySelector('[data-ivk="22.10.2026851582-8"] [data-ivs]') || (!!document.querySelector('[data-ivk="22.10.2026851582-8"][data-ivside]') && !!document.querySelector('[data-cardpane] [data-panecard="851582-8"]'))`); // П12: от 1200 px карточка — в панели справа
       if (!ok) fails.push(tag('?d=22.10.2026&v=136156: карточка 851582-8 не раскрыта'));
       const seen = await ev(p.s, `(() => { const t = document.body.innerText; return ${JSON.stringify(off)}.filter((b) => t.includes(b)).length; })()`);
       if (seen !== off.length) fails.push(tag(`22.10.2026: видно ${seen} из ${off.length} законопроектов вне повестки`));
