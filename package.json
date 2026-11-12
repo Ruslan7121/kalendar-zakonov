@@ -1,0 +1,16 @@
+{
+  "name": "kalendar-zakonov",
+  "private": true,
+  "description": "Календарь законов: заседания, голосования и акты органов власти по официальным источникам",
+  "scripts": {
+    "build": "bash web/build.sh",
+    "serve": "python3 -m http.server 8000 --directory web/dist"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}
