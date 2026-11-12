@@ -64,6 +64,9 @@ cp web/dist/app.js "$STAGE/$JS"
 mkdir -p "$STAGE/data"; for f in $DATA_FILES; do cp "web/dist/data/$f" "$STAGE/data/$f"; done
 sed "s#<script src=\"app.js\"></script>#<script src=\"$JS\"></script>#" web/dist/index.html > "$STAGE/index.html"
 grep -q "<script src=\"$JS\"></script>" "$STAGE/index.html" || die "не удалось подставить $JS в index.html"
+# статические файлы сайта (П5, П11, П13): web/dist/extras.txt — список путей (favicon, превью, страницы законопроектов, RSS, .ics)
+EXTRAS=$( [ -s web/dist/extras.txt ] && cat web/dist/extras.txt || true )
+for f in $EXTRAS; do [ -s "web/dist/$f" ] || die "сборка не дала web/dist/$f"; mkdir -p "$STAGE/x/$(dirname "$f")"; cp "web/dist/$f" "$STAGE/x/$f"; done
 
 # 3. временный worktree ветки gh-pages (точно на $REMOTE/gh-pages, без локальных правок)
 git worktree add -q --detach "$WT" "$REMOTE/$BRANCH"
@@ -75,6 +78,9 @@ cp "$STAGE/index.html" index.html
 cp "$STAGE/$JS" app.js            # мост для закэшированного старого index.html
 mkdir -p data; cp "$STAGE"/data/*.json data/   # имена по хешу содержимого: прежние файлы не перезаписываются
 touch .nojekyll
+# каталоги статики пересоздаются целиком (удалённые законопроекты/ленты не остаются), отдельные файлы — перезаписываются
+for d in bill feed ics; do [ -d "$d" ] && { git rm -q -r --cached "$d" >/dev/null 2>&1 || true; rm -rf "$d"; }; done
+[ -d "$STAGE/x" ] && cp -r "$STAGE/x/." .
 # прежние хешированные файлы: оставить последние KEEP (кроме текущего), остальные удалить
 OLD=$(git log --format= --name-only --diff-filter=A -- 'app.*.js' | grep -E '^app\.[0-9a-f]{10}\.js$' | grep -vx "$JS" | awk '!s[$0]++' || true)
 n=0
@@ -106,9 +112,9 @@ MD
 git add -A
 CHANGED=$(git diff --cached --name-only)
 # в коммите допустимы только файлы сайта
-BAD=$(echo "$CHANGED" | grep -v -E '^(index\.html|app\.js|app\.[0-9a-f]{10}\.js|README\.md|\.nojekyll|data/(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json)$' || true)
+BAD=$(echo "$CHANGED" | grep -v -E '^(index\.html|404\.html|app\.js|app\.[0-9a-f]{10}\.js|README\.md|\.nojekyll|favicon\.svg|og\.png|manifest\.webmanifest|sw\.js|robots\.txt|sitemap\.xml|(bill|feed|ics)/[A-Za-z0-9._/-]+|data/(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json)$' || true)
 [ -z "$BAD" ] || die "в коммит gh-pages попали неожиданные файлы: $BAD"
-if git diff --cached --quiet -- index.html "$JS"; then
+if git diff --cached --quiet -- . ':(exclude)README.md'; then
   echo "publish.sh: сайт не изменился ($JS уже опубликован), коммит не нужен"; exit 0
 fi
 echo "В gh-pages уйдёт:"; git diff --cached --stat
