@@ -12,8 +12,8 @@ import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
 import { spawn, execFileSync } from 'node:child_process';
-import { build } from 'esbuild';
 import { loadCanvas, ROOT } from './load_canvas.mjs';
+import { siteServer } from './site_server.mjs';
 
 const WIDTHS = [{ w: 390, h: 844, mobile: true, dpr: 3 }, { w: 1366, h: 900, mobile: false, dpr: 1 }];
 
@@ -22,13 +22,7 @@ const CHROME = process.env.CHROME || ['google-chrome', 'google-chrome-stable', '
 if (!CHROME) { if (process.env.GD_REQUIRE_BROWSER === '1') throw new Error('Chrome не найден'); console.log('SKIP test_org_filter.browser: нет Chrome'); process.exit(0); }
 
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gd-site-'));
-await build({ entryPoints: [path.join(ROOT, 'web/main.tsx')], bundle: true, minify: true, charset: 'utf8', format: 'iife', jsx: 'automatic',
-  alias: { 'grok/canvas': path.join(ROOT, 'web/grok-canvas.tsx') }, define: { 'process.env.NODE_ENV': '"production"' }, outfile: path.join(dir, 'app.js'), logLevel: 'error' });
-fs.copyFileSync(path.join(ROOT, 'web/index.html'), path.join(dir, 'index.html'));
-const srv = http.createServer((q, r) => { const f = path.join(dir, new URL(q.url, 'http://x').pathname.endsWith('.js') ? 'app.js' : 'index.html');
-  r.writeHead(200, { 'content-type': f.endsWith('.js') ? 'text/javascript; charset=utf-8' : 'text/html; charset=utf-8' }); fs.createReadStream(f).pipe(r); });
-await new Promise((ok) => srv.listen(0, '127.0.0.1', ok)); const BASE = `http://127.0.0.1:${srv.address().port}`;
+const SITE = await siteServer(); const BASE = SITE.BASE; // сайт как web/build.sh: код + data/*.json по месяцам (пункт 10)
 
 const prof = fs.mkdtempSync(path.join(os.tmpdir(), 'gd-chrome-'));
 const ch = spawn(CHROME, ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--no-first-run', '--no-default-browser-check',
@@ -79,7 +73,7 @@ try {
     await shot('3_all');
     await cmd('Target.closeTarget', { targetId });
   }
-} finally { try { ws.close(); } catch {} ch.kill('SIGKILL'); srv.close(); fs.rmSync(dir, { recursive: true, force: true }); setTimeout(() => fs.rmSync(prof, { recursive: true, force: true }), 500); }
+} finally { try { ws.close(); } catch {} ch.kill('SIGKILL'); SITE.close(); setTimeout(() => fs.rmSync(prof, { recursive: true, force: true }), 500); }
 rep.forEach((x) => console.log('  ' + x));
 assert.deepEqual(fails, [], 'правило 12 нарушено:\n  ' + fails.join('\n  '));
 console.log(`OK test_org_filter.browser: «Убрать все» / «Все» (${WIDTHS.map((w) => w.w + 'px').join(', ')})`);

@@ -6,7 +6,7 @@
 | Переменная | Значение по умолчанию | Что это |
 |---|---|---|
 | `GD_ROOT` | каталог над `pipeline/` (корень клона), например `/workspace/kalendar-zakonov` | git-клон github.com/Ruslan7121/kalendar-zakonov |
-| `CANVAS` | `$GD_ROOT/src/canvas.tsx` | **единственный канон** кода и данных сайта (DATA, VT, TRACK, CAL, BP, ZTAG…). Его пишут все скрипты и его собирает `web/build.sh` |
+| `CANVAS` | `$GD_ROOT/src/canvas.tsx` | **единственный канон** кода и данных сайта (DATA, VT, TRACK, CAL, BP, ZTAG…). Его пишут все скрипты; `split_data.mjs` раскладывает его данные в `$GD_ROOT/data/*.json` (их и читает сайт, пункт 10), `web/build.sh` собирает код |
 | `GD_DUMA` | `/workspace/duma` | внешний вспомогательный каталог **вне клона** (не второй конвейер): `lists/*.txt` — списки RU-прокси для `fetch.sh`; **единый кэш HTML sozd** `bills/<номер>.html` (см. ниже), кэши `cal_cache/`, `sep/`, `chk/`; `calendar_static.json` (распорядок сессии); `days/` |
 | `GD_DAYS` | `$GD_DUMA/days` | `ДД.ММ.ГГГГ.json` от `votes_day.py` (их читает `vote_times.py`) |
 | `GD_FETCH` | `pipeline/fetch.sh` | загрузчик через RU-прокси |
@@ -44,8 +44,20 @@ python3 pipeline/gap_check.py --online              # + 1-я страница с
 python3 pipeline/gap_check.py --from 01.11.2026 --to 12.11.2026 --skip 31.12.2026
 ```
 
+## Данные сайта по месяцам (с 12.11.2026, пункт 10)
+Сайт больше не встраивает данные в JS: `app.<hash>.js` — только код (~0,4 МБ вместо 1,73 МБ), данные — JSON, подгружаемые по месяцам.
+- **Канон данных не изменился** — `src/canvas.tsx` (его пишут все скрипты, и он остаётся самодостаточной формой страницы). Из него **`pipeline/split_data.mjs`** раскладывает данные в `data/` (в git):
+  - `data/core.json` — общее: `LAWS` (уже с `LAWS_FIX`), `ZTAG`, `PLAIN`, `PROC`, `RES_T`, `DEP_RAW`, `DEP8`, `BUDGET`, `SFM`, `CAL.u/w/n` и записи о законопроектах, на которые ссылаются код или `LAWS`;
+  - `data/months/ГГГГ-ММ.json` — дни месяца: `DATA`, `SUM` (уже с `NV`), `FULL`, `GOVA`, `SFN`, `CAL.p` (уже объединённый с DATA, пункт 2), `CAL.g`, `ORG` (с `ORGX` и заседаниями СФ `SFI`), `ORGNEWS`, а также `SHORT`, `TX`, `VT`, `TRACK` (с `TRACK1112`), `INFO`, `BP` (с `BP1112`) для голосований и законопроектов, упомянутых в этом месяце (запись может быть в нескольких месяцах);
+  - `data/index.json` — оглавление: месяцы, файлы, хеши, `DAYS`, `COUNT`, порядок ключей по дням (`ko`) и элементов массивов (`ord`), счётчики месяца для переключателя (`cnt`).
+  Генератор не правит и не дополняет данные: он выполняет код загрузки canvas (тот же, что у страницы) и раскладывает полученные значения; ключ месяца — подстрока ММ.ГГГГ даты «ДД.ММ.ГГГГ» из самих данных (без перевода в Date, часовой пояс не влияет). После загрузки всех месяцев объекты сайта совпадают с canvas по содержимому (у объектов по дням — и по порядку ключей) — это проверяет `tests/js/test_data_split.mjs`. Если форма canvas изменилась так, что нужный оператор не найден, генератор падает (сборка не выпустит сайт с неполными данными).
+- **Когда запускается:** `run_daily.sh` (после `strip_code_only.py`), `commit.sh` (и коммитит `data/`), `web/build.sh` (пишет также `web/gen/app.tsx` — код canvas с `GDX.S.*` вместо констант данных, `web/gen/manifest.json` и `web/dist/data/*.<хеш>.json`). `node pipeline/split_data.mjs --check` — только сравнить `data/` с canvas (так делают `tests/run_all.sh` и CI). `publish.sh` отказывается публиковать, если сборка изменила `data/` (сначала `commit.sh`).
+- **Загрузка на сайте** (`web/gdx.ts`, `web/main.tsx`): до первой отрисовки — `core` и месяц дня из ссылки `?d=` (иначе последнего дня с голосованиями) и текущий месяц календаря; код сайта выполняется только после этого, поэтому ссылки `?d=&v=` (alignDeep, правило 11) работают как раньше. Остальные месяцы грузятся, когда экран их просит (день или месяц календаря); соседние с открытым — заранее, в фоне; поиск, «Избранное» и фильтры законопроектов в календаре подгружают все месяцы. Пока месяц грузится — плашка «Загружаю данные: …»; не загрузился (сеть, 404, повреждённый файл) — «Не удалось загрузить данные: октябрь 2026» и «Повторить», а не пустой календарь. Нет общего `core` — страница пишет ошибку и «Обновить страницу».
+- **Кэш:** имена файлов на сайте — по хешу содержимого (`data/core.<hash>.json`, `data/m-ГГГГ-ММ.<hash>.json`), оглавление с именами встроено в `app.<hash>.js`, поэтому старый JSON из кэша (`max-age=600`) к новому коду не подставится. `publish.sh` оставляет в `gh-pages` файлы, нужные текущему и оставленным прежним `app.<hash>.js`.
+
 ## Тесты и CI (с 12.11.2026, пункт 8)
 Все тесты — без сети: `bash tests/run_all.sh` (или `npm test`). Нужны Python ≥ 3.9, Node ≥ 22 (`npm install`), для теста правила 11 — Chrome/Chromium (`$CHROME` или `google-chrome`/`chromium` в PATH; нет браузера — тест пропускается, `GD_REQUIRE_BROWSER=1` — падает; `TEST_BROWSER=0` — не запускать).
+- `tests/js/test_data_split.mjs` (пункт 10, без сети): `data/` совпадает с canvas (`split_data.mjs --check`); после подгрузки всех месяцев код сайта видит те же данные, что canvas; каждый месяц отдельно — все законопроекты/постановления DATA видны в календаре (в т. ч. 54 вне повестки); ссылки `?d=&v=` в октябрь/ноябрь/сентябрь грузят свой месяц до отрисовки; 404 месяца → ошибка, без выдуманных дней; в `app.js` нет встроенных DATA/CAL/FULL/NV/INFO/BP/GOVA/ORG. `tests/js/test_months.browser.mjs` — то же в Chrome на 390/1366 px (главная не грузит сентябрь, ?d=30.09.2026, октябрьская карточка и вне повестки, плашка ошибки и «Повторить»). Браузерные тесты собирают сайт как `web/build.sh` (`tests/js/site_server.mjs`).
 - `tests/test_organs.py` — разборщики органов на fixtures; `out/organs/enrich.json` без записей для несуществующих событий; блоки `ORG`/`ORGX` в `src/canvas.tsx` совпадают с `events.json`/`enrich.json`; `organs.py --embed` (во временной копии) не стирает записи ORGX, которых нет в enrich.json, а enrich.json главнее. **Правки проверенных полей органов («Суть», тип и т. п.) вносить в `out/organs/enrich.json`, затем `organs.py --embed`**, а не прямо в ORGX canvas; если запись есть только в canvas, `--embed` её оставит и напишет предупреждение в stderr и `out/logs/organs.log`. Событие без записи в enrich.json допустимо (показывается по данным ленты).
 - `tests/test_votes_day.py`, `tests/test_sozd_cache.py`, `tests/test_gap_check.py` — см. разделы выше.
 - `tests/js/test_calendar_visible.mjs` — инвариант «каждый законопроект из DATA виден в календаре»: настоящий код загрузки `src/canvas.tsx` (через esbuild, `tests/js/load_canvas.mjs`) выполняется в Node, и для каждой строки DATA с номером законопроекта проверяется строка в `CAL.p[день].a`, для «Пост. N» — карточка `p.r`; одна строка на законопроект. Октябрьский случай (54 законопроекта вне опубликованной повестки) проверяется отдельно, плюс синтетика: день без `CAL.p` и законопроект вне повестки; при отключённом объединении тест обязан упасть.
@@ -70,7 +82,7 @@ bash pipeline/run_daily.sh [ДД.ММ.ГГГГ]
 6. `track.py` — путь закона → `TRACK`, `LAWS` (auto).
 7. `audit.py --day ДЕНЬ --fix` — дневной аудит.
 8. `todo.py` → `out/TODO.md`.
-9. `strip_code_only.py` — производные копии (`src/canvas.code-only.tsx`, `out/canvas*.tsx`).
+9. `strip_code_only.py` — производные копии (`src/canvas.code-only.tsx`, `out/canvas*.tsx`); затем **`split_data.mjs`** — данные сайта `data/core.json`, `data/months/*.json`, `data/index.json` (пункт 10).
 10. `summary.sh ДЕНЬ` — сводка логов.
 
 Дальше бот пишет тексты (BOT_PROMPT.md), коммитит в `main` (`pipeline/commit.sh`) и публикует сайт (ниже).
@@ -86,7 +98,8 @@ bash pipeline/run_daily.sh [ДД.ММ.ГГГГ]
 ## Скрипты
 | Скрипт | Что делает | Пишет |
 |---|---|---|
-| run_daily.sh [ДД.ММ.ГГГГ] | прогон за день: **votes_day (шаг 1)** → calendar_update + cal_merge → gap_check → bills → vote_times → organs → track → **audit.py --day** → todo → strip_code_only → сводка (см. выше). | — |
+| run_daily.sh [ДД.ММ.ГГГГ] | прогон за день: **votes_day (шаг 1)** → calendar_update + cal_merge → gap_check → bills → vote_times → organs → track → **audit.py --day** → todo → strip_code_only → split_data → сводка (см. выше). | — |
+| split_data.mjs [--dist DIR] [--check] | данные canvas → `data/core.json`, `data/months/ГГГГ-ММ.json`, `data/index.json` (пункт 10); `web/gen/app.tsx` + `manifest.json` для сборки; `--dist` — копии с хешем в имени для сайта; `--check` — только сравнить | `data/`, `web/gen/` |
 | votes_day.py ДД.ММ.ГГГГ [ДД.ММ.ГГГГ] [--dry-run] [--canvas файл] | **шаг 1.** Голосования дня с vote.duma.gov.ru: список `?from=&to=` (все страницы `page=`) + страница каждого голосования `/vote/<id>` (итог, поимённо → фракции, дата и время). Пишет days/ДД.ММ.ГГГГ.json, затем аддитивно DATA: новые id вставляются по порядку, существующие строки не меняются (расхождения цифр — в отчёт), Суть/TRACK/ZTAG/постановления не трогаются. VT — время со страницы голосования. День без голосований (официально «ничего не найдено») в DATA не добавляется. Код выхода: 0 — ок, 1 — есть пробелы (голосования не попали в DATA), 2 — список дня недоступен, DATA не изменён. | $GD_DAYS/ДД.ММ.ГГГГ.json, DATA, блок VT, out/cache/vote/<id>.html, out/logs/votes_day_<день>.json, out/logs/votes_day_fail.log |
 | calendar_update.py | календарь пленарных дней (sozd), заседаний Правительства, распорядок из `$GD_DUMA/calendar_static.json`; canvas не трогает | out/calendar.json, `$GD_DUMA/cal_cache/` |
 | gap_check.py [--from Д] [--to Д] [--online] [--skip Д…] | проверка пропусков: рабочие дни окна без DATA и/или CAL (правило — см. «Проверка пропусков»); только отчёт, canvas не меняет; выход 1 — есть пропуски | out/logs/gaps_<дата>.txt/.json, out/logs/gap_check_fail.log |

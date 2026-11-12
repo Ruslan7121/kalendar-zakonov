@@ -5,6 +5,7 @@
 ## Где что лежит (канон, см. docs/PIPELINE.md)
 - Рабочий каталог — git-клон https://github.com/Ruslan7121/kalendar-zakonov (`GD_ROOT`, например `/workspace/kalendar-zakonov`). Перед работой: `git pull --ff-only`.
 - Единственный файл кода и данных сайта — `src/canvas.tsx` (`CANVAS`). Его пишут скрипты и бот; `src/canvas.code-only.tsx`, `out/canvas.tsx`, `out/canvas.code-only.tsx` — производные копии, их пересобирает `strip_code_only.py` (руками не править).
+- С 12.11.2026 (пункт 10) сайт читает данные не из JS, а из `data/core.json` и `data/months/ГГГГ-ММ.json` — их раскладывает из `src/canvas.tsx` `pipeline/split_data.mjs` (вызывают `run_daily.sh`, `commit.sh`, `web/build.sh`). Данные по-прежнему правят только в `src/canvas.tsx` (скриптами), `data/` руками не править; `commit.sh` коммитит и `data/`, `publish.sh` не опубликует, если `data/` устарела.
 - `/workspace/out/canvas.tsx` и `/workspace/duma/pipeline/` устарели — не использовать. `/workspace/duma` (`GD_DUMA`) — только вспомогательный каталог: списки RU-прокси `lists/`, кэши sozd и календаря, `calendar_static.json`.
 - Публичный сайт — только https://ruslan7121.github.io/kalendar-zakonov/ (ветка `gh-pages`). Страницу Cursor не редактировать (EditCanvas/WriteCanvas не вызывать). Netlify не публичный сайт и не используется.
 

@@ -2,7 +2,7 @@
 // с начала — шапка карточки [data-ivs] целиком в видимой области ниже всех закреплённых шапок, а верх карточки [data-ivk]
 // совпадает с шапкой (не середина карточки). 390 px (мобильный, touch) и 1366 px.
 // Там же — кнопки карточки: на телефоне «Поделиться карточкой» внизу, без «Скопировать ссылку на голосование» и сырого адреса.
-// Сайт собирается из src/canvas.tsx теми же параметрами, что web/build.sh, во временную папку и раздаётся локально (127.0.0.1).
+// Сайт собирается как web/build.sh (код + data/*.json по месяцам, tests/js/site_server.mjs) во временную папку и раздаётся локально (127.0.0.1).
 // Нужен Chrome/Chromium: $CHROME или google-chrome / chromium в PATH; без браузера тест пропускается (код 0, «SKIP»),
 // при GD_REQUIRE_BROWSER=1 (CI) — падает. Зависимостей нет: протокол DevTools через встроенный WebSocket Node ≥ 22.
 // Запуск: node tests/js/test_share_scroll.browser.mjs
@@ -12,8 +12,8 @@ import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
 import { spawn, execFileSync } from 'node:child_process';
-import { build } from 'esbuild';
 import { loadCanvas, ROOT } from './load_canvas.mjs';
+import { siteServer } from './site_server.mjs';
 
 const CASES = ['11.11.2026:136361', '10.11.2026:136304', '11.11.2026:136349', '11.11.2026:136378', '10.11.2026:136283', '10.11.2026:136277', '22.10.2026:136156'];
 const WIDTHS = [{ w: 390, h: 844, mobile: true, dpr: 3 }, { w: 1366, h: 900, mobile: false, dpr: 1 }];
@@ -25,13 +25,7 @@ if (!CHROME) { if (process.env.GD_REQUIRE_BROWSER === '1') throw new Error('Chro
 const T = await loadCanvas(['DATA']);
 const bill = (d, v) => ((T.DATA[d] || '').split('\n').find((l) => l.split('|')[0] === v) || '').split('|')[1];
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gd-site-'));
-await build({ entryPoints: [path.join(ROOT, 'web/main.tsx')], bundle: true, minify: true, charset: 'utf8', format: 'iife', jsx: 'automatic',
-  alias: { 'grok/canvas': path.join(ROOT, 'web/grok-canvas.tsx') }, define: { 'process.env.NODE_ENV': '"production"' }, outfile: path.join(dir, 'app.js'), logLevel: 'error' });
-fs.copyFileSync(path.join(ROOT, 'web/index.html'), path.join(dir, 'index.html'));
-const srv = http.createServer((q, r) => { const f = path.join(dir, new URL(q.url, 'http://x').pathname.endsWith('.js') ? 'app.js' : 'index.html');
-  r.writeHead(200, { 'content-type': f.endsWith('.js') ? 'text/javascript; charset=utf-8' : 'text/html; charset=utf-8' }); fs.createReadStream(f).pipe(r); });
-await new Promise((ok) => srv.listen(0, '127.0.0.1', ok)); const BASE = `http://127.0.0.1:${srv.address().port}`;
+const SITE = await siteServer(); const BASE = SITE.BASE; // сайт как web/build.sh: код + data/*.json по месяцам (пункт 10)
 
 const prof = fs.mkdtempSync(path.join(os.tmpdir(), 'gd-chrome-'));
 const ch = spawn(CHROME, ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--no-first-run', '--no-default-browser-check',
@@ -101,7 +95,7 @@ try {
     }
     await cmd('Target.closeTarget', { targetId });
   }
-} finally { try { ws.close(); } catch {} ch.kill('SIGKILL'); srv.close(); fs.rmSync(dir, { recursive: true, force: true }); setTimeout(() => fs.rmSync(prof, { recursive: true, force: true }), 500); }
+} finally { try { ws.close(); } catch {} ch.kill('SIGKILL'); SITE.close(); setTimeout(() => fs.rmSync(prof, { recursive: true, force: true }), 500); }
 rep.forEach((x) => console.log('  ' + x));
 assert.deepEqual(fails, [], 'правило 11 нарушено:\n  ' + fails.join('\n  '));
 console.log(`OK test_share_scroll.browser: ${rep.length} открытий (${WIDTHS.map((w) => w.w + 'px').join(', ')})`);

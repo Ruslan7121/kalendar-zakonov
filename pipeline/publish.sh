@@ -1,6 +1,7 @@
 #!/bin/bash
 # Публикация сайта на GitHub Pages (ветка gh-pages) одной командой:
 #   сборка src/canvas.tsx (web/build.sh) → app.<hash>.js + index.html со ссылкой на него
+#   + data/core.<hash>.json и data/m-ГГГГ-ММ.<hash>.json (данные по месяцам, пункт 10; имена — в оглавлении внутри app.<hash>.js)
 #   → обычный коммит в gh-pages (через временный worktree) → git push без --force
 #   → проверка живой страницы.
 #
@@ -47,6 +48,9 @@ fi
 # 2. сборка
 bash web/build.sh >/dev/null
 [ -s web/dist/app.js ] && [ -s web/dist/index.html ] || die "сборка не дала web/dist/app.js и index.html"
+[ -z "$(git status --porcelain -- data/)" ] || die "data/*.json не совпадают с src/canvas.tsx (сборка их пересобрала) — сначала pipeline/commit.sh, затем git push"
+DATA_FILES=$(node -p "Object.values(require('./web/gen/manifest.json').file).join(' ')")
+for f in $DATA_FILES; do [ -s "web/dist/data/$f" ] || die "сборка не дала web/dist/data/$f"; done
 grep -q '<script src="app.js"></script>' web/dist/index.html || die "в web/index.html не найден <script src=\"app.js\"> — шаблон изменился"
 
 HASH=$(sha256sum web/dist/app.js | cut -c1-10)
@@ -57,6 +61,7 @@ cleanup() { git worktree remove --force "$WT" >/dev/null 2>&1 || true; rm -rf "$
 trap cleanup EXIT
 
 cp web/dist/app.js "$STAGE/$JS"
+mkdir -p "$STAGE/data"; for f in $DATA_FILES; do cp "web/dist/data/$f" "$STAGE/data/$f"; done
 sed "s#<script src=\"app.js\"></script>#<script src=\"$JS\"></script>#" web/dist/index.html > "$STAGE/index.html"
 grep -q "<script src=\"$JS\"></script>" "$STAGE/index.html" || die "не удалось подставить $JS в index.html"
 
@@ -68,6 +73,7 @@ cd "$WT"
 cp "$STAGE/$JS" "$JS"
 cp "$STAGE/index.html" index.html
 cp "$STAGE/$JS" app.js            # мост для закэшированного старого index.html
+mkdir -p data; cp "$STAGE"/data/*.json data/   # имена по хешу содержимого: прежние файлы не перезаписываются
 touch .nojekyll
 # прежние хешированные файлы: оставить последние KEEP (кроме текущего), остальные удалить
 OLD=$(git log --format= --name-only --diff-filter=A -- 'app.*.js' | grep -E '^app\.[0-9a-f]{10}\.js$' | grep -vx "$JS" | awk '!s[$0]++' || true)
@@ -77,6 +83,9 @@ for f in $OLD; do
   n=$((n+1)); [ $n -le "$KEEP" ] && continue
   git rm -q "$f"
 done
+# data/*.json: оставить те, на которые ссылается текущий или оставленный прежний app.<hash>.js (и мост app.js), остальные удалить
+KEEPDATA=$(for f in app.js app.*.js; do [ -e "$f" ] && grep -oE '(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json' "$f"; done | sort -u || true)
+for f in data/*.json; do [ -e "$f" ] || continue; echo "$KEEPDATA" | grep -qx "$(basename "$f")" && continue; git rm -q --cached "$f" 2>/dev/null || true; rm -f "$f"; done
 cat > README.md <<MD
 # Календарь законов: собранный сайт
 
@@ -91,12 +100,13 @@ cat > README.md <<MD
 - \`index.html\` ссылается на \`$JS\` — имя по хешу содержимого, поэтому после выкладки браузер не может взять старый JS из кэша.
 - Предыдущие \`app.<hash>.js\` (последние $KEEP) оставлены для страниц, закэшированных до выкладки (GitHub Pages: \`max-age=600\`).
 - \`app.js\` — копия последней сборки только для старых закэшированных \`index.html\`; новый \`index.html\` его не использует.
+- \`data/\` — данные по месяцам (\`core.<hash>.json\`, \`m-ГГГГ-ММ.<hash>.json\`), их читает \`$JS\`; оставлены и файлы, нужные прежним \`app.<hash>.js\`.
 - \`build/\` — исторические копии исходников сборки, не используются.
 MD
 git add -A
 CHANGED=$(git diff --cached --name-only)
 # в коммите допустимы только файлы сайта
-BAD=$(echo "$CHANGED" | grep -v -E '^(index\.html|app\.js|app\.[0-9a-f]{10}\.js|README\.md|\.nojekyll)$' || true)
+BAD=$(echo "$CHANGED" | grep -v -E '^(index\.html|app\.js|app\.[0-9a-f]{10}\.js|README\.md|\.nojekyll|data/(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json)$' || true)
 [ -z "$BAD" ] || die "в коммит gh-pages попали неожиданные файлы: $BAD"
 if git diff --cached --quiet -- index.html "$JS"; then
   echo "publish.sh: сайт не изменился ($JS уже опубликован), коммит не нужен"; exit 0
@@ -117,6 +127,8 @@ for i in $(seq 1 40); do
   if curl -fsS "${SITE}?t=$(date +%s%N)" -H 'Cache-Control: no-cache' 2>/dev/null | grep -q "<script src=\"$JS\"></script>"; then
     code=$(curl -s -o /dev/null -w '%{http_code}' "${SITE}${JS}")
     [ "$code" = 200 ] || die "живой index.html ссылается на $JS, но файл отдаёт $code"
+    for f in $DATA_FILES; do c=$(curl -s -o /dev/null -w '%{http_code}' "${SITE}data/$f"); [ "$c" = 200 ] || die "data/$f отдаёт $c"; done
+    echo "Живой сайт: data/ — $(echo $DATA_FILES | wc -w) файлов (200)"
     echo "Живой сайт: index.html → $JS (200). Готово."; exit 0
   fi
   sleep 15

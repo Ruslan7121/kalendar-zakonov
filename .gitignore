@@ -2,6 +2,8 @@ __pycache__/
 *.pyc
 node_modules
 web/dist/
+# код сайта без данных и оглавление — пишет pipeline/split_data.mjs при каждой сборке (данные — в data/, они в git)
+web/gen/
 # рабочие файлы конвейера (пишутся в клон, в git не идут)
 out/logs/
 out/cache/

@@ -49,6 +49,9 @@ echo "[список задач]"
 python3 todo.py
 echo "[копии: src/canvas.code-only.tsx, out/canvas.tsx, out/canvas.code-only.tsx]"
 python3 strip_code_only.py || echo "strip_code_only: ошибка" >&2
+echo "[данные сайта по месяцам: data/core.json, data/months/*.json, data/index.json]"
+# 12.11.2026 (п. 10): сайт берёт данные не из JS, а из data/*.json — после любых правок canvas их пересобирает split_data.mjs.
+node split_data.mjs || echo "split_data: ОШИБКА — data/*.json не обновлены, публиковать нельзя (docs/PIPELINE.md)" >&2
 echo ""
 echo "=== Сводка ==="
 bash summary.sh "$DAY"

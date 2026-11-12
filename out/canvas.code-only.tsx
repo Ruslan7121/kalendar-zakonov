@@ -17,6 +17,18 @@ function Status({ tone, children, b }: { tone: string; children: React.ReactNode
 const F = ['ЕР', 'КПРФ', 'ЛДПР', 'НЛ', 'СРЗП', 'Вне'];
 const DEF: Record<string, number> = { 'ЕР': 350, 'КПРФ': 37, 'ЛДПР': 24, 'НЛ': 20, 'СРЗП': 17, 'Вне': 2 };
 const FNAME: Record<string, string> = { 'ЕР': 'Единая Россия', 'КПРФ': 'КПРФ', 'ЛДПР': 'ЛДПР', 'НЛ': 'Новые люди', 'СРЗП': 'СРЗП', 'Вне': 'Вне фракций' };
+/* 12.11.2026 (п. 10): данные по месяцам. Здесь (канон для конвейера и самодостаточная форма страницы) все данные встроены, GDX = null.
+   Сайт собирается из web/gen/app.tsx (pipeline/split_data.mjs): крупные константы данных там берутся из GDX.S — их заполняет
+   загрузчик web/gdx.ts из data/*.json (общий core и месяц открытого дня до первой отрисовки, остальные месяцы — когда их открывают). */
+const GDX: any = (globalThis as any).__GDX || null;
+const gdMk = (d: string) => (d || '').slice(3);
+function useGDV(): number { const [v, u] = useState(0); useEffect(() => (GDX ? GDX.sub(() => u((x: number) => x + 1)) : undefined), []); return v; }
+/* need: месяцы ММ.ГГГГ, нужные экрану (null — все). Возвращает null, если всё загружено, иначе { err?, mk[] } для плашки «Загружаю…» / ошибки. */
+function gdNeed(need: string[] | null): null | { err: string | null; mk: string[] } { if (!GDX) return null; const ms = (need || GDX.M.months).filter((k: string) => GDX.M.months.includes(k)); GDX.need(ms); const miss = ms.filter((k: string) => !GDX.has(k)); if (!miss.length) return null; const e = miss.map((k: string) => GDX.err[k]).find(Boolean); return { err: e || null, mk: miss }; }
+function GdWait({ st, t }: { st: { err: string | null; mk: string[] }; t: any }) { const MN = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']; const ml = st.mk.map((k) => `${MN[+k.slice(0, 2) - 1]} ${k.slice(3)}`).join(', ');
+  return <div role={st.err ? 'alert' : 'status'} data-gd-load={st.err ? 'err' : 'wait'} style={{ margin: '16px 0', padding: '14px 16px', borderRadius: 12, border: `1px solid ${st.err ? (DK ? 'rgba(255,105,97,0.45)' : '#F0ABAB') : t.border.subtle}`, background: st.err ? (DK ? 'rgba(255,69,58,0.12)' : '#FDECEC') : t.bg.subtle, color: t.text.primary, fontSize: 15, lineHeight: 1.45 }}>
+    {st.err ? <><b>Не удалось загрузить данные: {ml}.</b><div style={{ color: t.text.secondary, fontSize: 14, marginTop: 4 }}>{st.err}. Календарь за этот период не показан, чтобы не выдавать пустые дни за настоящие.</div><button type="button" onClick={() => GDX.retry(st.mk)} style={{ marginTop: 10, minHeight: 40, padding: '0 16px', borderRadius: 10, border: `1px solid ${t.border.default}`, background: t.bg.base, color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Повторить</button></> : <>Загружаю данные: {ml}…</>}
+  </div>; }
 const DATA: Record<string,string> = {
 '30.09.2026': `135960|—|О проекте порядка работы первого заседания Государственной Думы Федерального Собрания Российско…|за основу|1|443/0/0/7|345/0/0/5;37/0/0/0;23/0/0/1;20/0/0/0;16/0/0/1;2/0/0/0
 135961|—|О Счетной комиссии Государственной Думы|—|1|443/0/0/7|345/0/0/5;37/0/0/0;23/0/0/1;20/0/0/0;16/0/0/1;2/0/0/0
@@ -3177,8 +3189,8 @@ const WDL = ['воскресенье', 'понедельник', 'вторник
 const pd = (s: string) => new Date(+s.slice(6, 10), +s.slice(3, 5) - 1, +s.slice(0, 2));
 const fd = (x: Date) => `${String(x.getDate()).padStart(2, '0')}.${String(x.getMonth() + 1).padStart(2, '0')}.${x.getFullYear()}`;
 const calCk = (dt: Date) => `${String(dt.getMonth() + 1).padStart(2, '0')}.${dt.getFullYear()}`;
-function calCks(): string[] { const n = new Date(); const st = new Set<string>([0, 1].map((k) => calCk(new Date(n.getFullYear(), n.getMonth() + k, 1)))); [...CAL.p.map((x: any) => x.d), ...CAL.g.map((x: any) => x[0]), ...ORG.map((x: any) => x.d), ...CAL.w.flatMap((x: any) => [x[0], x[1]])].forEach((d: string) => { if (d) st.add(calCk(pd(d))); }); return [...st].sort((a, b) => (a.slice(3) + a.slice(0, 2)).localeCompare(b.slice(3) + b.slice(0, 2))); }
-const calCnt = (k: string) => (cof('gd') ? CAL.p.filter((x: any) => calCk(pd(x.d)) === k).length : 0) + (cof('gov') ? CAL.g.filter((x: any) => calCk(pd(x[0])) === k).length : 0) + new Set(ORG.filter((x: any) => cof(x.o) && calCk(pd(x.d)) === k).map((x: any) => x.d)).size;
+function calCks(): string[] { const n = new Date(); const st = new Set<string>([0, 1].map((k) => calCk(new Date(n.getFullYear(), n.getMonth() + k, 1)))); [...CAL.p.map((x: any) => x.d), ...CAL.g.map((x: any) => x[0]), ...ORG.map((x: any) => x.d), ...CAL.w.flatMap((x: any) => [x[0], x[1]]), ...(GDX ? GDX.M.months.map((k: string) => '01.' + k) : [])].forEach((d: string) => { if (d) st.add(calCk(pd(d))); }); return [...st].sort((a, b) => (a.slice(3) + a.slice(0, 2)).localeCompare(b.slice(3) + b.slice(0, 2))); }
+const calCnt = (k: string) => GDX && GDX.M.cnt[k] && !GDX.has(k) ? (() => { const c = GDX.M.cnt[k]; return (cof('gd') ? c.p : 0) + (cof('gov') ? c.g : 0) + new Set(Object.keys(c.o).filter(cof).flatMap((o) => c.o[o])).size; })() : (cof('gd') ? CAL.p.filter((x: any) => calCk(pd(x.d)) === k).length : 0) + (cof('gov') ? CAL.g.filter((x: any) => calCk(pd(x[0])) === k).length : 0) + new Set(ORG.filter((x: any) => cof(x.o) && calCk(pd(x.d)) === k).map((x: any) => x.d)).size;
 const AGSH: Record<string, string> = { '1291843-8': 'Больничные для иностранцев', '1205970-8': 'Сервис рассрочки', '1246473-8': 'Централизованная кадровая работа', '332027-8': 'Продажа вина через Почту России', '332033-8': 'Дистанционная продажа вина', '1327114-8': 'Архивное дело', '1249111-8': 'Ответственность почты за платежки', '1240307-8': 'Права на секреты производства' };
 let SHB: Record<string, string> | null = null;
 function agShort(bn: string, raw: string): string { if (!SHB) { SHB = {}; for (const d of Object.keys(DATA)) for (const l of DATA[d].split('\n')) { const p = l.split('|'); if (p[1] && SHORT[p[0]] && !SHB[p[1]]) SHB[p[1]] = SHORT[p[0]]; } } return SHB[bn] || AGSH[bn] || raw; }
@@ -3555,11 +3567,13 @@ function ToTop({ t }: { t: any }) {
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={t.text.accent} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
     </span></button>;
 }
+/* Кэши по всем дням (agShort, plainBill, fullT) пересчитываются после подгрузки месяца. */
+if (GDX) GDX.onMerge = () => { SHB = null; PLB = null; ftDone = false; };
 function CalendarApp() {
   const gk: any = useGT0();
   const [tho, setTho] = useState<string | null>(THO0);
   setPal(tho ? tho === 'dark' : !!gk && gk.kind === 'dark');
-  const t = useGrokTheme(); useZS();
+  const t = useGrokTheme(); useZS(); const dv = useGDV();
   const [filter, setFilter] = useState<'all' | 'acc' | 'rej'>('all');
   const [q, setQ] = useState(''); const [cq, setCq] = useState(''); zClrQ = () => setCq('');
   const setQ2 = (v: string) => { if (v) setFavOnly(false); setQ(v); };
@@ -3606,7 +3620,7 @@ function CalendarApp() {
     window.addEventListener('scroll', on, true); window.addEventListener('resize', on); on();
     return () => { window.removeEventListener('scroll', on, true); window.removeEventListener('resize', on); };
   }, []);
-  const votes = useMemo(() => { const a = parse(DATA[day]); const i = PIN ? a.findIndex((z) => z.id === PIN) : -1; return i > 0 ? [a[i], ...a.slice(0, i), ...a.slice(i + 1)] : a; }, [day]);
+  const votes = useMemo(() => { const a = parse(DATA[day]); const i = PIN ? a.findIndex((z) => z.id === PIN) : -1; return i > 0 ? [a[i], ...a.slice(0, i), ...a.slice(i + 1)] : a; }, [day, dv]);
   const list = useMemo(() => votes.filter((v) =>
     (filter === 'all' || (filter === 'acc') === v.ok) &&
     true), [votes, filter]);
@@ -3614,9 +3628,11 @@ function CalendarApp() {
   useFavs();
   onFavNav = (on) => { if (on) { (window as any).__gdFavBack = mode; setMode('d'); setQ(''); setView('v'); setOpen(null); } else { setOpen(null); const b = (window as any).__gdFavBack as 'd' | 'c' | 'l' | undefined; (window as any).__gdFavBack = null; if (b === 'd' || b === 'c' || b === 'l') setMode(b); } };
   const qq = normQ(q.trim());
-  const hits = useMemo(() => { if (!qq) return []; const out: { d: string; v: Vote[] }[] = []; for (const d of [...DAYS].reverse()) { const vs = parse(DATA[d]).filter((v) => normQ([v.id, v.doc, v.q, v.full, (PLAIN[v.id] || {}).title || ''].join(' ')).includes(qq)); if (vs.length) out.push({ d, v: vs }); } return out; }, [qq]);
-  const favHits = useMemo(() => { if (!FAV_ONLY || !FAVS.size) return [] as { d: string; v: Vote[] }[]; const out: { d: string; v: Vote[] }[] = []; const seen = new Set<string>(); for (const d of [...DAYS].reverse()) { const vs = parse(DATA[d]).filter((v) => { const b = billNo(v.doc); if (!b || !FAVS.has(b) || seen.has(b + '@' + v.id)) return false; seen.add(b + '@' + v.id); return true; }); if (vs.length) out.push({ d, v: vs }); } return out; }, [FAV_ONLY, FAVS.size]);
-  const favLaws = useMemo(() => { if (!FAV_ONLY || !FAVS.size) return [] as { mk: string; law: string; title: string; d: string }[]; const out: { mk: string; law: string; title: string; d: string }[] = []; try { for (const mk of Object.keys(LAWS.months || {})) { for (const x of (LAWS.months[mk] || [])) { const k = lawNo(x.law || ''); if (k && FAVS.has(k)) out.push({ mk, law: x.law, title: x.title, d: x.d }); } } } catch {} return out; }, [FAV_ONLY, FAVS.size]);
+  /* п. 10: месяцы, нужные экрану; поиск, «Избранное» и фильтры законопроектов в календаре идут по всем месяцам. */
+  const gdSt = gdNeed(qq || FAV_ONLY || (mode === 'c' && (!!cq.trim() || zN() > 0)) ? null : mode === 'c' ? [cmk] : mode === 'd' ? [gdMk(day)] : []); void dv;
+  const hits = useMemo(() => { if (!qq) return []; const out: { d: string; v: Vote[] }[] = []; for (const d of [...DAYS].reverse()) { const vs = parse(DATA[d]).filter((v) => normQ([v.id, v.doc, v.q, v.full, (PLAIN[v.id] || {}).title || ''].join(' ')).includes(qq)); if (vs.length) out.push({ d, v: vs }); } return out; }, [qq, dv]);
+  const favHits = useMemo(() => { if (!FAV_ONLY || !FAVS.size) return [] as { d: string; v: Vote[] }[]; const out: { d: string; v: Vote[] }[] = []; const seen = new Set<string>(); for (const d of [...DAYS].reverse()) { const vs = parse(DATA[d]).filter((v) => { const b = billNo(v.doc); if (!b || !FAVS.has(b) || seen.has(b + '@' + v.id)) return false; seen.add(b + '@' + v.id); return true; }); if (vs.length) out.push({ d, v: vs }); } return out; }, [FAV_ONLY, FAVS.size, dv]);
+  const favLaws = useMemo(() => { if (!FAV_ONLY || !FAVS.size) return [] as { mk: string; law: string; title: string; d: string }[]; const out: { mk: string; law: string; title: string; d: string }[] = []; try { for (const mk of Object.keys(LAWS.months || {})) { for (const x of (LAWS.months[mk] || [])) { const k = lawNo(x.law || ''); if (k && FAVS.has(k)) out.push({ mk, law: x.law, title: x.title, d: x.d }); } } } catch {} return out; }, [FAV_ONLY, FAVS.size, dv]);
   const listHits = qq ? hits : favHits;
   const nHits = listHits.reduce((a, h) => a + h.v.length, 0) + (qq ? 0 : favLaws.length);
   const showHits = !!qq || FAV_ONLY;
@@ -3730,7 +3746,7 @@ function CalendarApp() {
       {false && <div role="tablist" style={{ display: 'flex', marginTop: 8, padding: 3, gap: 2, borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['v', 'Голосования', votes.length], ['s', 'Сводка', null]] as const).map(([k, l, c]) => <button key={k} role="tab" aria-selected={view === k} onClick={() => { setView(k); window.scrollTo(0, 0); }} style={{ flex: 1, minWidth: 0, minHeight: 40, border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: t.font.family, fontSize: 15, fontWeight: view === k ? t.weight.semibold : t.weight.regular, background: view === k ? t.bg.base : 'transparent', boxShadow: view === k ? `0 1px 3px ${t.border.default}` : 'none', color: t.text.primary }}>{l}{c != null && <span style={{ color: t.text.tertiary }}> {c}</span>}</button>)}</div>}
       </>}
       </div>
-      {mode === 'l' ? <Laws m={m} mk={lmk} /> : mode === 'c' ? <Calendar cq={cq} m={m} day={day} openVote={openHit} cm={cmk} setCm={setCmk} openDay={(d) => { setMode('d'); go(d, true); window.scrollTo(0, 0); }} /> : <>{false && <>
+      {gdSt && <GdWait st={gdSt} t={t} />}<div style={{ display: gdSt ? 'none' : 'contents' }}>{mode === 'l' ? <Laws m={m} mk={lmk} /> : mode === 'c' ? <Calendar cq={cq} m={m} day={day} openVote={openHit} cm={cmk} setCm={setCmk} openDay={(d) => { setMode('d'); go(d, true); window.scrollTo(0, 0); }} /> : <>{false && <>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 16px', alignItems: 'stretch', marginBottom: !m && !votes.length ? 12 : 0 }}>
         {true ? false && <div style={{ flex: '1 1 100%', fontSize: 14, color: t.text.secondary, padding: '0 2px', fontVariantNumeric: 'tabular-nums' }}>{votes.length ? <><b style={{ color: t.text.primary }}>{votes.length}</b> {plv(votes.length).replace(/^\d+ /, '')} · <b style={{ color: INK[0] }}>{nAcc}</b> принято · <b style={{ color: votes.length - nAcc ? INK[1] : t.text.primary }}>{votes.length - nAcc}</b> отклонено</> : 'Пленарного заседания не было'}</div> :
         <div style={{ ...card(t), padding: m ? '12px 14px' : '14px 18px', color: t.text.primary, lineHeight: 1.45, flex: m ? '1 1 100%' : '0 1 auto' }}>
@@ -3815,7 +3831,7 @@ function CalendarApp() {
         {!list.length && <div style={{ padding: 12, color: t.text.secondary }}>Ничего не найдено</div>}
       </div>)}
       </>}
-      </>}
+      </>}</div>
       <div style={{ height: 8 }} />
       <p style={{ fontSize: 14, color: t.text.secondary, lineHeight: 1.5 }}>Источники: {['vote.duma.gov.ru', 'sozd.duma.gov.ru', 'duma.gov.ru', 'government.ru'].map((s, i) => <span key={s}>{i ? ', ' : ''}<a href={`http://${s}/`} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>{s}</a></span>)}</p>
       {m && <div style={{ height: 64 }} />}
