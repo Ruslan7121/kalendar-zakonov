@@ -2572,7 +2572,7 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
   const ctx = cardText(v, day);
   const secs: [string, string[]][] = [
     ...(ctx.sut ? [['Суть', ctx.sut.map(yo)] as [string, string[]]] : []),
-    ...(ctx.who ? [['Кого коснётся', [yo(ctx.who)]] as [string, string[]]] : []),
+    ...(ctx.who ? [[v.ok ? "Кого коснётся" : "Кого коснулось бы", [yo(ctx.who)]] as [string, string[]]] : []),
     ...(ctx.next.length ? [[v.ok ? 'Что дальше' : 'Почему отклонили', ctx.next.map(yo)] as [string, string[]]] : []),
   ];
   const ini = yo(inf.ini || INI_ADD[b || '']) as string | undefined;
@@ -2640,7 +2640,7 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
         {!inl && <span style={{ fontSize: m ? 12 : 13, color: t.text.secondary, fontVariantNumeric: 'tabular-nums' }}>{[`${dt.getDate()} ${MON[dt.getMonth()]} ${dt.getFullYear()}, ${WDN[dt.getDay()]}`].filter(Boolean).join(' · ')}</span>}
       </div>}
       {inl ? null : <>{!m && <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.3, color: t.text.primary, letterSpacing: '-0.01em', marginBottom: 10 }}>{yo(v.q)}</div>}</>}
-      {(sut0.length > 0 || ctx.who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{sut0.length > 0 && <div><div style={h}>Суть</div>{sut0.map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{p}</p>)}</div>}{ctx.who && <div><div style={h}>Кого коснётся</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(ctx.who)}</p></div>}{ctx.bs && <div><div style={h}>Что сейчас</div>{ctx.bs.map((r, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(r[0])}</p>)}</div>}{ctx.bs && <div><div style={h}>Что предлагалось изменить</div>{ctx.bs.map((r, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(r[1])}</p>)}</div>}</div>}
+      {(sut0.length > 0 || ctx.who) && <div style={{ ...box, display: 'flex', flexDirection: 'column', gap: m ? 12 : 16 }}>{sut0.length > 0 && <div><div style={h}>Суть</div>{sut0.map((p, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{p}</p>)}</div>}{ctx.who && <div><div style={h}>{v.ok ? "Кого коснётся" : "Кого коснулось бы"}</div><p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(ctx.who)}</p></div>}{ctx.bs && <div><div style={h}>Что сейчас</div>{ctx.bs.map((r, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(r[0])}</p>)}</div>}{ctx.bs && <div><div style={h}>Что предлагалось изменить</div>{ctx.bs.map((r, i) => <p key={i} style={{ margin: i ? '6px 0 0' : 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary }}>{yo(r[1])}</p>)}</div>}</div>}
       <div style={{ marginTop: (sut0.length > 0 || ctx.who) ? 12 : 0 }}>{res}</div>
       {b && !isResDoc(v.doc) && <Track b={b} rd={v.reading} m={!!m} ok={v.ok} />}
       {b && BUDGET[b] && <Budget b={b} m={!!m} />}
