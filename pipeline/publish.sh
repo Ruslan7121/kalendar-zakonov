@@ -45,7 +45,8 @@ if [ $DRY -eq 0 ]; then
   git merge-base --is-ancestor "$SRC_SHA" "$REMOTE/main" || die "коммит $SRC_SHORT ещё не отправлен в $REMOTE/main — сначала git push"
 fi
 
-# 2. сборка
+# 2. сборка (П6: сначала проверка схемы данных — битые данные не публикуются)
+node pipeline/validate_data.mjs >/dev/null || die "данные не прошли проверку схемы (out/logs/validate_data.txt)"
 bash web/build.sh >/dev/null
 [ -s web/dist/app.js ] && [ -s web/dist/index.html ] || die "сборка не дала web/dist/app.js и index.html"
 [ -z "$(git status --porcelain -- data/)" ] || die "data/*.json не совпадают с src/canvas.tsx (сборка их пересобрала) — сначала pipeline/commit.sh, затем git push"

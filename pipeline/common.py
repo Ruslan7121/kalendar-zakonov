@@ -54,5 +54,41 @@ def votes(src, day=None):
             if len(p) >= 4 and p[0].isdigit(): res.append((m.group(1), p[0], p[1], p[2], p[3]))
     return res
 
-def write_canvas(src):
-    open(CANVAS, 'w').write(src)
+def write_atomic(path, text):
+    """П6 (12.11.2026): запись через временный файл в том же каталоге + fsync + os.replace — при падении посреди записи
+    на диске остаётся либо старый, либо новый файл целиком, обрезков не бывает."""
+    import tempfile
+    d = os.path.dirname(os.path.abspath(path))
+    fd, tmp = tempfile.mkstemp(dir=d, prefix='.' + os.path.basename(path) + '.', suffix='.tmp')
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            f.write(text); f.flush(); os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        try: os.unlink(tmp)
+        except OSError: pass
+        raise
+
+def check_canvas(src):
+    """Проверка перед записью: все блоки /* NAME:start */ … /* NAME:end */ — корректный JSON, константы DATA/CAL на месте.
+    Ошибка → ValueError, файл не трогаем."""
+    for n in re.findall(r'/\* (\w+):start \*/', src):
+        try: get_block(src, n)
+        except Exception as e: raise ValueError(f'canvas: блок {n} не разбирается как JSON: {e}') from None
+    for need in ('const DATA', 'const CAL: any = '):
+        if need not in src: raise ValueError(f'canvas: нет «{need}» — запись отменена')
+    i = src.find('const CAL: any = '); e = src.find('\n', i)
+    try: json.loads(src[i + len('const CAL: any = '):e].rstrip().rstrip(';'))
+    except ValueError as x: raise ValueError(f'canvas: CAL не разбирается как JSON: {x}') from None
+
+def write_canvas(src, path=None):
+    """Проверить и атомарно записать canvas; прежняя версия — в out/cache/canvas.prev.tsx (откат: скопировать обратно)."""
+    path = path or CANVAS
+    check_canvas(src)
+    if os.path.exists(path):
+        old = open(path, encoding='utf-8').read()
+        if old == src: return False
+        os.makedirs(os.path.join(OUT, 'cache'), exist_ok=True)
+        write_atomic(os.path.join(OUT, 'cache', 'canvas.prev.tsx'), old)
+    write_atomic(path, src)
+    return True

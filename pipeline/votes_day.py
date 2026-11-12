@@ -299,7 +299,7 @@ def main():
     elif a.dry_run:
         print('canvas: --dry-run, изменения НЕ записаны (см. out/logs/votes_day_<день>.json)')
     else:
-        open(a.canvas, 'w').write(src)
+        C.write_canvas(src, a.canvas)   # П6: проверка блоков + атомарная запись
         print('canvas: записан', a.canvas)
     sys.exit(rc)
 
