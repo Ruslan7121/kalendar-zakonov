@@ -1,3 +1,4 @@
+# LEGACY: не запускать — см. pipeline/legacy/README.md (заменён pipeline/votes_day.py).
 import json,glob,re,datetime
 DEF={'ЕР':350,'КПРФ':37,'ЛДПР':24,'НЛ':20,'СРЗП':17,'Вне':2}
 F=['ЕР','КПРФ','ЛДПР','НЛ','СРЗП','Вне']

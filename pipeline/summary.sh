@@ -2,7 +2,7 @@
 # summary.sh — краткая сводка по логам парсинга
 # Запуск: ./summary.sh [день]
 
-ROOT="${GD_ROOT:-/workspace}"
+ROOT="${GD_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"   # git-клон kalendar-zakonov
 LOGS="$ROOT/out/logs"
 DAY="${1:-}"
 

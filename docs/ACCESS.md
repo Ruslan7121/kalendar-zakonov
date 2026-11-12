@@ -1,4 +1,6 @@
 # Доступ к сайтам (проверено 22.10.2026)
+> **Актуально с 12.11.2026:** канон данных — `src/canvas.tsx` в git-клоне, публикация — только GitHub Pages; страницу Cursor не трогать, Netlify не использовать. Пути `/workspace/out/canvas.tsx`, `/workspace/duma/bp_merge.py`, `make_code_only.py`, `make_edits.py`, `embed_calendar.py` и упоминания EditCanvas в заметках ниже — история; актуальные скрипты и пути — в [PIPELINE.md](PIPELINE.md). `fetch.sh` лежит в `pipeline/`, списки прокси — в `$GD_DUMA/lists/` (по умолчанию `/workspace/duma/lists/`).
+
 Скрипт: `./fetch.sh URL [OUTFILE]` (общий лимит времени FETCH_DEADLINE, по умолчанию 180 с).
 Списки прокси по доменам лежат в `lists/<домен>.txt`. Сработавший прокси переносится в начало списка.
 Если не отвечает ни один прокси из списка, скрипт берёт свежие RU-прокси (proxyscrape, proxifly), проверяет их на целевом URL, а в конце пробует Tor на 127.0.0.1:9050.

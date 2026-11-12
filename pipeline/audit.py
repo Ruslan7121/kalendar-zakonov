@@ -18,7 +18,7 @@ VOTE_DIRS = [
     os.path.join(C.DUMA, 'sep'),
     os.path.join(C.DUMA, 'chk'),
     os.path.join(C.DUMA),
-    '/workspace/out/votes',
+    os.path.join(C.OUT, 'votes'),
 ]
 DT = r'(\d\d\.\d\d\.\d{4}) \d\d\.\d\d\.\d\d(?: \d\d:\d\d)?'
 RD_MAP = {

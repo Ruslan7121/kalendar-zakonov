@@ -2,6 +2,14 @@
 
 ## 12.11.2026
 
+### Конвейер: один канон путей — git-клон и `src/canvas.tsx` (12.11.2026)
+- `common.py`: `GD_ROOT` по умолчанию — корень клона (каталог над `pipeline/`), а не `/workspace`; `CANVAS` = `$GD_ROOT/src/canvas.tsx` (можно переопределить переменной `CANVAS`); `GD_DUMA` (по умолчанию `/workspace/duma`) — только вспомогательный каталог (прокси, кэши). Раньше по умолчанию писался устаревший `/workspace/out/canvas.tsx`. **`votes_day.py` и остальные шаги теперь по умолчанию пишут в `src/canvas.tsx` клона.**
+- `strip_code_only.py`: читает канон, пишет `src/canvas.code-only.tsx` и синхронизирует `out/canvas.tsx`, `out/canvas.code-only.tsx` (без `import React`); на текущем коде результат побайтно совпадает с закоммиченными копиями. Вызывается в конце `run_daily.sh` и в `commit.sh`.
+- `calendar_update.py`: пути через `common.py` (`pipeline/fetch.sh`, `$GD_DUMA/cal_cache`, `$GD_DUMA/calendar_static.json`, `out/calendar.json`); перенесён фикс 10.11.2026 из копии в `/workspace/duma` (несколько пунктов повестки без номера не затирают друг друга).
+- Новый `cal_merge.py` (из `/workspace/duma`) — шаг CAL в `run_daily.sh` после `calendar_update.py`: объединение с текущей строкой `CAL`, ничего не теряется, компактная сериализация; на данных текущего `CAL` — без изменений. `embed_calendar.py` и `gen.py` перенесены в `pipeline/legacy/` (на текущем коде не работают, в прогон не входят).
+- `audit.py`, `bp_merge.py`, `summary.sh`: без жёстких `/workspace/...`. `commit.sh` добавляет и `out/canvas*.tsx`, сайт не публикует. `.gitignore`: логи, кэш и `TODO.md` прогона.
+- `docs/PIPELINE.md`, `BOT_PROMPT.md`, `README.md`: канон путей, порядок шагов (votes_day — шаг 1), публикация только через GitHub Pages; страницу Cursor не редактировать, Netlify не использовать. Данные (`DATA`, `CAL` и др.) и код сайта не менялись, gh-pages не пересобирался.
+
 ### Конвейер: голосования дня с vote.duma.gov.ru — первый шаг ежедневного прогона (12.11.2026)
 - Новый `pipeline/votes_day.py`: официальный список голосований `vote.duma.gov.ru/?from=ДД.ММ.ГГГГ&to=ДД.ММ.ГГГГ` (все страницы) и страница каждого голосования `/vote/<id>` → `days/ДД.ММ.ГГГГ.json` → строки `DATA` (номер, краткое название, чтение, итог, «за/против/возд./не голос.», разбивка по фракциям из поимённых результатов) и время в `VT`. Запись аддитивная и идемпотентная: существующие строки и прочие блоки (Суть, TRACK, ZTAG, постановления) не меняются; если страница не загрузилась — голосование в `gaps`, в `DATA` не попадает; недоступный список дня — выход 2 без изменений.
 - `run_daily.sh`: `votes_day.py "$DAY"` вызывается первым, до calendar/bills/vote_times.

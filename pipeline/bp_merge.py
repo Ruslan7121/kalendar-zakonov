@@ -3,10 +3,11 @@
 Схема в days/YYYY-MM-DD.json:
   "bp":   {"<номер законопроекта>": {"sut": [str], "who": str, "bs": [[было, стало], ...]}}
   "proc": {"<id голосования>": [суть, кого коснется]}   # процедурные голосования
-Запуск: python3 bp_merge.py [canvas.tsx] [days/*.json ...]  (по умолчанию все дни)."""
-import json, sys, glob
-cv = sys.argv[1] if len(sys.argv) > 1 else '/workspace/out/canvas.tsx'
-files = sys.argv[2:] or sorted(glob.glob('/workspace/out/days/*.json'))
+Запуск: python3 bp_merge.py [canvas.tsx] [days/*.json ...]  (по умолчанию $CANVAS = $GD_ROOT/src/canvas.tsx и все $GD_ROOT/out/days/*.json)."""
+import json, sys, glob, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import common as C
+cv = sys.argv[1] if len(sys.argv) > 1 else C.CANVAS
+files = sys.argv[2:] or sorted(glob.glob(os.path.join(C.OUT, 'days', '*.json')))
 L = open(cv).read().split('\n')
 def find(pre):
     for i, l in enumerate(L):

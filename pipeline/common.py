@@ -1,15 +1,24 @@
 """Общие функции конвейера: загрузка страниц, работа с блоками canvas.tsx."""
 import os, re, json, subprocess, html, datetime as dt
-ROOT = os.environ.get('GD_ROOT', '/workspace')
-DUMA = os.path.join(ROOT, 'duma'); OUT = os.path.join(ROOT, 'out')
-CANVAS = os.path.join(OUT, 'canvas.tsx')
-EXTR = os.path.join(OUT, 'extracts'); LOGS = os.path.join(OUT, 'logs')
+# Канон путей (одна точка для всех скриптов конвейера, см. docs/PIPELINE.md):
+#   GD_ROOT — git-клон github.com/Ruslan7121/kalendar-zakonov (по умолчанию — каталог над pipeline/);
+#   CANVAS  — исходник сайта $GD_ROOT/src/canvas.tsx (его собирает web/build.sh → gh-pages);
+#             out/canvas.tsx и *.code-only.tsx — производные копии, их пересобирает strip_code_only.py;
+#   GD_DUMA — внешний вспомогательный каталог вне клона (списки RU-прокси lists/, кэши sozd bills/, cal_cache/,
+#             calendar_static.json, days/*.json голосований); по умолчанию /workspace/duma.
+# Устаревший /workspace/out/canvas.tsx больше не используется по умолчанию.
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.environ.get('GD_ROOT') or os.path.dirname(HERE))
+DUMA = os.environ.get('GD_DUMA') or '/workspace/duma'
+OUT = os.path.join(ROOT, 'out')
+CANVAS = os.environ.get('CANVAS') or os.path.join(ROOT, 'src', 'canvas.tsx')
+EXTR = os.path.join(ROOT, 'extracts'); LOGS = os.path.join(OUT, 'logs')
 for d in (EXTR, LOGS): os.makedirs(d, exist_ok=True)
 
 def fetch(url, out, deadline=120):
-    """Скачать страницу через duma/fetch.sh (RU-прокси). True при успехе."""
+    """Скачать страницу через pipeline/fetch.sh (RU-прокси из $GD_DUMA/lists). True при успехе."""
     env = dict(os.environ, FETCH_DEADLINE=str(deadline))
-    here = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fetch.sh')
+    here = os.path.join(HERE, 'fetch.sh')
     fs = os.environ.get('GD_FETCH') or (here if os.path.exists(here) else os.path.join(DUMA, 'fetch.sh'))
     r = subprocess.run(['bash', fs, url, out], cwd=os.path.dirname(fs), env=env, capture_output=True, text=True)
     return r.returncode == 0 and os.path.exists(out) and os.path.getsize(out) > 2000

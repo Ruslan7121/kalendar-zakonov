@@ -78,11 +78,11 @@
 
 | Путь | Назначение |
 |---|---|
-| `src/canvas.tsx` | Весь код и данные интерфейса (React, экспорт по умолчанию `<CalendarApp />`) |
+| `src/canvas.tsx` | Весь код и данные интерфейса (React, экспорт по умолчанию `<CalendarApp />`) — единственный канон: его пишет конвейер и из него собирается сайт |
 | `src/canvas.code-only.tsx` | Тот же файл без больших блоков данных, для чтения кода |
 | `web/` | Сборка сайта: `main.tsx`, `index.html`, `grok-canvas.tsx` (компоненты оформления), `build.sh` |
 | `pipeline/` | Сбор данных с официальных сайтов (Python) |
-| `out/` | Рабочая копия интерфейса для конвейера и результаты сбора |
+| `out/` | `canvas.tsx` / `canvas.code-only.tsx` — производные копии `src/` (пересобирает `pipeline/strip_code_only.py`), тексты бота `days/`, документы органов `organs/`; логи и кэш прогона (`logs/`, `cache/`) в git не идут |
 | `extracts/` | Выжимки по законопроектам |
 | `tests/` | Тесты разбора источников органов |
 | `docs/` | Описание конвейера, доступа к источникам, журнал изменений |
@@ -107,7 +107,7 @@ npm run serve        # http://localhost:8000
 ## Сбор данных
 
 ```bash
-./pipeline/run_daily.sh                     # ежедневный прогон (шаг 1 — votes_day.py)
+./pipeline/run_daily.sh                     # ежедневный прогон (шаг 1 — votes_day.py); пишет в src/canvas.tsx этого клона
 python3 pipeline/votes_day.py 11.11.2026    # голосования дня с vote.duma.gov.ru → days/*.json → DATA (+ VT)
 python3 pipeline/votes_day.py 11.11.2026 --dry-run   # то же без записи canvas, отчёт в out/logs/votes_day_<день>.json
 python3 pipeline/bills.py --one 1322095-8   # один законопроект
@@ -115,6 +115,8 @@ python3 pipeline/track_fast.py              # «Путь закона»
 python3 pipeline/organs.py --embed          # документы органов
 ./pipeline/summary.sh                       # сводка по логам
 ```
+
+Конвейер работает только в git-клоне: `GD_ROOT` — корень клона (по умолчанию определяется сам), `CANVAS` — `src/canvas.tsx`. Вне клона нужен лишь вспомогательный каталог `GD_DUMA` (по умолчанию `/workspace/duma`) со списками RU-прокси и кэшами. Сайт публикуется только через GitHub Pages.
 
 Подробности в [docs/PIPELINE.md](docs/PIPELINE.md), доступ к сайтам описан в [docs/ACCESS.md](docs/ACCESS.md).
 

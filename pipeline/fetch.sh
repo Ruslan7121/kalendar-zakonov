@@ -1,6 +1,7 @@
 #!/bin/bash
 # fetch.sh URL [OUTFILE] — fetch public page from RU-geoblocked sites via per-domain RU proxy lists.
 # Total time limit: FETCH_DEADLINE seconds (default 180). Exit 1 on failure.
+# GD_DUMA — внешний вспомогательный каталог вне клона: lists/<домен>.txt — списки RU-прокси (см. docs/PIPELINE.md).
 D="${GD_DUMA:-/workspace/duma}"; URL="$1"; OUT="${2:-/dev/stdout}"; DEADLINE=$(( $(date +%s) + ${FETCH_DEADLINE:-180} ))
 UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
 host=$(echo "$URL" | sed -E 's#^[a-z]+://([^/:]+).*#\1#')

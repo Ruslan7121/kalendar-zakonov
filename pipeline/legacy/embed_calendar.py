@@ -1,3 +1,4 @@
+# LEGACY: не запускать — см. pipeline/legacy/README.md (заменён pipeline/cal_merge.py).
 import json, os
 c = json.load(open('/workspace/out/calendar.json'))
 cal = {'u': c['updated'], 'w': [[w['from'], w['to'], w['type']] for w in c['weeks']],

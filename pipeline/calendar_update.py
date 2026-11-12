@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
-"""Refresh /workspace/out/calendar.json (calendar of Duma plenary days + Government meetings).
+"""Refresh $GD_ROOT/out/calendar.json (calendar of Duma plenary days + Government meetings).
 Usage: python3 calendar_update.py [--days-back 4]
-Sources (via /workspace/duma/fetch.sh, RU proxies):
+Sources (via pipeline/fetch.sh, RU proxies from $GD_DUMA/lists):
  1. sozd.duma.gov.ru/calendar/b/day/D/D for today and previous N days -> bills with Совет Думы decision
     «включить законопроект в проект порядка работы Государственной Думы (DD.MM.YYYY)».
  2. sozd.duma.gov.ru/bill/<n> for each such bill -> title, plenary date (in parentheses), reading (from committee proposal).
  3. government.ru/meetings/ -> Government meetings (only announced/held ones; nothing is guessed).
- 4. /workspace/duma/calendar_static.json -> session schedule (week types) and manually confirmed facts with sources.
-Existing bill entries are kept if a fetch fails (no data is invented; unknown -> agenda_status 'not_published')."""
+ 4. $GD_DUMA/calendar_static.json -> session schedule (week types) and manually confirmed facts with sources.
+Existing bill entries are kept if a fetch fails (no data is invented; unknown -> agenda_status 'not_published').
+The canvas is not touched here: CAL is merged into $CANVAS by cal_merge.py (next step of run_daily.sh)."""
 import json, re, os, sys, html, subprocess, datetime as dt
 from concurrent.futures import ThreadPoolExecutor
-FETCH = '/workspace/duma/fetch.sh'; CACHE = '/workspace/duma/cal_cache'; OUT = '/workspace/out/calendar.json'
-STATIC = '/workspace/duma/calendar_static.json'
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import common as C
+FETCH = os.environ.get('GD_FETCH') or os.path.join(C.HERE, 'fetch.sh'); CACHE = os.path.join(C.DUMA, 'cal_cache')
+OUT = os.path.join(C.OUT, 'calendar.json'); STATIC = os.path.join(C.DUMA, 'calendar_static.json')
 os.makedirs(CACHE, exist_ok=True)
 CODES = [('административных правонарушениях', 'КоАП'), ('Налоговый кодекс', 'НК'), ('Гражданский кодекс', 'ГК'), ('Уголовный кодекс', 'УК'),
  ('Уголовно-процессуальный', 'УПК'), ('Бюджетный кодекс', 'БК'), ('Жилищный кодекс', 'ЖК'), ('Земельный кодекс', 'ЗК'), ('Трудовой кодекс', 'ТК'),
@@ -104,12 +106,14 @@ def main():
     with ThreadPoolExecutor(12) as ex: bills = [b for b in ex.map(bill, nums) if b]
     agenda = {}
     for d in old.get('days', []):  # keep previously known items
-        for it in d.get('agenda', []): agenda.setdefault(d['date'], {})[it['doc']] = it
+        for it in d.get('agenda', []): agenda.setdefault(d['date'], {})[it['doc'] if it['doc'] != '—' else '—' + it['title']] = it
     for b in bills:
         it = {k: b[k] for k in ('doc', 'short', 'title', 'reading', 'url')}; it['source'] = f"sozd.duma.gov.ru (решение Совета ГД {b['council_decision'] or ''})".replace(' )', ')')
         agenda.setdefault(b['date'], {})[b['doc']] = it
     for date, items in st.get('manual_agenda', {}).items():
-        for it in items: agenda.setdefault(date, {})[it['doc']] = {**agenda.get(date, {}).get(it['doc'], {}), **it}
+        for it in items:
+            k = it['doc'] if it['doc'] != '—' else '—' + it['title']  # несколько пунктов без номера (фикс 10.11.2026)
+            agenda.setdefault(date, {})[k] = {**agenda.get(date, {}).get(k, {}), **it}
     days = []
     for p in st['plenary_days']:
         a = list(agenda.get(p['date'], {}).values())

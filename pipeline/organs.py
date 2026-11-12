@@ -8,7 +8,7 @@
   python3 organs.py --snapshot sf_meetings=FILE --snapshot minfin_pravo=FILE   # текст публичной страницы,
                                           # сохраненный вручную, если сайт недоступен с этой машины
   python3 organs.py --offline DIR         # разбор сохраненных ответов (fixtures), без сети
-  python3 organs.py --embed               # записать события в блок ORG (и проверенные поля из out/organs/enrich.json в ORGX) страницы out/canvas.tsx
+  python3 organs.py --embed               # записать события в блок ORG (и проверенные поля из out/organs/enrich.json в ORGX) в $CANVAS (src/canvas.tsx)
 
 Результат (накопительно, без дублей по id=орган+ссылка):
   out/organs/events.json  — все события; out/organs/status.json — состояние каждого источника;
