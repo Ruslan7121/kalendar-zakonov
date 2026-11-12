@@ -68,9 +68,9 @@ jobs:
           npm run typecheck
           bash tests/run_all.sh
       - name: Коммит в main (pipeline/commit.sh)
-        run: ./pipeline/commit.sh "Ежедневный прогон ${{ steps.run.outputs.day }} (автоматически)"
+        run: bash pipeline/commit.sh "Ежедневный прогон ${{ steps.run.outputs.day }} (автоматически)"
       - name: Публикация (pipeline/publish.sh)
-        run: ./pipeline/publish.sh "Ежедневный прогон ${{ steps.run.outputs.day }}"
+        run: bash pipeline/publish.sh "Ежедневный прогон ${{ steps.run.outputs.day }}"
       - name: Сводка
         if: always()
         run: |
