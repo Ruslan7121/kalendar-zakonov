@@ -9,3 +9,6 @@ out/TODO.md
 out/calendar.json
 out/votes/
 extracts/bills_html/
+
+# временные файлы тестов
+tests/js/.tmp-*/

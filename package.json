@@ -4,7 +4,8 @@
   "description": "Календарь законов: заседания, голосования и акты органов власти по официальным источникам",
   "scripts": {
     "build": "bash web/build.sh",
-    "serve": "python3 -m http.server 8000 --directory web/dist"
+    "serve": "python3 -m http.server 8000 --directory web/dist",
+    "test": "bash tests/run_all.sh"
   },
   "dependencies": {
     "react": "19.3.1",
@@ -12,5 +13,8 @@
   },
   "devDependencies": {
     "esbuild": "0.28.2"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

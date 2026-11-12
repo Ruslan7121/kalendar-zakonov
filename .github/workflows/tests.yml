@@ -1,0 +1,39 @@
+# Тесты «Календаря законов» (12.11.2026, пункт 8): Python-тесты конвейера, инварианты сайта в Node
+# (каждый законопроект из DATA виден в календаре, формат ссылки «Поделиться») и правило 11 в headless Chrome.
+# Только проверка: CI ничего не публикует, не пушит в gh-pages и не запускает pipeline/publish.sh или commit.sh.
+name: tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TZ: Europe/Moscow
+      GD_REQUIRE_BROWSER: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: npm install (react, esbuild — версии закреплены в package.json)
+        run: npm install --no-audit --no-fund
+      - name: Chrome
+        run: |
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          test -n "$CHROME" && "$CHROME" --version
+          echo "CHROME=$CHROME" >> "$GITHUB_ENV"
+      - name: Тесты (bash tests/run_all.sh)
+        run: bash tests/run_all.sh

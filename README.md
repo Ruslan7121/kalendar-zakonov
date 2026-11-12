@@ -84,7 +84,8 @@
 | `pipeline/` | Сбор данных с официальных сайтов (Python) |
 | `out/` | `canvas.tsx` / `canvas.code-only.tsx` — производные копии `src/` (пересобирает `pipeline/strip_code_only.py`), тексты бота `days/`, документы органов `organs/`; логи и кэш прогона (`logs/`, `cache/`) в git не идут |
 | `extracts/` | Выжимки по законопроектам |
-| `tests/` | Тесты разбора источников органов |
+| `tests/` | Тесты без сети: конвейер (Python), инварианты сайта и ссылка «Поделиться» (`tests/js/`, Node), правило 11 в headless Chrome; все — `bash tests/run_all.sh` |
+| `.github/workflows/tests.yml` | CI: тесты на push/PR в `main`; ничего не публикует |
 | `docs/` | Описание конвейера, доступа к источникам, журнал изменений |
 | `BOT_PROMPT.md` | Как готовить тексты карточек после сбора данных |
 
@@ -94,12 +95,13 @@
 
 ## Сборка и публикация
 
-Нужен Node.js 18 или новее.
+Нужен Node.js 18 или новее (для тестов — 22 или новее).
 
 ```bash
 npm install
 npm run build        # web/dist/index.html + web/dist/app.js
 npm run serve        # http://localhost:8000
+npm test             # все тесты без сети (bash tests/run_all.sh); их же запускает CI на push/PR в main
 ```
 
 Публикация на GitHub Pages — одной командой из чистой и отправленной ветки `main`:

@@ -193,7 +193,8 @@ def collect(args):
 ENRICH = os.path.join(ODIR, 'enrich.json')
 def load_enrich():
     """Проверенные вручную по первоисточникам поля (st, kind, stt, no, full, sut, who, dl, nb, ps) по ключу «орган:ссылка#дата».
-    Файл ведется отдельно и сбором НЕ перезаписывается; события без записи показываются по данным ленты."""
+    Файл ведется отдельно и сбором НЕ перезаписывается; события без записи показываются по данным ленты.
+    Источник правды для ORGX — этот файл: правки «Сути» и т. п. вносятся сюда, затем organs.py --embed."""
     return json.load(open(ENRICH)) if os.path.exists(ENRICH) else {}
 
 def in_window(e, a, b, ahead):
@@ -230,7 +231,13 @@ def main(argv=None):
         src = C.read_canvas(); src = C.set_block(src, 'ORG', 'const ORG: any[]', [{k: v for k, v in e.items() if k != 'id'} for e in allv])
         if '/* ORGX:start */' in src:
             ids = {e['id'] for e in allv}; enr = load_enrich()
-            src = C.set_block(src, 'ORGX', 'const ORGX: Record<string, any>', {k: v for k, v in enr.items() if k in ids})
+            # 12.11.2026 (п. 8): проверенные поля, внесенные прямо в ORGX canvas, но не перенесенные в enrich.json,
+            # при --embed не теряются (раньше блок ORGX перестраивался только из enrich.json и молча стирал их).
+            old_x = C.get_block(src, 'ORGX'); keep = {k: v for k, v in old_x.items() if k in ids and k not in enr}
+            if keep:
+                msg = f"ORGX: {len(keep)} записей есть в canvas, но нет в {ENRICH} — оставлены; перенесите их в enrich.json: " + ', '.join(sorted(keep))
+                print('ВНИМАНИЕ: ' + msg, file=sys.stderr); C.log('organs.log', msg)
+            src = C.set_block(src, 'ORGX', 'const ORGX: Record<string, any>', {**{k: v for k, v in enr.items() if k in ids}, **keep})
         C.write_canvas(src)
         print('canvas: блоки ORG/ORGX обновлены')
     return allv, run
