@@ -40,7 +40,9 @@ die() { echo "publish.sh: $*" >&2; exit 1; }
 # PUBLISH_SRC_BRANCH — исходная ветка (по умолчанию main); другая — только для разовой выкладки по прямому решению владельца
 SRCB=${PUBLISH_SRC_BRANCH:-main}
 [ "$(git rev-parse --abbrev-ref HEAD)" = "$SRCB" ] || die "нужна ветка $SRCB"
-[ -z "$(git status --porcelain --untracked-files=no)" ] || die "в main есть незакоммиченные изменения — сначала commit.sh"
+DIRTY="$(git status --porcelain --untracked-files=no)"
+[ -z "$DIRTY" ] || die "в main есть незакоммиченные изменения — сначала commit.sh:
+$DIRTY"
 git fetch -q "$REMOTE" "$SRCB" "$BRANCH"
 SRC_SHA=$(git rev-parse HEAD); SRC_SHORT=$(git rev-parse --short HEAD)
 if [ $DRY -eq 0 ]; then
