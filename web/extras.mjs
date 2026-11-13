@@ -85,7 +85,7 @@ const page = ({ title, desc, url, body, depth }) => {
 <meta name="description" content="${esc(desc)}"><link rel="canonical" href="${esc(url)}"><link rel="icon" href="${up}favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="article"><meta property="og:site_name" content="Календарь законов"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${esc(url)}"><meta property="og:image" content="${SITE}og.png"><meta property="og:locale" content="ru_RU"><meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="application/rss+xml" title="Календарь законов: Госдума" href="${up}feed/gd.xml"><style>${CSS}</style></head>
-<body><main><nav><a href="${up}">← Календарь законов</a> · <a href="${up}bill/">Все законопроекты</a> · <a href="${up}feed/">Подписки</a></nav>${body}
+<body><main><nav><a href="${up}">← Календарь законов</a> · <a href="${up}bill/">Все законопроекты</a> · <a href="${up}day/">По дням</a> · <a href="${up}fractions/">Фракции</a> · <a href="${up}feed/">Подписки</a></nav>${body}
 <footer>Только официальные источники: sozd.duma.gov.ru, vote.duma.gov.ru, duma.gov.ru. Страница собрана автоматически из данных календаря.</footer></main></body></html>`;
 };
 const cut = (s, n) => (s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : s);
@@ -101,7 +101,7 @@ for (const b of ALL) b.tags.forEach((g, gi) => (g || []).forEach((v) => { const 
 // ---------- запись ----------
 const files = [];
 const put = (rel, s) => { const f = path.join(OUT, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, s); files.push(rel); };
-for (const d of ['bill', 'feed', 'ics']) fs.rmSync(path.join(OUT, d), { recursive: true, force: true });
+for (const d of ['bill', 'feed', 'ics', 'day', 'fractions']) fs.rmSync(path.join(OUT, d), { recursive: true, force: true });
 
 // страницы законопроектов
 const TRK = [['in', 'Внесен'], ['kom', 'Комитет'], ['r1', '1-е чтение'], ['r2', '2-е чтение'], ['r3', '3-е чтение'], ['sf', 'Совет Федерации'], ['pr', 'Подписан']];
@@ -153,7 +153,50 @@ const PST = { held: 'состоялось', confirmed: 'назначено', exp
 const plEv = CALP.filter((p) => p && p.d).map((p) => ({ uid: `gd-${ymd(p.d)}`, d: p.d, s: `Пленарное заседание Госдумы${p.s && p.s !== 'held' ? ` (${PST[p.s] || p.s})` : ''}`, x: [(p.a || []).length ? `Законопроектов в повестке: ${p.a.length}` : '', p.src ? `Источник: ${p.src}` : ''].filter(Boolean).join('\n'), u: `${SITE}?d=${p.d}` }));
 put('ics/plenary.ics', ics('Пленарные заседания Госдумы', plEv));
 
+// ---------- Ф3 (13.11.2026): страницы дней day/ГГГГ-ММ-ДД/ — что рассмотрела Госдума в этот день ----------
+const MONN = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
+const iso = (d) => d.split('.').reverse().join('-');
+const DAYB = {}; // день → [{b, v}] — последнее голосование дня по каждому законопроекту
+for (const b of ALL) { const by = {}; for (const v of b.votes) by[v.day] = v; for (const [d, v] of Object.entries(by)) (DAYB[d] = DAYB[d] || []).push({ b, v }); }
+const DAYS = Object.keys(DAYB).sort((a, b) => pd(b) - pd(a));
+const dayRow = ({ b, v }) => `<a class="row" href="../../bill/${b.no}/"><b>${esc(b.title)}</b><span class="meta"><span class="no">${esc(b.no)}</span>${v.read ? ` · ${esc(v.read)}` : ''} · за ${v.za}, против ${v.pr}</span></a>`;
+for (const d of DAYS) {
+  const L = DAYB[d]; const acc = L.filter((x) => x.v.ok); const rej = L.filter((x) => !x.v.ok);
+  const title = `Госдума ${hd(d)}: что приняли и что отклонили`;
+  const desc = `${hd(d)} Госдума голосовала по ${L.length} законопроектам: принято — ${acc.length}, отклонено — ${rej.length}.`;
+  const body = `<h1>${esc(hd(d))}: голосования Госдумы</h1><p class="meta">Законопроектов: ${L.length}. Принято — ${acc.length}, отклонено — ${rej.length}. <a href="${SITE}?d=${d}">Открыть день в календаре</a></p>
+${acc.length ? `<h2>Принято (${acc.length})</h2><div class="list">${acc.map(dayRow).join('')}</div>` : ''}
+${rej.length ? `<h2>Отклонено (${rej.length})</h2><div class="list">${rej.map(dayRow).join('')}</div>` : ''}
+<h2>Источник</h2><p><a href="http://vote.duma.gov.ru/?from=${d}&amp;to=${d}" rel="noopener">Голосования за ${esc(hd(d))} на vote.duma.gov.ru</a></p>`;
+  put(`day/${iso(d)}/index.html`, page({ title, desc, url: `${SITE}day/${iso(d)}/`, body, depth: 2 }));
+}
+put('day/index.html', page({ title: 'Голосования Госдумы по дням', desc: `Дни, за которые в календаре есть голосования по законопроектам: ${DAYS.length}.`, url: `${SITE}day/`, depth: 1,
+  body: `<h1>Голосования Госдумы по дням</h1><div class="list">${DAYS.map((d) => { const L = DAYB[d]; return `<a class="row" href="${iso(d)}/"><b>${esc(hd(d))}</b><span class="meta">законопроектов: ${L.length} · принято ${L.filter((x) => x.v.ok).length} · отклонено ${L.filter((x) => !x.v.ok).length}</span></a>`; }).join('')}</div>` }));
+
+// ---------- Ф5 (13.11.2026): fractions/ — как голосовали фракции по законопроектам, по месяцам ----------
+const FR = ['ЕР', 'КПРФ', 'ЛДПР', 'НЛ', 'СРЗП', 'Вне фракций'];
+const FV = []; // голосования по законопроектам с разбивкой по фракциям
+for (const day of Object.keys(DATA)) for (const ln of String(DATA[day]).split('\n')) {
+  const f = ln.split('|'); if (f.length < 7 || !/^\d+-\d+$/.test(f[1]) || !f[6]) continue;
+  const fr = f[6].split(';').map((x) => x.split(':')[0].split('/').map(Number)); if (fr.length < 5) continue;
+  FV.push({ id: f[0], day, no: f[1], ok: f[4] === '1', read: readW(f[3]), fr });
+}
+const pos = (q) => { const [za, pr, vz] = q; if (za + pr + vz === 0) return 'n'; return za > pr + vz ? 'y' : 'x'; };
+const frMonths = [...new Set(FV.map((v) => v.day.slice(3)))].sort((a, b) => (b.slice(3) + b.slice(0, 2)).localeCompare(a.slice(3) + a.slice(0, 2)));
+const PL = { y: 'за', x: 'против или воздержалась', n: 'не голосовала' };
+const frBody = frMonths.map((mk) => {
+  const L = FV.filter((v) => v.day.slice(3) === mk);
+  const rows = FR.map((n, i) => { const c = { y: 0, x: 0, n: 0 }; let za = 0, all = 0; for (const v of L) { const q = v.fr[i]; if (!q) continue; c[pos(q)]++; za += q[0]; all += q[0] + q[1] + q[2] + q[3]; } return `<tr><td>${esc(n)}</td><td>${c.y}</td><td>${c.x}</td><td>${c.n}</td><td>${all ? Math.round((za / all) * 100) : 0}%</td></tr>`; }).join('');
+  const split = L.filter((v) => { const p = v.fr.slice(0, 5).map(pos); return p.includes('y') && p.includes('x'); }).sort((a, b) => pd(b.day) - pd(a.day) || +b.id - +a.id);
+  const sp = split.slice(0, 40).map((v) => { const b = BILLS[v.no] ? billOf(v.no) : null; return `<a class="row" href="../bill/${v.no}/"><b>${esc(b ? b.title : v.no)}</b><span class="meta"><span class="no">${esc(v.no)}</span> · ${esc(hd(v.day))}${v.read ? ` · ${esc(v.read)}` : ''} · ${v.ok ? 'принят' : 'отклонен'}<br>${FR.slice(0, 5).map((n, i) => `${esc(n)}: ${PL[pos(v.fr[i])]}`).join('; ')}</span></a>`; }).join('');
+  return `<h2>${MONN[+mk.slice(0, 2) - 1]} ${mk.slice(3)}: голосований по законопроектам — ${L.length}</h2>
+<table><thead><tr><th>Фракция</th><th>Большинство «за»</th><th>Против или воздержались</th><th>Не голосовали</th><th>Доля голосов «за»</th></tr></thead><tbody>${rows}</tbody></table>
+${split.length ? `<p class="meta" style="margin-top:14px">Фракции разошлись в ${split.length} голосованиях${split.length > 40 ? ' (показаны последние 40)' : ''}:</p><div class="list">${sp}</div>` : '<p class="meta" style="margin-top:14px">Голосований, где фракции разошлись, нет.</p>'}`;
+}).join('');
+put('fractions/index.html', page({ title: 'Как голосуют фракции', desc: 'Голосования фракций Госдумы по законопроектам: как часто фракция голосовала «за» и где фракции разошлись.', url: `${SITE}fractions/`, depth: 1,
+  body: `<h1>Как голосуют фракции</h1><p class="meta">Считаются только голосования по законопроектам. Позиция фракции — «за», если «за» проголосовало больше её депутатов, чем «против» и «воздержались» вместе. «За» — как записано в итогах голосования на vote.duma.gov.ru: в голосованиях об отклонении законопроекта это «за отклонение».</p>${frBody}` }));
+
 // sitemap, robots
-put('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[SITE, `${SITE}bill/`, ...ALL.map((b) => `${SITE}bill/${b.no}/`)].map((u) => `<url><loc>${u}</loc></url>`).join('\n')}\n</urlset>\n`);
+put('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[SITE, `${SITE}bill/`, `${SITE}day/`, `${SITE}fractions/`, ...DAYS.map((d) => `${SITE}day/${iso(d)}/`), ...ALL.map((b) => `${SITE}bill/${b.no}/`)].map((u) => `<url><loc>${u}</loc></url>`).join('\n')}\n</urlset>\n`);
 put('robots.txt', `User-agent: *\nAllow: /\nSitemap: ${SITE}sitemap.xml\n`);
 console.log(`extras: ${ALL.length} страниц законопроектов, ${Object.keys(TAGS).length + 1} лент RSS, ${lawEv.length} законов и ${plEv.length} заседаний в .ics → ${path.relative(ROOT, OUT)}`);
