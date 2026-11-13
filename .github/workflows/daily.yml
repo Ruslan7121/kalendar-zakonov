@@ -29,6 +29,9 @@ jobs:
       TZ: Europe/Moscow
       GD_DUMA: ${{ github.workspace }}/../duma
       GD_REQUIRE_BROWSER: '1'
+      # путь закона: только свежие и «в пути», не дольше 30 минут — прогон успевает до коммита и публикации
+      TRACK_DAYS: '14'
+      TRACK_BUDGET_SEC: '1800'
     steps:
       - uses: actions/checkout@v4
         with:
