@@ -11,6 +11,9 @@ name: daily
 on:
   schedule:
     - cron: '17 18 * * 1-5'   # 18:17 UTC = 21:17 МСК, пн–пт
+    # Н2 (13.11.2026): повторы, если основной прогон упал или источник не ответил (22:47 и 23:47 МСК); после успешного — пропускаются
+    - cron: '47 19 * * 1-5'
+    - cron: '47 20 * * 1-5'
   workflow_dispatch:
     inputs:
       day:
@@ -18,11 +21,30 @@ on:
         required: false
 permissions:
   contents: write
+  issues: write
+  actions: read
 concurrency:
   group: daily-run
   cancel-in-progress: false
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.g.outputs.go }}
+    steps:
+      - id: g
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          GO=1
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "${{ github.event.schedule }}" != "17 18 * * 1-5" ]; then
+            N="$(gh run list -R "${{ github.repository }}" --workflow daily.yml --status success --created ">=$(date -u +%Y-%m-%dT18:00:00Z)" --json databaseId -q length || echo 0)"
+            [ "${N:-0}" -gt 0 ] && GO=0
+          fi
+          echo "go=$GO" >> "$GITHUB_OUTPUT"; echo "повтор нужен: $GO"
   run:
+    needs: gate
+    if: needs.gate.outputs.go == '1'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
@@ -33,14 +55,14 @@ jobs:
       TRACK_DAYS: '14'
       TRACK_BUDGET_SEC: '3600'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: main
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
       - name: Зависимости (pdftotext для пояснительных записок, npm)
@@ -49,7 +71,7 @@ jobs:
           npm install --no-audit --no-fund
           mkdir -p "$GD_DUMA/lists" "$GD_DUMA/bills" "$GD_DUMA/days"
       - name: Кэш конвейера (страницы sozd, списки прокси, days/)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ github.workspace }}/../duma
           key: duma-${{ github.run_id }}
@@ -64,6 +86,8 @@ jobs:
           DAY="${{ github.event.inputs.day }}"; [ -n "$DAY" ] || DAY="$(date +%d.%m.%Y)"
           echo "day=$DAY" >> "$GITHUB_OUTPUT"
           bash pipeline/run_daily.sh "$DAY" 2>&1 | tee daily.log
+          # Н2: источник не ответил — остальное всё равно собираем и публикуем, но прогон в конце помечается неуспешным (сработает повтор)
+          if grep -q "список голосований за .* не загружен" daily.log; then echo "src_fail=1" >> "$GITHUB_OUTPUT"; fi
       - name: Проверка схемы данных
         run: node pipeline/validate_data.mjs
       - name: Проверка типов и тесты
@@ -74,6 +98,21 @@ jobs:
         run: bash pipeline/commit.sh "Ежедневный прогон ${{ steps.run.outputs.day }} (автоматически)"
       - name: Публикация (pipeline/publish.sh)
         run: bash pipeline/publish.sh "Ежедневный прогон ${{ steps.run.outputs.day }}"
+      - name: Источник голосований не ответил
+        if: steps.run.outputs.src_fail == '1'
+        run: |
+          echo "vote.duma.gov.ru не отдал список голосований — прогон повторится по расписанию (22:47 и 23:47 МСК)"; exit 1
+      # Н1 (13.11.2026): о сбое прогона владелец узнаёт из обращения (issue) — GitHub присылает его на почту
+      - name: Сообщить о сбое
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          { echo "Ежедневный прогон за ${{ steps.run.outputs.day }} завершился с ошибкой: $URL"; echo; echo '```'; tail -n 40 daily.log 2>/dev/null || true; echo '```'; } > issue.md
+          N="$(gh issue list -R "${{ github.repository }}" --state open --search 'Сбой ежедневного прогона in:title' --json number -q '.[0].number' || true)"
+          if [ -n "$N" ]; then gh issue comment "$N" -R "${{ github.repository }}" --body-file issue.md
+          else gh issue create -R "${{ github.repository }}" --title "Сбой ежедневного прогона" --body-file issue.md; fi
       - name: Сводка
         if: always()
         run: |

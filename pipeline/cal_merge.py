@@ -8,9 +8,20 @@ import json,sys,os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import common as C
 P=sys.argv[1] if len(sys.argv)>1 else C.CANVAS
 CJ=os.path.join(C.OUT,'calendar.json')
-if not os.path.exists(CJ): print('cal_merge: нет', CJ, '— CAL не изменён', file=sys.stderr); sys.exit(1)
+ONLY='--status-only' in sys.argv
+if ONLY: P=C.CANVAS
 s=open(P).read(); pre='const CAL: any = '
 i=s.find(pre); e=s.find('\n',i); old=json.loads(s[i+len(pre):e].rstrip(';'))
+# Т6 (13.11.2026): день, за который в DATA уже есть голосования, — состоявшееся заседание (held), даже если календарь
+# duma.gov.ru не обновился. --status-only: только эта правка, без out/calendar.json (когда calendar_update.py не отработал).
+VD={v[0] for v in C.votes(s)}
+if ONLY:
+    ch=[p['d'] for p in old['p'] if p['d'] in VD and p.get('s')!='held']
+    if not ch: print('CAL: статусы без изменений'); sys.exit(0)
+    for p in old['p']:
+        if p['d'] in VD: p['s']='held'
+    C.write_canvas(s[:i]+pre+json.dumps(old,ensure_ascii=False,separators=(',',':'))+';'+s[e:], P); print('CAL: held —', ', '.join(ch)); sys.exit(0)
+if not os.path.exists(CJ): print('cal_merge: нет', CJ, '— CAL не изменён', file=sys.stderr); sys.exit(1)
 c=json.load(open(CJ))
 O={p['d']:p for p in old['p']}
 def key(d): return d[6:]+d[3:5]+d[:2]
@@ -29,6 +40,8 @@ for d in c['days']:
         ps[d['date']]={'d':d['date'],'s':d['status'],'t':d.get('time'),'src':d['source'],'a':na}
 for k,o in O.items():
     if k not in ps: ps[k]=o
+for k in ps:
+    if k in VD: ps[k]['s']='held'
 g={x[0]:x for x in old['g']}
 for x in c['gov_meetings']: g[x['date']]=[x['date'],x['title'],x['url']]
 cal={'u':c['updated'],'w':[[w['from'],w['to'],w['type']] for w in c['weeks']],

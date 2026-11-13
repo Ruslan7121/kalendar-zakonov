@@ -3276,6 +3276,8 @@ const SITE = 'https://ruslan7121.github.io/kalendar-zakonov';
 /* П13 (12.11.2026): адрес RSS-ленты метки — тот же slug, что в web/extras.mjs */
 const TRL: Record<string, string> = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'c', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya' };
 const tagSlug = (v: string) => v.toLowerCase().split('').map((c) => (c in TRL ? TRL[c] : /[a-z0-9]/.test(c) ? c : '-')).join('').replace(/-+/g, '-').replace(/^-|-$/g, '');
+/* Т2 (13.11.2026): когда данные сайта обновлялись в последний раз — время последнего коммита в data/, его подставляет web/build.sh */
+function updTxt(): string { try { const u = (window as any).__GD_UPD; if (!u) return ''; const d = new Date(u); if (isNaN(+d)) return ''; return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' }).format(d).replace(' в ', ', ') + ' по Москве'; } catch (e) { return ''; } }
 const SRCS: [string, string][] = [['vote.duma.gov.ru', 'http://vote.duma.gov.ru/'], ['sozd.duma.gov.ru', 'https://sozd.duma.gov.ru/'], ['duma.gov.ru', 'http://duma.gov.ru/'], ['council.gov.ru', 'http://council.gov.ru/'], ['government.ru', 'http://government.ru/'], ['kremlin.ru', 'http://kremlin.ru/'], ['publication.pravo.gov.ru', 'http://publication.pravo.gov.ru/'], ['cbr.ru', 'https://www.cbr.ru/'], ['minfin.gov.ru', 'https://minfin.gov.ru/'], ['mintrud.gov.ru', 'https://mintrud.gov.ru/'], ['minjust.gov.ru', 'https://minjust.gov.ru/']];
 
 const WDS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -4059,6 +4061,7 @@ function CalendarApp() {
       </>}
       </>}</div>
       <div style={{ height: 8 }} />
+      {updTxt() && <p data-upd="1" style={{ fontSize: 14, color: t.text.secondary, lineHeight: 1.5, margin: '0 0 6px' }}>Данные обновлены: {updTxt()}</p>}
       <p style={{ fontSize: 14, color: t.text.secondary, lineHeight: 1.5 }}>Источники: {SRCS.map(([s, u], i) => <span key={s}>{i ? ', ' : ''}<a href={u} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>{s}</a></span>)}</p>
       <p data-subs="1" style={{ fontSize: 14, color: t.text.secondary, lineHeight: 1.5, marginTop: -6 }}><a href={`${SITE}/bill/`} style={{ color: t.text.accent }}>Все законопроекты</a> · <a href={`${SITE}/feed/`} style={{ color: t.text.accent }}>Подписки: RSS и календарь .ics</a></p>
       {m && <div style={{ height: 64 }} />}

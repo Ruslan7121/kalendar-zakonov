@@ -27,6 +27,7 @@ if python3 calendar_update.py; then
   python3 cal_merge.py || echo "cal_merge: ошибка — CAL не изменён" >&2
 else
   echo "calendar_update: ошибка — CAL не изменён" >&2
+  python3 cal_merge.py --status-only || true
 fi
 echo "[проверка пропусков DATA/CAL по рабочим дням] до $DAY"
 # Только отчёт (out/logs/gaps_<дата>.txt): canvas не меняется, прогон не останавливается. Дни без DATA — votes_day.py ДЕНЬ,
