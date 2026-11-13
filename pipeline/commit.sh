@@ -20,7 +20,8 @@ python3 pipeline/strip_code_only.py
 node pipeline/split_data.mjs
 
 # что коммитить
-git add src/canvas.tsx src/canvas.code-only.tsx out/canvas.tsx out/canvas.code-only.tsx data/ out/days/ docs/ 2>/dev/null || true
+# 13.11.2026: out/organs/ (статусы и выжимки органов) и out/full/ тоже пишет run_daily.sh — без них publish.sh видел «незакоммиченные изменения»
+git add src/canvas.tsx src/canvas.code-only.tsx out/canvas.tsx out/canvas.code-only.tsx data/ out/days/ out/organs/ out/full/ docs/ 2>/dev/null || true
 git add -u extracts/ 2>/dev/null || true
 
 if git diff --cached --quiet; then
