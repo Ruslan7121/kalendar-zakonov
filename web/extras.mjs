@@ -85,7 +85,7 @@ const page = ({ title, desc, url, body, depth }) => {
 <meta name="description" content="${esc(desc)}"><link rel="canonical" href="${esc(url)}"><link rel="icon" href="${up}favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="article"><meta property="og:site_name" content="Календарь законов"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${esc(url)}"><meta property="og:image" content="${SITE}og.png"><meta property="og:locale" content="ru_RU"><meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="application/rss+xml" title="Календарь законов: Госдума" href="${up}feed/gd.xml"><style>${CSS}</style></head>
-<body><main><nav><a href="${up}">← Календарь законов</a> · <a href="${up}bill/">Все законопроекты</a> · <a href="${up}day/">По дням</a> · <a href="${up}fractions/">Фракции</a> · <a href="${up}feed/">Подписки</a></nav>${body}
+<body><main><nav><a href="${up}">← Календарь законов</a> · <a href="${up}bill/">Все законопроекты</a> · <a href="${up}feed/">Подписки</a></nav>${body}
 <footer>Только официальные источники: sozd.duma.gov.ru, vote.duma.gov.ru, duma.gov.ru. Страница собрана автоматически из данных календаря.</footer></main></body></html>`;
 };
 const cut = (s, n) => (s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : s);
