@@ -239,8 +239,25 @@ if __name__ == '__main__':
         refresh_set = set(ns) if ns else set(bill_meta)
         ns = sorted(refresh_set) if not sys.argv[1:] or sys.argv[1:] == ['--refresh'] else [x for x in sys.argv[1:] if x != '--refresh']
 
-    print(f'track: {len(ns)} bills', flush=True)
+    # 13.11.2026: ежедневный прогон (CI) — TRACK_DAYS=N: только законопроекты, голосовавшиеся за последние N дней, и «в пути»
+    # (есть r3/sf/sign/law, но нет force); у остальных TRACK уже есть. TRACK_BUDGET_SEC=S: после S секунд цикл
+    # останавливается, собранное записывается, остальное — в следующий прогон (прогон не упирается в лимит времени CI).
+    import time, datetime as _dt
+    days_lim = int(os.environ.get('TRACK_DAYS', '0') or 0)
+    if days_lim > 0 and not sys.argv[1:]:
+        today = _dt.date.today()
+        def _recent(d):
+            try: return (today - _dt.datetime.strptime(d, '%d.%m.%Y').date()).days <= days_lim
+            except ValueError: return False
+        moving = {n for n, v in T.items() if not v.get('force') and any(v.get(k) for k in ('r3', 'sf', 'sign', 'law'))}
+        ns = [n for n in ns if _recent(bill_meta.get(n, {}).get('day', '')) or n in moving or n not in T]
+    budget = float(os.environ.get('TRACK_BUDGET_SEC', '0') or 0); t0 = time.time()
+    print(f'track: {len(ns)} bills' + (f' (последние {days_lim} дн. и «в пути»)' if days_lim > 0 else '') + (f', бюджет {int(budget)} с' if budget else ''), flush=True)
     for i, n in enumerate(ns, 1):
+        if budget and time.time() - t0 > budget:
+            print(f'track: бюджет времени исчерпан на {i - 1} из {len(ns)} — остальные в следующий прогон', flush=True)
+            C.log('track_fail.log', f'бюджет {int(budget)} с исчерпан: обработано {i - 1} из {len(ns)}')
+            break
         meta = bill_meta.get(n, {})
         old = T.get(n, {})
         # если кэш без поздних дат, а старый TRACK их имел — попробовать refresh один раз
