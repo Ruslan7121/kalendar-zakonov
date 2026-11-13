@@ -273,6 +273,22 @@ if __name__ == '__main__':
             except ValueError: return False
         moving = {n for n, v in T.items() if not v.get('force') and any(v.get(k) for k in ('r3', 'sf', 'sign', 'law'))}
         ns = [n for n in ns if _recent(bill_meta.get(n, {}).get('day', '')) or n in moving or n not in T]
+    # 13.11.2026: первыми — законопроекты без инициатора/комитета (в INFO данных сайта и в INIC), чтобы раздел «Инициатор» заполнялся быстрее
+    def _has_ini():
+        have = set(C.get_block(src, 'INIC').keys()) if '/* INIC:start */' in src else set()
+        dd = os.path.join(C.ROOT, 'data')
+        try:
+            idx = json.load(open(os.path.join(dd, 'index.json')))
+            for f in ['core.json'] + list(idx.get('file', {}).values()):
+                if f == 'core.json' or f.startswith('months/'):
+                    for k, v in (json.load(open(os.path.join(dd, f))).get('INFO') or {}).items():
+                        if v.get('ini'): have.add(k)
+        except (OSError, ValueError):
+            pass
+        return have
+    _hi = _has_ini()
+    ns = [n for n in ns if n not in _hi] + [n for n in ns if n in _hi]
+    print(f'track: без инициатора — {sum(1 for n in ns if n not in _hi)}, они первыми', flush=True)
     budget = float(os.environ.get('TRACK_BUDGET_SEC', '0') or 0); t0 = time.time()
     print(f'track: {len(ns)} bills' + (f' (последние {days_lim} дн. и «в пути»)' if days_lim > 0 else '') + (f', бюджет {int(budget)} с' if budget else ''), flush=True)
     for i, n in enumerate(ns, 1):
