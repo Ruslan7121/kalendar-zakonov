@@ -12,6 +12,9 @@ npx esbuild web/main.tsx --bundle --minify --charset=utf8 --format=iife --jsx=au
   --alias:grok/canvas=./web/grok-canvas.tsx --define:process.env.NODE_ENV='"production"' \
   --outfile=web/dist/app.js --log-level=warning
 cp web/index.html web/dist/index.html
+# Т2 (13.11.2026): «Данные обновлены …» — время последнего коммита в data/ (в git), сайт показывает его внизу страницы
+UPD="$(git log -1 --format=%cI -- data/ 2>/dev/null || true)"
+sed -i "s#<script src=\"app.js\"></script>#<script>window.__GD_UPD=\"$UPD\"</script><script src=\"app.js\"></script>#" web/dist/index.html
 # статические файлы (П5): favicon, превью для ссылок, manifest; extras.txt — список для pipeline/publish.sh
 cp -r web/static/. web/dist/
 # П11, П13: страницы законопроектов bill/, RSS feed/, календари ics/, sitemap.xml — из data/*.json
