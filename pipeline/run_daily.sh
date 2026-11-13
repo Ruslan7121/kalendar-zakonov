@@ -56,6 +56,7 @@ python3 strip_code_only.py || echo "strip_code_only: ошибка" >&2
 echo "[данные сайта по месяцам: data/core.json, data/months/*.json, data/index.json]"
 # 12.11.2026 (п. 10): сайт берёт данные не из JS, а из data/*.json — после любых правок canvas их пересобирает split_data.mjs.
 node split_data.mjs || echo "split_data: ОШИБКА — data/*.json не обновлены, публиковать нельзя (docs/PIPELINE.md)" >&2
+python3 todo.py >/dev/null || true   # Т5: docs/STATUS.md — по уже пересобранным data/
 node validate_data.mjs || echo "validate_data: ОШИБКА — данные не прошли проверку схемы, публиковать нельзя (out/logs/validate_data.txt)" >&2
 echo ""
 echo "=== Сводка ==="

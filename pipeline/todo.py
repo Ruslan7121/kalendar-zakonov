@@ -35,5 +35,51 @@ L += ['', '## Вступают в силу — автодобавленные з
 L += ['', '## Ошибки загрузки', '']
 for f in sorted(glob.glob(os.path.join(C.LOGS, '*.log'))):
     ls = open(f).read().strip().splitlines(); L.append(f'- {os.path.basename(f)}: {len(ls)} строк')
+# Т1 (13.11.2026): законы «Вступают в силу» без ссылки на официальный источник — проверить по kremlin.ru / publication.pravo.gov.ru
+OFF = ('duma.gov.ru', 'council.gov.ru', 'government.ru', 'kremlin.ru', 'pravo.gov.ru', 'cbr.ru', 'gov.ru')
+host = lambda u: re.sub(r'^https?://', '', u or '').split('/')[0]
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# ссылки законов и карточки органов — как на сайте: из data/ (split_data.mjs добавляет к LAWS официальные ссылки, ORG собирает по месяцам)
+try: LWD = json.load(open(os.path.join(ROOT, 'data', 'core.json'))).get('LAWS') or LW
+except Exception: LWD = LW
+ORGD = []
+for fp in glob.glob(os.path.join(ROOT, 'data', 'months', '*.json')):
+    try: ORGD += json.load(open(fp)).get('ORG') or []
+    except Exception: pass
+nosrc = [f"- [ ] {x['d']} {x.get('law') or x.get('title')}: нет ссылки на официальный источник (сейчас: {', '.join(host(l.get('u')) for l in x.get('src', [])) or 'нет ссылок'})"
+         for mk in LWD['months'].values() for x in mk if not any(host(l.get('u')).endswith(OFF) for l in x.get('src', []))]
+L += ['', '## Вступают в силу — нет официальной ссылки', ''] + (nosrc or ['нет'])
+# Т3 (13.11.2026): проверка полноты — у Совета Федерации число карточек заседания против «Сенаторы рассмотрели N вопросов»
+part = []
+try:
+    i = src.index('const SFM'); i = src.index('= ', i) + 2; SFM = json.loads(src[i:src.index('\n', i)].rstrip().rstrip(';'))
+    ORG = ORGD
+    for d, m in SFM.items():
+        mm = re.search(r'(\d+)\s+вопрос', m.get('lead', '')); have = sum(1 for o in ORG if o.get('o') == 'sf' and o.get('d') == d)
+        if mm and int(mm.group(1)) > have: part.append(f"- [ ] {d} Совет Федерации: собрано {have} из {mm.group(1)} вопросов заседания ({m.get('u', '')})")
+except Exception as e: part.append(f'- проверка полноты СФ не выполнена: {e}')
+L += ['', '## Полнота сбора', ''] + (part or ['расхождений нет'])
 open(os.path.join(C.OUT, 'TODO.md'), 'w').write('\n'.join(L) + '\n')
+# Т5 (13.11.2026): docs/STATUS.md — сводка «что не заполнено» (в git, обновляется при каждом прогоне)
+bills = {}
+for d, vid, doc, q, rd in C.votes(src):
+    if re.match(r'^\d+-\d+$', doc): bills.setdefault(d[3:], set()).add(doc)
+def infos():
+    out = {}
+    for fpath in glob.glob(os.path.join(ROOT, 'data', 'core.json')) + glob.glob(os.path.join(ROOT, 'data', 'months', '*.json')):
+        try: J = json.load(open(fpath))
+        except Exception: continue
+        for k in ('INFO', 'BP'):
+            for b, v in (J.get(k) or {}).items(): out.setdefault(b, {}).update({kk: vv for kk, vv in v.items() if vv})
+    return out
+INFO = infos()
+S = ['# Что не заполнено', '', 'Файл пишет `pipeline/todo.py` при каждом прогоне. Подробный список задач — в `out/TODO.md` (в git не хранится).', '',
+     '| Месяц | Законопроектов с голосованиями | Без «Сути» | Без «Кого коснётся» | Без инициатора | Без комитета |', '|---|---|---|---|---|---|']
+for mk in sorted(bills, key=lambda x: (x[3:], x[:2]), reverse=True):
+    b = bills[mk]; cnt = lambda k: sum(1 for x in b if not INFO.get(x, {}).get(k))
+    S.append(f"| {mk} | {len(b)} | {cnt('sut')} | {cnt('who')} | {cnt('ini')} | {cnt('com')} |")
+S += ['', f'- Законы «Вступают в силу» без официальной ссылки: {len(nosrc)}', f'- Автодобавленные законы без текста: {len(auto)}', f'- Расхождения полноты сбора: {len([p for p in part if p.startswith("- [ ]")])}', '']
+if part: S += ['## Полнота сбора', ''] + part + ['']
+if nosrc: S += ['## Нет официальной ссылки', ''] + nosrc + ['']
+open(os.path.join(ROOT, 'docs', 'STATUS.md'), 'w').write('\n'.join(S))
 print('TODO:', len(miss_s), 'sut,', len(miss_b), 'bs,', len(auto), 'законов')
