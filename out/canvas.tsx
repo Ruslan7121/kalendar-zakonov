@@ -2338,6 +2338,11 @@ const FFULL: Record<string, string> = { 'ЕР': '«Единая Россия»',
 /* «Суть» / «Кого коснётся» законопроекта из уже имеющихся текстов PLAIN по другим голосованиям того же законопроекта (ничего не дописывается). */
 let PLB: Record<string, { sut?: string[]; who?: string }> | null = null;
 function plainBill(b: string): { sut?: string[]; who?: string } { if (!PLB) { PLB = {}; for (const d of Object.keys(DATA)) for (const l of (DATA[d] || '').split('\n')) { const p = l.split('|'); const q = PLAIN[p[0]]; const bn = p[1] ? billNo(p[1]) : null; if (!q || !bn || /^Таблица поправок/.test(SHORT[p[0]] || '')) continue; const o = (PLB[bn] = PLB[bn] || {}); if (!o.sut && q.sut && q.sut.length) o.sut = q.sut; if (!o.who && q.who) o.who = q.who; } } return PLB[b] || {}; }
+/* 13.11.2026: голосование об отклонении законопроекта — пометка «к отклонению» (vote.duma.gov.ru) или итог «отклонен» при «за» не меньше
+   нужного числа голосов: тогда «за» — это «за отклонение», и карточка так и подписывает голоса */
+function rejMot(v: Vote): boolean { if (/^к отклонению/.test(v.reading || '')) return true; const need = /федеральн\S* конституционн/i.test(v.full || '') ? 300 : 226; return !v.ok && (v.total[0] || 0) >= need; }
+const REJ_CATS = ['За отклонение', 'Против отклонения', 'Воздержались', 'Не голосовали'];
+const REJ_CATS_S = ['За откл.', 'Против', 'Воздер.', 'Не голос.'];
 function cardText(v: Vote, day: string) {
   const b = billNo(v.doc);
   const pl = PLAIN[v.id] || {}; const bpx = BP[b || ''] || {}; const inf = INFO[b || ''] || {}; const pr = PROC[v.id];
@@ -2359,6 +2364,14 @@ function cardText(v: Vote, day: string) {
     else if (r === '3-е' || (b && /^О ратификации/.test(title))) next = ['Закон направляется в Совет Федерации.'];
     else if (/^1(4664|4596|4329|4577|4590)-9$/.test(b || '')) next = ['Президент подписал указ о назначении — об этом сообщил сайт Государственной Думы.'];
     else if ((!b || /-9$/.test(b)) && (r === '—' || r === 'процедура')) next = ['Постановление Государственной Думы вступает в силу со дня принятия.'];
+  } else if (rejMot(v)) {
+    const need = /федеральн\S* конституционн/i.test(title) ? 300 : 226;
+    const g2: Record<string, string[]> = { za: [], pr: [], ng: [] };
+    for (const k of ['ЕР', 'КПРФ', 'ЛДПР', 'НЛ', 'СРЗП']) { const f = (v.fr as any)?.[k]; if (!f || !f.size) continue; const [z, p, , n] = f.v; if (z > f.size / 2) g2.za.push(FFULL[k]); else if (p > f.size / 2) g2.pr.push(FFULL[k]); else if (n >= f.size / 2) g2.ng.push(FFULL[k]); }
+    const jn = (a: string[]) => a.length > 1 ? a.slice(0, -1).join(', ') + ' и ' + a[a.length - 1] : a[0];
+    const rw = /2/.test(v.reading || '') ? ' во втором чтении' : /1/.test(v.reading || '') ? ' в первом чтении' : '';
+    next = [`Госдума проголосовала за отклонение законопроекта${rw}: «за отклонение» — ${v.total[0]}, «против» — ${v.total[1]} (нужно не менее ${need}). Работа над законопроектом прекращается.`,
+      [g2.za.length ? `За отклонение — ${g2.za.length > 1 ? 'фракции' : 'фракция'} ${jn(g2.za)}` : '', g2.pr.length ? `против отклонения — ${jn(g2.pr)}` : '', g2.ng.length ? `не голосовали — ${jn(g2.ng)}` : ''].filter(Boolean).join('; ') + '.'].filter((x) => x && x !== '.');
   } else {
     const need = /федеральн\S* конституционн/i.test(title) ? 300 : 226;
     const gs: Record<string, string[]> = { za: [], pr: [], ng: [] };
@@ -2378,7 +2391,7 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
   const COLS4 = ['#34C759', '#FF3B30', '#FF9F0A', '#9A9AA1'];
   const pl = PLAIN[v.id] || {};
   const inf = INFO[billNo(v.doc) || ''] || {};
-  const title = fullT(billNo(v.doc), pl.title, inf.t, v.full);
+  const title = fullT(billNo(v.doc), pl.title, inf.t, v.full); const rjm = rejMot(v);
   const rw = readWord(v.reading);
   const bn = billNo(v.doc);
   const dt = new Date(+day.slice(6, 10), +day.slice(3, 5) - 1, +day.slice(0, 2));
@@ -2440,11 +2453,11 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
     const SC = SYS_L;
     const bx0 = L, bx1 = RFULL, by0 = y - 10; rr(x1, bx0, by0, bx1, by0 + (v.fr ? 760 : 380), 28, 'rgb(246,247,249)');
     let yy0 = by0 + 30; tx(x1, 'ИТОГИ И ПО ФРАКЦИЯМ', bx0 + 34, yy0, 26, 800, BL); yy0 += 50;
-    { let lx = bx0 + 34; CATS_S.forEach((n, i) => { x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 10, yy0 + 15, 10, 0, Math.PI * 2); x1.fill(); const w = tx(x1, n, lx + 28, yy0, 28, 400, MU); lx += 28 + w + 34; }); }
+    { let lx = bx0 + 34; (rjm ? REJ_CATS_S : CATS_S).forEach((n, i) => { x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 10, yy0 + 15, 10, 0, Math.PI * 2); x1.fill(); const w = tx(x1, n, lx + 28, yy0, 28, 400, MU); lx += 28 + w + 34; }); }
     yy0 += 60;
-    { const cx = bx0 + 34 + 130, cy = yy0 + 130; donut(x1, cx, cy, 130, 38, v.total); ct(x1, String(v.total[0]), cx, cy - 52, 68, 800, TXC); ct(x1, 'за', cx, cy + 24, 38, 700, MU);
+    { const cx = bx0 + 34 + 130, cy = yy0 + 130; donut(x1, cx, cy, 130, 38, v.total); ct(x1, String(v.total[0]), cx, cy - 52, 68, 800, TXC); ct(x1, rjm ? 'за откл.' : 'за', cx, cy + 24, 38, 700, MU);
       const lx = bx0 + 360, rx = bx1 - 40;
-      CATS_S.forEach((n, i) => { const yy = yy0 + 22 + i * 62; x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 11, yy + 21, 11, 0, Math.PI * 2); x1.fill(); tx(x1, n, lx + 40, yy, 36, 400, MU); const s = String(v.total[i]); fnt(x1, 40, 800); tx(x1, s, rx - x1.measureText(s).width, yy - 2, 40, 800, COLS4[i]); }); }
+      (rjm ? REJ_CATS_S : CATS_S).forEach((n, i) => { const yy = yy0 + 22 + i * 62; x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 11, yy + 21, 11, 0, Math.PI * 2); x1.fill(); tx(x1, n, lx + 40, yy, 36, 400, MU); const s = String(v.total[i]); fnt(x1, 40, 800); tx(x1, s, rx - x1.measureText(s).width, yy - 2, 40, 800, COLS4[i]); }); }
     yy0 += 290;
     if (v.fr) {
       x1.fillStyle = GRB; x1.fillRect(bx0 + 34, yy0, bx1 - bx0 - 68, 2); yy0 += 30;
@@ -2458,9 +2471,9 @@ function drawCards(v: Vote, day: string): HTMLCanvasElement[] {
     }
     y = by0 + (v.fr ? 760 : 380) + 40;
   } else {
-  { const cx = L + 130, cy = y + 130; donut(x1, cx, cy, 125, 40, v.total); ct(x1, String(v.total[0]), cx, cy - 46, 66, 800, TXC); ct(x1, 'за', cx, cy + 30, 26, 400, MU);
+  { const cx = L + 130, cy = y + 130; donut(x1, cx, cy, 125, 40, v.total); ct(x1, String(v.total[0]), cx, cy - 46, 66, 800, TXC); ct(x1, rjm ? 'за откл.' : 'за', cx, cy + 30, 26, 400, MU);
     const lx = L + 320, rx = RFULL - 20;
-    CATS.forEach((n, i) => { const yy = y + 20 + i * 62; x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 11, yy + 23, 11, 0, Math.PI * 2); x1.fill(); tx(x1, n, lx + 40, yy, 34, 400, TXC); const s = String(v.total[i]); fnt(x1, 38, 800); tx(x1, s, rx - x1.measureText(s).width, yy - 2, 38, 800, COLS4[i]); }); }
+    (rjm ? REJ_CATS : CATS).forEach((n, i) => { const yy = y + 20 + i * 62; x1.fillStyle = COLS4[i]; x1.beginPath(); x1.arc(lx + 11, yy + 23, 11, 0, Math.PI * 2); x1.fill(); tx(x1, n, lx + 40, yy, 34, 400, TXC); const s = String(v.total[i]); fnt(x1, 38, 800); tx(x1, s, rx - x1.measureText(s).width, yy - 2, 38, 800, COLS4[i]); }); }
   y += 290;
   if (v.fr) {
     x1.fillStyle = GRB; x1.fillRect(L, y - 1, RLOW - L, 2); y += 24;
@@ -2593,7 +2606,7 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
   ];
   const [shw, setShw] = useState(false);
   const sut0 = (ctx.sut || []).map(yo) as string[]; const sen = (sut0[0] || '').split(/(?<=[.!?])\s+(?=[А-ЯA-Z«"(0-9])/); const sutS = sen.length > 2 || sut0.length > 1 ? [sen.slice(0, 2).join(' ') + (sen.length > 2 ? ' …' : '')] : sut0; const cut = sutS !== sut0;
-  const nw = true; const CATn = CATS;
+  const nw = true; const rjm = rejMot(v); const CATn = rjm ? REJ_CATS : CATS;
   const okC = v.ok ? ['rgba(52,199,89,0.16)', INK[0]] : ['rgba(255,59,48,0.13)', INK[1]];
   const box = { background: t.bg.base, border: `1px solid ${t.border.subtle}`, borderRadius: 12, padding: m ? '10px 10px' : '12px 14px', minWidth: 0 } as const;
   const h = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: (DK ? '#409CFF' : 'rgb(10,100,214)'), marginBottom: 4 } as const;
@@ -2622,7 +2635,7 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
             <span style={{ flex: 1, color: t.text.secondary }}>{n}</span>
             <b style={{ fontVariantNumeric: 'tabular-nums', color: SYS[i] }}>{v.total[i]}</b>
           </div>))}</div>
-        <div style={{ width: m ? 76 : 112, flexShrink: 0 }}><Donut v={v.total} size={m ? 76 : 112} center={String(tot)} sub="за" nw={nw} /></div>
+        <div style={{ width: m ? 76 : 112, flexShrink: 0 }}><Donut v={v.total} size={m ? 76 : 112} center={String(tot)} sub={rjm ? 'за откл.' : 'за'} nw={nw} /></div>
       </div></div>
       {v.fr ? (
         <div style={box}>
