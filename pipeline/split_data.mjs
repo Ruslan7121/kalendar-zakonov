@@ -71,6 +71,7 @@ function transform(src) {
   decl('BUDGET'); decl('DEP_RAW'); decl('DEP8');
   drop(/^const INFO_RAW\b/, 'const INFO_RAW'); decl('PLAIN'); decl('BP'); drop(/^const BP1112\b/, 'const BP1112'); drop(/^Object\.keys\(BP1112\)\.forEach/, 'BP1112 → BP');
   decl('PROC'); decl('INFO');
+  drop(/^\/\* INIC:start \*\/const INIC\b/, 'const INIC'); drop(/^Object\.keys\(INIC\)\.forEach/, 'INIC → INFO');   // 13.11.2026: инициатор/комитет с sozd уже влиты в INFO
   decl('LAWS'); drop(/^const LAWS_FIX\b/, 'const LAWS_FIX'); drop(/^for \(const k in LAWS_FIX\)/, 'LAWS_FIX → LAWS');
   decl('CAL'); decl('RES_T'); drop(/^\(\(\) => \{ const byD: Record<string, any> = Object\.fromEntries\(CAL\.p\.map/, 'объединение CAL.p ∪ DATA');
   decl('GOVA'); decl('ORG'); drop(/^\/\* ORGX:start \*\/const ORGX\b/, 'const ORGX'); drop(/^ORG\.forEach\(\(x: any\) => \{ const e = ORGX\[/, 'ORGX → ORG');
