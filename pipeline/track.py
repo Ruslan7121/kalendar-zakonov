@@ -48,6 +48,25 @@ def force_date(n_law, pub, sign=''):
     return '', url
 
 
+# 13.11.2026: паспорт законопроекта на sozd — инициатор и ответственный комитет (для карточки «Инициатор» / «Ответственный комитет»,
+# где их нет в INFO). Разбор только по подписям полей страницы; не нашлось — поле пустое, ничего не додумываем.
+PASS = {}
+_STOP = r'(?=\s*(?:Форма законопроекта|Профильный комитет|Ответственный комитет|Комитет-соисполнитель|Комитеты-соисполнители|Отрасль законодательства|Тематический блок|Тематика|Пакет документов|Вид законопроекта|Отзывы|По событиям|Субъект|$))'
+INI_RE = re.compile(r'Субъекты? (?:права )?законодательной инициативы\s*:?\s*(.{3,600}?)' + _STOP)
+COM_RE = re.compile(r'(?:Ответственный|Профильный) комитет\s*:?\s*(Комитет .{5,220}?)' + _STOP)
+
+
+def passport(t):
+    p = {}
+    m = INI_RE.search(t)
+    if m and '<' not in m.group(1):
+        p['ini'] = m.group(1).strip(' ,;:')
+    m = COM_RE.search(t)
+    if m:
+        p['com'] = m.group(1).strip(' ,;:.')
+    return p
+
+
 def load_sozd(n, refresh=False, day=''):
     """HTML sozd из единого кэша sozd_cache ($GD_DUMA/bills/, общий с bills.py): моложе TTL — без сети,
     старше — перезапрос; при 504 — последняя хорошая страница. TRACK_QUICK=1 — только кэш, без сети."""
@@ -60,6 +79,9 @@ def load_sozd(n, refresh=False, day=''):
     if st == 'stale' and not quick:
         C.log('track_fail.log', f'{n}: sozd fetch fail, using cache')
     t = re.sub(r'\s+', ' ', C.text(raw))
+    pp = passport(t[:t.find('По событиям')] if 'По событиям' in t else t)
+    if pp:
+        PASS[n] = pp
     if 'По событиям' in t:
         t = t[t.find('По событиям'):]
     return t
@@ -280,5 +302,12 @@ if __name__ == '__main__':
             src = add_law(src, n, T[n], titles.get(n, ''))
         if i % 25 == 0 or n in ('1071863-8', '1081963-8', '443614-8'):
             print(i, n, {k: T[n][k] for k in STAGES if k in T[n]}, flush=True)
-    C.write_canvas(C.set_block(src, 'TRACK', 'const TRACK: Record<string, Record<string, string>>', T))
+    src = C.set_block(src, 'TRACK', 'const TRACK: Record<string, Record<string, string>>', T)
+    if '/* INIC:start */' in src:
+        IN = C.get_block(src, 'INIC')
+        for n, p in PASS.items():
+            IN[n] = {**IN.get(n, {}), **p}
+        src = C.set_block(src, 'INIC', 'const INIC: Record<string, { ini?: string; com?: string }>', IN)
+        print(f'инициатор/комитет с sozd: {len(PASS)} законопроектов, всего {len(IN)}', flush=True)
+    C.write_canvas(src)
     print('TRACK written', len(T), flush=True)
