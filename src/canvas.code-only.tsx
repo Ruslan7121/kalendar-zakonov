@@ -2988,35 +2988,53 @@ function newsItems(d: string): NItem[] {
 }
 function NewsFeed({ m, months, more, focus }: { m: boolean; months: string[]; more: null | (() => void); focus?: string }) {
   const t = useGrokTheme(); useGDV(); const dk = t.kind === 'dark';
-  const fd0 = useRef(false); useEffect(() => { if (fd0.current || !focus) return; const el = document.querySelector(`[data-newsday="${focus}"]`) as HTMLElement | null; if (!el) return; fd0.current = true; const go = () => { const e2 = document.querySelector(`[data-newsday="${focus}"]`) as HTMLElement | null; if (!e2) return; const top = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gd-top')) || 0) * GZ; window.scrollTo({ top: window.scrollY + e2.getBoundingClientRect().top - top - 8 }); }; go(); setTimeout(go, 400); setTimeout(go, 1200); });
+  /* 12.11.2026: день выбирается переключателем «‹ 11 ноября ›» (как месяц во «Вступают в силу»); показаны новости одного дня.
+     Дальше самого раннего загруженного дня стрелка «‹» подгружает предыдущий месяц и переходит на его последний день. */
+  const [sel, setSel] = useState<string | null>(focus && /^\d\d\.\d\d\.\d{4}$/.test(focus) ? focus : null);
+  const [wantOlder, setWantOlder] = useState<string | null>(null);
   const [src, setSrc] = useState<string>('all');
   const col = (o: string) => (o === 'gd' ? t.text.accent : o === 'gov' ? (dk ? '#3CCB9C' : '#009E73') : orgCol(o, dk));
   const name = (o: string) => (NSRC.find((x) => x[0] === o) || [o, ORGN[o] || o])[1];
   const keys = new Set<string>([...Object.keys(FULL), ...Object.keys(SUM), ...Object.keys(SFN), ...ORGNEWS.map((x: any) => x.d)]);
-  const days = [...keys].filter((d) => /^\d\d\.\d\d\.\d{4}$/.test(d) && months.includes(d.slice(3))).sort((a, b) => +pd(b) - +pd(a));
-  const all = days.map((d) => [d, newsItems(d)] as [string, NItem[]]).filter(([, a]) => a.length > 0);
-  const cnt: Record<string, number> = {}; all.forEach(([, a]) => a.forEach((x) => { cnt[x.o] = (cnt[x.o] || 0) + 1; }));
-  const total = Object.values(cnt).reduce((a, b) => a + b, 0);
-  const shown = all.map(([d, a]) => [d, src === 'all' ? a : a.filter((x) => x.o === src)] as [string, NItem[]]).filter(([, a]) => a.length > 0);
+  const days = [...keys].filter((d) => /^\d\d\.\d\d\.\d{4}$/.test(d) && months.includes(d.slice(3)) && newsItems(d).length > 0).sort((a, b) => +pd(b) - +pd(a));
+  useEffect(() => { if (!wantOlder) return; const o = days.find((d) => pd(d) < pd(wantOlder)); if (o) { setSel(o); setWantOlder(null); } else if (!more) setWantOlder(null); });
+  const cur = sel && days.includes(sel) ? sel : days[0] || null;
+  const ix = cur ? days.indexOf(cur) : -1;
+  const older = ix >= 0 && ix < days.length - 1 ? days[ix + 1] : null; const newer = ix > 0 ? days[ix - 1] : null;
+  const goOlder = () => { if (older) setSel(older); else if (more && cur) { setWantOlder(cur); more(); } };
+  const items = cur ? newsItems(cur) : [];
+  const cnt: Record<string, number> = {}; items.forEach((x) => { cnt[x.o] = (cnt[x.o] || 0) + 1; });
+  const shown = src === 'all' ? items : items.filter((x) => x.o === src);
   const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return 'источник'; } };
-  const chip = (k: string, l: string, n: number) => { const on = src === k; return <button key={k} data-nsrc={k} aria-pressed={on} onClick={(e: any) => { setSrc(k); try { e.currentTarget.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); } catch (x) {} }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, minHeight: 34, padding: '0 12px', borderRadius: 9999, border: `1px solid ${on ? t.text.accent : t.border.default}`, background: on ? t.fill.accentSubtle : t.bg.base, color: on ? t.text.accent : t.text.primary, fontFamily: t.font.family, fontSize: 14, fontWeight: on ? 600 : 400, cursor: 'pointer', whiteSpace: 'nowrap' }}>{k !== 'all' && <i aria-hidden style={{ width: 8, height: 8, borderRadius: 2, background: col(k) }} />}{l}<span style={{ fontSize: 12, color: on ? t.text.accent : t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{n}</span></button>; };
-  return <div data-newsfeed="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: m ? 0 : 6 }}>
-    <div data-nchips="1" ref={(el: any) => { if (el && el.parentElement) el.parentElement.style.setProperty('--gd-nc', el.offsetHeight + 'px'); }} style={{ position: 'sticky', top: m ? 0 : 'var(--gd-top, 0px)', zIndex: 6, background: DK ? '#000000' : t.bg.base, display: 'flex', gap: 6, flexWrap: m ? 'nowrap' : 'wrap', overflowX: m ? 'auto' : undefined, scrollbarWidth: 'none', margin: m ? '0 -14px' : 0, padding: m ? '8px 14px' : '8px 0' } as any}>
-      {chip('all', 'Все', total)}{NSRC.filter(([k]) => cnt[k]).map(([k, l]) => chip(k, l, cnt[k]))}
+  const nb = (dis: boolean) => ({ width: 34, height: 34, padding: 0, border: 'none', borderRadius: 9, background: 'transparent', color: t.text.secondary, fontSize: 20, lineHeight: 1, cursor: dis ? 'default' : 'pointer', opacity: dis ? 0.3 : 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' } as any);
+  const chip = (k: string, l: string, n: number) => { const on = src === k; return <button key={k} data-nsrc={k} aria-pressed={on} onClick={(e: any) => { setSrc(k); try { e.currentTarget.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); } catch (x) {} }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, minHeight: 32, padding: '0 12px', borderRadius: 9999, border: `1px solid ${on ? t.text.accent : t.border.default}`, background: on ? t.fill.accentSubtle : t.bg.base, color: on ? t.text.accent : t.text.primary, fontFamily: t.font.family, fontSize: 14, fontWeight: on ? 600 : 400, cursor: 'pointer', whiteSpace: 'nowrap' }}>{k !== 'all' && <i aria-hidden style={{ width: 8, height: 8, borderRadius: 2, background: col(k) }} />}{l}<span style={{ fontSize: 12, color: on ? t.text.accent : t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{n}</span></button>; };
+  const dd = cur ? pd(cur) : null;
+  return <div data-newsfeed="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 0 }}>
+    <div data-nchips="1" style={{ position: 'sticky', top: m ? 0 : 'var(--gd-top, 0px)', zIndex: 6, background: DK ? '#000000' : t.bg.base, margin: m ? '0 -14px' : 0, padding: m ? '2px 14px 8px' : '6px 0 8px' }}>
+      <div data-nday="1" style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
+        <button aria-label="Предыдущий день" disabled={!older && !more} onClick={goOlder} style={nb(!older && !more)}>‹</button>
+        <span style={{ fontSize: m ? 20 : 22, fontWeight: 700, letterSpacing: '-0.01em', color: t.text.primary, whiteSpace: 'nowrap' }}>{dd ? `${dd.getDate()} ${MON[dd.getMonth()]}` : 'Новости'}</span>
+        {dd && <span style={{ fontSize: 14, color: t.text.tertiary, marginLeft: 4, whiteSpace: 'nowrap' }}>{WDL[dd.getDay()]}</span>}
+        <button aria-label="Следующий день" disabled={!newer} onClick={() => newer && setSel(newer)} style={nb(!newer)}>›</button>
+        <span style={{ flex: 1 }} />
+        {ix > 0 && <button onClick={() => setSel(days[0])} style={{ height: 28, padding: '0 12px', borderRadius: 14, border: `1px solid ${t.text.accent}`, background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>Последние</button>}
+      </div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: m ? 'nowrap' : 'wrap', overflowX: m ? 'auto' : undefined, scrollbarWidth: 'none' } as any}>
+        {chip('all', 'Все', items.length)}{NSRC.filter(([k]) => cnt[k]).map(([k, l]) => chip(k, l, cnt[k]))}
+      </div>
     </div>
-    {!shown.length && <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>{all.length ? 'У этого источника новостей за эти дни нет' : 'Загружаю новости…'}</div>}
-    {shown.map(([d, a]) => { const dd = pd(d); return <section key={d} data-newsday={d} style={{ ...card(t), padding: 0, overflow: 'visible' }}>
-      <div style={{ position: 'sticky', top: m ? 'var(--gd-nc, 50px)' : 'calc(var(--gd-top, 0px) + var(--gd-nc, 50px))', zIndex: 5, background: t.bg.base, borderRadius: '12px 12px 0 0', borderBottom: `1px solid ${t.border.subtle}`, display: 'flex', alignItems: 'baseline', gap: 10, padding: m ? '10px 14px' : '10px 18px' }}><span style={{ fontSize: m ? 17 : 16, fontWeight: 700, color: t.text.primary }}>{dd.getDate()} {MON[dd.getMonth()]}, {WDL[dd.getDay()]}</span><span style={{ fontSize: 13, color: t.text.tertiary }}>{a.length}</span></div>
-      {a.map((x, i) => { const Tg: any = x.u ? 'a' : 'article'; return <Tg key={i} data-newsitem={x.o} className="gd-rw" {...(x.u ? { href: x.u, target: '_blank', rel: 'noopener noreferrer', title: `Открыть на ${host(x.u)}` } : {})} style={{ display: 'flex', gap: 10, padding: m ? '9px 14px 10px' : '9px 18px 10px', borderTop: i ? `1px solid ${t.border.subtle}` : 'none', textDecoration: 'none', color: 'inherit', cursor: x.u ? 'pointer' : 'default' }}>
+    {!cur && <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>{wantOlder ? 'Загружаю…' : 'Загружаю новости…'}</div>}
+    {cur && !shown.length && <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>У этого источника новостей в этот день нет</div>}
+    {cur && shown.length > 0 && <section key={cur} data-newsday={cur} className="gd-anim" style={{ ...card(t), padding: 0, overflow: 'hidden' }}>
+      {shown.map((x, i) => { const Tg: any = x.u ? 'a' : 'article'; return <Tg key={i} data-newsitem={x.o} className="gd-rw" {...(x.u ? { href: x.u, target: '_blank', rel: 'noopener noreferrer', title: `Открыть на ${host(x.u)}` } : {})} style={{ display: 'flex', gap: 10, padding: m ? '9px 14px 10px' : '9px 18px 10px', borderTop: i ? `1px solid ${t.border.subtle}` : 'none', textDecoration: 'none', color: 'inherit', cursor: x.u ? 'pointer' : 'default' }}>
         <i aria-hidden style={{ flex: 'none', width: 3, borderRadius: 2, background: col(x.o) }} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontSize: 12, fontWeight: 600, color: col(x.o), marginBottom: 2 }}><span style={{ flex: '1 1 auto', minWidth: 0 }}>{name(x.o)}{x.sec ? <span style={{ fontWeight: 400, color: t.text.tertiary }}> · {x.sec}</span> : null}</span></div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: col(x.o), marginBottom: 2 }}>{name(x.o)}{x.sec ? <span style={{ fontWeight: 400, color: t.text.tertiary }}> · {x.sec}</span> : null}</div>
           <div style={{ fontSize: m ? 15 : 14.5, lineHeight: 1.45, color: t.text.primary, overflowWrap: 'anywhere' }}>{x.tag ? <b style={{ fontWeight: 600 }}>{x.tag}: </b> : null}{x.text}</div>
           {x.sub ? <div className="gd-cl2" style={{ marginTop: 3, fontSize: 13.5, lineHeight: 1.45, color: t.text.secondary }}>{x.sub}</div> : null}
         </div>
       </Tg>; })}
-    </section>; })}
-    {more && <button data-newsmore="1" onClick={more} style={{ alignSelf: 'center', minHeight: 42, padding: '0 20px', borderRadius: 12, border: `1px solid ${t.border.default}`, background: t.bg.base, color: t.text.accent, fontFamily: t.font.family, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>Показать ранее</button>}
+    </section>}
   </div>;
 }
 
@@ -3771,7 +3789,7 @@ function CalendarApp() {
   const setTop = () => document.documentElement.style.setProperty('--gd-top', (bhidR.current && modeR.current === 'c' ? 0 : barH.current) + 'px');
   useEffect(() => { let ly = window.scrollY, ut = 0; const u = () => { ut = Date.now(); };
     const f = () => { const y = window.scrollY, dy = y - ly; ly = y; const user = Date.now() - ut < 400; let nx = bhidR.current;
-      if (y < barH.current * 1.5) nx = false; else if (user && dy > 6) nx = true; else if (dy < -6) nx = false;
+      nx = false; void user; void dy; /* 12.11.2026: по решению владельца верхняя строка всегда видна — не прячется при прокрутке */
       if (nx !== bhidR.current) { bhidR.current = nx; setBhid(nx); setTop(); } };
     const ks = (k: KeyboardEvent) => { if (/^(ArrowDown|ArrowUp|PageDown|PageUp|Space| |End|Home)$/.test(k.key)) u(); };
     window.addEventListener('wheel', u, { passive: true }); window.addEventListener('touchmove', u, { passive: true }); window.addEventListener('keydown', ks); window.addEventListener('scroll', f, { passive: true });
