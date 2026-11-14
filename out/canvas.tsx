@@ -2633,7 +2633,7 @@ function ProcBlk({ p, m }: { p: any; m: boolean }) {
 function DaySrc({ p }: { p: any }) {
   const t = useGrokTheme(); const src = String(p.src || ''); const L: [string, string][] = [];
   const add = (l: string, u: string) => { if (!L.some((z) => z[0] === l)) L.push([l, u]); };
-  (src.match(/[a-z0-9.-]+\.gov\.ru[^\s;:,)]*/gi) || []).forEach((u) => { const h = u.toLowerCase(); const url = (/^vote\./.test(h) ? 'http://' : 'https://') + u; if (/^vote\.duma/.test(h)) add('голосования', url); else if (/duma\.gov\.ru/.test(h)) add('повестка', url); else add(h.split('/')[0], url); });
+  ((src.match(/[a-z0-9.-]+\.gov\.ru[^\s;:,)]*/gi) || []) as string[]).forEach((u) => { const h = u.toLowerCase(); const url = (/^vote\./.test(h) ? 'http://' : 'https://') + u; if (/^vote\.duma/.test(h)) add('голосования', url); else if (/duma\.gov\.ru/.test(h)) add('повестка', url); else add(h.split('/')[0], url); });
   if ((DATA[p.d] || p.vx || (p.r || []).length)) add('голосования', 'http://vote.duma.gov.ru/');
   const lk = { color: t.text.accent, textDecoration: 'none' } as any;
   return <div data-daysrc="1" style={{ padding: '6px 14px', fontSize: 12, color: t.text.tertiary, lineHeight: 1.5 }}>{L.length ? <>Источники: {L.map(([l, u], i) => <span key={l}>{i ? ' · ' : ''}<a className="gd-lnk" href={u} target="_blank" rel="noreferrer" style={lk}>{l}</a></span>)}</> : <>Источник: {src}</>}</div>;
