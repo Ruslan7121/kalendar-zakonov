@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Календарь законов: Работа и зарплата — все голосования</title><link>https://ruslan7121.github.io/kalendar-zakonov/?t=%D0%A0%D0%B0%D0%B1%D0%BE%D1%82%D0%B0%20%D0%B8%20%D0%B7%D0%B0%D1%80%D0%BF%D0%BB%D0%B0%D1%82%D0%B0</link><description>Все голосования Госдумы по законопроектам с меткой «Работа и зарплата» (Тема), включая отклоненные.</description><language>ru</language><atom:link href="https://ruslan7121.github.io/kalendar-zakonov/feed/rabota-i-zarplata-all.xml" rel="self" type="application/rss+xml"/>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Календарь законов: Работа и зарплата — все голосования</title><link>https://ruslan7121.github.io/kalendar-zakonov/?t=%D0%A0%D0%B0%D0%B1%D0%BE%D1%82%D0%B0%20%D0%B8%20%D0%B7%D0%B0%D1%80%D0%BF%D0%BB%D0%B0%D1%82%D0%B0</link><description>Все голосования Госдумы по законопроектам с меткой «Работа и зарплата» (Тема), включая отклоненные, законы, вступающие в силу, и документы органов.</description><language>ru</language><atom:link href="https://ruslan7121.github.io/kalendar-zakonov/feed/rabota-i-zarplata-all.xml" rel="self" type="application/rss+xml"/>
 <item><title>Адаптивный режим труда — 1-е чтение, отклонен</title><link>https://ruslan7121.github.io/kalendar-zakonov/bill/1141606-8/</link><guid isPermaLink="false">kalendar-zakonov:vote:136409</guid><pubDate>Wed, 11 Nov 2026 13:10:39 GMT</pubDate><description>1141606-8. Предлагалось ввести в Трудовой кодекс временный адаптивный режим труда: работник с временными ограничениями здоровья может по своему заявлению и при наличии медицинского заключения продолжать работать в облегченном режиме, сохраняя доход.
 Кого коснётся: Работники с временными нетяжелыми заболеваниями и работодатели.
 За 91, против 0, воздержались 0.
@@ -100,4 +100,12 @@
 Кого коснётся: Граждан Индии, приезжающих работать в Россию, их работодателей и россиян, работающих в Индии.
 За 431, против 0, воздержались 0.
 Официальный источник: https://sozd.duma.gov.ru/bill/1298120-8</description></item>
+<item><title>С 1 сентября 2026 вступает в силу: Бойцов СВО защитят от сокращения</title><link>http://kremlin.ru/acts/bank/53183</link><guid isPermaLink="false">kalendar-zakonov:law:3743ac9e</guid><pubDate>Tue, 25 Aug 2026 00:00:00 GMT</pubDate><description>Федеральный закон от 25.04.2026 № 108-ФЗ
+Участники СВО, вернувшиеся на прежнее место работы, получают преимущественное право остаться на работе при сокращении штата.
+Кого коснётся: Ветераны СВО и их работодатели.
+Официальный источник: http://kremlin.ru/acts/bank/53183</description></item>
+<item><title>С 1 сентября 2026 вступает в силу: Доп. выходной и отпуск пострадавшим при ЧС</title><link>http://kremlin.ru/acts/bank/53124</link><guid isPermaLink="false">kalendar-zakonov:law:0d2d3222</guid><pubDate>Tue, 25 Aug 2026 00:00:00 GMT</pubDate><description>Федеральный закон от 09.04.2026 № 90-ФЗ
+Пострадавшие от ЧС могут получить оплачиваемый выходной и до пяти дней отпуска без сохранения зарплаты; заявление можно подать электронно.
+Кого коснётся: Работники, проживающие в зоне ЧС и потерявшие имущество.
+Официальный источник: http://kremlin.ru/acts/bank/53124</description></item>
 </channel></rss>

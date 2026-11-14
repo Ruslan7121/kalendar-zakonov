@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Календарь законов: Сельские жители — все голосования</title><link>https://ruslan7121.github.io/kalendar-zakonov/?w=%D0%A1%D0%B5%D0%BB%D1%8C%D1%81%D0%BA%D0%B8%D0%B5%20%D0%B6%D0%B8%D1%82%D0%B5%D0%BB%D0%B8</link><description>Все голосования Госдумы по законопроектам с меткой «Сельские жители» (Для кого), включая отклоненные.</description><language>ru</language><atom:link href="https://ruslan7121.github.io/kalendar-zakonov/feed/selskie-zhiteli-all.xml" rel="self" type="application/rss+xml"/>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Календарь законов: Сельские жители — все голосования</title><link>https://ruslan7121.github.io/kalendar-zakonov/?w=%D0%A1%D0%B5%D0%BB%D1%8C%D1%81%D0%BA%D0%B8%D0%B5%20%D0%B6%D0%B8%D1%82%D0%B5%D0%BB%D0%B8</link><description>Все голосования Госдумы по законопроектам с меткой «Сельские жители» (Для кого), включая отклоненные, законы, вступающие в силу, и документы органов.</description><language>ru</language><atom:link href="https://ruslan7121.github.io/kalendar-zakonov/feed/selskie-zhiteli-all.xml" rel="self" type="application/rss+xml"/>
 <item><title>Агроинформация — 1-е чтение, принят</title><link>https://ruslan7121.github.io/kalendar-zakonov/bill/1136619-8/</link><guid isPermaLink="false">kalendar-zakonov:vote:136044</guid><pubDate>Thu, 15 Oct 2026 11:51:52 GMT</pubDate><description>1136619-8. Уточняется, какие сведения о местах применения пестицидов и агрохимикатов — кадастровый номер, адрес участка — указываются в государственных системах. Расширяется перечень данных в системе учета племенных животных.
 Кого коснётся: Аграриев, применяющих пестициды и агрохимикаты, и племенные хозяйства.
 За 415, против 0, воздержались 0.
 Официальный источник: https://sozd.duma.gov.ru/bill/1136619-8</description></item>
+<item><title>С 1 сентября 2026 вступает в силу: Передвижные аптечные пункты</title><link>http://duma.gov.ru/news/64038/</link><guid isPermaLink="false">kalendar-zakonov:law:729b8ace</guid><pubDate>Tue, 25 Aug 2026 00:00:00 GMT</pubDate><description>Федеральный закон от 02.05.2026 № 125-ФЗ
+Лекарства разрешено продавать через передвижные аптечные пункты в населенных пунктах без стационарных аптек.
+Кого коснётся: Жители сел и удаленных территорий, аптечные организации.
+Официальный источник: http://duma.gov.ru/news/64038/</description></item>
 </channel></rss>

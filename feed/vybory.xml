@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Календарь законов: Выборы</title><link>https://ruslan7121.github.io/kalendar-zakonov/?t=%D0%92%D1%8B%D0%B1%D0%BE%D1%80%D1%8B</link><description>Принятые законопроекты и законы, вступающие в силу, с меткой «Выборы» (Тема).</description><language>ru</language><atom:link href="https://ruslan7121.github.io/kalendar-zakonov/feed/vybory.xml" rel="self" type="application/rss+xml"/>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Календарь законов: Выборы</title><link>https://ruslan7121.github.io/kalendar-zakonov/?t=%D0%92%D1%8B%D0%B1%D0%BE%D1%80%D1%8B</link><description>Принятые законопроекты, законы, вступающие в силу, и документы органов с меткой «Выборы» (Тема).</description><language>ru</language><atom:link href="https://ruslan7121.github.io/kalendar-zakonov/feed/vybory.xml" rel="self" type="application/rss+xml"/>
 
 </channel></rss>

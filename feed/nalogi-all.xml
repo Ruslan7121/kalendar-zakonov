@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Календарь законов: Налоги — все голосования</title><link>https://ruslan7121.github.io/kalendar-zakonov/?t=%D0%9D%D0%B0%D0%BB%D0%BE%D0%B3%D0%B8</link><description>Все голосования Госдумы по законопроектам с меткой «Налоги» (Тема), включая отклоненные.</description><language>ru</language><atom:link href="https://ruslan7121.github.io/kalendar-zakonov/feed/nalogi-all.xml" rel="self" type="application/rss+xml"/>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Календарь законов: Налоги — все голосования</title><link>https://ruslan7121.github.io/kalendar-zakonov/?t=%D0%9D%D0%B0%D0%BB%D0%BE%D0%B3%D0%B8</link><description>Все голосования Госдумы по законопроектам с меткой «Налоги» (Тема), включая отклоненные, законы, вступающие в силу, и документы органов.</description><language>ru</language><atom:link href="https://ruslan7121.github.io/kalendar-zakonov/feed/nalogi-all.xml" rel="self" type="application/rss+xml"/>
+<item><title>Минфин России: Приказ: Приказ № 152н от 08.10.2026: Об утверждении Перечня государств (территорий), законодательством которых предусмотрены правила экстерриториального налогообложения в соответствии с Модельными правилами, разработанными…</title><link>http://publication.pravo.gov.ru/document/0001202611100017</link><guid isPermaLink="false">kalendar-zakonov:minfin:http://publication.pravo.gov.ru/document/0001202611100017#10.11.2026</guid><pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate><description>Зарегистрирован Минюстом 09.11.2026 № 89108
+Официальный источник: http://publication.pravo.gov.ru/document/0001202611100017</description></item>
+<item><title>Минфин России: Приказ: Приказ № 151н от 08.10.2026: Об утверждении Перечня государств (территорий), законодательством которых предусмотрены правила минимального эффективного уровня налогообложения в соответствии с Модельными правилами…</title><link>http://publication.pravo.gov.ru/document/0001202611100019</link><guid isPermaLink="false">kalendar-zakonov:minfin:http://publication.pravo.gov.ru/document/0001202611100019#10.11.2026</guid><pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate><description>Зарегистрирован Минюстом 09.11.2026 № 89107
+Официальный источник: http://publication.pravo.gov.ru/document/0001202611100019</description></item>
+<item><title>Совет Федерации: Россия и Беларусь уточнили перечни категорий налогоплательщиков, освобождаемых от НДС</title><link>http://council.gov.ru/events/news/178218/</link><guid isPermaLink="false">kalendar-zakonov:sf:http://council.gov.ru/events/news/178218/#10.11.2026</guid><pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate><description>Совет Федерации одобрил Федеральный закон «О ратификации Протокола о внесении изменений в Договор между Российской Федерацией и Республикой Беларусь об общих принципах налогообложения по косвенным налогам от 3 октября 2022 года». Заместитель председателя Комитета СФ по международным делам Елена Афанасьева пояснила, что в связи с изменениями в налоговых законодательствах двух стран документом актуализируются перечни категорий налогоплательщиков, освобождаемых от НДС, а также операций, освобождаемых от налога и облагаемых по пониженной и нулевой ставкам. Кроме того, документ дополняется информацией о минимальных налоговых ставках акцизов.
+Официальный источник: http://council.gov.ru/events/news/178218/</description></item>
 <item><title>«Образование для всех, в течение всей жизни» — 1-е чтение, отклонен</title><link>https://ruslan7121.github.io/kalendar-zakonov/bill/645714-8/</link><guid isPermaLink="false">kalendar-zakonov:vote:136315</guid><pubDate>Tue, 10 Nov 2026 12:57:14 GMT</pubDate><description>645714-8. Предлагалось закрепить принцип «образование для всех, в течение всей жизни»: обеспечить право на образование независимо от возраста и установить гарантию ежегодных расходов на образование не менее 7% ВВП, а также налоговые льготы для тех, кто вкладывает средства в образование.
 Кого коснётся: Учащиеся всех возрастов, учителя и образовательные организации.
 За 90, против 0, воздержались 0.
@@ -40,6 +46,14 @@
 Кого коснётся: Букмекеров и организаторов азартных игр.
 За 85, против 0, воздержались 0.
 Официальный источник: https://sozd.duma.gov.ru/bill/1196598-8</description></item>
+<item><title>С 1 ноября 2026 вступает в силу: Платежи государству — в ГИС ГМП за час</title><link>http://www.kremlin.ru/acts/bank/53539</link><guid isPermaLink="false">kalendar-zakonov:law:606bb60d</guid><pubDate>Sun, 25 Oct 2026 00:00:00 GMT</pubDate><description>Федеральный закон от 04.08.2026 № 312-ФЗ
+Сведения об уплате налогов, пошлин и штрафов должны поступать в ГИС ГМП не позднее часа после приема платежа; правительство может расширять перечень платежей.
+Кого коснётся: Граждане и компании, платящие налоги и штрафы; банки.
+Официальный источник: http://www.kremlin.ru/acts/bank/53539</description></item>
+<item><title>С 1 ноября 2026 вступает в силу: Вычет по НДПИ на газ на Ямале</title><link>http://kremlin.ru/acts/bank/52640</link><guid isPermaLink="false">kalendar-zakonov:law:9e5027b8</guid><pubDate>Sun, 25 Oct 2026 00:00:00 GMT</pubDate><description>Федеральный закон от 28.11.2025 № 425-ФЗ (отдельные положения)
+Для отдельных добытчиков газа на полуострове Ямал вводится налоговый вычет по НДПИ, коэффициент снижается до 0,03.
+Кого коснётся: Газодобывающие компании.
+Официальный источник: http://kremlin.ru/acts/bank/52640</description></item>
 <item><title>Государственная пошлина, инвалиды в суде — 1-е чтение, принят</title><link>https://ruslan7121.github.io/kalendar-zakonov/bill/1264919-8/</link><guid isPermaLink="false">kalendar-zakonov:vote:136042</guid><pubDate>Thu, 15 Oct 2026 11:41:10 GMT</pubDate><description>1264919-8. Инвалидов I и II группы не будут освобождать от госпошлины, если они судятся по долгам по потребительским кредитам, которые им уступили лица без такой льготы. Цель — закрыть схему злоупотребления льготой.
 Кого коснётся: Инвалидов I и II группы и тех, кто переуступает им долги по кредитам.
 За 382, против 0, воздержались 0.
@@ -56,4 +70,16 @@
 Кого коснётся: Граждан, которые меняют квартиру, дом или участок на другую недвижимость.
 За 416, против 0, воздержались 1.
 Официальный источник: https://sozd.duma.gov.ru/bill/1272209-8</description></item>
+<item><title>С 1 октября 2026 вступает в силу: НДС 10% на детские товары — только с документами</title><link>http://kremlin.ru/acts/bank/search?query=%E2%84%96%20218-%D0%A4%D0%97</link><guid isPermaLink="false">kalendar-zakonov:law:34f3b059</guid><pubDate>Thu, 24 Sep 2026 00:00:00 GMT</pubDate><description>Федеральный закон от 04.07.2026 № 218-ФЗ
+Льготная ставка НДС на детские товары применяется только при наличии сертификата или декларации о соответствии.
+Кого коснётся: Производители, импортеры и продавцы детских товаров.
+Официальный источник: http://kremlin.ru/acts/bank/search?query=%E2%84%96%20218-%D0%A4%D0%97</description></item>
+<item><title>С 1 октября 2026 вступает в силу: НДС при смене налоговых правил по ходу договора</title><link>http://kremlin.ru/acts/bank/search?query=%E2%84%96%20293-%D0%A4%D0%97</link><guid isPermaLink="false">kalendar-zakonov:law:dc61bc2f</guid><pubDate>Thu, 24 Sep 2026 00:00:00 GMT</pubDate><description>Федеральный закон от 04.08.2026 № 293-ФЗ
+Если в ходе договора появилась обязанность платить НДС, а цена не изменена, налог считается расчетным путем от цены договора.
+Кого коснётся: Организации и ИП, работающие по долгосрочным договорам.
+Официальный источник: http://kremlin.ru/acts/bank/search?query=%E2%84%96%20293-%D0%A4%D0%97</description></item>
+<item><title>С 1 октября 2026 вступает в силу: Контроль доходов трудовых мигрантов</title><link>http://kremlin.ru/acts/bank/search?query=%E2%84%96%20241-%D0%A4%D0%97</link><guid isPermaLink="false">kalendar-zakonov:law:df156e68</guid><pubDate>Thu, 24 Sep 2026 00:00:00 GMT</pubDate><description>Федеральный закон от 26.07.2026 № 241-ФЗ (отдельные положения)
+Налоговая будет сообщать в МВД, сколько заработали трудовые мигранты, а МВД — проверять, есть ли у них доход и какого уровня.
+Кого коснётся: Трудовые мигранты и их работодатели.
+Официальный источник: http://kremlin.ru/acts/bank/search?query=%E2%84%96%20241-%D0%A4%D0%97</description></item>
 </channel></rss>
