@@ -12,7 +12,9 @@ function setPal(d: boolean) { DK = d; SYS.splice(0, 4, ...(d ? SYS_D : SYS_L)); 
 const FLASH = () => DK ? 'rgba(64,156,255,0.4)' : 'rgba(10,102,214,0.22)';
 function useGrokTheme(): any { const t: any = useGT0(); return { ...t, ...(DK ? DARK : LIGHT), kind: DK ? 'dark' : 'light' }; }
 const ADAPT = () => { const P: any = DK ? DARK : LIGHT; const v: any = { base: P.bg.base, subtle: P.bg.subtle, primary: P.text.primary, secondary: P.text.secondary, tertiary: P.text.tertiary }; const r = (a: string, k: string, prop: string, val: string) => `html #root [data-grok-adapt-${a}="${k}"]{${prop}:${val}!important}`; let c = ['base', 'subtle'].map((k) => r('bg', k, 'background-color', v[k])).join('') + ['primary', 'secondary', 'tertiary'].map((k) => r('ink', k, 'color', v[k])).join('') + r('border', 'default', 'border-color', P.border.default) + r('border', 'strong', 'border-color', P.border.default); ['fill', 'stroke', 'stop-color', 'flood-color'].forEach((pr) => { [['paper-base', v.base], ['paper-subtle', v.subtle], ['ink-primary', v.primary], ['ink-secondary', v.secondary], ['ink-tertiary', v.tertiary]].forEach(([k, val]) => { c += r(pr, k, pr, val); }); }); return c; };
-const THO0 = (() => { try { const v = localStorage.getItem('gd_theme'); return v === 'dark' || v === 'light' ? v : null; } catch (e) { return null; } })();
+/* 14.11.2026: ручной выбор темы (кнопка с луной) действует только до закрытия вкладки и сбрасывается, когда меняется тема телефона;
+   раньше он сохранялся навсегда, и сайт переставал следовать теме телефона. Старый постоянный выбор удаляем. */
+const THO0 = (() => { try { localStorage.removeItem('gd_theme'); } catch (e) { /* нет хранилища */ } try { const v = sessionStorage.getItem('gd_theme'); return v === 'dark' || v === 'light' ? v : null; } catch (e) { return null; } })();
 function Status({ tone, children, b }: { tone: string; children: React.ReactNode; b?: boolean }) { const ok = tone === 'success'; return <span style={{ border: `1px solid ${DK ? (ok ? 'rgba(48,209,88,0.45)' : 'rgba(255,105,97,0.45)') : (ok ? '#9FD6AE' : '#F0ABAB')}`, boxSizing: 'border-box', display: 'inline-flex', alignItems: 'center', padding: b ? '2px 8px' : '1px 7px', borderRadius: 9999, fontSize: 12, fontWeight: 600, lineHeight: 1.4, whiteSpace: 'nowrap', background: DK ? (ok ? 'rgba(48,209,88,0.18)' : 'rgba(255,69,58,0.2)') : (ok ? '#E3F4E8' : '#FDE8E8'), color: DK ? (ok ? '#30D158' : '#FF6961') : (ok ? '#1B7A3A' : '#C42B2B') }}>{children}</span>; }
 
 const F = ['ЕР', 'КПРФ', 'ЛДПР', 'НЛ', 'СРЗП', 'Вне'];
@@ -2593,19 +2595,24 @@ function ShareVote({ v, day, m }: { v: Vote; day: string; m?: boolean }) {
   const [st, setSt] = useState('');
   const [copied, setCopied] = useState(false);
   const url = shareLink(day, v.id);
-  const [imgs, setImgs] = useState<string[]>([]);
+  const [imgs, setImgs] = useState<string[]>([]); const boxR = useRef<HTMLDivElement | null>(null);
+  /* 14.11.2026: картинки кодируются в PNG асинхронно (toBlob + FileReader) и после первой отрисовки окна — раньше синхронный toDataURL держал открытие окна на телефоне ~0,4 с */
   useEffect(() => {
-    try {
-      setImgs(drawCards(v, day).map((c) => c.toDataURL('image/png')));
-      setSt(m ? 'Нажмите на картинку и удерживайте → «Сохранить изображение»' : 'Правый клик по картинке → «Сохранить изображение как…»');
-    } catch { setSt('Не удалось создать картинки'); }
+    let alive = true; const tip = m ? 'Нажмите на картинку и удерживайте → «Сохранить изображение»' : 'Правый клик по картинке → «Сохранить изображение как…»';
+    const enc = (c: HTMLCanvasElement) => new Promise<string>((ok) => { try { c.toBlob((b) => { if (!b) { ok(c.toDataURL('image/png')); return; } const fr = new FileReader(); fr.onload = () => ok(String(fr.result)); fr.onerror = () => ok(c.toDataURL('image/png')); fr.readAsDataURL(b); }, 'image/png'); } catch (e) { ok(c.toDataURL('image/png')); } });
+    const go = () => { if (!alive) return; try { Promise.all(drawCards(v, day).map(enc)).then((u) => { if (alive) { setImgs(u); setSt(tip); } }, () => { if (alive) setSt('Не удалось создать картинки'); }); } catch { setSt('Не удалось создать картинки'); } };
+    /* рисуем, только когда блок картинок подходит к экрану (он внизу окна) — открытие окна и прокрутка не ждут рисования */
+    let h: any = 0; const ric = (window as any).requestIdleCallback; const later = () => { h = ric ? ric(go, { timeout: 500 }) : setTimeout(go, 50); };
+    const el = boxR.current; let io: IntersectionObserver | null = null;
+    if (el && typeof IntersectionObserver !== 'undefined') { io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io && io.disconnect(); io = null; later(); } }, { rootMargin: '400px 0px' }); io.observe(el); } else later();
+    return () => { alive = false; if (io) io.disconnect(); const cic = (window as any).cancelIdleCallback; if (ric && cic && h) cic(h); else clearTimeout(h); };
   }, [v.id, day]);
   const copyLink = async () => {
     try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1600); }
     catch { try { const ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch {} }
   };
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 10px', margin: m ? '10px 0 0' : '6px 0 0' }}>
+    <div ref={boxR} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 10px', margin: m ? '10px 0 0' : '6px 0 0' }}>
       {m && <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: (DK ? '#409CFF' : 'rgb(10,100,214)') }}>Сохранить карточку</span>}
       {st && <span style={{ fontSize: 12, color: t.text.secondary }}>{st}</span>}
       {imgs.length > 0 && <div className={imgs.length > 2 ? 'gd-hs' : undefined} style={{ display: 'flex', flexWrap: 'nowrap', overflowX: imgs.length > 2 && m ? 'auto' : undefined, gap: m ? 8 : 12, width: '100%', marginTop: 6 }}>{imgs.map((u, i) => <figure key={i} style={{ margin: 0, flex: imgs.length > 2 && m ? '0 0 46%' : '1 1 0', maxWidth: m ? undefined : 420, minWidth: 0 }}><img src={u} alt={`Картинка ${i + 1}: ${v.q.slice(0, 80)}`} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 10, border: `1px solid ${t.border.subtle}`, WebkitTouchCallout: 'default', userSelect: 'auto' } as any} /><figcaption style={{ fontSize: 12, color: t.text.tertiary, marginTop: 4 }}>Картинка {i + 1} из {imgs.length}</figcaption></figure>)}</div>}
@@ -3791,7 +3798,7 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
           const days = ds.map((s) => ({ s, es: real.filter((e: any) => e.d === s), sv: svc(s) })).filter((x) => x.es.length > 0 || (!!sd && x.sv.length > 0));
           if (!days.length) return ev.length ? <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>{auto ? 'Ничего не найдено' : sd ? 'В этот день событий нет' : 'Событий нет'}</div> : null;
           const dOn = (s: string) => (s in dyo ? dyo[s] : auto || !!sd); /* 14.11.2026: выбранный в календаре день открыт сразу, со всеми органами */ const solo = (s: string) => { const dd = days.find((x) => x.s === s); return !!dd && new Set(dd.es.map(gk)).size === 1; }; /* 13.11.2026: в дне один орган — раскрыт сразу, без второго нажатия */
-          const oOn = (s: string, k: string) => (s + '|' + k in tro ? tro[s + '|' + k] : (auto && (k === 'gd' || !!qn)) || solo(s) || (!!sd && s === sd));
+          const oOn = (s: string, k: string) => (s + '|' + k in tro ? tro[s + '|' + k] : (auto && (k === 'gd' || !!qn)) || solo(s));
           const clr = (s: string, k?: string) => { if ((!k || k === 'gd') && ivo && ivo.startsWith(s)) setIvo0(null); if ((!k || k === 'gov') && typeof gai === 'string' && gai.startsWith('g' + s + ':')) setGai(null); setDf('all'); };
           const tgD = (s: string) => { const o = dOn(s); if (o) { const n: Record<string, boolean> = {}; Object.keys(tro).forEach((q) => { if (!q.startsWith(s + '|')) n[q] = tro[q]; }); setTro(n); clr(s); if (pcl[s]) { const c = { ...pcl }; delete c[s]; setPcl(c); } } setDyo({ ...dyo, [s]: !o }); if (!o) softTo(`[data-day="${s}"]`); };
           /* «Свернуть день» из закреплённой шапки: день закрывается, экран плавно возвращается к его заголовку */
@@ -3904,6 +3911,7 @@ if (GDX) GDX.onMerge = () => { SHB = null; PLB = null; ftDone = false; };
 function CalendarApp() {
   const gk: any = useGT0();
   const [tho, setTho] = useState<string | null>(THO0);
+  useEffect(() => { const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null; if (!mq) return; const f = () => { setTho(null); try { sessionStorage.removeItem('gd_theme'); } catch (e) {} }; mq.addEventListener ? mq.addEventListener('change', f) : (mq as any).addListener(f); return () => { mq.removeEventListener ? mq.removeEventListener('change', f) : (mq as any).removeListener(f); }; }, []);
   setPal(tho ? tho === 'dark' : !!gk && gk.kind === 'dark');
   const t = useGrokTheme(); useZS(); const dv = useGDV();
   const [filter, setFilter] = useState<'all' | 'acc' | 'rej'>('all');
@@ -4075,7 +4083,7 @@ function CalendarApp() {
       </div>);
   /* 12.11.2026: цвет строки состояния и панелей браузера на телефоне — как фон страницы в выбранной теме (раньше был синий) */
   useEffect(() => { try { const c = DK ? '#000000' : '#FFFFFF'; const ms = document.querySelectorAll('meta[name="theme-color"]'); if (!ms.length) { const x = document.createElement('meta'); x.name = 'theme-color'; document.head.appendChild(x); } document.querySelectorAll('meta[name="theme-color"]').forEach((x: any) => { x.removeAttribute('media'); x.content = c; }); document.documentElement.style.background = c; } catch (e) {} }, [DK]);
-  const thBtn = <button aria-label={DK ? 'Светлая тема' : 'Темная тема'} title={DK ? 'Светлая тема' : 'Темная тема'} onClick={() => { const n = DK ? 'light' : 'dark'; setTho(n); try { localStorage.setItem('gd_theme', n); } catch (e) {} }} style={{ flexShrink: 0, width: 32, height: 32, padding: 0, borderRadius: 9999, border: `1px solid ${t.border.default}`, background: t.bg.subtle, color: t.text.primary, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>{DK ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="12" cy="12" r="4.5" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>}</button>;
+  const thBtn = <button aria-label={DK ? 'Светлая тема' : 'Темная тема'} title={DK ? 'Светлая тема' : 'Темная тема'} onClick={() => { const n = DK ? 'light' : 'dark'; const sys = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'; if (n === sys) { setTho(null); try { sessionStorage.removeItem('gd_theme'); } catch (e) {} } else { setTho(n); try { sessionStorage.setItem('gd_theme', n); } catch (e) {} } }} style={{ flexShrink: 0, width: 32, height: 32, padding: 0, borderRadius: 9999, border: `1px solid ${t.border.default}`, background: t.bg.subtle, color: t.text.primary, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>{DK ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="12" cy="12" r="4.5" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>}</button>;
   return (
     <Page title="Календарь законов" width="wide">
       <style>{css(t) + `#root,#root>div{background:${DK ? '#000000' : '#FFFFFF'}!important;color:${DK ? '#F5F5F7' : '#1D1D1F'}!important}#root>div{min-height:100vh}` + ADAPT() + (DK ? DKCSS : '')}</style>
