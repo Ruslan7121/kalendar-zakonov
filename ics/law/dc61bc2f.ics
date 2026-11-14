@@ -1,0 +1,27 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:НДС при смене налоговых правил п
+ о ходу договора
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-dc61bc2f@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: НДС при смене налог
+ овых правил по ходу договора
+DESCRIPTION:Федеральный закон от 04.08.2026 № 293-Ф
+ З\nЕсли в ходе договора появилась обяза
+ нность платить НДС\, а цена не изменена\,
+  налог считается расчетным путем от цен
+ ы договора.\nКого коснётся: Организации 
+ и ИП\, работающие по долгосрочным догов
+ орам.\nКарточка закона: https://ruslan7121.github.io/k
+ alendar-zakonov/?tab=l&law=dc61bc2f
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=dc61bc2f
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

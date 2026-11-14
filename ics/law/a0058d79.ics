@@ -1,0 +1,26 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Займы — в бюро кредитных историй
+  сразу
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-a0058d79@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Вступает в силу: Займы — в бюро кред
+ итных историй сразу
+DESCRIPTION:Федеральный закон от 13.02.2025 № 9-ФЗ\
+ nБанки и МФО обязаны незамедлительно пе
+ редавать в БКИ сведения о договорах пот
+ ребительского кредита для борьбы с мош
+ енничеством.\nКого коснётся: Заемщики\, 
+ банки\, МФО.\nКарточка закона: https://ruslan7121.
+ github.io/kalendar-zakonov/?tab=l&law=a0058d79
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=a0058d79
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

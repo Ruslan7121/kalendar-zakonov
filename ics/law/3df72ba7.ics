@@ -1,0 +1,28 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Изменения в закон о присяжных за
+ седателях
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-3df72ba7@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261024
+DTEND;VALUE=DATE:20261025
+SUMMARY:Вступает в силу: Изменения в закон о
+  присяжных заседателях
+DESCRIPTION:Федеральный закон от 26.07.2026 № 256-Ф
+ З\nСписки кандидатов в присяжные можно 
+ публиковать на сайтах и подписывать эл
+ ектронной подписью\, а гражданин может 
+ электронно попросить исключить его из 
+ списка или исправить ошибку.\nКого косн
+ ётся: Граждане\, включаемые в списки при
+ сяжных\, суды.\nКарточка закона: https://ruslan7
+ 121.github.io/kalendar-zakonov/?tab=l&law=3df72ba7
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=3df72ba7
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

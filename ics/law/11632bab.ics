@@ -1,0 +1,26 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Запрет продажи вейпов и табака н
+ а остановках
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-11632bab@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20260901
+DTEND;VALUE=DATE:20260902
+SUMMARY:Вступает в силу: Запрет продажи вей
+ пов и табака на остановках
+DESCRIPTION:Федеральный закон от 29.12.2025 № 551-Ф
+ З\nТабачную и никотинсодержащую продук
+ цию нельзя продавать на остановках общ
+ ественного транспорта.\nКого коснётся: 
+ Продавцы табака и никотиновой продукци
+ и.\nКарточка закона: https://ruslan7121.github.io/kalenda
+ r-zakonov/?tab=l&law=11632bab
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=11632bab
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

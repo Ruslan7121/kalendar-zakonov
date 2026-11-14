@@ -1,0 +1,27 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Медосвидетельствование мигрант
+ ов — за 30 дней
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-3799321a@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20260901
+DTEND;VALUE=DATE:20260902
+SUMMARY:Вступает в силу: Медосвидетельство
+ вание мигрантов — за 30 дней
+DESCRIPTION:Федеральный закон от 10.06.2026 № 162-Ф
+ З\nСрок обязательного медосвидетельств
+ ования для иностранцев\, приехавших бол
+ ее чем на три месяца\, сокращен с 90 до 30 д
+ ней\; при опасной инфекции — депортация
+ .\nКого коснётся: Иностранные граждане и
+  работодатели мигрантов.\nКарточка зако
+ на: https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=3799321a
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=3799321a
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

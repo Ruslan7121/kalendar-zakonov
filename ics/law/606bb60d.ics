@@ -1,0 +1,28 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Платежи государству — в ГИС ГМП 
+ за час
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-606bb60d@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261101
+DTEND;VALUE=DATE:20261102
+SUMMARY:Вступает в силу: Платежи государств
+ у — в ГИС ГМП за час
+DESCRIPTION:Федеральный закон от 04.08.2026 № 312-Ф
+ З\nСведения об уплате налогов\, пошлин и 
+ штрафов должны поступать в ГИС ГМП не п
+ озднее часа после приема платежа\; прав
+ ительство может расширять перечень пла
+ тежей.\nКого коснётся: Граждане и компан
+ ии\, платящие налоги и штрафы\; банки.\nКа
+ рточка закона: https://ruslan7121.github.io/kalendar-zakonov
+ /?tab=l&law=606bb60d
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=606bb60d
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

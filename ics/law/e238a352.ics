@@ -1,0 +1,29 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Поправки в закон «Об обороне»
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-e238a352@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261223
+DTEND;VALUE=DATE:20261224
+SUMMARY:Вступает в силу: Поправки в закон «О
+ б обороне»
+DESCRIPTION:Федеральный закон от 26.06.2026 № 192-Ф
+ З (отдельные положения)\nДля закрытых во
+ енных городков вводится особый режим —
+  пропуска\, ограничения въезда и прожив
+ ания\, проверка документов\; военные пол
+ учают право глушить\, перехватывать и с
+ бивать беспилотники у объектов Минобор
+ оны.\nКого коснётся: Военнослужащие\, ор
+ ганы военного управления.\nКарточка зак
+ она: https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=e238a35
+ 2
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=e238a352
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

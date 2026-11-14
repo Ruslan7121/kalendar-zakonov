@@ -1,0 +1,26 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Передвижные аптечные пункты
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-729b8ace@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20260901
+DTEND;VALUE=DATE:20260902
+SUMMARY:Вступает в силу: Передвижные аптечн
+ ые пункты
+DESCRIPTION:Федеральный закон от 02.05.2026 № 125-Ф
+ З\nЛекарства разрешено продавать через 
+ передвижные аптечные пункты в населенн
+ ых пунктах без стационарных аптек.\nКог
+ о коснётся: Жители сел и удаленных терр
+ иторий\, аптечные организации.\nКарточк
+ а закона: https://ruslan7121.github.io/kalendar-zakonov/?tab=l&la
+ w=729b8ace
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=729b8ace
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

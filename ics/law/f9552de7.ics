@@ -1,0 +1,30 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Приставы смогут запрашивать кре
+ дитную историю
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-f9552de7@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261126
+DTEND;VALUE=DATE:20261127
+SUMMARY:Вступает в силу: Приставы смогут за
+ прашивать кредитную историю
+DESCRIPTION:Федеральный закон от 07.06.2025 № 137-Ф
+ З (отдельные положения)\nБюро кредитных 
+ историй по запросу судебных приставов 
+ будет предоставлять сведения\, необход
+ имые для проверки фактов превышения ко
+ ллекторами полномочий\; ответ — через с
+ истему межведомственного электронного
+  взаимодействия.\nКого коснётся: Судебн
+ ые приставы\, бюро кредитных историй\, к
+ оллекторы и должники.\nКарточка закона: 
+ https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=f9552de7
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=f9552de7
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

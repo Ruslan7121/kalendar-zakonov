@@ -1,0 +1,28 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Поправки в закон о Следственном 
+ комитете
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-b0c85a82@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Вступает в силу: Поправки в закон о 
+ Следственном комитете
+DESCRIPTION:Федеральный закон от 04.07.2026 № 224-Ф
+ З\nСемьи сотрудников Следственного ком
+ итета\, погибших в связи с СВО\, получат 
+ жилищную выплату не позднее года со дня
+  гибели\; за ними и за рядом сотрудников 
+ сохраняется право жить в служебном жил
+ ье.\nКого коснётся: Сотрудники СК России
+ .\nКарточка закона: https://ruslan7121.github.io/kalendar-
+ zakonov/?tab=l&law=b0c85a82
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=b0c85a82
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,26 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Изменение условий содержания по
+ д стражей
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-b6e9f0c2@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261207
+DTEND;VALUE=DATE:20261208
+SUMMARY:Вступает в силу: Изменение условий 
+ содержания под стражей
+DESCRIPTION:Федеральный закон от 10.06.2026 № 178-Ф
+ З\nСотрудников аппаратов судов\, взятых 
+ под стражу\, будут содержать отдельно о
+ т остальных арестованных — так же\, как 
+ судей.\nКого коснётся: Подозреваемые\, о
+ бвиняемые\, СИЗО.\nКарточка закона: https://r
+ uslan7121.github.io/kalendar-zakonov/?tab=l&law=b6e9f0c2
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=b6e9f0c2
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

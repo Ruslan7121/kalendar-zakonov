@@ -1,0 +1,28 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Упразднение Беловского районног
+ о суда
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-cfbc4c1a@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261215
+DTEND;VALUE=DATE:20261216
+SUMMARY:Вступает в силу: Упразднение Беловс
+ кого районного суда
+DESCRIPTION:Федеральный закон от 15.12.2025 № 459-Ф
+ З\nБеловский районный суд Кемеровской о
+ бласти упраздняется\; его дела переходя
+ т Беловскому городскому суду\, который 
+ будет рассматривать дела и города Бело
+ во\, и Беловского района.\nКого коснётся:
+  Жители и участники дел в Кемеровской о
+ бласти.\nКарточка закона: https://ruslan7121.github.
+ io/kalendar-zakonov/?tab=l&law=cfbc4c1a
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=cfbc4c1a
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

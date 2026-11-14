@@ -1,0 +1,26 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Изменения в отдельные законодат
+ ельные акты
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-191ff14d@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261223
+DTEND;VALUE=DATE:20261224
+SUMMARY:Вступает в силу: Изменения в отдель
+ ные законодательные акты
+DESCRIPTION:Федеральный закон от 26.06.2026 № 215-Ф
+ З (отдельные положения)\nБанки будут выд
+ авать Минюсту справки по счетам иноаге
+ нтов только в электронном виде и за 3 ра
+ бочих дня.\nКого коснётся: Определяется 
+ текстом закона.\nКарточка закона: https://rus
+ lan7121.github.io/kalendar-zakonov/?tab=l&law=191ff14d
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=191ff14d
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

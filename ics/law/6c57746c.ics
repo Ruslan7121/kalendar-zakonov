@@ -1,0 +1,28 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Пенсии силовиков: изменение ст. 50
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-6c57746c@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Вступает в силу: Пенсии силовиков: и
+ зменение ст. 50
+DESCRIPTION:Федеральный закон от 04.07.2026 № 225-Ф
+ З\nПенсионерам Минобороны\, МВД\, ФСИН\, Ф
+ ССП\, ФСБ\, прокуратуры и СК\, получающим 
+ пенсию по закону № 4468-I\, будут выдавать 
+ пенсионное удостоверение\; его образец 
+ и порядок выдачи утвердит ведомство\, к
+ оторое платит пенсию.\nКого коснётся: Во
+ енные и силовые пенсионеры и их семьи.\n
+ Карточка закона: https://ruslan7121.github.io/kalendar-zak
+ onov/?tab=l&law=6c57746c
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=6c57746c
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

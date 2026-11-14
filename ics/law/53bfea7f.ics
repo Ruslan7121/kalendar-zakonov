@@ -1,0 +1,27 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Висковый дистиллят — под контро
+ ль как спирт
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-53bfea7f@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261101
+DTEND;VALUE=DATE:20261102
+SUMMARY:Вступает в силу: Висковый дистиллят
+  — под контроль как спирт
+DESCRIPTION:Федеральный закон от 04.07.2026 № 231-Ф
+ З\nПроизводство вискового дистиллята п
+ одчиняется правилам госрегулирования 
+ для этилового спирта\; новым лицензиата
+ м нужен уставный капитал от 100 млн рубле
+ й.\nКого коснётся: Производители виски и
+  алкоголя.\nКарточка закона: https://ruslan7121.gi
+ thub.io/kalendar-zakonov/?tab=l&law=53bfea7f
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=53bfea7f
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

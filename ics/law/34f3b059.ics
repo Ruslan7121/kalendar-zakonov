@@ -1,0 +1,27 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:НДС 10% на детские товары — только
+  с документами
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-34f3b059@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: НДС 10% на детские то
+ вары — только с документами
+DESCRIPTION:Федеральный закон от 04.07.2026 № 218-Ф
+ З\nЛьготная ставка НДС на детские товар
+ ы применяется только при наличии серти
+ фиката или декларации о соответствии.\n
+ Кого коснётся: Производители\, импортер
+ ы и продавцы детских товаров.\nКарточка 
+ закона: https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=3
+ 4f3b059
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=34f3b059
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

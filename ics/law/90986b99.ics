@@ -1,0 +1,27 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Ограничение третьего «дорогого»
+  микрозайма
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-90986b99@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: Ограничение третье
+ го «дорогого» микрозайма
+DESCRIPTION:Федеральный закон от 29.12.2025 № 545-Ф
+ З (ч. 5 ст. 4)\nМФО не могут выдать третий з
+ аем с полной стоимостью более 200% годовы
+ х\, если у заемщика уже два таких займа\; 
+ действует до 1 апреля 2027 года.\nКого косн
+ ётся: Заемщики и микрофинансовые орган
+ изации.\nКарточка закона: https://ruslan7121.github.
+ io/kalendar-zakonov/?tab=l&law=90986b99
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=90986b99
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

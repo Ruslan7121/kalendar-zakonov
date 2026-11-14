@@ -1,0 +1,27 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Претензии к товару — прямо на ма
+ ркетплейсе
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-1bb99f5a@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: Претензии к товару 
+ — прямо на маркетплейсе
+DESCRIPTION:Федеральный закон от 31.07.2025 № 290-Ф
+ З\nПокупатель может предъявить требова
+ ния о недостатках товара продавцу прям
+ о на платформе\; оператор обязан обеспе
+ чить возврат денег и товара.\nКого коснё
+ тся: Покупатели маркетплейсов\, продавц
+ ы\, операторы платформ.\nКарточка закона
+ : https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=1bb99f5a
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=1bb99f5a
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

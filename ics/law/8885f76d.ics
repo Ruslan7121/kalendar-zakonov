@@ -1,0 +1,27 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Выше штрафы для иностранцев за м
+ играционные нарушения
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-8885f76d@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261103
+DTEND;VALUE=DATE:20261104
+SUMMARY:Вступает в силу: Выше штрафы для ино
+ странцев за миграционные нарушения
+DESCRIPTION:Федеральный закон от 04.08.2026 № 294-Ф
+ З\nЗа нарушение правил въезда или пребы
+ вания штраф составит 4–7 тыс. рублей с в
+ озможным выдворением\, при повторе — 7–
+ 9 тыс. с обязательным выдворением.\nКого 
+ коснётся: Иностранные граждане и лица б
+ ез гражданства.\nКарточка закона: https://rus
+ lan7121.github.io/kalendar-zakonov/?tab=l&law=8885f76d
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=8885f76d
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

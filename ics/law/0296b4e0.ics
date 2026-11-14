@@ -1,0 +1,29 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Налоговые поправки: очередной эт
+ ап
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-0296b4e0@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261201
+DTEND;VALUE=DATE:20261202
+SUMMARY:Вступает в силу: Налоговые поправки
+ : очередной этап
+DESCRIPTION:Федеральный закон от 28.11.2025 № 425-Ф
+ З (отдельные положения)\nИмпортеры и про
+ изводители электроники и электронных к
+ омпонентов платят технологический сбо
+ р — не больше 5000 рублей за единицу\; без 
+ уплаты маркируемый товар нельзя ввести
+  в оборот.\nКого коснётся: Налогоплатель
+ щики — организации и граждане.\nКарточк
+ а закона: https://ruslan7121.github.io/kalendar-zakonov/?tab=l&la
+ w=0296b4e0
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=0296b4e0
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

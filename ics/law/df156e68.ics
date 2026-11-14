@@ -1,0 +1,27 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Контроль доходов трудовых мигра
+ нтов
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-df156e68@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:Вступает в силу: Контроль доходов т
+ рудовых мигрантов
+DESCRIPTION:Федеральный закон от 26.07.2026 № 241-Ф
+ З (отдельные положения)\nНалоговая буде
+ т сообщать в МВД\, сколько заработали тр
+ удовые мигранты\, а МВД — проверять\, ес
+ ть ли у них доход и какого уровня.\nКого 
+ коснётся: Трудовые мигранты и их работо
+ датели.\nКарточка закона: https://ruslan7121.github.
+ io/kalendar-zakonov/?tab=l&law=df156e68
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=df156e68
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

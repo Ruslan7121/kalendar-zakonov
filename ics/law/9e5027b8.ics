@@ -1,0 +1,25 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Вычет по НДПИ на газ на Ямале
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-9e5027b8@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261101
+DTEND;VALUE=DATE:20261102
+SUMMARY:Вступает в силу: Вычет по НДПИ на га
+ з на Ямале
+DESCRIPTION:Федеральный закон от 28.11.2025 № 425-Ф
+ З (отдельные положения)\nДля отдельных д
+ обытчиков газа на полуострове Ямал вво
+ дится налоговый вычет по НДПИ\, коэффиц
+ иент снижается до 0\,03.\nКого коснётся: Га
+ зодобывающие компании.\nКарточка закон
+ а: https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=9e5027b8
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=9e5027b8
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

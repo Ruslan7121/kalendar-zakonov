@@ -1,0 +1,28 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Изменения в закон о госрегистрац
+ ии недвижимости
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-09eb9276@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20261024
+DTEND;VALUE=DATE:20261025
+SUMMARY:Вступает в силу: Изменения в закон о
+  госрегистрации недвижимости
+DESCRIPTION:Федеральный закон от 26.07.2026 № 263-Ф
+ З\nС публичной кадастровой карты можно 
+ убрать сведения о зданиях и сооружения
+ х важных\, режимных\, критически важных 
+ и опасных объектов — например\, энергет
+ ики и транспорта.\nКого коснётся: Собств
+ енники недвижимости\, Росреестр.\nКарто
+ чка закона: https://ruslan7121.github.io/kalendar-zakonov/?tab=
+ l&law=09eb9276
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=09eb9276
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

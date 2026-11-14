@@ -1,0 +1,25 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Бойцов СВО защитят от сокращения
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-3743ac9e@kalendar-zakonov
+DTSTAMP:20261114T133150Z
+DTSTART;VALUE=DATE:20260901
+DTEND;VALUE=DATE:20260902
+SUMMARY:Вступает в силу: Бойцов СВО защитят 
+ от сокращения
+DESCRIPTION:Федеральный закон от 25.04.2026 № 108-Ф
+ З\nУчастники СВО\, вернувшиеся на прежне
+ е место работы\, получают преимуществен
+ ное право остаться на работе при сокращ
+ ении штата.\nКого коснётся: Ветераны СВО
+  и их работодатели.\nКарточка закона: https
+ ://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=3743ac9e
+URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=3743ac9e
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR
