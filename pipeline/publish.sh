@@ -116,8 +116,9 @@ cat > README.md <<MD
 MD
 git add -A
 CHANGED=$(git diff --cached --name-only)
-# в коммите допустимы только файлы сайта
-BAD=$(echo "$CHANGED" | grep -v -E '^(index\.html|404\.html|app\.js|app\.[0-9a-f]{10}\.js|README\.md|\.nojekyll|favicon\.svg|og\.png|manifest\.webmanifest|sw\.js|robots\.txt|sitemap\.xml|(bill|feed|ics)/[A-Za-z0-9._/-]+|data/(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json)$' || true)
+# в коммите допустимы только файлы сайта (14.11.2026: + day/ и fractions/ — страницы дней и статистики фракций из web/extras.mjs;
+# без них с 13.11 падали все выкладки — и deploy, и ежедневный прогон)
+BAD=$(echo "$CHANGED" | grep -v -E '^(index\.html|404\.html|app\.js|app\.[0-9a-f]{10}\.js|README\.md|\.nojekyll|favicon\.svg|og\.png|manifest\.webmanifest|sw\.js|robots\.txt|sitemap\.xml|(bill|feed|ics|day|fractions)/[A-Za-z0-9._/-]+|data/(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json)$' || true)
 [ -z "$BAD" ] || die "в коммит gh-pages попали неожиданные файлы: $BAD"
 if git diff --cached --quiet -- . ':(exclude)README.md'; then
   echo "publish.sh: сайт не изменился ($JS уже опубликован), коммит не нужен"; exit 0
