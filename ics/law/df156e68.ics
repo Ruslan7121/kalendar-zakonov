@@ -8,7 +8,7 @@ X-WR-CALNAME:Контроль доходов трудовых мигра
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-df156e68@kalendar-zakonov
-DTSTAMP:20261114T190143Z
+DTSTAMP:20261114T191128Z
 DTSTART;VALUE=DATE:20261001
 DTEND;VALUE=DATE:20261002
 SUMMARY:Вступает в силу: Контроль доходов т
@@ -20,8 +20,8 @@ DESCRIPTION:Федеральный закон от 26.07.2026 № 241-Ф
  ть ли у них доход и какого уровня.\nКого 
  коснётся: Трудовые мигранты и их работо
  датели.\nОфициальный источник: http://kremlin.r
- u/acts/bank/9555
-URL:http://kremlin.ru/acts/bank/9555
+ u/acts/bank/search?query=%E2%84%96%20241-%D0%A4%D0%97
+URL:http://kremlin.ru/acts/bank/search?query=%E2%84%96%20241-%D0%A4%D0%97
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

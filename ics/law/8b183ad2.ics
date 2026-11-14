@@ -7,7 +7,7 @@ X-WR-CALNAME:Самозапрет на азартные игры
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-8b183ad2@kalendar-zakonov
-DTSTAMP:20261114T190143Z
+DTSTAMP:20261114T191128Z
 DTSTART;VALUE=DATE:20260901
 DTEND;VALUE=DATE:20260902
 SUMMARY:Вступает в силу: Самозапрет на азар
@@ -18,9 +18,9 @@ DESCRIPTION:Федеральный закон от 29.12.2025 № 575-Ф
  ли Госуслуги\; реклама игр будет с преду
  преждением о зависимости.\nКого коснётс
  я: Граждане\, букмекеры и рекламодатели.
- \nОфициальный источник: http://kremlin.ru/acts/bank/2
- 1916
-URL:http://kremlin.ru/acts/bank/21916
+ \nОфициальный источник: http://kremlin.ru/acts/bank/s
+ earch?query=%E2%84%96%20575-%D0%A4%D0%97
+URL:http://kremlin.ru/acts/bank/search?query=%E2%84%96%20575-%D0%A4%D0%97
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR
