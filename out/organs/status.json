@@ -1,7 +1,7 @@
 {
- "run": "14.11.2026 04:36 МСК",
+ "run": "14.11.2026 22:56 МСК",
  "window": [
-  "14.11.2026",
+  "07.11.2026",
   "14.11.2026"
  ],
  "ahead_to": "17.11.2026",
@@ -21,10 +21,20 @@
    "status": "ok",
    "n": 64
   },
+  "mintrud_news": {
+   "url": "https://mintrud.gov.ru/news/news/list",
+   "status": "ok",
+   "n": 12
+  },
+  "minfin_news": {
+   "url": "https://minfin.gov.ru/ru/press-center/",
+   "status": "ok",
+   "n": 18
+  },
   "minjust_events": {
    "url": "https://minjust.gov.ru/ru/events/list/",
    "status": "ok",
-   "n": 3
+   "n": 20
   },
   "minfin_pravo": {
    "url": "http://publication.pravo.gov.ru/documents/foiv283/monthly",
@@ -56,6 +66,6 @@
    "why": "реестр регистрации НПА (publication.pravo.gov.ru, pravo.minjust.ru) — с этой машины нет соединения/HTTP 500"
   }
  },
- "new": 0,
- "total": 17
+ "new": 34,
+ "total": 51
 }
