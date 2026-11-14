@@ -26,7 +26,7 @@ MSK = dt.timezone(dt.timedelta(hours=3))
 UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
 ODIR = os.path.join(C.OUT, 'organs')
 ORGS = {'minfin': 'Минфин', 'mintrud': 'Минтруд', 'minjust': 'Минюст', 'cbr': 'Банк России', 'sf': 'Совет Федерации'}
-TYPES = ('заседание', 'проект', 'решение', 'разъяснение')
+TYPES = ('заседание', 'проект', 'решение', 'разъяснение', 'новость')  # «новость» — во вкладку «Новости» (ORGNEWS), не в календарь
 MONTHS = {m: i + 1 for i, m in enumerate(['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'])}
 SOURCES = {
     'cbr_news': 'https://www.cbr.ru/rss/RssNews',
@@ -115,8 +115,8 @@ def parse_mintrud_docs(xml):
     return res
 
 def parse_minjust_events(h):
-    """Лента /ru/events/list/: заголовки дат «6 ноября 2026 год» и ссылки /ru/events/N/. Берем только
-    коллегии (заседание), разработанные проекты (проект) и распоряжения о реестрах (решение)."""
+    """Лента /ru/events/list/: заголовки дат «6 ноября 2026 год» и ссылки /ru/events/N/. Коллегии — заседание,
+    разработанные проекты — проект (они же в календаре); 14.11.2026: остальные материалы ленты — «новость» (вкладка «Новости»)."""
     res, cur = [], None
     h = re.sub(r'<div class="day">\s*(\d{1,2})(?:&nbsp;|\s)+(\w+)\s*</div>\s*<div class="year">\s*(\d{4})\s*год', r'\1 \2 \3 год', h)
     for m in re.finditer(r'(\d{1,2}\s+(?:' + '|'.join(MONTHS) + r')\s+\d{4})\s*год|<a[^>]+href="(/ru/events/\d+/)"[^>]*>(.*?)</a>', h, re.S):
@@ -126,6 +126,7 @@ def parse_minjust_events(h):
         u = 'https://minjust.gov.ru' + m.group(2); lt = t.lower()
         if 'коллеги' in lt: res.append(ev('minjust', cur, 'заседание', t, u, 'Коллегия'))
         elif re.search(r'разработан\w* (законопроект|проект)|проект\w* приказ', lt): res.append(ev('minjust', cur, 'проект', t, u, 'Проект'))
+        else: res.append(ev('minjust', cur, 'новость', t, u, 'Новость'))
     seen, out = set(), []
     for e in res:
         if e['id'] not in seen: seen.add(e['id']); out.append(e)

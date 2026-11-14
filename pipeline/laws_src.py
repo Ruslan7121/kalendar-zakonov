@@ -64,16 +64,36 @@ def page_ok(html, num, d):
     return any(matches(h, num, d) for h in heads(html))
 
 
+def ranked(html, num, d):
+    """Ссылки на акты из страницы поиска: сначала те, у которых в тексте ссылки или после неё
+    стоят номер и дата закона (текст от ссылки до следующей), затем остальные — в порядке появления."""
+    good, rest = [], []; ms = list(re.finditer(r'href="(/acts/bank/\d+)"', html))
+    for i, m in enumerate(ms):
+        p = m.group(1)
+        if p in good or p in rest: continue
+        end = ms[i + 1].start() if i + 1 < len(ms) else len(html)  # текст от этой ссылки до следующей — её строка в выдаче
+        near = C.text(html[m.start():min(end, m.end() + 600)])
+        (good if matches(near, num, d) else rest).append(p)
+    return good + [p for p in rest if p not in good]
+
+
+DBG = os.path.join(C.OUT, 'laws_src_debug')
+
+
 def find(num, d):
-    h = f'/tmp/lawsrc_{num}.html'
-    if not C.fetch('http://kremlin.ru/acts/bank/search?query=' + ('№ ' + num).replace(' ', '+'), h, 60):
-        return None, 'поиск kremlin.ru недоступен'
-    for path in candidates(open(h, errors='ignore').read())[:5]:
-        h2 = h + path.rsplit('/', 1)[1]
-        if not C.fetch('http://kremlin.ru' + path, h2, 60): continue
-        if page_ok(open(h2, errors='ignore').read(), num, d):
-            return 'http://kremlin.ru' + path, ''
-    return None, 'в поиске kremlin.ru нет страницы с этим номером и датой'
+    """Поиск закона на kremlin.ru: запрос с номером и датой, затем только с номером; проверка — заголовок страницы акта."""
+    os.makedirs(DBG, exist_ok=True); seen = set(); ok_search = False
+    for k, q in enumerate([f'№ {num} от {d}', f'{d} № {num}', f'№ {num}']):
+        h = os.path.join(DBG, f'search_{num}_{k}.html')
+        if not C.fetch('http://kremlin.ru/acts/bank/search?query=' + q.replace(' ', '+'), h, 60): continue
+        ok_search = True
+        for path in ranked(open(h, errors='ignore').read(), num, d)[:10]:
+            if path in seen: continue
+            seen.add(path); h2 = os.path.join(DBG, f'act_{path.rsplit("/", 1)[1]}.html')
+            if not C.fetch('http://kremlin.ru' + path, h2, 60): continue
+            if page_ok(open(h2, errors='ignore').read(), num, d):
+                return 'http://kremlin.ru' + path, ''
+    return None, ('поиск kremlin.ru недоступен' if not ok_search else f'в поиске kremlin.ru нет страницы с этим номером и датой (проверено {len(seen)})')
 
 
 def main(dry=False):
