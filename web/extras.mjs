@@ -3,6 +3,7 @@
 //                             по нему в календаре, путь закона, ссылки на sozd/vote; Open Graph для превью в мессенджерах.
 //   bill/index.html         — список всех законопроектов (последнее голосование сверху).
 //   feed/gd.xml             — RSS: голосования Госдумы по законопроектам (последние 100).
+//   feed/org-<орган>.xml    — RSS по органу: новости и документы (Правительство, СФ, Банк России, министерства).
 //   feed/<метка>.xml        — RSS по каждой метке «Для кого» / «Тема» / «Что меняется»; feed/index.html — список лент.
 //   ics/laws.ics            — календарь (.ics): законы, вступающие в силу («Вступают в силу»).
 //   ics/law/<номер>.ics    — один закон (кнопка «Добавить в календарь» в карточке закона), ссылка — на официальный источник.
@@ -22,11 +23,12 @@ const rd = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8')
 const IDX = rd('index.json');
 const CORE = rd('core.json');
 const M = {}; // имя блока → объединённые значения всех месяцев
-const CALP = [];
+const CALP = []; const ORGA = []; // ORG — массивы по месяцам (документы и новости органов)
 for (const mk of IDX.months) {
   const J = rd(IDX.file[mk]);
   for (const [k, v] of Object.entries(J)) {
     if (k === 'CAL.p') { CALP.push(...v); continue; }
+    if (k === 'ORG' && Array.isArray(v)) { ORGA.push(...v); continue; }
     if (Array.isArray(v)) continue;
     if (v && typeof v === 'object') M[k] = Object.assign(M[k] || {}, v);
   }
@@ -133,10 +135,24 @@ ${list.map(({ b, v }) => `<item><title>${esc(`${b.title} — ${v.read ? v.read +
 </channel></rss>`;
 put('feed/gd.xml', rss('Календарь законов: голосования Госдумы', 'Голосования Госдумы по законопроектам: стадия, итог, суть — по официальным данным.', SITE, `${SITE}feed/gd.xml`, items(ALL, 100)));
 for (const [k, tg] of Object.entries(TAGS)) put(`feed/${k}.xml`, rss(`Календарь законов: ${tg.name}`, `Голосования Госдумы по законопроектам с меткой «${tg.name}» (${tg.grp}).`, `${SITE}?${tg.q}=${encodeURIComponent(tg.name)}`, `${SITE}feed/${k}.xml`, items(tg.bills, 60)));
+// 14.11.2026: ленты органов — feed/org-<орган>.xml: новости и документы Правительства, Совета Федерации, Банка России и министерств
+// (для «Моей ленты» из фильтров). Ссылки только официальные; новые сверху, до 100 материалов.
+const offU = (u) => /^https?:\/\/([a-z0-9-]+\.)*(gov\.ru|kremlin\.ru|government\.ru|cbr\.ru)(\/|$)/i.test(u || '');
+const ORGF = { gov: 'Правительство РФ', sf: 'Совет Федерации', cbr: 'Банк России', minfin: 'Минфин России', mintrud: 'Минтруд России', minjust: 'Минюст России' };
+const oItems = Object.fromEntries(Object.keys(ORGF).map((o) => [o, []]));
+for (const x of ORGA) if (oItems[x.o] && offU(x.u)) oItems[x.o].push({ d: x.d, t: x.st || x.t, x: x.sut || x.x || x.full || '', u: x.u, k: x.kind || x.k || '' });
+for (const [d, arr] of Object.entries(pick('SFN'))) for (const x of arr || []) if (offU(x.u)) oItems.sf.push({ d, t: x.st || x.t, x: x.sut || x.x || '', u: x.u, k: x.k || 'Новость' });
+for (const [d, sm] of Object.entries(pick('SUM'))) for (const g of (sm && sm.g) || []) { const u = /^https?:/.test(g[2] || '') ? g[2] : `http://government.ru/news/${g[2]}/`; if (offU(u)) oItems.gov.push({ d, t: `${g[0]}: ${g[1]}`, x: g[1], u, k: 'Новость' }); }
+const orss = (o) => { const seen = new Set(); const list = oItems[o].filter((x) => x.t && !seen.has(x.u + x.d) && seen.add(x.u + x.d)).sort((a, b) => pd(b.d) - pd(a.d)).slice(0, 100);
+  return `<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>${esc(`Календарь законов: ${ORGF[o]}`)}</title><link>${SITE}</link><description>${esc(`Новости и документы: ${ORGF[o]} — по официальным источникам.`)}</description><language>ru</language><atom:link href="${SITE}feed/org-${o}.xml" rel="self" type="application/rss+xml"/>
+${list.map((x) => `<item><title>${esc((x.k && x.k !== 'Новость' ? x.k + ': ' : '') + x.t)}</title><link>${esc(x.u)}</link><guid isPermaLink="false">kalendar-zakonov:${o}:${esc(x.u)}#${x.d}</guid><pubDate>${rfc(x.d)}</pubDate><description>${esc(x.x)}</description></item>`).join('\n')}
+</channel></rss>`; };
+for (const o of Object.keys(ORGF)) put(`feed/org-${o}.xml`, orss(o));
 put('feed/index.html', page({ title: 'Подписки', desc: 'RSS-ленты и календари .ics «Календаря законов».', url: `${SITE}feed/`, depth: 1,
   body: `<h1>Подписки</h1><p>Добавьте адрес ленты в RSS-читалку (Feedly, Inoreader, NetNewsWire, Telegram-бот для RSS) или календарь .ics в Google / Apple / Яндекс Календарь (пункт «Подписаться по URL»).</p>
 <h2>Календари .ics</h2><div class="list"><a class="row" href="../ics/laws.ics"><b>Законы вступают в силу</b><span class="meta">${SITE}ics/laws.ics</span></a><a class="row" href="../ics/plenary.ics"><b>Пленарные заседания Госдумы</b><span class="meta">${SITE}ics/plenary.ics</span></a></div>
-<h2>RSS</h2><div class="list"><a class="row" href="gd.xml"><b>Все голосования Госдумы по законопроектам</b><span class="meta">${SITE}feed/gd.xml</span></a></div>
+<h2>RSS</h2><div class="list"><a class="row" href="gd.xml"><b>Все голосования Госдумы по законопроектам</b><span class="meta">${SITE}feed/gd.xml</span></a>${Object.entries(ORGF).map(([o, n]) => `<a class="row" href="org-${o}.xml"><b>${esc(n)}: новости и документы</b><span class="meta">${SITE}feed/org-${o}.xml</span></a>`).join('')}</div>
 ${GRP.map(([q, l]) => `<h2>${esc(l)}</h2><div class="chips">${Object.entries(TAGS).filter(([, x]) => x.q === q).sort((a, b) => b[1].bills.length - a[1].bills.length).map(([k, x]) => `<a class="chip" href="${k}.xml">${esc(x.name)} · ${x.bills.length}</a>`).join('')}</div>`).join('')}` }));
 
 // .ics

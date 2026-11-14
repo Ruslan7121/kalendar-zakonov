@@ -1,0 +1,57 @@
+# 14.11.2026: сбор только органов — документы и новости Совета Федерации, Банка России, Минфина, Минтруда, Минюста
+# (pipeline/organs.py за последние 7 дней, --embed) → проверка данных и тесты → коммит в main → публикация сайта.
+# Голосования Госдумы, календарь и законопроекты не собирает. Запуск вручную: Actions → organs → Run workflow.
+name: organs
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: daily-run
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      TZ: Europe/Moscow
+      GD_DUMA: ${{ github.workspace }}/../duma
+      GD_REQUIRE_BROWSER: '1'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Зависимости
+        run: |
+          npm install --no-audit --no-fund
+          mkdir -p "$GD_DUMA/lists" "$GD_DUMA/bills" "$GD_DUMA/days"
+      - name: Автор коммитов
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Сбор органов (pipeline/organs.py)
+        run: |
+          FROM="$(date -d '7 days ago' +%d.%m.%Y)"; TO="$(date +%d.%m.%Y)"
+          cd pipeline && python3 organs.py --from "$FROM" --to "$TO" --embed 2>&1 | tee ../organs.log
+          cd .. && python3 pipeline/strip_code_only.py && node pipeline/split_data.mjs
+      - name: Проверка схемы данных
+        run: node pipeline/validate_data.mjs
+      - name: Проверка типов и тесты
+        run: |
+          npm run typecheck
+          bash tests/run_all.sh
+      - name: Коммит в main (pipeline/commit.sh)
+        run: bash pipeline/commit.sh "Документы и новости органов (автоматически)"
+      - name: Публикация (pipeline/publish.sh)
+        run: bash pipeline/publish.sh "Документы и новости органов"
+      - name: Сводка
+        if: always()
+        run: |
+          { echo '### Органы'; echo '```'; cat organs.log 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
