@@ -3608,11 +3608,11 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
     return (
       <div key={s} role="button" tabIndex={0} onClick={click} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); click(); } }}
         aria-pressed={isS} data-heat={heat ? heat.toFixed(2) : undefined} title={[nEv ? `Событий: ${nEv}` : '', gdOn && p && !exp ? (plan(p) ? 'Пленарное заседание Госдумы (ожидается)' : 'Пленарное заседание Госдумы') : '', gdOn && bud ? 'Рассмотрение бюджета' : '', g ? 'Заседание Правительства РФ' : '', og ? [...new Set(og.map((x: any) => x.o))].map((o: any) => ORGN[o] || o).join(' · ') : '', isS ? 'Снять выбор' : 'Показать события дня'].filter(Boolean).join(' · ')}
-        style={{ position: 'relative', minWidth: 0, height: m ? 56 : 42, borderRadius: 8, cursor: 'pointer', opacity: inM ? 1 : 0, pointerEvents: inM ? 'auto' : 'none',
+        style={{ position: 'relative', minWidth: 0, height: m ? (wl ? 54 : 44) : 42, borderRadius: 8, cursor: 'pointer', opacity: inM ? 1 : 0 /* 14.11.2026: ниже клетки на телефоне — блок компактнее */, pointerEvents: inM ? 'auto' : 'none',
           /* новый вид: фон у всех дней одинаковый; выделяются только выбранный день и сегодняшний */ background: isS ? SELB : inM ? neu : 'transparent',
           boxShadow: isS ? `inset 0 0 0 2px ${SELC}${isT ? `, inset 0 0 0 3.5px ${blue}` : ''}` : isT ? `inset 0 0 0 1.5px ${blue}` : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {wl && <span aria-hidden style={{ position: 'absolute', top: 5, left: 0, right: 0, textAlign: 'center', fontSize: 10.5, color: t.text.tertiary }}>{WDS[(d.getDay() + 6) % 7]}</span>}
-        <span style={{ marginBottom: wl ? 0 : m ? 14 : 12, marginTop: wl ? 6 : 0, fontSize: m ? 14 : 15, fontWeight: isT ? t.weight.semibold : t.weight.regular, color: isS ? SELC : wd ? t.text.primary : t.text.tertiary, ...(isS ? { fontWeight: 700 } : {}), fontVariantNumeric: 'tabular-nums' }}>{d.getDate()}</span>
+        <span style={{ marginBottom: wl ? 0 : m ? 9 : 12, marginTop: wl ? 6 : 0, fontSize: m ? 14 : 15, fontWeight: isT ? t.weight.semibold : t.weight.regular, color: isS ? SELC : wd ? t.text.primary : t.text.tertiary, ...(isS ? { fontWeight: 700 } : {}), fontVariantNumeric: 'tabular-nums' }}>{d.getDate()}</span>
         {((gdOn && ((p && !exp) || bud)) || g || og) && <span data-mks="1" style={{ position: 'absolute', bottom: 4, left: 2, right: 2, display: 'flex', flexWrap: 'wrap-reverse', justifyContent: 'center', gap: 2 }}>
           {gdOn && p && !exp && (plan(p) ? <i data-mk="plx" style={{ width: mkw, height: 5, borderRadius: 1.5, flex: 'none', boxSizing: 'border-box', border: `1.5px solid ${blue}`, background: 'transparent' }} /> : <i data-mk="pl" style={{ width: mkw, height: 5, borderRadius: 1.5, flex: 'none', background: blue }} />)}
           {og && ORGK.filter((o) => og.some((x: any) => x.o === o)).map((o) => <i key={o} data-mk={o} style={{ width: mkw, height: 5, borderRadius: 1.5, flex: 'none', background: orgCol(o, dk) }} />)}
@@ -3796,15 +3796,16 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
       <div data-calcol="1" style={fon || !!qn ? { display: 'none' } : !m ? { flex: '0 0 360px', maxWidth: 360, minWidth: 0, overflowX: 'hidden', position: 'sticky', top: 'calc(var(--gd-top, 0px) + 8px)', maxHeight: 'calc(100vh - var(--gd-top, 0px) - 16px)', overflowY: 'auto', alignSelf: 'flex-start' } : undefined}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: m ? 10 : 6 }}>{[cm].map((k) => grid(new Date(+k.slice(3), +k.slice(0, 2) - 1, 1)))}</div>
       <div style={{ display: m && cwk && ck(sd ? pd(sd) : now) === cm ? 'none' : 'flex', alignItems: 'flex-start', gap: 8, marginBottom: inf ? 8 : m ? 16 : 4, transition: 'margin .25s ease' }}>
-        <div data-legend="1" style={{ flex: 1, minWidth: 0, display: m ? 'flex' : 'grid', ...(m ? { flexDirection: 'column', alignItems: 'flex-start' } : { gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', columnGap: 10, alignItems: 'start' }), gap: m ? 6 : 4, fontSize: m ? 13 : 12, lineHeight: '16px', color: t.text.secondary, paddingTop: m ? 14 : 4 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: m ? 6 : 4, minWidth: 0 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.text.tertiary }}>Госдума</span>
+        <div data-legend="1" style={{ flex: 1, minWidth: 0, display: m ? 'flex' : 'grid', ...(m ? { flexDirection: 'column', alignItems: 'flex-start' } : { gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', columnGap: 10, alignItems: 'start' }), gap: m ? 8 : 4, fontSize: m ? 12.5 : 12, lineHeight: '16px', color: t.text.secondary, paddingTop: m ? 6 : 4 }}>
+        {/* 14.11.2026: на телефоне пункты легенды идут в строку с переносом, а не столбиком — блок занимает 3–4 строки вместо 12 */}
+        <div style={{ display: 'flex', flexDirection: m ? 'row' : 'column', flexWrap: m ? 'wrap' : undefined, alignItems: m ? 'center' : 'flex-start', gap: m ? '4px 12px' : 4, minWidth: 0 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.text.tertiary, ...(m ? { flex: '0 0 100%' } : {}) }}>Госдума</span>
         {lg(<i data-lg="pl" style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: blue }} />, 'Пленарное заседание')}
         {lg(<i data-lg="bud" style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: amber }} />, 'Рассмотрение бюджета')}
         {lg(<i data-lg="plx" style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', boxSizing: 'border-box', border: `1.5px solid ${blue}` }} />, 'Ожидается')}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: m ? 6 : 4, minWidth: 0 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.text.tertiary, marginTop: m ? 4 : 0 }}>Другие органы</span>
+        <div style={{ display: 'flex', flexDirection: m ? 'row' : 'column', flexWrap: m ? 'wrap' : undefined, alignItems: m ? 'center' : 'flex-start', gap: m ? '4px 12px' : 4, minWidth: 0 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.text.tertiary, ...(m ? { flex: '0 0 100%' } : {}) }}>Другие органы</span>
         {lg(<i data-lg="gov" style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: green }} />, 'Правительство РФ')}
         {ORGK.map((o) => <span key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><i data-lg={o} style={{ width: 14, height: 6, borderRadius: 1.5, display: 'inline-block', background: orgCol(o, dk) }} />{ORGN[o]}</span>)}
         </div>
