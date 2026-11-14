@@ -3,7 +3,8 @@
 
 Для каждого закона из LAWS без официальной ссылки (*.gov.ru, kremlin.ru, government.ru, cbr.ru) берём номер и дату из поля
 law («Федеральный закон от 28.11.2025 № 425-ФЗ …»), ищем его на kremlin.ru/acts/bank/search (тот же поиск, что в track.py),
-открываем найденные страницы и оставляем только ту, где в тексте есть и номер, и дата подписания. Найденная ссылка
+открываем найденные страницы и оставляем только ту, где номер и дата подписания стоят в заголовке самого акта
+(<title>, og:title, <h1>) — не во всём тексте: на страницах kremlin.ru есть ленты других документов. Найденная ссылка
 добавляется в src закона (и в LAWS_FIX, если он подменяет src этого закона). Не нашлось или источник недоступен — ничего
 не меняем, пишем в out/logs/laws_src.log; на сайте остаётся ссылка на поиск закона на kremlin.ru.
 Запуск: python3 laws_src.py [--dry]
@@ -44,9 +45,23 @@ def candidates(html):
 
 
 def matches(text, num, d):
-    """Страница акта — нужный закон: есть номер «№ 425-ФЗ» и дата подписания."""
+    """Строка (заголовок акта) — нужный закон: есть номер «№ 425-ФЗ» и дата подписания."""
     t = re.sub(r'\s+', ' ', text)
     return bool(re.search(r'№\s*' + re.escape(num) + r'(?!\d)', t)) and any(w in t for w in date_words(d))
+
+
+def heads(html):
+    """Заголовки страницы акта: <title>, og:title, <h1>. Только по ним сверяем номер и дату — в тексте страницы kremlin.ru
+    есть ленты других документов, и сверка по всему тексту (14.11.2026) приняла старые акты 8506, 12755… за законы 2025–2026 годов."""
+    out = [m.group(1) for m in re.finditer(r'(?is)<title[^>]*>(.*?)</title>', html)]
+    out += [m.group(1) for m in re.finditer(r'(?is)<meta[^>]+property="og:title"[^>]+content="([^"]*)"', html)]
+    out += [m.group(1) for m in re.finditer(r'(?is)<h1[^>]*>(.*?)</h1>', html)]
+    return [C.text(h) for h in out]
+
+
+def page_ok(html, num, d):
+    """Страница — нужный закон, только если номер и дата есть в одном из её заголовков."""
+    return any(matches(h, num, d) for h in heads(html))
 
 
 def find(num, d):
@@ -56,7 +71,7 @@ def find(num, d):
     for path in candidates(open(h, errors='ignore').read())[:5]:
         h2 = h + path.rsplit('/', 1)[1]
         if not C.fetch('http://kremlin.ru' + path, h2, 60): continue
-        if matches(C.text(open(h2, errors='ignore').read()), num, d):
+        if page_ok(open(h2, errors='ignore').read(), num, d):
             return 'http://kremlin.ru' + path, ''
     return None, 'в поиске kremlin.ru нет страницы с этим номером и датой'
 
