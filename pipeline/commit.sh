@@ -23,6 +23,9 @@ node pipeline/split_data.mjs
 # 13.11.2026: out/organs/ (статусы и выжимки органов) и out/full/ тоже пишет run_daily.sh — без них publish.sh видел «незакоммиченные изменения»
 git add src/canvas.tsx src/canvas.code-only.tsx out/canvas.tsx out/canvas.code-only.tsx data/ out/days/ out/organs/ out/full/ docs/ 2>/dev/null || true
 git add -u extracts/ 2>/dev/null || true
+# 15.11.2026: и новые выжимки пояснительных записок — по ним ИИ пишет «Суть» и «Кого коснётся» (AGENTS.md, раздел 2);
+# раньше в git попадали только уже известные файлы, и записки новых законопроектов оставались лишь в Actions
+git add extracts/bills/*.json 2>/dev/null || true
 
 if git diff --cached --quiet; then
   echo "нет изменений для коммита"
