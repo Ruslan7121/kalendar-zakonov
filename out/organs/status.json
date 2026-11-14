@@ -1,25 +1,25 @@
 {
- "run": "10.11.2026 09:29 МСК",
+ "run": "14.11.2026 04:36 МСК",
  "window": [
-  "05.11.2026",
-  "10.11.2026"
+  "14.11.2026",
+  "14.11.2026"
  ],
- "ahead_to": "13.11.2026",
+ "ahead_to": "17.11.2026",
  "sources": {
   "cbr_news": {
    "url": "https://www.cbr.ru/rss/RssNews",
    "status": "ok",
-   "n": 15
+   "n": 18
   },
   "cbr_events": {
    "url": "https://www.cbr.ru/rss/eventrss",
    "status": "ok",
-   "n": 7
+   "n": 8
   },
   "mintrud_docs": {
    "url": "https://mintrud.gov.ru/document/rss",
    "status": "ok",
-   "n": 65
+   "n": 64
   },
   "minjust_events": {
    "url": "https://minjust.gov.ru/ru/events/list/",
@@ -28,17 +28,17 @@
   },
   "minfin_pravo": {
    "url": "http://publication.pravo.gov.ru/documents/foiv283/monthly",
-   "status": "snapshot:minfin_pravo_monthly.webfetch.md",
-   "n": 2
+   "status": "ok",
+   "n": 7
   },
   "sf_meetings": {
    "url": "http://council.gov.ru/activity/meetings/",
-   "status": "snapshot:sf_meetings.webfetch.md",
+   "status": "ok",
    "n": 6
   },
   "minfin_projects": {
    "url": "https://minfin.gov.ru/ru/document/npa_projects/",
-   "status": "blocked:HTTP 503, страница ограничения доступа"
+   "status": "ok (разбор не реализован)"
   },
   "mintrud_profstandards": {
    "url": "https://regulation.gov.ru/",
@@ -57,5 +57,5 @@
   }
  },
  "new": 0,
- "total": 13
+ "total": 17
 }
