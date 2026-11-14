@@ -8,7 +8,7 @@ X-WR-CALNAME:Приставы смогут запрашивать кре
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-f9552de7@kalendar-zakonov
-DTSTAMP:20261114T185726Z
+DTSTAMP:20261114T190143Z
 DTSTART;VALUE=DATE:20261126
 DTEND;VALUE=DATE:20261127
 SUMMARY:Вступает в силу: Приставы смогут за
@@ -23,9 +23,8 @@ DESCRIPTION:Федеральный закон от 07.06.2025 № 137-Ф
   взаимодействия.\nКого коснётся: Судебн
  ые приставы\, бюро кредитных историй\, к
  оллекторы и должники.\nОфициальный исто
- чник: http://kremlin.ru/acts/bank/search?query=%E2%84%96%20137-%D0%A
- 4%D0%97
-URL:http://kremlin.ru/acts/bank/search?query=%E2%84%96%20137-%D0%A4%D0%97
+ чник: http://kremlin.ru/acts/bank/40955
+URL:http://kremlin.ru/acts/bank/40955
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

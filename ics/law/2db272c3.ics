@@ -8,7 +8,7 @@ X-WR-CALNAME:Закупки школ и детсадов через ма
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-2db272c3@kalendar-zakonov
-DTSTAMP:20261114T185726Z
+DTSTAMP:20261114T190143Z
 DTSTART;VALUE=DATE:20261001
 DTEND;VALUE=DATE:20261002
 SUMMARY:Вступает в силу: Закупки школ и детс
@@ -19,9 +19,8 @@ DESCRIPTION:Федеральный закон от 04.08.2026 № 278-Ф
  пки малого объема через маркетплейсы\; 
  до 30.09.2028.\nКого коснётся: Бюджетные учре
  ждения и поставщики.\nОфициальный источ
- ник: http://kremlin.ru/acts/bank/search?query=%E2%84%96%20278-%D0%A4%
- D0%97
-URL:http://kremlin.ru/acts/bank/search?query=%E2%84%96%20278-%D0%A4%D0%97
+ ник: http://kremlin.ru/acts/bank/7384
+URL:http://kremlin.ru/acts/bank/7384
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

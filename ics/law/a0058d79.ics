@@ -8,7 +8,7 @@ X-WR-CALNAME:Займы — в бюро кредитных историй
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-a0058d79@kalendar-zakonov
-DTSTAMP:20261114T185726Z
+DTSTAMP:20261114T190143Z
 DTSTART;VALUE=DATE:20261231
 DTEND;VALUE=DATE:20270101
 SUMMARY:Вступает в силу: Займы — в бюро кред
@@ -19,8 +19,8 @@ DESCRIPTION:Федеральный закон от 13.02.2025 № 9-ФЗ\
  ребительского кредита для борьбы с мош
  енничеством.\nКого коснётся: Заемщики\, 
  банки\, МФО.\nОфициальный источник: http://kr
- emlin.ru/acts/bank/search?query=%E2%84%96%209-%D0%A4%D0%97
-URL:http://kremlin.ru/acts/bank/search?query=%E2%84%96%209-%D0%A4%D0%97
+ emlin.ru/acts/bank/21866
+URL:http://kremlin.ru/acts/bank/21866
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR
