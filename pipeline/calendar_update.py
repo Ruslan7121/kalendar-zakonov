@@ -93,11 +93,21 @@ def gov_meetings():
             if not any(o['date'] == date for o in out): out.append({'date': date, 'title': t[:160], 'url': 'http://government.ru' + m.group(1), 'source': 'government.ru/meetings/'})
     return out
 
+def load_static(path=STATIC):
+    """Распорядок сессии. 15.11.2026: $GD_DUMA/calendar_static.json лежит только в кэше Actions; если кэш восстановлен из запуска
+    другого workflow (laws, organs) без этого файла, распорядок берется из CAL в src/canvas.tsx (недели и известные пленарные
+    дни с их статусом и источником) — раньше календарь в этом случае не обновлялся вовсе (FileNotFoundError)."""
+    if os.path.exists(path): return json.load(open(path))
+    s = C.read_canvas(); i = s.index('const CAL: any = ') + len('const CAL: any = '); cal = json.loads(s[i:s.index('\n', i)].rstrip(';'))
+    print(f'calendar_update: нет {path} — распорядок взят из CAL ({len(cal["p"])} пленарных дней)', file=sys.stderr)
+    return {'weeks': [{'from': a, 'to': b, 'type': t} for a, b, t in cal['w']],
+            'plenary_days': [{'date': x['d'], 'status': x['s'], 'time': x.get('t'), 'source': x['src']} for x in cal['p']]}
+
 def main():
     back = int(sys.argv[sys.argv.index('--days-back') + 1]) if '--days-back' in sys.argv else 4
     today = dt.date.today()
     old = json.load(open(OUT)) if os.path.exists(OUT) else {}
-    st = json.load(open(STATIC))
+    st = load_static()
     nums = []
     for i in range(back, -1, -1):
         for n in council_bills(today - dt.timedelta(days=i)):
