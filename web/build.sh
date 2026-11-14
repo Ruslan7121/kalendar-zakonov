@@ -15,6 +15,14 @@ cp web/index.html web/dist/index.html
 # Т2 (13.11.2026): «Данные обновлены …» — время последнего коммита в data/ (в git), сайт показывает его внизу страницы
 UPD="$(git log -1 --format=%cI -- data/ 2>/dev/null || true)"
 sed -i "s#<script src=\"app.js\"></script>#<script>window.__GD_UPD=\"$UPD\"</script><script src=\"app.js\"></script>#" web/dist/index.html
+# 14.11.2026: данные первой отрисовки (core + месяц из ?d= / последний день / текущий месяц — как firstMonths в web/gdx.ts)
+# начинают скачиваться сразу, параллельно с app.js, а не после его запуска (было три запроса подряд — заметно на медленной сети).
+# Тот же запрос fetch(..., cors, same-origin) из gdx.ts берёт уже скачанный ответ.
+node -e '
+const fs = require("fs"); const M = JSON.parse(fs.readFileSync("web/gen/manifest.json", "utf8"));
+const F = {}; for (const k of ["core", ...M.months]) F[k] = M.file[k]; const last = M.DAYS.length ? M.DAYS[M.DAYS.length - 1].slice(3) : "";
+const js = `(function(){try{var F=${JSON.stringify(F)},q=new URLSearchParams(location.search+"&"+location.hash.replace(/^#/,"")),d=q.get("d"),n=new Date(),m=[],seen={};function p(f){if(!f||seen[f])return;seen[f]=1;var l=document.createElement("link");l.rel="preload";l.as="fetch";l.crossOrigin="anonymous";l.href="data/"+f;document.head.appendChild(l);}p(F.core);if(d&&/^\\d\\d\.\\d\\d\.\\d{4}$/.test(d))m.push(d.slice(3));m.push(${JSON.stringify(last)});m.push(("0"+(n.getMonth()+1)).slice(-2)+"."+n.getFullYear());m.forEach(function(k){p(F[k]);});}catch(e){}})();`;
+const f = "web/dist/index.html"; let h = fs.readFileSync(f, "utf8"); h = h.replace("</head>", `<script>${js}</script></head>`); fs.writeFileSync(f, h);'
 # статические файлы (П5): favicon, превью для ссылок, manifest; extras.txt — список для pipeline/publish.sh
 cp -r web/static/. web/dist/
 # П11, П13: страницы законопроектов bill/, RSS feed/, календари ics/, sitemap.xml — из data/*.json
