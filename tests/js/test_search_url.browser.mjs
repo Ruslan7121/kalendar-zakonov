@@ -52,7 +52,7 @@ try {
       return { s, close: () => cmd('Target.closeTarget', { targetId }) }; };
     // 1) поиск по «Сути» законопроекта и по документам органов
     { const p = await open('/?q=' + encodeURIComponent('форели'));
-      const ok = await until(p.s, `document.body.innerText.includes('1276697-8') && /Найдено по запросу/.test(document.body.innerText)`);
+      const ok = await until(p.s, `!!document.querySelector('[data-ivt$="1276697-8"]') && /Найдено по запросу/.test(document.body.innerText)`);
       chk(ok, '?q=форели: законопроект 1276697-8 (слово только в «Сути») не найден'); chk((await ev(p.s, CQ)) === 'форели', '?q=: строка поиска не заполнена');
       rep.push(tag(`?q=форели: ${ok ? 'найден 1276697-8' : 'НЕТ'}`)); await p.close(); }
     { const p = await open('/?q=' + encodeURIComponent('Колокольцев'));
