@@ -5,7 +5,7 @@
 //   feed/gd.xml             — RSS: голосования Госдумы по законопроектам (последние 100).
 //   feed/<метка>.xml        — RSS по каждой метке «Для кого» / «Тема» / «Что меняется»; feed/index.html — список лент.
 //   ics/laws.ics            — календарь (.ics): законы, вступающие в силу («Вступают в силу»).
-//   ics/law/<номер>.ics    — один закон (кнопка «Добавить в календарь» в карточке закона).
+//   ics/law/<номер>.ics    — один закон (кнопка «Добавить в календарь» в карточке закона), ссылка — на официальный источник.
 //   ics/plenary.ics         — календарь (.ics): пленарные заседания Госдумы (прошедшие и запланированные).
 //   sitemap.xml, robots.txt
 // Только данные из data/*.json; если поля нет — оно не выводится. Запуск: node web/extras.mjs [каталог] (по умолчанию web/dist).
@@ -150,9 +150,12 @@ const ics = (name, evs) => ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//kalenda
   'END:VCALENDAR'].join('\r\n') + '\r\n';
 // постоянный номер закона — тот же расчёт, что lawId в src/canvas.tsx (FNV-1a от даты, реквизитов и названия)
 const lawId = (x) => { let h = 0x811c9dc5; for (const ch of `${x.d}|${x.law || ''}|${x.title || ''}`) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
-const lawCard = (x) => `${SITE}?tab=l&law=${lawId(x)}`;
+// только официальные источники (правило проекта): *.gov.ru, kremlin.ru, government.ru, cbr.ru — тот же список, что isOff в canvas.tsx
+const isOff = (u) => { const h = String(u || '').replace(/^https?:\/\//i, '').split(/[/?#]/)[0].toLowerCase().replace(/^www\./, ''); return /\.gov\.ru$/.test(h) || h === 'kremlin.ru' || h === 'government.ru' || h === 'cbr.ru'; };
+// ссылка события — официальный источник закона (kremlin.ru, pravo.gov.ru, duma.gov.ru…), если его нет — портал официального опубликования
+const lawSrc = (x) => ((x.src || []).find((l) => l && isOff(l.u)) || {}).u || 'http://publication.pravo.gov.ru/';
 const LAWL = Object.values(LAWS.months || {}).flat().filter((x) => x && x.d && x.title);
-const lawEv = LAWL.map((x) => ({ uid: `law-${lawId(x)}`, d: x.d, s: `Вступает в силу: ${x.title}`, x: [x.law, x.sut, x.who ? `Кого коснётся: ${x.who}` : '', `Карточка закона: ${lawCard(x)}`].filter(Boolean).join('\n'), u: lawCard(x) }));
+const lawEv = LAWL.map((x) => ({ uid: `law-${lawId(x)}`, d: x.d, s: `Вступает в силу: ${x.title}`, x: [x.law, x.sut, x.who ? `Кого коснётся: ${x.who}` : '', `Официальный источник: ${lawSrc(x)}`].filter(Boolean).join('\n'), u: lawSrc(x) }));
 // ics/law/<номер>.ics — один закон: кнопка «Добавить в календарь» в карточке; в событии ссылка на карточку
 lawEv.forEach((e, i) => put(`ics/law/${lawId(LAWL[i])}.ics`, ics(LAWL[i].title, [e])));
 put('ics/laws.ics', ics('Законы вступают в силу', lawEv));
