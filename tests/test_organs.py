@@ -57,4 +57,10 @@ try:
     assert x2[k1]['nb'] == 'из enrich.json', '--embed: enrich.json должен быть главнее ORGX'
     assert len(C.get_block(open(cv).read(), 'ORG')) == len(ev)
 finally: shutil.rmtree(T, ignore_errors=True)
+# 14.11.2026: новости Минюста — все материалы ленты, кроме коллегий и проектов, идут как «новость» (вкладка «Новости»)
+mj = O.parse_minjust_events(open(os.path.join(R, 'tests', 'fixtures', 'minjust_events_list.html')).read())
+mjn = [e for e in mj if e['ty'] == 'новость']
+assert mjn and all(e['u'].startswith('https://minjust.gov.ru/ru/events/') for e in mjn), 'новости Минюста не разобраны'
+assert any(e['d'] == '03.11.2026' and e['t'].startswith('Константин Чуйченко совершил рабочую поездку') for e in mjn)
+assert not any('коллеги' in e['t'].lower() for e in mjn), 'коллегия — заседание, не новость'
 print(f'OK test_organs: событий {len(ev)}, с проверенными полями {len(enr)}, ORG/ORGX в canvas совпадают с out/organs')

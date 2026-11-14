@@ -1,0 +1,42 @@
+# 14.11.2026: разбор устройства страниц источников для новых парсеров (новости министерств и т. п.). Только читает и печатает,
+# ничего не коммитит и не публикует. Запуск вручную: Actions → probe → Run workflow, адреса через пробел.
+name: probe
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: 'Адреса страниц через пробел'
+        required: true
+permissions:
+  contents: read
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: Europe/Moscow
+      GD_DUMA: ${{ github.workspace }}/../duma
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Кэш конвейера (списки прокси)
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ github.workspace }}/../duma
+          key: duma-${{ github.run_id }}
+          restore-keys: duma-
+      - name: Страницы
+        env:
+          URLS: ${{ github.event.inputs.urls }}
+        run: |
+          mkdir -p "$GD_DUMA/lists"
+          cd pipeline && python3 probe.py $URLS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: probe
+          path: out/probe/
+          retention-days: 7
+          if-no-files-found: ignore
