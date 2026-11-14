@@ -129,12 +129,15 @@ put('bill/index.html', page({ title: 'Все законопроекты', desc: 
 // RSS
 const rfc = (day, time) => { const [h, m, s] = (time || '12:00:00').split(':').map(Number); const x = pd(day); x.setUTCHours(h - 3, m, s || 0); return x.toUTCString(); };
 const items = (bs, n) => bs.flatMap((b) => b.votes.map((v) => ({ b, v }))).sort((x, y) => pd(y.v.day) - pd(x.v.day) || +y.v.id - +x.v.id).slice(0, n);
+// 14.11.2026: запись ленты — общий вид для голосований и законов: заголовок, ссылка, guid, дата, описание
+// (в описании «Суть», «Кого коснётся» и официальный источник).
+const voteItem = ({ b, v }) => ({ t: `${b.title} — ${v.read ? v.read + ', ' : ''}${v.ok ? 'принят' : 'отклонен'}`, l: `${SITE}bill/${b.no}/`, g: `kalendar-zakonov:vote:${v.id}`, ts: +pd(v.day) + +(v.id), p: rfc(v.day, v.time),
+  d: [`${b.no}. ${b.sut.join(' ') || b.full}`, b.who ? `Кого коснётся: ${b.who}` : '', `За ${v.za}, против ${v.pr}, воздержались ${v.vz}.`, `Официальный источник: https://sozd.duma.gov.ru/bill/${b.no}`].filter(Boolean).join('\n') });
 const rss = (title, desc, link, self, list) => `<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>${esc(title)}</title><link>${esc(link)}</link><description>${esc(desc)}</description><language>ru</language><atom:link href="${esc(self)}" rel="self" type="application/rss+xml"/>
-${list.map(({ b, v }) => `<item><title>${esc(`${b.title} — ${v.read ? v.read + ', ' : ''}${v.ok ? 'принят' : 'отклонен'}`)}</title><link>${SITE}bill/${b.no}/</link><guid isPermaLink="false">kalendar-zakonov:vote:${v.id}</guid><pubDate>${rfc(v.day, v.time)}</pubDate><description>${esc(`${b.no}. ${b.sut.join(' ') || b.full} За ${v.za}, против ${v.pr}, воздержались ${v.vz}.`)}</description></item>`).join('\n')}
+${list.map((x) => (x.b ? voteItem(x) : x)).map((x) => `<item><title>${esc(x.t)}</title><link>${esc(x.l)}</link><guid isPermaLink="false">${esc(x.g)}</guid><pubDate>${x.p}</pubDate><description>${esc(x.d)}</description></item>`).join('\n')}
 </channel></rss>`;
 put('feed/gd.xml', rss('Календарь законов: голосования Госдумы', 'Голосования Госдумы по законопроектам: стадия, итог, суть — по официальным данным.', SITE, `${SITE}feed/gd.xml`, items(ALL, 100)));
-for (const [k, tg] of Object.entries(TAGS)) put(`feed/${k}.xml`, rss(`Календарь законов: ${tg.name}`, `Голосования Госдумы по законопроектам с меткой «${tg.name}» (${tg.grp}).`, `${SITE}?${tg.q}=${encodeURIComponent(tg.name)}`, `${SITE}feed/${k}.xml`, items(tg.bills, 60)));
 // 14.11.2026: ленты органов — feed/org-<орган>.xml: новости и документы Правительства, Совета Федерации, Банка России и министерств
 // (для «Моей ленты» из фильтров). Ссылки только официальные; новые сверху, до 100 материалов.
 const offU = (u) => /^https?:\/\/([a-z0-9-]+\.)*(gov\.ru|kremlin\.ru|government\.ru|cbr\.ru)(\/|$)/i.test(u || '');
@@ -153,6 +156,7 @@ put('feed/index.html', page({ title: 'Подписки', desc: 'RSS-ленты �
   body: `<h1>Подписки</h1><p>Добавьте адрес ленты в RSS-читалку (Feedly, Inoreader, NetNewsWire, Telegram-бот для RSS) или календарь .ics в Google / Apple / Яндекс Календарь (пункт «Подписаться по URL»).</p>
 <h2>Календари .ics</h2><div class="list"><a class="row" href="../ics/laws.ics"><b>Законы вступают в силу</b><span class="meta">${SITE}ics/laws.ics</span></a><a class="row" href="../ics/plenary.ics"><b>Пленарные заседания Госдумы</b><span class="meta">${SITE}ics/plenary.ics</span></a></div>
 <h2>RSS</h2><div class="list"><a class="row" href="gd.xml"><b>Все голосования Госдумы по законопроектам</b><span class="meta">${SITE}feed/gd.xml</span></a>${Object.entries(ORGF).map(([o, n]) => `<a class="row" href="org-${o}.xml"><b>${esc(n)}: новости и документы</b><span class="meta">${SITE}feed/org-${o}.xml</span></a>`).join('')}</div>
+<p>Ленты по меткам: принятые законопроекты и законы с этой меткой, вступающие в силу (за неделю до даты). Все голосования, включая отклоненные, — в ленте с окончанием <code>-all.xml</code>, например <code>${SITE}feed/pensionery-all.xml</code>.</p>
 ${GRP.map(([q, l]) => `<h2>${esc(l)}</h2><div class="chips">${Object.entries(TAGS).filter(([, x]) => x.q === q).sort((a, b) => b[1].bills.length - a[1].bills.length).map(([k, x]) => `<a class="chip" href="${k}.xml">${esc(x.name)} · ${x.bills.length}</a>`).join('')}</div>`).join('')}` }));
 
 // .ics
@@ -176,6 +180,20 @@ const lawEv = LAWL.map((x) => ({ uid: `law-${lawId(x)}`, d: x.d, s: `Вступ�
 // ics/law/<номер>.ics — один закон: кнопка «Добавить в календарь» в карточке; в событии ссылка на карточку
 lawEv.forEach((e, i) => put(`ics/law/${lawId(LAWL[i])}.ics`, ics(LAWL[i].title, [e])));
 put('ics/laws.ics', ics('Законы вступают в силу', lawEv));
+// 14.11.2026: ленты по меткам. feed/<метка>.xml — главное: принятые законопроекты (голосования «принят») и законы с этой меткой,
+// вступающие в силу (запись появляется за 7 дней до даты, ссылка — официальный источник). feed/<метка>-all.xml — все голосования,
+// включая отклоненные (прежний вид ленты).
+const NOWMS = Date.now(); const WEEK = 7 * 864e5;
+const lawItem = (x) => { const due = +pd(x.d); const ts = Math.min(NOWMS, due - WEEK);
+  return { t: `С ${hd(x.d)} вступает в силу: ${x.title}`, l: lawSrc(x), g: `kalendar-zakonov:law:${lawId(x)}`, ts, p: new Date(ts).toUTCString(),
+    d: [x.law, x.sut, x.who ? `Кого коснётся: ${x.who}` : '', `Официальный источник: ${lawSrc(x)}`].filter(Boolean).join('\n') }; };
+for (const x of LAWL) (x.tg || []).forEach((g, gi) => (g || []).forEach((v) => { const k = slug(v); (TAGS[k] = TAGS[k] || { name: v, grp: GRP[gi][1], q: GRP[gi][0], bills: [] }); (TAGS[k].laws = TAGS[k].laws || []).push(x); }));
+for (const [k, tg] of Object.entries(TAGS)) {
+  const ok = items(tg.bills, 400).filter(({ v }) => v.ok).map(voteItem);
+  const lw = (tg.laws || []).filter((x) => +pd(x.d) - WEEK <= NOWMS).map(lawItem);
+  put(`feed/${k}.xml`, rss(`Календарь законов: ${tg.name}`, `Принятые законопроекты и законы, вступающие в силу, с меткой «${tg.name}» (${tg.grp}).`, `${SITE}?${tg.q}=${encodeURIComponent(tg.name)}`, `${SITE}feed/${k}.xml`, [...ok, ...lw].sort((a, b) => b.ts - a.ts).slice(0, 60)));
+  put(`feed/${k}-all.xml`, rss(`Календарь законов: ${tg.name} — все голосования`, `Все голосования Госдумы по законопроектам с меткой «${tg.name}» (${tg.grp}), включая отклоненные.`, `${SITE}?${tg.q}=${encodeURIComponent(tg.name)}`, `${SITE}feed/${k}-all.xml`, items(tg.bills, 60)));
+}
 const PST = { held: 'состоялось', confirmed: 'назначено', expected: 'ожидается по распорядку' };
 const plEv = CALP.filter((p) => p && p.d).map((p) => ({ uid: `gd-${ymd(p.d)}`, d: p.d, s: `Пленарное заседание Госдумы${p.s && p.s !== 'held' ? ` (${PST[p.s] || p.s})` : ''}`, x: [(p.a || []).length ? `Законопроектов в повестке: ${p.a.length}` : '', p.src ? `Источник: ${p.src}` : ''].filter(Boolean).join('\n'), u: `${SITE}?d=${p.d}` }));
 put('ics/plenary.ics', ics('Пленарные заседания Госдумы', plEv));
