@@ -152,8 +152,9 @@ const ics = (name, evs) => ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//kalenda
 const lawId = (x) => { let h = 0x811c9dc5; for (const ch of `${x.d}|${x.law || ''}|${x.title || ''}`) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
 // только официальные источники (правило проекта): *.gov.ru, kremlin.ru, government.ru, cbr.ru — тот же список, что isOff в canvas.tsx
 const isOff = (u) => { const h = String(u || '').replace(/^https?:\/\//i, '').split(/[/?#]/)[0].toLowerCase().replace(/^www\./, ''); return /\.gov\.ru$/.test(h) || h === 'kremlin.ru' || h === 'government.ru' || h === 'cbr.ru'; };
-// ссылка события — официальный источник закона (kremlin.ru, pravo.gov.ru, duma.gov.ru…), если его нет — портал официального опубликования
-const lawSrc = (x) => ((x.src || []).find((l) => l && isOff(l.u)) || {}).u || 'http://publication.pravo.gov.ru/';
+// ссылка события — официальный источник закона (kremlin.ru, pravo.gov.ru, duma.gov.ru…), если его нет — поиск закона по номеру на kremlin.ru
+const lawSearch = (x) => { const n = /№\s*(\d+-ФЗ)/.exec(x.law || ''); return n ? 'http://kremlin.ru/acts/bank/search?query=' + encodeURIComponent('№ ' + n[1]) : ''; };
+const lawSrc = (x) => ((x.src || []).find((l) => l && isOff(l.u)) || {}).u || lawSearch(x) || 'http://publication.pravo.gov.ru/';
 const LAWL = Object.values(LAWS.months || {}).flat().filter((x) => x && x.d && x.title);
 const lawEv = LAWL.map((x) => ({ uid: `law-${lawId(x)}`, d: x.d, s: `Вступает в силу: ${x.title}`, x: [x.law, x.sut, x.who ? `Кого коснётся: ${x.who}` : '', `Официальный источник: ${lawSrc(x)}`].filter(Boolean).join('\n'), u: lawSrc(x) }));
 // ics/law/<номер>.ics — один закон: кнопка «Добавить в календарь» в карточке; в событии ссылка на карточку
