@@ -36,15 +36,34 @@ GAP_ARGS="--to $DAY"; [ "${GAP_ONLINE:-1}" = 0 ] || GAP_ARGS="$GAP_ARGS --online
 python3 gap_check.py $GAP_ARGS; rc=$?
 case $rc in
   0) ;;
-  1) echo "gap_check: ВНИМАНИЕ — есть дни без DATA и/или CAL, см. out/logs/gaps_*.txt (дозагрузка не выполнялась)" >&2;;
+  1) echo "gap_check: ВНИМАНИЕ — есть дни без DATA и/или CAL, см. out/logs/gaps_*.txt" >&2;;
   *) echo "gap_check: ОШИБКА — проверка пропусков не выполнена" >&2;;
 esac
+# 14.11.2026: дозагрузка пропущенных дней. Прогон, начатый с опозданием или упавший, оставлял рабочие дни без голосований
+# (так пропал 13.11). Каждый прогон теперь добирает голосования за рабочие дни последней недели, где gap_check нашёл пропуск.
+MISS=$(python3 - "$DAY" <<'PY'
+import json, glob, os, sys, datetime as dt
+p = lambda s: dt.date(int(s[6:]), int(s[3:5]), int(s[:2]))
+day = p(sys.argv[1]); fs = sorted(glob.glob(os.path.join(os.environ.get('GD_ROOT', '..'), 'out', 'logs', 'gaps_*.json')), key=os.path.getmtime)
+if fs:
+    for d in json.load(open(fs[-1])).get('days', []):
+        if d.get('gap_data') and d['d'] != sys.argv[1] and 0 < (day - p(d['d'])).days <= 7: print(d['d'])
+PY
+)
+for MD in $MISS; do
+  echo "[дозагрузка пропущенного дня] $MD"
+  python3 votes_day.py "$MD" || echo "votes_day $MD: не загружен (см. logs/votes_day_fail.log)" >&2
+  python3 bills.py "$MD" || true
+  python3 vote_times.py "$MD" || true
+done
 echo "[законопроекты] $DAY"
 python3 bills.py "$DAY"
 echo "[время голосований] $DAY"
 python3 vote_times.py "$DAY"
 echo "[органы власти: СФ, Минфин, Минтруд, Минюст, ЦБ] $DAY"
-python3 organs.py --day "$DAY" --embed || echo "organs: ошибка (см. out/organs/status.json)" >&2
+# 14.11.2026: документы органов — за три дня до DAY включительно, чтобы пропущенный или опоздавший прогон не терял публикации
+OFROM=$(python3 -c "import datetime as d,sys; x=d.datetime.strptime(sys.argv[1],'%d.%m.%Y')-d.timedelta(days=3); print(x.strftime('%d.%m.%Y'))" "$DAY")
+python3 organs.py --from "$OFROM" --to "$DAY" --embed || echo "organs: ошибка (см. out/organs/status.json)" >&2
 echo "[путь закона]"
 python3 track.py
 echo "[аудит] $DAY"

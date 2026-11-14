@@ -83,7 +83,10 @@ jobs:
       - name: Прогон (pipeline/run_daily.sh)
         id: run
         run: |
-          DAY="${{ github.event.inputs.day }}"; [ -n "$DAY" ] || DAY="$(date +%d.%m.%Y)"
+          DAY="${{ github.event.inputs.day }}"
+          # 14.11.2026: GitHub запускает расписание с опозданием (13.11 — на 5 часов, уже после полуночи по Москве).
+          # Плановый прогон до 12:00 МСК относится к вчерашнему дню, иначе вчерашний день пропускается.
+          if [ -z "$DAY" ]; then if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date +%H)" -lt 12 ]; then DAY="$(date -d yesterday +%d.%m.%Y)"; else DAY="$(date +%d.%m.%Y)"; fi; fi
           echo "day=$DAY" >> "$GITHUB_OUTPUT"
           bash pipeline/run_daily.sh "$DAY" 2>&1 | tee daily.log
           # Н2: источник не ответил — остальное всё равно собираем и публикуем, но прогон в конце помечается неуспешным (сработает повтор)
