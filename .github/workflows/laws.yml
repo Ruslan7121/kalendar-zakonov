@@ -57,6 +57,14 @@ jobs:
         run: bash pipeline/commit.sh "Официальные ссылки законов «Вступают в силу» (kremlin.ru)"
       - name: Публикация (pipeline/publish.sh)
         run: bash pipeline/publish.sh "Официальные ссылки законов «Вступают в силу»"
+      - name: Страницы поиска kremlin.ru (для разбора)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laws-src-debug
+          path: out/laws_src_debug/
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Сводка
         if: always()
         run: |
