@@ -5,6 +5,7 @@ import os, sys, json, tempfile
 os.environ['GD_DUMA'] = tempfile.mkdtemp()  # calendar_update создает $GD_DUMA/cal_cache при импорте; в CI /workspace недоступен
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'pipeline'))
 import common as C, calendar_update as U
+C.CANVAS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'src', 'canvas.tsx')  # run_all.sh может подменять GD_ROOT
 
 s = C.read_canvas(); i = s.index('const CAL: any = ') + len('const CAL: any = '); cal = json.loads(s[i:s.index('\n', i)].rstrip(';'))
 st = U.load_static('/nonexistent/calendar_static.json')
