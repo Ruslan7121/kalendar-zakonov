@@ -7,7 +7,7 @@ X-WR-CALNAME:Поправки в закон «Об оружии»
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-9a817739@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20261231
 DTEND;VALUE=DATE:20270101
 SUMMARY:Вступает в силу: Поправки в закон «О
@@ -19,10 +19,9 @@ DESCRIPTION:Федеральный закон от 04.07.2026 № 236-Ф
  зного оружия обязателен только для изг
  отовленного в России или купленного за 
  границей.\nКого коснётся: Владельцы ору
- жия\, продавцы\, Росгвардия.\nКарточка за
- кона: https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=9a817
- 739
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=9a817739
+ жия\, продавцы\, Росгвардия.\nОфициальны
+ й источник: http://kremlin.ru/acts/bank/53407
+URL:http://kremlin.ru/acts/bank/53407
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

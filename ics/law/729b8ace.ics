@@ -7,7 +7,7 @@ X-WR-CALNAME:Передвижные аптечные пункты
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-729b8ace@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20260901
 DTEND;VALUE=DATE:20260902
 SUMMARY:Вступает в силу: Передвижные аптечн
@@ -17,10 +17,9 @@ DESCRIPTION:Федеральный закон от 02.05.2026 № 125-Ф
  передвижные аптечные пункты в населенн
  ых пунктах без стационарных аптек.\nКог
  о коснётся: Жители сел и удаленных терр
- иторий\, аптечные организации.\nКарточк
- а закона: https://ruslan7121.github.io/kalendar-zakonov/?tab=l&la
- w=729b8ace
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=729b8ace
+ иторий\, аптечные организации.\nОфициал
+ ьный источник: http://duma.gov.ru/news/64038/
+URL:http://duma.gov.ru/news/64038/
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

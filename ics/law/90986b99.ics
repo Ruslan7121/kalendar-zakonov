@@ -8,7 +8,7 @@ X-WR-CALNAME:Ограничение третьего «дорогого»
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-90986b99@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20261001
 DTEND;VALUE=DATE:20261002
 SUMMARY:Вступает в силу: Ограничение третье
@@ -19,9 +19,9 @@ DESCRIPTION:Федеральный закон от 29.12.2025 № 545-Ф
  х\, если у заемщика уже два таких займа\; 
  действует до 1 апреля 2027 года.\nКого косн
  ётся: Заемщики и микрофинансовые орган
- изации.\nКарточка закона: https://ruslan7121.github.
- io/kalendar-zakonov/?tab=l&law=90986b99
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=90986b99
+ изации.\nОфициальный источник: https://www.cbr.
+ ru/press/event/?id=32884
+URL:https://www.cbr.ru/press/event/?id=32884
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

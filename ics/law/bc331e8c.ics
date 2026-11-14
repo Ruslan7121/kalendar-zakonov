@@ -7,7 +7,7 @@ X-WR-CALNAME:Штрафы для операторов платформ
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-bc331e8c@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20261001
 DTEND;VALUE=DATE:20261002
 SUMMARY:Вступает в силу: Штрафы для операто
@@ -17,9 +17,9 @@ DESCRIPTION:Федеральный закон от 04.08.2026 № 295-Ф
  снижение цены за счет продавца без прав
  ил — штраф до 300 тыс. рублей для юрлиц.\nК
  ого коснётся: Операторы маркетплейсов.\
- nКарточка закона: https://ruslan7121.github.io/kalendar-za
- konov/?tab=l&law=bc331e8c
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=bc331e8c
+ nОфициальный источник: http://publication.pravo.gov.r
+ u/
+URL:http://publication.pravo.gov.ru/
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

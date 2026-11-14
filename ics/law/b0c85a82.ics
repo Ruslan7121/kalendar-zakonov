@@ -8,7 +8,7 @@ X-WR-CALNAME:Поправки в закон о Следственном
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-b0c85a82@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20261231
 DTEND;VALUE=DATE:20270101
 SUMMARY:Вступает в силу: Поправки в закон о 
@@ -20,9 +20,9 @@ DESCRIPTION:Федеральный закон от 04.07.2026 № 224-Ф
   гибели\; за ними и за рядом сотрудников 
  сохраняется право жить в служебном жил
  ье.\nКого коснётся: Сотрудники СК России
- .\nКарточка закона: https://ruslan7121.github.io/kalendar-
- zakonov/?tab=l&law=b0c85a82
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=b0c85a82
+ .\nОфициальный источник: http://www.kremlin.ru/acts/b
+ ank/53410
+URL:http://www.kremlin.ru/acts/bank/53410
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

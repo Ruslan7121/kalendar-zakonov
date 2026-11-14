@@ -8,7 +8,7 @@ X-WR-CALNAME:НДС 10% на детские товары — только
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-34f3b059@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20261001
 DTEND;VALUE=DATE:20261002
 SUMMARY:Вступает в силу: НДС 10% на детские то
@@ -18,10 +18,9 @@ DESCRIPTION:Федеральный закон от 04.07.2026 № 218-Ф
  ы применяется только при наличии серти
  фиката или декларации о соответствии.\n
  Кого коснётся: Производители\, импортер
- ы и продавцы детских товаров.\nКарточка 
- закона: https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=3
- 4f3b059
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=34f3b059
+ ы и продавцы детских товаров.\nОфициаль
+ ный источник: http://publication.pravo.gov.ru/
+URL:http://publication.pravo.gov.ru/
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

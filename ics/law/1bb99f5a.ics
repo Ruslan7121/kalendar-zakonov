@@ -8,7 +8,7 @@ X-WR-CALNAME:Претензии к товару — прямо на ма
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-1bb99f5a@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20261001
 DTEND;VALUE=DATE:20261002
 SUMMARY:Вступает в силу: Претензии к товару 
@@ -19,9 +19,9 @@ DESCRIPTION:Федеральный закон от 31.07.2025 № 290-Ф
  о на платформе\; оператор обязан обеспе
  чить возврат денег и товара.\nКого коснё
  тся: Покупатели маркетплейсов\, продавц
- ы\, операторы платформ.\nКарточка закона
- : https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=1bb99f5a
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=1bb99f5a
+ ы\, операторы платформ.\nОфициальный ист
+ очник: http://publication.pravo.gov.ru/
+URL:http://publication.pravo.gov.ru/
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

@@ -8,7 +8,7 @@ X-WR-CALNAME:Налоговые поправки: очередной эт
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-0296b4e0@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20261201
 DTEND;VALUE=DATE:20261202
 SUMMARY:Вступает в силу: Налоговые поправки
@@ -20,10 +20,9 @@ DESCRIPTION:Федеральный закон от 28.11.2025 № 425-Ф
  р — не больше 5000 рублей за единицу\; без 
  уплаты маркируемый товар нельзя ввести
   в оборот.\nКого коснётся: Налогоплатель
- щики — организации и граждане.\nКарточк
- а закона: https://ruslan7121.github.io/kalendar-zakonov/?tab=l&la
- w=0296b4e0
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=0296b4e0
+ щики — организации и граждане.\nОфициал
+ ьный источник: http://publication.pravo.gov.ru/
+URL:http://publication.pravo.gov.ru/
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

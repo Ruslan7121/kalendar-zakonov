@@ -8,7 +8,7 @@ X-WR-CALNAME:Платежи государству — в ГИС ГМП
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-606bb60d@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20261101
 DTEND;VALUE=DATE:20261102
 SUMMARY:Вступает в силу: Платежи государств
@@ -19,10 +19,10 @@ DESCRIPTION:Федеральный закон от 04.08.2026 № 312-Ф
  озднее часа после приема платежа\; прав
  ительство может расширять перечень пла
  тежей.\nКого коснётся: Граждане и компан
- ии\, платящие налоги и штрафы\; банки.\nКа
- рточка закона: https://ruslan7121.github.io/kalendar-zakonov
- /?tab=l&law=606bb60d
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=606bb60d
+ ии\, платящие налоги и штрафы\; банки.\nОф
+ ициальный источник: http://www.kremlin.ru/acts/bank/535
+ 39
+URL:http://www.kremlin.ru/acts/bank/53539
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

@@ -8,7 +8,7 @@ X-WR-CALNAME:Медосвидетельствование мигрант
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-3799321a@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20260901
 DTEND;VALUE=DATE:20260902
 SUMMARY:Вступает в силу: Медосвидетельство
@@ -19,9 +19,9 @@ DESCRIPTION:Федеральный закон от 10.06.2026 № 162-Ф
  ее чем на три месяца\, сокращен с 90 до 30 д
  ней\; при опасной инфекции — депортация
  .\nКого коснётся: Иностранные граждане и
-  работодатели мигрантов.\nКарточка зако
- на: https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=3799321a
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=3799321a
+  работодатели мигрантов.\nОфициальный и
+ сточник: http://duma.gov.ru/news/64038/
+URL:http://duma.gov.ru/news/64038/
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

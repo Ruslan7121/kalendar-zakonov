@@ -8,7 +8,7 @@ X-WR-CALNAME:Изменения в отдельные законодат
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-191ff14d@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20261223
 DTEND;VALUE=DATE:20261224
 SUMMARY:Вступает в силу: Изменения в отдель
@@ -18,9 +18,9 @@ DESCRIPTION:Федеральный закон от 26.06.2026 № 215-Ф
  авать Минюсту справки по счетам иноаге
  нтов только в электронном виде и за 3 ра
  бочих дня.\nКого коснётся: Определяется 
- текстом закона.\nКарточка закона: https://rus
- lan7121.github.io/kalendar-zakonov/?tab=l&law=191ff14d
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=191ff14d
+ текстом закона.\nОфициальный источник: h
+ ttp://kremlin.ru/acts/bank/53391
+URL:http://kremlin.ru/acts/bank/53391
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

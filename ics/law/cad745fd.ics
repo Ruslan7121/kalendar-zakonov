@@ -7,7 +7,7 @@ X-WR-CALNAME:Закон о платформенной экономике
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-cad745fd@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20261001
 DTEND;VALUE=DATE:20261002
 SUMMARY:Вступает в силу: Закон о платформен
@@ -17,10 +17,9 @@ DESCRIPTION:Федеральный закон от 31.07.2025 № 289-Ф
  кетплейсы: договоры с продавцами и ПВЗ\,
   карточки товаров\, скидки\, рассмотрени
  е жалоб.\nКого коснётся: Маркетплейсы\, п
- родавцы\, владельцы ПВЗ\, покупатели.\nКа
- рточка закона: https://ruslan7121.github.io/kalendar-zakonov
- /?tab=l&law=cad745fd
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=cad745fd
+ родавцы\, владельцы ПВЗ\, покупатели.\nОф
+ ициальный источник: http://publication.pravo.gov.ru/
+URL:http://publication.pravo.gov.ru/
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

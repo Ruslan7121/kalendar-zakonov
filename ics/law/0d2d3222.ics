@@ -8,7 +8,7 @@ X-WR-CALNAME:Доп. выходной и отпуск пострадав
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-0d2d3222@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20260901
 DTEND;VALUE=DATE:20260902
 SUMMARY:Вступает в силу: Доп. выходной и отп
@@ -19,9 +19,9 @@ DESCRIPTION:Федеральный закон от 09.04.2026 № 90-ФЗ
  ка без сохранения зарплаты\; заявление 
  можно подать электронно.\nКого коснётся
  : Работники\, проживающие в зоне ЧС и пот
- ерявшие имущество.\nКарточка закона: https
- ://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=0d2d3222
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=0d2d3222
+ ерявшие имущество.\nОфициальный источн
+ ик: http://kremlin.ru/acts/bank/53124
+URL:http://kremlin.ru/acts/bank/53124
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

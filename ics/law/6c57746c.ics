@@ -7,7 +7,7 @@ X-WR-CALNAME:Пенсии силовиков: изменение ст. 50
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-6c57746c@kalendar-zakonov
-DTSTAMP:20261114T155740Z
+DTSTAMP:20261114T172658Z
 DTSTART;VALUE=DATE:20261231
 DTEND;VALUE=DATE:20270101
 SUMMARY:Вступает в силу: Пенсии силовиков: и
@@ -20,9 +20,9 @@ DESCRIPTION:Федеральный закон от 04.07.2026 № 225-Ф
  и порядок выдачи утвердит ведомство\, к
  оторое платит пенсию.\nКого коснётся: Во
  енные и силовые пенсионеры и их семьи.\n
- Карточка закона: https://ruslan7121.github.io/kalendar-zak
- onov/?tab=l&law=6c57746c
-URL:https://ruslan7121.github.io/kalendar-zakonov/?tab=l&law=6c57746c
+ Официальный источник: http://kremlin.ru/acts/bank/534
+ 27
+URL:http://kremlin.ru/acts/bank/53427
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR
