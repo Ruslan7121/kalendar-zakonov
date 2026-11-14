@@ -31,3 +31,13 @@ import laws_check as K
 assert list(K.laws_in('Федеральный закон от 28.11.2025 № 425-ФЗ и закон № 9-ФЗ; повторно № 425-ФЗ')) == ['425-ФЗ', '9-ФЗ']
 assert K.digest_links('<a href="/news/64396/">Какие законы вступают в силу в ноябре</a><a href="/news/1/">Пленарное заседание</a>') == [('http://duma.gov.ru/news/64396/', 'Какие законы вступают в силу в ноябре')]
 print('OK test_laws_check: номера законов и ссылки на подборки Госдумы')
+
+# 15.11.2026: publication.pravo.gov.ru — выбор закона по номеру и дате подписания из ответа API
+import json as _j
+_js = _j.dumps({'items': [
+  {'eoNumber': '0001202605250005', 'number': '137-ФЗ', 'documentDate': '2026-05-25T00:00:00', 'complexName': 'Федеральный закон от 25.05.2026 № 137-ФЗ\n "О ратификации"'},
+  {'eoNumber': '5801202610150003', 'number': '24-55', 'documentDate': '2026-10-15T00:00:00', 'complexName': 'Приказ … № 137-ФЗ'},
+  {'eoNumber': '0001202506070014', 'number': '137-ФЗ', 'documentDate': '2025-06-07T00:00:00', 'complexName': 'Федеральный закон от 07.06.2025 № 137-ФЗ\n "О внесении изменений"'}]}, ensure_ascii=False)
+assert L.pravo_pick(_js, '137-ФЗ', '07.06.2025') == 'http://publication.pravo.gov.ru/document/0001202506070014'
+assert L.pravo_pick(_js, '137-ФЗ', '08.06.2025') is None and L.pravo_pick('не json', '137-ФЗ', '07.06.2025') is None
+print('OK test_laws_src: publication.pravo.gov.ru — выбор по номеру и дате')
