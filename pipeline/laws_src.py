@@ -97,6 +97,28 @@ def ranked(html, num, d):
 
 
 DBG = os.path.join(C.OUT, 'laws_src_debug')
+PRAVO = 'http://publication.pravo.gov.ru/api/Documents?PageSize=10&Index=1&Number='
+
+
+def pravo_pick(js, num, d):
+    """15.11.2026: ответ API publication.pravo.gov.ru (официальное опубликование) → ссылка на документ: федеральный закон
+    с тем же номером и датой подписания (documentDate), адрес http://publication.pravo.gov.ru/document/<eoNumber>."""
+    try: items = json.loads(js).get('items') or []
+    except Exception: return None
+    iso = '-'.join(reversed(d.split('.')))
+    for it in items:
+        if it.get('number') == num and (it.get('documentDate') or '').startswith(iso) and (it.get('complexName') or '').startswith('Федеральный закон') and it.get('eoNumber'):
+            return 'http://publication.pravo.gov.ru/document/' + it['eoNumber']
+    return None
+
+
+def find_pravo(num, d):
+    """Закон по номеру на publication.pravo.gov.ru (прямой запрос, как organs.py: через RU-прокси API не отвечает)."""
+    import urllib.parse, organs as O
+    st, body = O.get(PRAVO + urllib.parse.quote(num), 40)
+    if st != 'ok': return None, f'publication.pravo.gov.ru: {st}'
+    u = pravo_pick(body, num, d)
+    return (u, '') if u else (None, 'на publication.pravo.gov.ru нет закона с этим номером и датой')
 
 
 def find(num, d):
@@ -135,12 +157,17 @@ def main(dry=False):
                     if 'src' in fx: fx['src'] = [z for z in fx['src'] if z.get('u') != l['u']]
                     removed += 1
             cur = fx.get('src', x.get('src', []))
-            if any(is_off(l.get('u')) for l in cur): continue
+            # 15.11.2026: пропускаем только законы с прямой ссылкой на текст акта (не на новость duma.gov.ru или cbr.ru)
+            if any(re.search(r'kremlin\.ru/acts/bank/\d+|publication\.pravo\.gov\.ru/document/\d+', l.get('u') or '') for l in cur): continue
             key = law_key(law)
             if not key: C.log('laws_src.log', f"{x['d']} {x.get('title')}: в реквизитах нет номера или даты"); continue
             url, why = find(*key)
+            if not url:  # 15.11.2026: не нашлось на kremlin.ru — официальный портал опубликования
+                u2, why2 = find_pravo(*key)
+                if u2: url = u2
+                else: why = f'{why}; {why2}'
             if not url: C.log('laws_src.log', f"{x['d']} № {key[0]} от {key[1]}: {why}"); continue
-            link = {'t': 'kremlin.ru', 'u': url}
+            link = {'t': 'kremlin.ru' if 'kremlin.ru' in url else 'publication.pravo.gov.ru', 'u': url}
             x['src'] = [link] + list(x.get('src', []))
             if 'src' in fx: fx['src'] = [link] + list(fx['src'])
             found += 1; C.log('laws_src.log', f"{x['d']} № {key[0]} от {key[1]}: {url}")

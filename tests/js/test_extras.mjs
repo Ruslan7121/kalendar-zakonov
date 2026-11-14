@@ -42,8 +42,15 @@ try {
   for (const f of feeds) {
     const x = fs.readFileSync(path.join(out, 'feed', f), 'utf8');
     assert.ok(x.startsWith('<?xml') && x.includes('<rss version="2.0"') && x.trim().endsWith('</rss>'), `feed/${f}: не RSS 2.0`);
-    const items = x.match(/<item>[\s\S]*?<\/item>/g) || []; assert.ok(items.length > 0, `feed/${f}: пусто`);
-    for (const it of items) { const l = it.match(/<link>([^<]+)<\/link>/); assert.ok(l && /\/bill\/\d+-\d+\/$/.test(l[1]), `feed/${f}: ссылка не на страницу законопроекта`); assert.ok(/<pubDate>[A-Z][a-z]{2}, \d\d [A-Z][a-z]{2} \d{4} \d\d:\d\d:\d\d GMT<\/pubDate>/.test(it), `feed/${f}: pubDate`); }
+    const items = x.match(/<item>[\s\S]*?<\/item>/g) || [];
+    // 14.11.2026: главная лента метки — принятые законопроекты и законы, вступающие в силу (может быть пустой, если все голосования
+    // отклонены); feed/<метка>-all.xml и gd.xml — все голосования, не пустые
+    const all = f === 'gd.xml' || f.endsWith('-all.xml');
+    if (all) assert.ok(items.length > 0, `feed/${f}: пусто`); else assert.ok(fs.existsSync(path.join(out, 'feed', f.replace(/\.xml$/, '-all.xml'))), `feed/${f}: нет варианта -all.xml`);
+    for (const it of items) { const l = it.match(/<link>([^<]+)<\/link>/); const law = it.includes(':law:');
+      if (!all) assert.ok(!/отклонен<\/title>/.test(it), `feed/${f}: в главной ленте метки отклоненный законопроект`);
+      if (law) assert.ok(!all && l && /^https?:\/\/([a-z0-9-]+\.)*(gov\.ru|kremlin\.ru|government\.ru|cbr\.ru)(\/|$)/i.test(l[1].replace(/&amp;/g, '&')) && /Официальный источник: /.test(it), `feed/${f}: закон без официальной ссылки`);
+      else { assert.ok(l && /\/bill\/\d+-\d+\/$/.test(l[1]), `feed/${f}: ссылка не на страницу законопроекта`); assert.ok(/Официальный источник: https:\/\/sozd\.duma\.gov\.ru\/bill\//.test(it), `feed/${f}: нет ссылки на sozd`); } assert.ok(/<pubDate>[A-Z][a-z]{2}, \d\d [A-Z][a-z]{2} \d{4} \d\d:\d\d:\d\d GMT<\/pubDate>/.test(it), `feed/${f}: pubDate`); }
   }
   const tags = new Set(); for (const [k, g] of Object.entries(T.ZTAG)) if (/^\d+-\d+$/.test(k) && bills.has(k)) g.flat().forEach((v) => tags.add(v));
   for (const v of tags) assert.ok(feeds.includes(T.tagSlug(v) + '.xml'), `нет ленты для метки «${v}» (feed/${T.tagSlug(v)}.xml)`);
