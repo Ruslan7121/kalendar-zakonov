@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """calendar_update.load_static: без $GD_DUMA/calendar_static.json распорядок берется из CAL в src/canvas.tsx (15.11.2026:
 кэш Actions из запусков laws/organs без этого файла ломал обновление календаря в ежедневном прогоне)."""
-import os, sys, json
+import os, sys, json, tempfile
+os.environ['GD_DUMA'] = tempfile.mkdtemp()  # calendar_update создает $GD_DUMA/cal_cache при импорте; в CI /workspace недоступен
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'pipeline'))
 import common as C, calendar_update as U
 
