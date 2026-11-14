@@ -33,6 +33,7 @@ SOURCES = {
     'cbr_events': 'https://www.cbr.ru/rss/eventrss',
     'mintrud_docs': 'https://mintrud.gov.ru/document/rss',
     'mintrud_news': 'https://mintrud.gov.ru/news/news/list',
+    'minfin_news': 'https://minfin.gov.ru/ru/press-center/',
     'mintrud_profstandards': 'https://regulation.gov.ru/',
     'minjust_events': 'https://minjust.gov.ru/ru/events/list/',
     'minjust_projects': 'https://minjust.gov.ru/ru/documents/projects/',
@@ -149,6 +150,32 @@ def parse_mintrud_news(h):
         seen.add(href); res.append(ev('mintrud', dd, 'новость', title, 'https://mintrud.gov.ru' + href, 'Новость'))
     return res
 
+def parse_minfin_list(h):
+    """14.11.2026: пресс-центр Минфина (minfin.gov.ru/ru/press-center/): ссылки ?id_4=<номер>-<slug> с заголовком. Даты в списке нет —
+    ее берем со страницы новости (parse_minfin_article). Возвращает [(адрес, заголовок)] без повторов, в порядке страницы."""
+    out, seen = [], set()
+    for m in re.finditer(r'(?is)<a[^>]+href="(/ru/press-center/\?id_4=\d+[^"]*)"[^>]*>(.*?)</a>', h):
+        u = 'https://minfin.gov.ru' + html.unescape(m.group(1)); t = clean(re.sub(r'<[^>]+>', ' ', m.group(2)))
+        if len(t) < 15 or u in seen: continue
+        seen.add(u); out.append((u, t))
+    return out
+
+def parse_minfin_article(h):
+    """Страница новости Минфина: заголовок <h1 class="page_title"> и дата <span class="presscenter_event_date">14 ноября 2026 13:48</span>."""
+    t = re.search(r'(?is)<h1[^>]*class="page_title"[^>]*>(.*?)</h1>', h); d = re.search(r'(?is)class="presscenter_event_date[^"]*"[^>]*>(.*?)</span>', h)
+    dd = ru_date(clean(d.group(1))) if d else None
+    return (clean(re.sub(r'<[^>]+>', ' ', t.group(1))) if t else '', dd)
+
+def collect_minfin_news(body, fetch=None, limit=25):
+    """Новости Минфина: список из пресс-центра + дата со страницы каждой новости (не больше limit страниц за запуск)."""
+    fetch = fetch or (lambda u: get(u)); res = []
+    for u, t in parse_minfin_list(body)[:limit]:
+        st, a = fetch(u)
+        if st != 'ok': continue
+        t2, d = parse_minfin_article(a)
+        if d: res.append(ev('minfin', d, 'новость', t2 or t, u, 'Новость'))
+    return res
+
 def parse_pravo_list(txt, org='minfin'):
     """Список «Официальное опубликование правовых актов» по органу (HTML→текст или сохраненный текст страницы).
     Дата события — дата официального опубликования; в названии — дата и номер регистрации в Минюсте."""
@@ -178,6 +205,7 @@ SF_AGENDA = {'622': ('http://council.gov.ru/activity/meetings/178174/agenda/',
     'Консультации по кандидатуре заместителя Генпрокурора; «правительственный час» с министром внутренних дел.')}
 
 PARSERS = {'cbr_news': parse_cbr_news, 'cbr_events': parse_cbr_events, 'mintrud_docs': parse_mintrud_docs, 'mintrud_news': parse_mintrud_news,
+           'minfin_news': lambda body: collect_minfin_news(body),
            'minjust_events': parse_minjust_events, 'minfin_pravo': parse_pravo_list, 'sf_meetings': parse_sf_meetings}
 NOT_PARSED = {'mintrud_profstandards': 'проекты профстандартов публикуются на regulation.gov.ru — с этой машины нет соединения',
               'minjust_projects': 'страница проектов документов Минюста отдается без списка (пустая выдача)',
@@ -192,6 +220,7 @@ def collect(args):
         if key in snaps:
             body, st = open(snaps[key]).read(), 'snapshot:' + os.path.basename(snaps[key])
         elif args.offline:
+            if key not in FIX: status[key] = {'url': src, 'status': 'no-fixture'}; continue  # minfin_news ходит в сеть за каждой новостью — офлайн не собираем
             p = os.path.join(args.offline, FIX[key])
             if not os.path.exists(p): status[key] = {'url': src, 'status': 'no-fixture'}; continue
             body, st = open(p).read(), 'offline'
