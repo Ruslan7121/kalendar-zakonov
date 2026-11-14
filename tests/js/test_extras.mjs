@@ -32,7 +32,13 @@ try {
   assert.equal((list.match(/class="row"/g) || []).length, bills.size, 'bill/: не все законопроекты в списке');
 
   const T = await loadCanvas(['tagSlug', 'ZTAG', 'lawId']);
-  const feeds = fs.readdirSync(path.join(out, 'feed')).filter((f) => f.endsWith('.xml'));
+  const feeds = fs.readdirSync(path.join(out, 'feed')).filter((f) => f.endsWith('.xml') && !f.startsWith('org-'));
+  // 14.11.2026: ленты органов feed/org-<орган>.xml — корректный RSS, ссылки только на официальные сайты
+  for (const o of ['gov', 'sf', 'cbr', 'minfin', 'mintrud', 'minjust']) {
+    const x = fs.readFileSync(path.join(out, 'feed', `org-${o}.xml`), 'utf8');
+    assert.ok(x.startsWith('<?xml') && x.includes('<rss version="2.0"') && x.trim().endsWith('</channel></rss>'), `feed/org-${o}.xml: обёртка RSS`);
+    for (const l of x.match(/<item>.*?<\/item>/gs) || []) { const u = (l.match(/<link>([^<]+)<\/link>/) || [])[1] || ''; assert.ok(/^https?:\/\/([a-z0-9-]+\.)*(gov\.ru|kremlin\.ru|government\.ru|cbr\.ru)(\/|$)/i.test(u.replace(/&amp;/g, '&')), `feed/org-${o}.xml: ссылка не на официальный сайт: ${u}`); }
+  }
   for (const f of feeds) {
     const x = fs.readFileSync(path.join(out, 'feed', f), 'utf8');
     assert.ok(x.startsWith('<?xml') && x.includes('<rss version="2.0"') && x.trim().endsWith('</rss>'), `feed/${f}: не RSS 2.0`);
