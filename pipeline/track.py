@@ -291,33 +291,39 @@ if __name__ == '__main__':
     print(f'track: без инициатора — {sum(1 for n in ns if n not in _hi)}, они первыми', flush=True)
     budget = float(os.environ.get('TRACK_BUDGET_SEC', '0') or 0); t0 = time.time()
     print(f'track: {len(ns)} bills' + (f' (последние {days_lim} дн. и «в пути»)' if days_lim > 0 else '') + (f', бюджет {int(budget)} с' if budget else ''), flush=True)
-    for i, n in enumerate(ns, 1):
-        if budget and time.time() - t0 > budget:
-            print(f'track: бюджет времени исчерпан на {i - 1} из {len(ns)} — остальные в следующий прогон', flush=True)
-            C.log('track_fail.log', f'бюджет {int(budget)} с исчерпан: обработано {i - 1} из {len(ns)}')
-            break
-        meta = bill_meta.get(n, {})
-        old = T.get(n, {})
-        # если кэш без поздних дат, а старый TRACK их имел — попробовать refresh один раз
-        need_refresh = n in refresh_set
-        tr = one(n, vote_day=meta.get('day', ''), vote_rd=meta.get('rd', ''),
-                 rejected=meta.get('rejected', False), refresh=need_refresh)
-        if not tr:
-            continue
+    # 15.11.2026: страницы sozd загружаются параллельно (TRACK_WORKERS, по умолчанию 6): по одному законопроекту прогон шел
+    # больше часа (~27 с на законопроект) и упирался в бюджет. Сведение результатов — по порядку, как раньше.
+    from concurrent.futures import ThreadPoolExecutor
+    def fetch_one(n):
+        if budget and time.time() - t0 > budget: return n, None, True
+        meta = bill_meta.get(n, {}); old = T.get(n, {}); need_refresh = n in refresh_set
+        tr = one(n, vote_day=meta.get('day', ''), vote_rd=meta.get('rd', ''), rejected=meta.get('rejected', False), refresh=need_refresh)
+        if not tr: return n, None, False
         merged = merge_track(old, tr)
         # если после кэша нет sf/sign/pub, а голос уже 3-е/закон — refresh
         if (not os.environ.get('TRACK_QUICK') and not need_refresh
                 and not any(merged.get(k) for k in ('sf', 'sign', 'pub'))):
             if re.search(r'3\s*чтен|3-е', meta.get('rd', ''), re.I) or old.get('sf') or old.get('law'):
-                tr2 = one(n, vote_day=meta.get('day', ''), vote_rd=meta.get('rd', ''),
-                          rejected=meta.get('rejected', False), refresh=True)
-                if tr2:
-                    merged = merge_track(merged, tr2)
+                tr2 = one(n, vote_day=meta.get('day', ''), vote_rd=meta.get('rd', ''), rejected=meta.get('rejected', False), refresh=True)
+                if tr2: merged = merge_track(merged, tr2)
+        return n, merged, False
+    workers = max(1, int(os.environ.get('TRACK_WORKERS', '6') or 6)); done = 0; over = False
+    with ThreadPoolExecutor(workers) as ex:
+        res = list(ex.map(fetch_one, ns))
+    for i, (n, merged, late) in enumerate(res, 1):
+        if late:
+            over = True; continue
+        done += 1
+        if merged is None:
+            continue
         T[n] = {k: v for k, v in merged.items() if v}
         if T[n].get('force') and T[n].get('law') and T[n].get('sign'):
             src = add_law(src, n, T[n], titles.get(n, ''))
         if i % 25 == 0 or n in ('1071863-8', '1081963-8', '443614-8'):
             print(i, n, {k: T[n][k] for k in STAGES if k in T[n]}, flush=True)
+    if over:
+        print(f'track: бюджет времени исчерпан на {done} из {len(ns)} — остальные в следующий прогон', flush=True)
+        C.log('track_fail.log', f'бюджет {int(budget)} с исчерпан: обработано {done} из {len(ns)}')
     src = C.set_block(src, 'TRACK', 'const TRACK: Record<string, Record<string, string>>', T)
     if '/* INIC:start */' in src:
         IN = C.get_block(src, 'INIC')
