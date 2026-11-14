@@ -48,7 +48,7 @@ const MEASURE = (k) => `(() => {
   const bs = p ? [...p.querySelectorAll('button,a')].filter(vis) : [];
   const copy = bs.filter((e) => /Скопировать ссылку|Ссылка скопирована/.test(tx(e))).length;
   const raw = p ? [...p.querySelectorAll('*')].filter((e) => vis(e) && !e.children.length && /^https:\\/\\/ruslan7121\\.github\\.io\\/kalendar-zakonov\\/\\?d=/.test(tx(e))).length : 0;
-  const sh = bs.filter((e) => /Поделиться карточкой/.test(tx(e))); const s0 = sh[0];
+  const sh = bs.filter((e) => /^Поделиться/.test(tx(e))); const s0 = sh[0];
   const lk = bs.filter((e) => /^(Законопроект|Голосование)/.test(tx(e)));
   const sr = s0 && s0.getBoundingClientRect(); const pr = p && p.getBoundingClientRect();
   const share = s0 ? { n: sh.length, bottom: !!s0.closest('[data-share-bottom]'), inRow: lk.some((l) => l.parentElement === s0.parentElement.parentElement), last: lk.every((l) => l.getBoundingClientRect().bottom <= sr.top + 1), gap: pr.bottom - sr.bottom } : null;
@@ -81,14 +81,14 @@ try {
       if (!r.backdrop) fails.push(`${tag}: нет затемнения на весь экран`);
       if (!r.closeBtn) fails.push(`${tag}: нет кнопки закрытия`);
       if (W.mobile && !r.sheet) fails.push(`${tag}: на телефоне окно должно быть листом, прижатым к низу экрана`);
-      // Правило 11, мобильная версия: на телефоне нет «Скопировать ссылку на голосование» и сырого адреса,
-      // «Поделиться карточкой» — одна кнопка внизу карточки, ниже ссылок; на широкой версии кнопка в том же блоке ссылок.
-      if (!r.share) fails.push(`${tag}: нет кнопки «Поделиться карточкой»`);
-      else if (W.mobile) {
-        if (r.copy) fails.push(`${tag}: на телефоне видна «Скопировать ссылку на голосование»`);
-        if (r.raw) fails.push(`${tag}: на телефоне виден сырой адрес ссылки`);
-        if (r.share.n !== 1 || !r.share.bottom || r.share.inRow || !r.share.last || r.share.gap > 40) fails.push(`${tag}: «Поделиться карточкой» не внизу карточки ${JSON.stringify(r.share)}`);
-      } else if (r.share.bottom || !r.share.inRow) fails.push(`${tag}: на широкой версии «Поделиться карточкой» не в блоке ссылок ${JSON.stringify(r.share)}`);
+      // Правило 11 (по сводному макету 14.11.2026): нет «Скопировать ссылку на голосование» и сырого адреса;
+      // «Поделиться» — одна кнопка в блоке ссылок «Законопроект / Текст / Голосование» на любой ширине.
+      if (!r.share) fails.push(`${tag}: нет кнопки «Поделиться»`);
+      else {
+        if (r.copy) fails.push(`${tag}: видна «Скопировать ссылку на голосование»`);
+        if (r.raw) fails.push(`${tag}: виден сырой адрес ссылки`);
+        if (r.share.n !== 1 || !r.share.inRow) fails.push(`${tag}: «Поделиться» не в блоке ссылок ${JSON.stringify(r.share)}`);
+      }
       if (!r.links) fails.push(`${tag}: нет ссылок «Законопроект»/«Голосование»`);
       // закрытие: поочередно Escape, крестик, нажатие на затемнение
       const how = CASES.indexOf(c) % 3; const closeJs = how === 0 ? `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))` : how === 1 ? `document.querySelector('[data-gdclose]').click()` : `document.querySelector('[data-gdmodal]').click()`;
