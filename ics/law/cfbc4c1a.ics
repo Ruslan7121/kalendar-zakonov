@@ -8,7 +8,7 @@ X-WR-CALNAME:Упразднение Беловского районног
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-cfbc4c1a@kalendar-zakonov
-DTSTAMP:20261114T182909Z
+DTSTAMP:20261114T184454Z
 DTSTART;VALUE=DATE:20261215
 DTEND;VALUE=DATE:20261216
 SUMMARY:Вступает в силу: Упразднение Беловс
@@ -20,9 +20,9 @@ DESCRIPTION:Федеральный закон от 15.12.2025 № 459-Ф
  будет рассматривать дела и города Бело
  во\, и Беловского района.\nКого коснётся:
   Жители и участники дел в Кемеровской о
- бласти.\nОфициальный источник: http://publicati
- on.pravo.gov.ru/
-URL:http://publication.pravo.gov.ru/
+ бласти.\nОфициальный источник: http://kremlin.r
+ u/acts/bank/search?query=%E2%84%96%20459-%D0%A4%D0%97
+URL:http://kremlin.ru/acts/bank/search?query=%E2%84%96%20459-%D0%A4%D0%97
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR

@@ -8,7 +8,7 @@ X-WR-CALNAME:НДС при смене налоговых правил п
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-dc61bc2f@kalendar-zakonov
-DTSTAMP:20261114T182909Z
+DTSTAMP:20261114T184454Z
 DTSTART;VALUE=DATE:20261001
 DTEND;VALUE=DATE:20261002
 SUMMARY:Вступает в силу: НДС при смене налог
@@ -19,9 +19,9 @@ DESCRIPTION:Федеральный закон от 04.08.2026 № 293-Ф
   налог считается расчетным путем от цен
  ы договора.\nКого коснётся: Организации 
  и ИП\, работающие по долгосрочным догов
- орам.\nОфициальный источник: http://publication.p
- ravo.gov.ru/
-URL:http://publication.pravo.gov.ru/
+ орам.\nОфициальный источник: http://kremlin.ru/ac
+ ts/bank/search?query=%E2%84%96%20293-%D0%A4%D0%97
+URL:http://kremlin.ru/acts/bank/search?query=%E2%84%96%20293-%D0%A4%D0%97
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR
