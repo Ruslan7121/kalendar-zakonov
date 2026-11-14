@@ -52,7 +52,7 @@ try {
       return { s, close: () => cmd('Target.closeTarget', { targetId }) }; };
     // 1) поиск по «Сути» законопроекта и по документам органов
     { const p = await open('/?q=' + encodeURIComponent('форели'));
-      const ok = await until(p.s, `document.body.innerText.includes('1276697-8') && /Найдено по запросу/.test(document.body.innerText)`);
+      const ok = await until(p.s, `!!document.querySelector('[data-ivt$="1276697-8"]') && /Найдено по запросу/.test(document.body.innerText)`);
       chk(ok, '?q=форели: законопроект 1276697-8 (слово только в «Сути») не найден'); chk((await ev(p.s, CQ)) === 'форели', '?q=: строка поиска не заполнена');
       rep.push(tag(`?q=форели: ${ok ? 'найден 1276697-8' : 'НЕТ'}`)); await p.close(); }
     { const p = await open('/?q=' + encodeURIComponent('Колокольцев'));
@@ -66,7 +66,7 @@ try {
       chk(await ev(p.s, OPENF), 'нет кнопки «Фильтры»'); await until(p.s, `!!document.querySelector('[data-zc]')`);
       const a = await ev(p.s, ZC('w', 'Пенсионеры')), b = await ev(p.s, ZC('c', 'Новая выплата или льгота'));
       chk(+a === N && +b === N, `счётчики выбранных меток (${a}, ${b}) не равны «Найдено: ${N}»`);
-      const sh = await ev(p.s, `(() => { const b = [...document.querySelectorAll('button')].find((x) => /^Показать/.test(x.textContent)); return b ? b.textContent : ''; })()`); chk(sh === `Показать ${N}`, `кнопка «${sh}» ≠ «Показать ${N}»`);
+      const sh = await ev(p.s, `(() => { const b = [...document.querySelectorAll('button')].find((x) => /^Показать/.test(x.textContent)); return b ? b.textContent : ''; })()`); chk(new RegExp(`^Показать ${N} карточ(ку|ки|ек)$`).test(sh), `кнопка «${sh}» ≠ «Показать ${N} карточек»`); /* по макету: «Показать N карточек» */
       const tc = +(await ev(p.s, ZC('t', 'Пособия и выплаты'))); chk(tc > 0 && tc <= N, `счётчик «Пособия и выплаты» ${tc}`);
       await ev(p.s, `document.querySelector('[data-zk="t"][data-zv="Пособия и выплаты"]').click()`); await sleep(400);
       const N2 = await ev(p.s, FOUND); chk(N2 === tc, `после выбора «Пособия и выплаты» найдено ${N2}, счётчик был ${tc}`);
