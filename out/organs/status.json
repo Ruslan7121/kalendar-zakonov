@@ -1,5 +1,5 @@
 {
- "run": "14.11.2026 02:33 МСК",
+ "run": "14.11.2026 03:31 МСК",
  "window": [
   "14.11.2026",
   "14.11.2026"
@@ -38,7 +38,7 @@
   },
   "minfin_projects": {
    "url": "https://minfin.gov.ru/ru/document/npa_projects/",
-   "status": "blocked:HTTP 403, страница ограничения доступа"
+   "status": "ok (разбор не реализован)"
   },
   "mintrud_profstandards": {
    "url": "https://regulation.gov.ru/",
