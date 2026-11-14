@@ -8,7 +8,7 @@ X-WR-CALNAME:НДС при смене налоговых правил п
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-dc61bc2f@kalendar-zakonov
-DTSTAMP:20261114T191937Z
+DTSTAMP:20261114T193409Z
 DTSTART;VALUE=DATE:20261001
 DTEND;VALUE=DATE:20261002
 SUMMARY:Вступает в силу: НДС при смене налог
