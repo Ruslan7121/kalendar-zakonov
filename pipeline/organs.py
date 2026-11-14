@@ -32,6 +32,7 @@ SOURCES = {
     'cbr_news': 'https://www.cbr.ru/rss/RssNews',
     'cbr_events': 'https://www.cbr.ru/rss/eventrss',
     'mintrud_docs': 'https://mintrud.gov.ru/document/rss',
+    'mintrud_news': 'https://mintrud.gov.ru/news/news/list',
     'mintrud_profstandards': 'https://regulation.gov.ru/',
     'minjust_events': 'https://minjust.gov.ru/ru/events/list/',
     'minjust_projects': 'https://minjust.gov.ru/ru/documents/projects/',
@@ -40,7 +41,7 @@ SOURCES = {
     'minfin_pravo': 'http://publication.pravo.gov.ru/documents/foiv283/monthly',
     'sf_meetings': 'http://council.gov.ru/activity/meetings/',
 }
-FIX = {'cbr_news': 'cbr_RssNews.xml', 'cbr_events': 'cbr_eventrss.xml', 'mintrud_docs': 'mintrud_document_rss.xml',
+FIX = {'cbr_news': 'cbr_RssNews.xml', 'cbr_events': 'cbr_eventrss.xml', 'mintrud_docs': 'mintrud_document_rss.xml', 'mintrud_news': 'mintrud_news_list.html',
        'minjust_events': 'minjust_events_list.html', 'minjust_projects': 'minjust_projects.html',
        'minfin_pravo': 'minfin_pravo_monthly.webfetch.md', 'sf_meetings': 'sf_meetings.webfetch.md'}
 
@@ -132,6 +133,22 @@ def parse_minjust_events(h):
         if e['id'] not in seen: seen.add(e['id']); out.append(e)
     return out
 
+def parse_mintrud_news(h):
+    """14.11.2026: «Картина дня» Минтруда (mintrud.gov.ru/news/news/list). Каждая новость — ссылка, в тексте которой
+    заголовок и дата («… 13 ноября 2026») или дата и заголовок (карточки вверху страницы). Видеобанк и разделы без даты пропускаем."""
+    res, seen = [], set()
+    D = r'(\d{1,2}\s+(?:' + '|'.join(MONTHS) + r')\s+\d{4})'
+    for m in re.finditer(r'(?is)<a[^>]+href="(/[^"#]+)"[^>]*>(.*?)</a>', h):
+        href, t = m.group(1), clean(re.sub(r'<[^>]+>', ' ', m.group(2)))
+        if href.startswith(('/videobank', '/events/event-profi')) or href in seen: continue
+        a = re.match(r'^(.{15,}?)\s+' + D + r'$', t) or re.match(r'^' + D + r'\s+(.{15,})$', t)
+        if not a: continue
+        title, d = (a.group(1), a.group(2)) if not re.match(D, t) else (a.group(2), a.group(1))
+        dd = ru_date(d)
+        if not dd: continue
+        seen.add(href); res.append(ev('mintrud', dd, 'новость', title, 'https://mintrud.gov.ru' + href, 'Новость'))
+    return res
+
 def parse_pravo_list(txt, org='minfin'):
     """Список «Официальное опубликование правовых актов» по органу (HTML→текст или сохраненный текст страницы).
     Дата события — дата официального опубликования; в названии — дата и номер регистрации в Минюсте."""
@@ -160,7 +177,7 @@ SF_AGENDA = {'622': ('http://council.gov.ru/activity/meetings/178174/agenda/',
     'протокол с Беларусью о косвенных налогах; соглашение с Южной Осетией о зачете выслуги в таможенных органах. '
     'Консультации по кандидатуре заместителя Генпрокурора; «правительственный час» с министром внутренних дел.')}
 
-PARSERS = {'cbr_news': parse_cbr_news, 'cbr_events': parse_cbr_events, 'mintrud_docs': parse_mintrud_docs,
+PARSERS = {'cbr_news': parse_cbr_news, 'cbr_events': parse_cbr_events, 'mintrud_docs': parse_mintrud_docs, 'mintrud_news': parse_mintrud_news,
            'minjust_events': parse_minjust_events, 'minfin_pravo': parse_pravo_list, 'sf_meetings': parse_sf_meetings}
 NOT_PARSED = {'mintrud_profstandards': 'проекты профстандартов публикуются на regulation.gov.ru — с этой машины нет соединения',
               'minjust_projects': 'страница проектов документов Минюста отдается без списка (пустая выдача)',

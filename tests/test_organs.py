@@ -63,4 +63,9 @@ mjn = [e for e in mj if e['ty'] == 'новость']
 assert mjn and all(e['u'].startswith('https://minjust.gov.ru/ru/events/') for e in mjn), 'новости Минюста не разобраны'
 assert any(e['d'] == '03.11.2026' and e['t'].startswith('Константин Чуйченко совершил рабочую поездку') for e in mjn)
 assert not any('коллеги' in e['t'].lower() for e in mjn), 'коллегия — заседание, не новость'
+# 14.11.2026: новости Минтруда — «Картина дня»: заголовок и дата в одной ссылке, видеобанк и разделы без даты пропускаются
+mt = O.parse_mintrud_news(open(os.path.join(R, 'tests', 'fixtures', 'mintrud_news_list.html')).read())
+assert [e['d'] for e in mt] == ['13.11.2026', '05.11.2026', '11.11.2026', '06.11.2026'], [e['d'] for e in mt]
+assert all(e['ty'] == 'новость' and e['o'] == 'mintrud' and e['u'].startswith('https://mintrud.gov.ru/') for e in mt)
+assert not any('videobank' in e['u'] or 'event-profi' in e['u'] for e in mt)
 print(f'OK test_organs: событий {len(ev)}, с проверенными полями {len(enr)}, ORG/ORGX в canvas совпадают с out/organs')
