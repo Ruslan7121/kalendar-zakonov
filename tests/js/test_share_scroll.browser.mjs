@@ -53,7 +53,7 @@ const MEASURE = (k) => `(() => {
   const sr = s0 && s0.getBoundingClientRect(); const pr = p && p.getBoundingClientRect();
   const share = s0 ? { n: sh.length, bottom: !!s0.closest('[data-share-bottom]'), inRow: lk.some((l) => l.parentElement === s0.parentElement.parentElement), last: lk.every((l) => l.getBoundingClientRect().bottom <= sr.top + 1), gap: pr.bottom - sr.bottom } : null;
   const bd = document.querySelector('[data-gdmodal]'); const br = bd && bd.getBoundingClientRect();
-  return { hTop: hr.top, hBot: hr.bottom, wTop: wr.top, wBot: wr.bottom, wH: wr.height, st: win.scrollTop, vh: innerHeight, copy, raw, share, links: lk.length, closeBtn: !!win.querySelector('[data-gdclose]'), backdrop: !!br && br.width >= innerWidth - 1 && br.height >= innerHeight - 1, sheet: wr.bottom >= innerHeight - 1 };
+  return { hTop: hr.top, hBot: hr.bottom, wTop: wr.top, wBot: wr.bottom, wH: wr.height, st: win.scrollTop, vh: innerHeight, copy, raw, share, links: lk.length, closeBtn: !!win.querySelector('[data-gdclose]'), backdrop: !!br && br.width >= innerWidth - 1 && br.height >= innerHeight - 1, sheet: wr.bottom >= innerHeight - 40 && wr.bottom <= innerHeight - 4 && wr.left >= 6 && innerWidth - wr.right >= 6 };
 })()`;
 
 const fails = []; const rep = [];
@@ -80,7 +80,7 @@ try {
       if (r.wTop < -1 || r.wBot > r.vh + 1) fails.push(`${tag}: окно выходит за экран (${r.wTop.toFixed(1)}–${r.wBot.toFixed(1)})`);
       if (!r.backdrop) fails.push(`${tag}: нет затемнения на весь экран`);
       if (!r.closeBtn) fails.push(`${tag}: нет кнопки закрытия`);
-      if (W.mobile && !r.sheet) fails.push(`${tag}: на телефоне окно должно быть листом, прижатым к низу экрана`);
+      if (W.mobile && !r.sheet) fails.push(`${tag}: на телефоне окно должно быть листом у низа экрана с отступами по бокам и снизу (14.11.2026: «чуть меньше с каждой стороны»)`);
       // Правило 11 (по сводному макету 14.11.2026): нет «Скопировать ссылку на голосование» и сырого адреса;
       // «Поделиться» — одна кнопка в блоке ссылок «Законопроект / Текст / Голосование» на любой ширине.
       if (!r.share) fails.push(`${tag}: нет кнопки «Поделиться»`);
