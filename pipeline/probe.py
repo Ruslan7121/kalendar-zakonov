@@ -10,6 +10,8 @@ DATE = re.compile(r'\d{1,2}\s+(?:' + '|'.join(O.MONTHS) + r')\s+\d{4}|\d\d\.\d\d
 
 
 def show(url, body, how):
+    if body.lstrip()[:1] in '{[':  # 15.11.2026: ответ API (JSON) — печатаем начало как есть
+        print(f'--- {how}: JSON {len(body)} байт:', body[:2500]); return
     t = re.search(r'(?is)<title[^>]*>(.*?)</title>', body)
     print(f'--- {how}: {len(body)} байт, title: {O.clean(t.group(1)) if t else "—"}')
     rss = re.findall(r'(?i)<link[^>]+type="application/rss\+xml"[^>]*>', body)
