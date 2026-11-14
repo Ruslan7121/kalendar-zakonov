@@ -1,0 +1,64 @@
+# 14.11.2026: прямые ссылки на официальный текст законов «Вступают в силу» (kremlin.ru/acts/bank/<id>) — отдельно от ежедневного прогона.
+# Запуск вручную: Actions → laws → Run workflow. Делает только pipeline/laws_src.py (поиск закона по номеру на kremlin.ru через
+# RU-прокси pipeline/fetch.sh, сверка номера и даты подписания) → проверка данных и тесты → коммит в main → публикация сайта.
+# Голосования, календарь и органы не собирает. Тот же шаг выполняется и в ежедневном прогоне (run_daily.sh после track.py).
+name: laws
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: daily-run
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      TZ: Europe/Moscow
+      GD_DUMA: ${{ github.workspace }}/../duma
+      GD_REQUIRE_BROWSER: '1'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Зависимости
+        run: |
+          npm install --no-audit --no-fund
+          mkdir -p "$GD_DUMA/lists" "$GD_DUMA/bills" "$GD_DUMA/days"
+      - name: Кэш конвейера (списки прокси)
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/../duma
+          key: duma-${{ github.run_id }}
+          restore-keys: duma-
+      - name: Автор коммитов
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Поиск ссылок (pipeline/laws_src.py)
+        run: |
+          cd pipeline && python3 laws_src.py 2>&1 | tee ../laws.log
+          cd .. && python3 pipeline/strip_code_only.py && node pipeline/split_data.mjs
+      - name: Проверка схемы данных
+        run: node pipeline/validate_data.mjs
+      - name: Проверка типов и тесты
+        run: |
+          npm run typecheck
+          bash tests/run_all.sh
+      - name: Коммит в main (pipeline/commit.sh)
+        run: bash pipeline/commit.sh "Официальные ссылки законов «Вступают в силу» (kremlin.ru)"
+      - name: Публикация (pipeline/publish.sh)
+        run: bash pipeline/publish.sh "Официальные ссылки законов «Вступают в силу»"
+      - name: Сводка
+        if: always()
+        run: |
+          { echo '### Ссылки законов'; echo '```'; cat laws.log 2>/dev/null; echo; tail -n 60 out/logs/laws_src.log 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          tail -n 60 out/logs/laws_src.log 2>/dev/null || true
