@@ -47,6 +47,9 @@ jobs:
         run: |
           cd pipeline && python3 laws_src.py 2>&1 | tee ../laws.log
           cd .. && python3 pipeline/strip_code_only.py && node pipeline/split_data.mjs
+      - name: Полнота «Вступают в силу» (подборки Госдумы, только отчет)
+        run: |
+          cd pipeline && python3 laws_check.py http://duma.gov.ru/news/64396/ http://duma.gov.ru/news/64038/ 2>&1 | tee ../laws_check.log || true
       - name: Проверка схемы данных
         run: node pipeline/validate_data.mjs
       - name: Проверка типов и тесты
@@ -68,5 +71,6 @@ jobs:
       - name: Сводка
         if: always()
         run: |
-          { echo '### Ссылки законов'; echo '```'; cat laws.log 2>/dev/null; echo; tail -n 60 out/logs/laws_src.log 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo '### Ссылки законов'; echo '```'; cat laws.log 2>/dev/null; echo; tail -n 60 out/logs/laws_src.log 2>/dev/null; echo '```'; echo '### Полнота'; echo '```'; cat laws_check.log 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           tail -n 60 out/logs/laws_src.log 2>/dev/null || true
+          cat laws_check.log 2>/dev/null || true
