@@ -2132,6 +2132,20 @@ const nvTile = (c?: string): any => ({ ['--gd-ga' as any]: c ? nvGlowA(c) : `0 4
 const nvBlk = (): any => ({ background: DK ? '#262C37' : '#EDF1F7', boxShadow: `inset 0 0 0 1px ${DK ? '#353C49' : '#DCE3EE'}`, border: 'none', borderRadius: 14 });
 const nvPill = (c: string): any => ({ display: 'inline-block', fontSize: 11.5, fontWeight: 600, lineHeight: 1.3, padding: '1px 9px', borderRadius: 9999, border: `1.5px solid ${c}`, color: c, whiteSpace: 'nowrap', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' });
 function NvRing({ n, p, c, size }: { n: string; p: number; c: string; size?: number }) { const z = size || 44; return <span aria-hidden style={{ width: z, height: z, borderRadius: '50%', flex: 'none', display: 'grid', placeItems: 'center', background: `conic-gradient(${c} ${Math.max(0, Math.min(100, p))}%, ${DK ? '#2C323D' : '#E3E7EE'} 0)` }}><span style={{ width: z - 12, height: z - 12, borderRadius: '50%', display: 'grid', placeItems: 'center', background: DK ? '#20252E' : '#FFFFFF', fontSize: z > 50 ? 13 : 10.5, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{n}</span></span>; }
+/* 14.11.2026 (вариант В): знак органа в тонированном кружке без толстого кольца — вместо номера документа и сокращений (ГД, СФ, ЦБ…).
+   Знаки свои (здания, ₽, монеты, каска, весы), не официальные эмблемы. Размер один везде — в плитках, шапке окна и новостях. */
+const ORGI: Record<string, string> = {
+  gd: 'M3 20.5h18M4.5 18.5h15M6 11v7.5M9 11v7.5M12 11v7.5M15 11v7.5M18 11v7.5M4 9.5h16v1.5H4zM7 6.5h10v3H7zM12 6.5V2.5M12 2.5h3.6l-.9 1.2.9 1.2H12',
+  sf: 'M3 20.5h18M4.5 18.5h15M6.5 11v7.5M10 11v7.5M14 11v7.5M17.5 11v7.5M3.5 10.5L12 5l8.5 5.5zM12 5V2',
+  gov: 'M2.5 20.5h19M4 20.5v-7h4.5M20 20.5v-7h-4.5M8.5 20.5V8h7v12.5M10 6h4v2h-4zM12 6V2.5M12 2.5h3l-.8 1 .8 1h-3M10.5 11h3M10.5 14h3M10.5 17h3M5.5 16h1.5M17 16h1.5',
+  cbr: 'M9.5 20V4h5a4 4 0 0 1 0 8h-7M7.5 16h8',
+  minfin: 'M5.5 6.5a6.5 2.5 0 1 0 13 0a6.5 2.5 0 1 0-13 0M5.5 6.5v4c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5v-4M5.5 10.5v4c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5v-4M5.5 14.5v3c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5v-3',
+  mintrud: 'M5 15.5a7 7 0 0 1 14 0M4 15.5h16v2H4zM12 8.5v-2M9.5 9.5V12M14.5 9.5V12M12 6.5a1.6 1.6 0 1 0 0-3.2a1.6 1.6 0 0 0 0 3.2z',
+  minjust: 'M12 3v17M8 20.5h8M5 6.5h14M12 4.5l-1 2h2zM6.5 6.5l-3 6.5h6zM17.5 6.5l-3 6.5h6zM3.5 13a3 2 0 0 0 6 0M14.5 13a3 2 0 0 0 6 0',
+};
+const ORGNM: Record<string, string> = { gd: 'Госдума', sf: 'Совет Федерации', gov: 'Правительство', cbr: 'Банк России', minfin: 'Минфин', mintrud: 'Минтруд', minjust: 'Минюст' };
+const OMZ = 48;
+function OrgMark({ o, c }: { o: string; c: string }) { const d = ORGI[o]; return <span data-orgmarkb={o} role="img" aria-label={ORGNM[o] || ''} style={{ width: OMZ, height: OMZ, borderRadius: '50%', flex: 'none', display: 'grid', placeItems: 'center', background: nvMix(c, 18), boxShadow: `inset 0 0 0 1px ${nvMix(c, 40)}` }}>{d ? <svg width={25} height={25} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg> : null}</span>; }
 function NvBadge({ t, c, size }: { t: string; c: string; size?: number }) { const z = size || 46; return <span aria-hidden style={{ width: z, height: z, borderRadius: '50%', flex: 'none', boxSizing: 'border-box', border: `4px solid ${c}`, display: 'grid', placeItems: 'center', background: DK ? '#20252E' : '#FFFFFF' }}><span style={{ fontSize: t.length > 4 ? 8.5 : 11, fontWeight: 700, lineHeight: 1.05, textAlign: 'center', maxWidth: z - 12, overflowWrap: 'anywhere' }}>{t}</span></span>; }
 /* Окно карточки: лист снизу на телефоне, окно по центру на компьютере; кромка светится цветом c. Закрытие: крестик, фон, Escape, «назад». */
 /* 14.11.2026 (6А): «уменьшение движения» в системе — окна без анимации */
@@ -3181,7 +3195,7 @@ function NewsFeed({ m, months, more, focus }: { m: boolean; months: string[]; mo
     {cur && shown.length > 0 && <section key={cur} data-newsday={cur} className="gd-anim" style={{ display: 'grid', gridTemplateColumns: m ? '1fr' : 'repeat(2, minmax(0, 1fr))', gap: m ? 10 : 12 }}>
       {/* новый вид, экран 6: широкие плитки — значок органа, рубрика в рамке, текст; нажатие открывает источник */}
       {shown.map((x, i) => { const Tg: any = x.u ? 'a' : 'article'; const c = col(x.o); const ab = ({ gd: 'ГД', gov: 'Пр', sf: 'СФ', cbr: 'ЦБ', minfin: 'МФ', mintrud: 'МТ', minjust: 'МЮ' } as Record<string, string>)[x.o] || ''; return <Tg key={i} data-newsitem={x.o} className="gd-rw" {...(x.u ? { href: x.u, target: '_blank', rel: 'noopener noreferrer', title: `Открыть на ${host(x.u)}` } : {})} style={{ ...nvTile(c), display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', textDecoration: 'none', color: 'inherit', cursor: x.u ? 'pointer' : 'default' }}>
-        <NvBadge t={ab} c={c} />
+        <OrgMark o={x.o} c={c} />{void ab}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
           <span style={nvPill(c)}>{x.tag || name(x.o)}</span>
           <div style={{ fontSize: m ? 14.5 : 14, lineHeight: 1.4, color: t.text.primary, overflowWrap: 'anywhere' }}>{x.text}</div>
@@ -3244,7 +3258,7 @@ function OrgItem({ x, m }: { x: any; m?: boolean }) {
   /* новый вид: широкая плитка (значок с номером в цвете органа, вид документа в рамке, название); карточка — окном */
   const oc = orgCol(x.o, DK); const good = /одобр|принят|поддерж|назнач|избран|утвержд/i.test(x.stt || ''); const bad = /отклон|не принят|не одобр/i.test(x.stt || ''); const gl = x.o === 'sf' && (good || bad) ? (bad ? INK[1] : INK[0]) : oc;
   const pl = x.o === 'sf' ? (x.stt || kind) : (kind || x.stt); const bt = no ? String(no).replace(/^№\s*/, '№ ') : (x.o === 'sf' ? 'СФ' : (ORGN[x.o] || '').slice(0, 2));
-  const hdr = (big?: boolean) => <><NvBadge t={bt} c={oc} size={big ? 56 : 46} /><span style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>{pl && <span data-orgkind="1" style={nvPill(oc)}>{pl}</span>}<span style={{ fontSize: big ? (m ? 17 : 19) : 14, lineHeight: 1.3, fontWeight: big ? 700 : t.weight.semibold, color: t.text.primary, textAlign: 'left' }}>{x.st || x.t}</span></span></>;
+  const hdr = (big?: boolean) => <><OrgMark o={x.o} c={oc} />{void bt}<span style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>{pl && <span data-orgkind="1" style={nvPill(oc)}>{pl}</span>}<span style={{ fontSize: big ? (m ? 17 : 19) : 14, lineHeight: 1.3, fontWeight: big ? 700 : t.weight.semibold, color: t.text.primary, textAlign: 'left' }}>{x.st || x.t}</span></span></>;
   const blk = { ...nvBlk(), padding: m ? '10px 12px' : '12px 14px' } as any;
   return (
     <div data-orgitem="1" data-orgopen={op ? '1' : undefined} style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
