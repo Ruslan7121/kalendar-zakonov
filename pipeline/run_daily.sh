@@ -66,6 +66,9 @@ OFROM=$(python3 -c "import datetime as d,sys; x=d.datetime.strptime(sys.argv[1],
 python3 organs.py --from "$OFROM" --to "$DAY" --embed || echo "organs: ошибка (см. out/organs/status.json)" >&2
 echo "[путь закона]"
 python3 track.py
+# 14.11.2026: прямые ссылки на официальный текст законов «Вступают в силу» (kremlin.ru/acts/bank), где их ещё нет
+echo "[законы: официальные ссылки]"
+python3 laws_src.py || echo "laws_src: ошибка (см. out/logs/laws_src.log)" >&2
 echo "[аудит] $DAY"
 python3 audit.py --day "$DAY" --fix
 echo "[список задач]"
