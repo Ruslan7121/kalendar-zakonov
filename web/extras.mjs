@@ -5,6 +5,7 @@
 //   feed/gd.xml             — RSS: голосования Госдумы по законопроектам (последние 100).
 //   feed/<метка>.xml        — RSS по каждой метке «Для кого» / «Тема» / «Что меняется»; feed/index.html — список лент.
 //   ics/laws.ics            — календарь (.ics): законы, вступающие в силу («Вступают в силу»).
+//   ics/law/<номер>.ics    — один закон (кнопка «Добавить в календарь» в карточке закона).
 //   ics/plenary.ics         — календарь (.ics): пленарные заседания Госдумы (прошедшие и запланированные).
 //   sitemap.xml, robots.txt
 // Только данные из data/*.json; если поля нет — оно не выводится. Запуск: node web/extras.mjs [каталог] (по умолчанию web/dist).
@@ -147,7 +148,13 @@ const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, '
 const ics = (name, evs) => ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//kalendar-zakonov//RU', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', fold(`X-WR-CALNAME:${icsEsc(name)}`), 'X-WR-TIMEZONE:Europe/Moscow',
   ...evs.flatMap((e) => ['BEGIN:VEVENT', fold(`UID:${e.uid}@kalendar-zakonov`), `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${ymd(e.d)}`, `DTEND;VALUE=DATE:${nextDay(e.d)}`, fold(`SUMMARY:${icsEsc(e.s)}`), fold(`DESCRIPTION:${icsEsc(e.x)}`), ...(e.u ? [fold(`URL:${e.u}`)] : []), 'TRANSP:TRANSPARENT', 'END:VEVENT']),
   'END:VCALENDAR'].join('\r\n') + '\r\n';
-const lawEv = Object.values(LAWS.months || {}).flat().filter((x) => x && x.d && x.title).map((x, i) => ({ uid: `law-${ymd(x.d)}-${slug(x.law || x.title).slice(0, 60)}-${i}`, d: x.d, s: `Вступает в силу: ${x.title}`, x: [x.law, x.sut, x.who ? `Кого коснётся: ${x.who}` : ''].filter(Boolean).join('\n'), u: `${SITE}?tab=l` }));
+// постоянный номер закона — тот же расчёт, что lawId в src/canvas.tsx (FNV-1a от даты, реквизитов и названия)
+const lawId = (x) => { let h = 0x811c9dc5; for (const ch of `${x.d}|${x.law || ''}|${x.title || ''}`) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
+const lawCard = (x) => `${SITE}?tab=l&law=${lawId(x)}`;
+const LAWL = Object.values(LAWS.months || {}).flat().filter((x) => x && x.d && x.title);
+const lawEv = LAWL.map((x) => ({ uid: `law-${lawId(x)}`, d: x.d, s: `Вступает в силу: ${x.title}`, x: [x.law, x.sut, x.who ? `Кого коснётся: ${x.who}` : '', `Карточка закона: ${lawCard(x)}`].filter(Boolean).join('\n'), u: lawCard(x) }));
+// ics/law/<номер>.ics — один закон: кнопка «Добавить в календарь» в карточке; в событии ссылка на карточку
+lawEv.forEach((e, i) => put(`ics/law/${lawId(LAWL[i])}.ics`, ics(LAWL[i].title, [e])));
 put('ics/laws.ics', ics('Законы вступают в силу', lawEv));
 const PST = { held: 'состоялось', confirmed: 'назначено', expected: 'ожидается по распорядку' };
 const plEv = CALP.filter((p) => p && p.d).map((p) => ({ uid: `gd-${ymd(p.d)}`, d: p.d, s: `Пленарное заседание Госдумы${p.s && p.s !== 'held' ? ` (${PST[p.s] || p.s})` : ''}`, x: [(p.a || []).length ? `Законопроектов в повестке: ${p.a.length}` : '', p.src ? `Источник: ${p.src}` : ''].filter(Boolean).join('\n'), u: `${SITE}?d=${p.d}` }));
