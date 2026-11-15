@@ -7,7 +7,7 @@
 //   feed/<метка>.xml        — RSS по каждой метке «Для кого» / «Тема» / «Что меняется»; feed/index.html — список лент.
 //   ics/laws.ics            — календарь (.ics): законы, вступающие в силу («Вступают в силу»).
 //   ics/law/<номер>.ics    — один закон (кнопка «Добавить в календарь» в карточке закона), ссылка — на официальный источник.
-//   ics/plenary.ics         — календарь (.ics): пленарные заседания Госдумы (прошедшие и запланированные).
+//   ics/plenary.ics         — календарь (.ics): пленарные заседания Госдумы — сегодняшние и будущие (с 15.11.2026).
 //   sitemap.xml, robots.txt
 // Только данные из data/*.json; если поля нет — оно не выводится. Запуск: node web/extras.mjs [каталог] (по умолчанию web/dist).
 import fs from 'node:fs';
@@ -180,7 +180,8 @@ const LAWL = Object.values(LAWS.months || {}).flat().filter((x) => x && x.d && x
 const lawEv = LAWL.map((x) => ({ uid: `law-${lawId(x)}`, d: x.d, s: `Вступает в силу: ${x.title}`, x: [x.law, x.sut, x.who ? `Кого коснётся: ${x.who}` : '', `Официальный источник: ${lawSrc(x)}`].filter(Boolean).join('\n'), u: lawSrc(x) }));
 // ics/law/<номер>.ics — один закон: кнопка «Добавить в календарь» в карточке; в событии ссылка на карточку
 lawEv.forEach((e, i) => put(`ics/law/${lawId(LAWL[i])}.ics`, ics(LAWL[i].title, [e])));
-put('ics/laws.ics', ics('Законы вступают в силу', lawEv));
+// 15.11.2026: события — от поздних дат к ранним (по просьбе владельца; часть программ показывает их в порядке файла)
+put('ics/laws.ics', ics('Законы вступают в силу', [...lawEv].sort((a, b) => +pd(b.d) - +pd(a.d))));
 // 15.11.2026: страница закона со своим адресом — law/<номер>/ (номер = lawId): дата, суть, кого коснется, метки, «Официальный текст»,
 // «Добавить в календарь», «Поделиться». Путь закона не показываем (решение владельца). law/ — список всех законов «Вступают в силу».
 const LBTN = 'display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:12px;background:var(--sub);border:1px solid var(--bd);font-weight:600;text-decoration:none;cursor:pointer;font:inherit;color:inherit';
@@ -227,7 +228,9 @@ for (const [k, tg] of Object.entries(TAGS)) {
 }
 const PST = { held: 'состоялось', confirmed: 'назначено', expected: 'ожидается по распорядку' };
 const plEv = CALP.filter((p) => p && p.d).map((p) => ({ uid: `gd-${ymd(p.d)}`, d: p.d, s: `Пленарное заседание Госдумы${p.s && p.s !== 'held' ? ` (${PST[p.s] || p.s})` : ''}`, x: [(p.a || []).length ? `Законопроектов в повестке: ${p.a.length}` : '', p.src ? `Источник: ${p.src}` : ''].filter(Boolean).join('\n'), u: `${SITE}?d=${p.d}` }));
-put('ics/plenary.ics', ics('Пленарные заседания Госдумы', plEv));
+// 15.11.2026: только сегодняшние и будущие заседания (прошедшие не нужны в календаре), от поздних к ранним; файл пересобирается при каждой публикации
+const TODAY0 = (() => { const n = new Date(Date.now() + 3 * 36e5); return Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()); })();
+put('ics/plenary.ics', ics('Пленарные заседания Госдумы', plEv.filter((e) => +pd(e.d) >= TODAY0).sort((a, b) => +pd(b.d) - +pd(a.d))));
 
 // ---------- Ф3 (13.11.2026): страницы дней day/ГГГГ-ММ-ДД/ — что рассмотрела Госдума в этот день ----------
 const MONN = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
