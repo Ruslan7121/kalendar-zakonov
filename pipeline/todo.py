@@ -44,6 +44,9 @@ for p in sorted(CALJ.get('p', []), key=lambda p: tuple(reversed(p['d'].split('.'
     for a in p.get('a') or []:
         if re.match(r'^\d+-\d+$', a[0] or '') and not (ZT.get(a[0]) and all(ZT[a[0]])) and not any(f' {a[0]} ' in l for l in miss_t):
             miss_t.append(f"- [ ] {p['d']} {a[0]} «{(a[1] or a[4] or '')[:80]}»: ZTAG — [[«Для кого»], [«Тема»], [«Что меняется»]] из ZW/ZT/ZC")
+try: _za = json.loads(src[src.index('const ZAUTO: string[] = ') + 24:src.index('\n', src.index('const ZAUTO: string[] = '))].rstrip(';'))
+except ValueError: _za = []
+miss_t += [f"- [ ] {n}: метки временные (pipeline/auto_ztag.py, по словам названия) — уточнить по записке extracts/bills/{n}.json, затем убрать номер из ZAUTO: {ZT.get(n)}" for n in _za]
 L[L.index('## Суть и кого касается — законопроекты'):L.index('## Суть и кого касается — законопроекты')] = ['## Метки законопроектов (ZTAG) — первыми: без них ежедневный прогон не публикуется', ''] + (miss_t or ['нет']) + ['']
 i = src.index('const LAWS: any = ') + 18; LW = json.loads(src[i:src.index(';\n', i)])
 auto = [f"- [ ] {x['d']} {x['law']} (законопроект {x.get('bill','')}): заголовок и sut" for mk in LW['months'].values() for x in mk if x.get('auto') and not x.get('sut')]
