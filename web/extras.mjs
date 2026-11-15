@@ -104,7 +104,7 @@ for (const b of ALL) b.tags.forEach((g, gi) => (g || []).forEach((v) => { const 
 // ---------- запись ----------
 const files = [];
 const put = (rel, s) => { const f = path.join(OUT, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, s); files.push(rel); };
-for (const d of ['bill', 'feed', 'ics', 'day', 'fractions', 'law']) fs.rmSync(path.join(OUT, d), { recursive: true, force: true });
+for (const d of ['bill', 'feed', 'ics', 'day', 'fractions', 'law', 'v']) fs.rmSync(path.join(OUT, d), { recursive: true, force: true });
 
 // страницы законопроектов
 const TRK = [['in', 'Внесен'], ['kom', 'Комитет'], ['r1', '1-е чтение'], ['r2', '2-е чтение'], ['r3', '3-е чтение'], ['sf', 'Совет Федерации'], ['pr', 'Подписан']];
@@ -122,6 +122,18 @@ ${tr ? `<h2>Путь закона</h2><div class="chips">${tr}</div>` : ''}
 ${b.ini || b.com ? `<h2>Кто внёс и ведёт</h2><div class="box">${b.ini ? `<p><b>Инициатор:</b> ${esc(b.ini)}</p>` : ''}${b.com ? `<p><b>Ответственный комитет:</b> ${esc(b.com)}</p>` : ''}</div>` : ''}
 <h2>Источники</h2><p><a href="https://sozd.duma.gov.ru/bill/${esc(b.no)}" rel="noopener">Законопроект на sozd.duma.gov.ru</a> · <a href="${esc(share(v))}">Карточка в календаре</a></p>`;
   put(`bill/${b.no}/index.html`, page({ title: `${b.title} (${b.no})`, desc, url, body, depth: 2 }));
+}
+// 15.11.2026: v/<id голосования>/ — ссылка «Поделиться» с превью: в Telegram, WhatsApp, VK видно название законопроекта, итог,
+// голоса и суть (og:title / og:description); человека страница сразу переводит в карточку календаря (?d=…&v=…).
+// Поисковикам эти страницы не нужны (noindex, в sitemap их нет) — для них есть bill/<номер>/.
+for (const b of ALL) for (const v of b.votes) {
+  const to = `../../?d=${v.day}&v=${v.id}`;
+  const title = `${b.title} — ${v.ok ? 'принят' : 'отклонен'}`;
+  const desc = cut(`${v.read ? v.read + ' · ' : ''}${hd(v.day)} · за ${v.za}, против ${v.pr}, воздержались ${v.vz}. ${b.sut.join(' ') || b.full}`, 220);
+  const body = `<script>location.replace(${JSON.stringify(to)})</script><div class="top"><span class="no">${esc(b.no)}</span>${v.read ? `<span>${esc(v.read)}</span>` : ''}<span class="st ${v.ok ? 'ok' : 'rej'}">${v.ok ? 'принят' : 'отклонен'}</span><span class="meta">${esc(hd(v.day))}</span></div>
+<h1>${esc(b.title)}</h1><p>За ${v.za}, против ${v.pr}, воздержались ${v.vz}, не голосовали ${v.ng}.</p>${b.sut.length ? `<div class="box">${b.sut.map((p) => `<p>${esc(p)}</p>`).join('')}</div>` : ''}
+<p><a href="${esc(to)}">Открыть карточку в календаре</a> · <a href="../../bill/${esc(b.no)}/">Страница законопроекта</a></p>`;
+  put(`v/${v.id}/index.html`, page({ title, desc, url: `${SITE}v/${v.id}/`, body, depth: 2 }).replace('<link rel="canonical"', '<meta name="robots" content="noindex"><link rel="canonical"'));
 }
 put('bill/index.html', page({ title: 'Все законопроекты', desc: `Законопроекты, по которым голосовала Госдума: ${ALL.length}.`, url: `${SITE}bill/`, depth: 1,
   body: `<h1>Все законопроекты</h1><p class="meta">${ALL.length} законопроектов, по которым есть голосования в календаре; последнее голосование — сверху.</p><div class="list">${ALL.map((b) => `<a class="row" href="${esc(b.no)}/"><span class="no">${esc(b.no)}</span> · ${esc(b.last.read || '')} · <span class="st ${b.last.ok ? 'ok' : 'rej'}">${b.last.ok ? 'принят' : 'отклонен'}</span> · <span class="meta">${esc(hd(b.last.day))}</span><b>${esc(b.title)}</b></a>`).join('')}</div>` }));
@@ -190,7 +202,8 @@ for (const x of LAWL) {
   const id = lawId(x); const url = `${SITE}law/${id}/`; const src = lawSrc(x); const act = isAct(src);
   const tags = (x.tg || []).flatMap((g, gi) => (g || []).map((v) => `<a class="chip" href="../../feed/${slug(v)}.xml" title="${esc(GRP[gi][1])}: RSS по метке">${esc(v)}</a>`)).join('');
   const more = (x.src || []).filter((l) => l && isOff(l.u) && l.u !== src).map((l) => `<a href="${esc(l.u)}" rel="noopener">${esc(l.t || l.u)}</a>`).join(' · ');
-  const body = `<div class="top"><span class="st ok">вступает в силу ${esc(hd(x.d))}</span></div>
+  /* 15.11.2026: страница закона — ссылка «Поделиться» с превью; человека сразу переводит в карточку закона на сайте */
+  const body = `<script>location.replace(${JSON.stringify(`../../?tab=l&law=${id}`)})</script><div class="top"><span class="st ok">вступает в силу ${esc(hd(x.d))}</span></div>
 <h1>${esc(x.title)}</h1>${x.law ? `<p class="full">${esc(x.law)}</p>` : ''}${tags ? `<div class="chips">${tags}</div>` : ''}
 ${x.sut || x.who ? `<h2>Суть</h2><div class="box">${x.sut ? `<p>${esc(x.sut)}</p>` : ''}${x.who ? `<p><b>Кого коснётся:</b> ${esc(x.who)}</p>` : ''}</div>` : ''}
 ${x.was || x.now ? `<h2>Что изменилось</h2><div class="box">${x.was ? `<p><b>Было:</b> ${esc(x.was)}</p>` : ''}${x.now ? `<p><b>Стало:</b> ${esc(x.now)}</p>` : ''}</div>` : ''}

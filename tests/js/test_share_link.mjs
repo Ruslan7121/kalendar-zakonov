@@ -8,7 +8,7 @@ import { loadCanvas, ROOT } from './load_canvas.mjs';
 
 const RX = /^https:\/\/ruslan7121\.github\.io\/kalendar-zakonov\/\?d=(\d\d)\.(\d\d)\.(\d{4})&v=(\d+)$/;
 const BAD = /cursor\.(com|sh|so|app)|cursor-?canvas|netlify|\/canvases?\//i;
-const T = await loadCanvas(['shareLink', 'SITE', 'DATA']);
+const T = await loadCanvas(['shareLink', 'cardLink', 'SITE', 'DATA']);
 assert.equal(T.SITE, 'https://ruslan7121.github.io/kalendar-zakonov');
 
 let n = 0;
@@ -18,6 +18,9 @@ for (const d of Object.keys(T.DATA)) for (const l of (T.DATA[d] || '').split('\n
   assert.ok(m, `shareLink(${d}, ${id}) = ${u}`);
   assert.equal(`${m[1]}.${m[2]}.${m[3]}`, d); assert.equal(m[4], id);
   const q = new URL(u); assert.deepEqual([...q.searchParams.keys()], ['d', 'v']); assert.equal(q.hash, '');
+  // 15.11.2026: «Поделиться» — страница с превью v/<id>/ (голосование по законопроекту) или прямой shareLink (процедурное)
+  const c = T.cardLink(d, id); const f = l.split('|');
+  if (f.length >= 6 && /^\d+-\d+$/.test(f[1])) assert.equal(c, `https://ruslan7121.github.io/kalendar-zakonov/v/${id}/`); else assert.equal(c, u);
   n++;
 }
 assert.ok(n > 300, `мало голосований для проверки ссылок: ${n}`);
@@ -33,7 +36,7 @@ for (const f of files) {
 }
 const src = fs.readFileSync(path.join(ROOT, 'src/canvas.tsx'), 'utf8');
 assert.equal((src.match(/[?&]d=\$\{/g) || []).length, 1, 'ссылка ?d=…&v=… должна собираться только в shareLink');
-assert.ok(/const u = shareLink\(day, id\)/.test(src), 'кнопка «Поделиться» не использует shareLink');
+assert.ok(/const u = cardLink\(day, id\)/.test(src), 'кнопка «Поделиться» не использует cardLink (страница с превью)');
 // 15.11.2026 (решение владельца): под картинками карточки нет «Скопировать ссылку на голосование» и сырого адреса — ссылку дает «Поделиться»:
 // на компьютере первой в столбике кнопок карточки ([data-cardbtns]), на телефоне внизу карточки ([data-share-bottom]).
 assert.ok(!/Скопировать ссылку на голосование/.test(src.replace(/\/\*[\s\S]*?\*\//g, '')), 'под картинками не должно быть кнопки «Скопировать ссылку на голосование»');
