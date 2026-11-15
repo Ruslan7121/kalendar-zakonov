@@ -36,6 +36,15 @@ miss_s = [l for l in miss_s if '(—)' not in l]; miss_p = sorted([l for l in mi
 miss_s = sorted([l for l in miss_s if '(Пост.' not in l], key=_dk, reverse=True); _seen = set(); miss_b = [l for l in sorted(miss_b, key=_dk, reverse=True) if '(Пост.' not in l and not (re.search(r'\(([^)]+)\): bs', l).group(1) in _seen or _seen.add(re.search(r'\(([^)]+)\): bs', l).group(1)))]  # bs — один раз на законопроект
 L += ['## Суть и кого касается — законопроекты', ''] + (miss_s or ['нет']) + ['', '## Что сейчас / что предлагалось изменить (сначала свежие)', ''] + (miss_b or ['нет'])
 L += ['', '## Постановления Госдумы — суть (по желанию)', ''] + (miss_p or ['нет'])
+# 15.11.2026: метки ZTAG у законопроектов повестки (CAL.p): без них падает tests/js/test_search_tags.mjs и ежедневный прогон
+# не публикуется — ставить первыми, сразу после сбора (новые повестки приходят заранее, на ближайшие заседания)
+ZT = jobj('ZTAG:'); _ci = src.index('const CAL: any = ') + 17; CALJ = json.loads(src[_ci:src.index('\n', _ci)].rstrip(';'))
+miss_t = []
+for p in sorted(CALJ.get('p', []), key=lambda p: tuple(reversed(p['d'].split('.'))), reverse=True):
+    for a in p.get('a') or []:
+        if re.match(r'^\d+-\d+$', a[0] or '') and not (ZT.get(a[0]) and all(ZT[a[0]])) and not any(f' {a[0]} ' in l for l in miss_t):
+            miss_t.append(f"- [ ] {p['d']} {a[0]} «{(a[1] or a[4] or '')[:80]}»: ZTAG — [[«Для кого»], [«Тема»], [«Что меняется»]] из ZW/ZT/ZC")
+L[L.index('## Суть и кого касается — законопроекты'):L.index('## Суть и кого касается — законопроекты')] = ['## Метки законопроектов (ZTAG) — первыми: без них ежедневный прогон не публикуется', ''] + (miss_t or ['нет']) + ['']
 i = src.index('const LAWS: any = ') + 18; LW = json.loads(src[i:src.index(';\n', i)])
 auto = [f"- [ ] {x['d']} {x['law']} (законопроект {x.get('bill','')}): заголовок и sut" for mk in LW['months'].values() for x in mk if x.get('auto') and not x.get('sut')]
 L += ['', '## Вступают в силу — автодобавленные законы', ''] + (auto or ['нет'])
@@ -92,4 +101,4 @@ S += ['', f'- Законы «Вступают в силу» без официа�
 if part: S += ['## Полнота сбора', ''] + part + ['']
 if nosrc: S += ['## Нет официальной ссылки', ''] + nosrc + ['']
 open(os.path.join(ROOT, 'docs', 'STATUS.md'), 'w').write('\n'.join(S))
-print('TODO:', len(miss_s), 'sut,', len(miss_p), 'постановлений,', len(miss_b), 'bs,', len(auto), 'законов,', len(notg), 'без меток tg')
+print('TODO:', len(miss_s), 'sut,', len(miss_p), 'постановлений,', len(miss_t), 'без меток ZTAG,', len(miss_b), 'bs,', len(auto), 'законов,', len(notg), 'без меток tg')
