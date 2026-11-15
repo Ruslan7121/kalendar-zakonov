@@ -8,7 +8,7 @@ X-WR-CALNAME:Медосвидетельствование мигрант
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-3799321a@kalendar-zakonov
-DTSTAMP:20261114T235901Z
+DTSTAMP:20261115T001404Z
 DTSTART;VALUE=DATE:20260901
 DTEND;VALUE=DATE:20260902
 SUMMARY:Вступает в силу: Медосвидетельство
@@ -20,8 +20,9 @@ DESCRIPTION:Федеральный закон от 10.06.2026 № 162-Ф
  ней\; при опасной инфекции — депортация
  .\nКого коснётся: Иностранные граждане и
   работодатели мигрантов.\nОфициальный и
- сточник: http://duma.gov.ru/news/64038/
-URL:http://duma.gov.ru/news/64038/
+ сточник: http://publication.pravo.gov.ru/document/000120260610000
+ 2
+URL:http://publication.pravo.gov.ru/document/0001202606100002
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR
