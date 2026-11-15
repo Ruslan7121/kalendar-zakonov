@@ -1,0 +1,10 @@
+# Cloudflare Worker бота @kalendar_zakonov_bot (15.11.2026). Деплой — .github/workflows/bot.yml (database_id подставляет workflow).
+name = "kalendar-zakonov-bot"
+main = "worker.mjs"
+compatibility_date = "2024-11-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "kalendar-stats"
+database_id = "__D1_ID__"
