@@ -34,9 +34,8 @@ def items_in(html):
     """15.11.2026: пункты подборки — подзаголовки и выделенные строки статьи (<h2>-<h4>, <strong>, <b>): в подборках
     duma.gov.ru законы описаны простым языком, номеров «№ N-ФЗ» в тексте нет."""
     h = re.search(r'(?is)<h1[^>]*>.*?</h1>(.*)', html); body = h.group(1) if h else html
-    for stop in ('Читайте также', 'Подписывайтесь', 'Новости по теме', 'Смотрите также'):
-        j = body.find(stop)
-        if j > 0: body = body[:j]
+    m = re.search(r'(?i)(Читайте|Смотрите)(\s|&nbsp;|&#160;|\xa0)+также|Подписывайтесь|Новости(\s|&nbsp;)+по(\s|&nbsp;)+теме', body)
+    if m: body = body[:m.start()]  # 15.11.2026: в HTML пробел бывает неразрывным (&nbsp;)
     out = []
     for m in re.finditer(r'(?is)<(h[2-4]|strong|b)[^>]*>(.*?)</\1>', body):
         t = re.sub(r'\s+', ' ', C.text(m.group(2))).strip(' :.—-')
