@@ -104,7 +104,7 @@ for (const b of ALL) b.tags.forEach((g, gi) => (g || []).forEach((v) => { const 
 // ---------- запись ----------
 const files = [];
 const put = (rel, s) => { const f = path.join(OUT, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, s); files.push(rel); };
-for (const d of ['bill', 'feed', 'ics', 'day', 'fractions']) fs.rmSync(path.join(OUT, d), { recursive: true, force: true });
+for (const d of ['bill', 'feed', 'ics', 'day', 'fractions', 'law']) fs.rmSync(path.join(OUT, d), { recursive: true, force: true });
 
 // страницы законопроектов
 const TRK = [['in', 'Внесен'], ['kom', 'Комитет'], ['r1', '1-е чтение'], ['r2', '2-е чтение'], ['r3', '3-е чтение'], ['sf', 'Совет Федерации'], ['pr', 'Подписан']];
@@ -174,12 +174,32 @@ const lawId = (x) => { let h = 0x811c9dc5; for (const ch of `${x.d}|${x.law || '
 const isOff = (u) => { const h = String(u || '').replace(/^https?:\/\//i, '').split(/[/?#]/)[0].toLowerCase().replace(/^www\./, ''); return /\.gov\.ru$/.test(h) || h === 'kremlin.ru' || h === 'government.ru' || h === 'cbr.ru'; };
 // ссылка события — официальный источник закона (kremlin.ru, pravo.gov.ru, duma.gov.ru…), если его нет — поиск закона по номеру на kremlin.ru
 const lawSearch = (x) => { const n = /№\s*(\d+-ФЗ)/.exec(x.law || ''); return n ? 'http://kremlin.ru/acts/bank/search?query=' + encodeURIComponent('№ ' + n[1]) : ''; };
-const lawSrc = (x) => ((x.src || []).find((l) => l && isOff(l.u)) || {}).u || lawSearch(x) || 'http://publication.pravo.gov.ru/';
+const isAct = (u) => /kremlin\.ru\/acts\/bank\/\d+|publication\.pravo\.gov\.ru\/document\/\d+/.test(u || '');
+const lawSrc = (x) => ((x.src || []).find((l) => l && isAct(l.u)) || (x.src || []).find((l) => l && isOff(l.u)) || {}).u || lawSearch(x) || 'http://publication.pravo.gov.ru/';
 const LAWL = Object.values(LAWS.months || {}).flat().filter((x) => x && x.d && x.title);
 const lawEv = LAWL.map((x) => ({ uid: `law-${lawId(x)}`, d: x.d, s: `Вступает в силу: ${x.title}`, x: [x.law, x.sut, x.who ? `Кого коснётся: ${x.who}` : '', `Официальный источник: ${lawSrc(x)}`].filter(Boolean).join('\n'), u: lawSrc(x) }));
 // ics/law/<номер>.ics — один закон: кнопка «Добавить в календарь» в карточке; в событии ссылка на карточку
 lawEv.forEach((e, i) => put(`ics/law/${lawId(LAWL[i])}.ics`, ics(LAWL[i].title, [e])));
 put('ics/laws.ics', ics('Законы вступают в силу', lawEv));
+// 15.11.2026: страница закона со своим адресом — law/<номер>/ (номер = lawId): дата, суть, кого коснется, метки, «Официальный текст»,
+// «Добавить в календарь», «Поделиться». Путь закона не показываем (решение владельца). law/ — список всех законов «Вступают в силу».
+const LBTN = 'display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:12px;background:var(--sub);border:1px solid var(--bd);font-weight:600;text-decoration:none;cursor:pointer;font:inherit;color:inherit';
+const lawSorted = [...LAWL].sort((a, b) => +pd(b.d) - +pd(a.d));
+for (const x of LAWL) {
+  const id = lawId(x); const url = `${SITE}law/${id}/`; const src = lawSrc(x); const act = isAct(src);
+  const tags = (x.tg || []).flatMap((g, gi) => (g || []).map((v) => `<a class="chip" href="../../feed/${slug(v)}.xml" title="${esc(GRP[gi][1])}: RSS по метке">${esc(v)}</a>`)).join('');
+  const more = (x.src || []).filter((l) => l && isOff(l.u) && l.u !== src).map((l) => `<a href="${esc(l.u)}" rel="noopener">${esc(l.t || l.u)}</a>`).join(' · ');
+  const body = `<div class="top"><span class="st ok">вступает в силу ${esc(hd(x.d))}</span></div>
+<h1>${esc(x.title)}</h1>${x.law ? `<p class="full">${esc(x.law)}</p>` : ''}${tags ? `<div class="chips">${tags}</div>` : ''}
+${x.sut || x.who ? `<h2>Суть</h2><div class="box">${x.sut ? `<p>${esc(x.sut)}</p>` : ''}${x.who ? `<p><b>Кого коснётся:</b> ${esc(x.who)}</p>` : ''}</div>` : ''}
+${x.was || x.now ? `<h2>Что изменилось</h2><div class="box">${x.was ? `<p><b>Было:</b> ${esc(x.was)}</p>` : ''}${x.now ? `<p><b>Стало:</b> ${esc(x.now)}</p>` : ''}</div>` : ''}
+<p style="display:flex;flex-wrap:wrap;gap:8px;margin-top:18px"><a style="${LBTN};background:#0a64d6;color:#fff;border-color:#0a64d6" href="${esc(src)}" rel="noopener">${act ? 'Официальный текст' : 'Найти официальный текст'} ↗</a><a style="${LBTN}" href="../../ics/law/${id}.ics">Добавить в календарь</a><button type="button" style="${LBTN}" onclick="var u=location.href;if(navigator.share){navigator.share({title:document.title,url:u}).catch(function(){})}else if(navigator.clipboard){navigator.clipboard.writeText(u).then(function(){alert('Ссылка скопирована')})}">Поделиться</button></p>
+${more ? `<h2>Источники</h2><p>${more}</p>` : ''}
+<p class="meta"><a href="../">Все законы «Вступают в силу»</a></p>`;
+  put(`law/${id}/index.html`, page({ title: x.title, desc: cut([x.sut, x.who].filter(Boolean).join(' '), 220) || x.title, url, body, depth: 2 }));
+}
+put('law/index.html', page({ title: 'Законы вступают в силу', desc: 'Законы, которые вступили и вступают в силу: суть, кого коснётся, официальный текст.', url: `${SITE}law/`, depth: 1,
+  body: `<h1>Законы вступают в силу</h1><div class="list">${lawSorted.map((x) => `<a class="row" href="${lawId(x)}/"><b>${esc(x.title)}</b><span class="meta">${esc(hd(x.d))}</span></a>`).join('')}</div>` }));
 // 14.11.2026: ленты по меткам. feed/<метка>.xml — главное: принятые законопроекты (голосования «принят») и законы с этой меткой,
 // вступающие в силу (запись появляется за 7 дней до даты, ссылка — официальный источник). feed/<метка>-all.xml — все голосования,
 // включая отклоненные (прежний вид ленты).
@@ -253,6 +273,6 @@ put('fractions/index.html', page({ title: 'Как голосуют фракци�
   body: `<h1>Как голосуют фракции</h1><p class="meta">Считаются только голосования по законопроектам. Позиция фракции — «за», если «за» проголосовало больше её депутатов, чем «против» и «воздержались» вместе. «За» — как записано в итогах голосования на vote.duma.gov.ru: в голосованиях об отклонении законопроекта это «за отклонение».</p>${frBody}` }));
 
 // sitemap, robots
-put('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[SITE, `${SITE}bill/`, `${SITE}day/`, `${SITE}fractions/`, ...DAYS.map((d) => `${SITE}day/${iso(d)}/`), ...ALL.map((b) => `${SITE}bill/${b.no}/`)].map((u) => `<url><loc>${u}</loc></url>`).join('\n')}\n</urlset>\n`);
+put('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[SITE, `${SITE}bill/`, `${SITE}day/`, `${SITE}fractions/`, `${SITE}law/`, ...DAYS.map((d) => `${SITE}day/${iso(d)}/`), ...ALL.map((b) => `${SITE}bill/${b.no}/`), ...LAWL.map((x) => `${SITE}law/${lawId(x)}/`)].map((u) => `<url><loc>${u}</loc></url>`).join('\n')}\n</urlset>\n`);
 put('robots.txt', `User-agent: *\nAllow: /\nSitemap: ${SITE}sitemap.xml\n`);
 console.log(`extras: ${ALL.length} страниц законопроектов, ${Object.keys(TAGS).length + 1} лент RSS, ${lawEv.length} законов и ${plEv.length} заседаний в .ics → ${path.relative(ROOT, OUT)}`);

@@ -74,6 +74,15 @@ try {
     assert.ok(/\.gov\.ru$/.test(host) || ['kremlin.ru', 'government.ru', 'cbr.ru'].includes(host), `ics/law/${id}.ics: ссылка не на официальный источник: ${url}`);
     assert.ok(!/ruslan7121\.github\.io/.test(x.replace(/\r\n /g, '')), `ics/law/${id}.ics: в событии ссылка на карточку сайта, а нужна на официальный источник`);
     for (const l of ls) assert.ok(Buffer.byteLength(l) <= 75, `ics/law/${id}.ics: строка длиннее 75 байт`); }
+  // 15.11.2026: страница закона law/<lawId>/ — «Официальный текст» на официальный сайт, без пути закона; в sitemap
+  const sm = fs.readFileSync(path.join(out, 'sitemap.xml'), 'utf8');
+  for (const id of lids) { const h = fs.readFileSync(path.join(out, 'law', id, 'index.html'), 'utf8');
+    const m = h.match(/<a [^>]*href="([^"]+)"[^>]*>(?:Официальный текст|Найти официальный текст) ↗<\/a>/); assert.ok(m, `law/${id}/: нет кнопки «Официальный текст»`);
+    const host = m[1].replace(/&amp;/g, '&').replace(/^https?:\/\//, '').split('/')[0].replace(/^www\./, '');
+    assert.ok(/\.gov\.ru$/.test(host) || ['kremlin.ru', 'government.ru', 'cbr.ru'].includes(host), `law/${id}/: «Официальный текст» не на официальный сайт: ${m[1]}`);
+    assert.ok(!/Путь закона/.test(h), `law/${id}/: путь закона на странице закона не показываем`);
+    assert.ok(sm.includes(`law/${id}/`), `law/${id}/ нет в sitemap.xml`); }
+  assert.ok(fs.existsSync(path.join(out, 'law', 'index.html')), 'нет law/index.html');
   for (const f of ['sitemap.xml', 'robots.txt', 'feed/index.html']) assert.ok(fs.existsSync(path.join(out, f)), `нет ${f}`);
   console.log(`OK test_extras: ${bills.size} страниц законопроектов, ${feeds.length} лент RSS, ${tags.size} меток, .ics laws/plenary и ${lids.length} файлов ics/law`);
 } finally { fs.rmSync(out, { recursive: true, force: true }); }
