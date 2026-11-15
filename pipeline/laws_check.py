@@ -30,6 +30,37 @@ def laws_in(text):
     return res
 
 
+def items_in(html):
+    """15.11.2026: пункты подборки — подзаголовки и выделенные строки статьи (<h2>-<h4>, <strong>, <b>): в подборках
+    duma.gov.ru законы описаны простым языком, номеров «№ N-ФЗ» в тексте нет."""
+    h = re.search(r'(?is)<h1[^>]*>.*?</h1>(.*)', html); body = h.group(1) if h else html
+    for stop in ('Читайте также', 'Подписывайтесь', 'Новости по теме'):
+        j = body.find(stop)
+        if j > 0: body = body[:j]
+    out = []
+    for m in re.finditer(r'(?is)<(h[2-4]|strong|b)[^>]*>(.*?)</\1>', body):
+        t = re.sub(r'\s+', ' ', C.text(m.group(2))).strip(' :.—-')
+        if 12 <= len(t) <= 220 and t not in out: out.append(t)
+    return out
+
+
+STOPW = set('закон законы федеральный федерального вступает вступают силу которые будет будут могут также после году года'.split())
+
+
+def words(t):
+    return {w[:6] for w in re.findall(r'[а-яёa-z0-9]+', (t or '').lower()) if len(w) >= 5 and w not in STOPW}
+
+
+def best(item, site):
+    """Самый похожий закон сайта по общим основам слов (первые 6 букв): (доля, заголовок)."""
+    a = words(item); r = (0.0, '')
+    for t, w in site:
+        if a and w:
+            k = len(a & w) / min(len(a), len(w))
+            if k > r[0]: r = (k, t)
+    return r
+
+
 def body_text(html):
     """Текст статьи без меню и подвала: от заголовка <h1> до блока «Читайте также»/подвала, если найдутся."""
     t = C.text(html); h = re.search(r'(?is)<h1[^>]*>(.*?)</h1>', html)
@@ -50,6 +81,8 @@ def main(urls):
         for k, x in enumerate(arr):
             law = (F.get(mk, {}).get(str(k), {}).get('law') or x.get('law') or '')
             for n in re.findall(r'№\s*(\d+-ФЗ)', law): site.setdefault(n, []).append(f"{x['d']} {x['title']}")
+    sitew = [(f"{x['d']} {x['title']}", words(' '.join([x.get('title', ''), x.get('sut', '') if isinstance(x.get('sut'), str) else ' '.join(x.get('sut') or []), x.get('who', '')]))) for arr in L['months'].values() for x in arr]
+    miss_items = []
     queue, seen, total = list(urls), set(), {}
     while queue and len(seen) < 8:
         u = queue.pop(0)
@@ -61,8 +94,14 @@ def main(urls):
         for n, ctx in found.items():
             print(f"    {'есть на сайте' if n in site else 'НЕТ НА САЙТЕ'}: № {n} — {ctx[-200:]}")
         total.update(found)
+        its = items_in(html); print(f'    пунктов подборки (подзаголовки): {len(its)}')
+        for it in its:
+            k, t = best(it, sitew)
+            print(f"    {'есть' if k >= 0.34 else 'НЕТ НА САЙТЕ?'} ({k:.2f}): {it[:120]}" + (f'  ≈ {t[:80]}' if k >= 0.34 else ''))
+            if k < 0.34: miss_items.append(f'{it[:150]} ({u})')
         for v, t in digest_links(html):
             if v not in seen and re.search(r'в (октябре|ноябре|декабре)', t): queue.append(v); print(f'    → подборка: {t} {v}')
+    print(f'\nПункты подборок без похожего закона на сайте ({len(miss_items)}), проверить вручную по официальному тексту:'); [print('   ', m) for m in miss_items]
     miss = [n for n in total if n not in site]
     print(f'\nИТОГО: в подборках {len(total)} законов, нет на сайте {len(miss)}: {", ".join(miss) or "—"}')
     extra = [f'№ {n}: {"; ".join(v)}' for n, v in site.items() if n not in total]
