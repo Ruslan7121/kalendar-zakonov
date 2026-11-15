@@ -14,6 +14,10 @@ def show(url, body, how):
         print(f'--- {how}: JSON {len(body)} байт:', body[:2500]); return
     t = re.search(r'(?is)<title[^>]*>(.*?)</title>', body)
     print(f'--- {how}: {len(body)} байт, title: {O.clean(t.group(1)) if t else "—"}')
+    # 15.11.2026: заголовки и описание страницы (на sozd — название законопроекта в элементе с классом oz_naimen)
+    for m in re.finditer(r'(?is)<h1[^>]*>(.*?)</h1>|<meta[^>]+name="description"[^>]+content="([^"]*)"|<[a-z]+[^>]+(?:class|id)="[^"]*(?:naimen|oz_name)[^"]*"[^>]*>(.*?)</', body):
+        t = O.clean(re.sub(r'<[^>]+>', ' ', next(g for g in m.groups() if g is not None)))
+        if t: print('  заголовок:', t[:400])
     rss = re.findall(r'(?i)<link[^>]+type="application/rss\+xml"[^>]*>', body)
     for r in rss[:5]: print('  RSS:', r)
     n = 0
