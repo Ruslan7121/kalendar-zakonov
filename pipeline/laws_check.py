@@ -34,7 +34,7 @@ def items_in(html):
     """15.11.2026: пункты подборки — подзаголовки и выделенные строки статьи (<h2>-<h4>, <strong>, <b>): в подборках
     duma.gov.ru законы описаны простым языком, номеров «№ N-ФЗ» в тексте нет."""
     h = re.search(r'(?is)<h1[^>]*>.*?</h1>(.*)', html); body = h.group(1) if h else html
-    for stop in ('Читайте также', 'Подписывайтесь', 'Новости по теме'):
+    for stop in ('Читайте также', 'Подписывайтесь', 'Новости по теме', 'Смотрите также'):
         j = body.find(stop)
         if j > 0: body = body[:j]
     out = []
@@ -42,6 +42,12 @@ def items_in(html):
         t = re.sub(r'\s+', ' ', C.text(m.group(2))).strip(' :.—-')
         if 12 <= len(t) <= 220 and t not in out: out.append(t)
     return out
+
+
+def after(html, item, n=600):
+    """Текст статьи сразу после пункта подборки — для ручной проверки пункта без пары на сайте."""
+    t = re.sub(r'\s+', ' ', C.text(html)); i = t.find(item)
+    return t[i + len(item):i + len(item) + n].strip() if i >= 0 else ''
 
 
 STOPW = set('закон законы федеральный федерального вступает вступают силу которые будет будут могут также после году года'.split())
@@ -98,7 +104,7 @@ def main(urls):
         for it in its:
             k, t = best(it, sitew)
             print(f"    {'есть' if k >= 0.34 else 'НЕТ НА САЙТЕ?'} ({k:.2f}): {it[:120]}" + (f'  ≈ {t[:80]}' if k >= 0.34 else ''))
-            if k < 0.34: miss_items.append(f'{it[:150]} ({u})')
+            if k < 0.34: miss_items.append(f'{it[:150]} ({u})'); print(f'        текст: {after(html, it)}')
         for v, t in digest_links(html):
             if v not in seen and re.search(r'в (октябре|ноябре|декабре)', t): queue.append(v); print(f'    → подборка: {t} {v}')
     print(f'\nПункты подборок без похожего закона на сайте ({len(miss_items)}), проверить вручную по официальному тексту:'); [print('   ', m) for m in miss_items]

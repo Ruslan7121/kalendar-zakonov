@@ -81,6 +81,6 @@ jobs:
       - name: Сводка
         if: always()
         run: |
-          { echo '### Ссылки законов'; echo '```'; cat laws.log 2>/dev/null; echo; tail -n 60 out/logs/laws_src.log 2>/dev/null; echo '```'; echo '### Полнота'; echo '```'; cat laws_check.log 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo '### Ссылки законов'; echo '```'; cat laws.log 2>/dev/null || true; echo; tail -n 60 out/logs/laws_src.log 2>/dev/null || true; echo '```'; echo '### Полнота'; echo '```'; cat laws_check.log 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           tail -n 60 out/logs/laws_src.log 2>/dev/null || true
           cat laws_check.log 2>/dev/null || true
