@@ -83,6 +83,19 @@ try {
     assert.ok(!/Путь закона/.test(h), `law/${id}/: путь закона на странице закона не показываем`);
     assert.ok(sm.includes(`law/${id}/`), `law/${id}/ нет в sitemap.xml`); }
   assert.ok(fs.existsSync(path.join(out, 'law', 'index.html')), 'нет law/index.html');
+  // 15.11.2026: v/<id>/ — страница «Поделиться» с превью для каждого голосования по законопроекту: og:title/og:description,
+  // noindex, не в sitemap, человека переводит в карточку ?d=…&v=…; страница закона переводит в карточку закона.
+  let nv = 0;
+  for (const [d, txt] of idx.months.flatMap((mk) => Object.entries(JSON.parse(fs.readFileSync(path.join(ROOT, 'data', idx.file[mk]), 'utf8')).DATA || {}))) for (const l of String(txt).split('\n')) {
+    const f = l.split('|'); if (f.length < 6 || !/^\d+$/.test(f[0]) || !/^\d+-\d+$/.test(f[1])) continue;
+    const fp = path.join(out, 'v', f[0], 'index.html'); assert.ok(fs.existsSync(fp), `нет v/${f[0]}/`); const h = fs.readFileSync(fp, 'utf8');
+    assert.ok(/<meta property="og:title" content="[^"]+ — (принят|отклонен)">/.test(h), `v/${f[0]}/: нет og:title с итогом`);
+    assert.ok(/<meta property="og:description" content="[^"]*за \d+, против \d+/.test(h), `v/${f[0]}/: нет голосов в og:description`);
+    assert.ok(h.includes(`location.replace("../../?d=${d}&v=${f[0]}")`), `v/${f[0]}/: не переводит в карточку`);
+    assert.ok(/<meta name="robots" content="noindex">/.test(h), `v/${f[0]}/: должна быть noindex`);
+    assert.ok(!sm.includes(`/v/${f[0]}/`), `v/${f[0]}/ не должна быть в sitemap.xml`); nv++; }
+  assert.ok(nv > 300, `мало страниц v/: ${nv}`);
+  for (const id of lids) assert.ok(fs.readFileSync(path.join(out, 'law', id, 'index.html'), 'utf8').includes(`location.replace("../../?tab=l&law=${id}")`), `law/${id}/: не переводит в карточку закона`);
   for (const f of ['sitemap.xml', 'robots.txt', 'feed/index.html']) assert.ok(fs.existsSync(path.join(out, f)), `нет ${f}`);
   console.log(`OK test_extras: ${bills.size} страниц законопроектов, ${feeds.length} лент RSS, ${tags.size} меток, .ics laws/plenary и ${lids.length} файлов ics/law`);
 } finally { fs.rmSync(out, { recursive: true, force: true }); }
