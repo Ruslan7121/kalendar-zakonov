@@ -3406,14 +3406,19 @@ const orgKinds = (ek: any[]) => { const c: Record<string, number> = {}; const or
 const FRO = ['ЕР', 'КПРФ', 'ЛДПР', 'НЛ', 'СРЗП', 'Вне'];
 function Itogi({ m }: { m: boolean }) {
   const t = useGrokTheme(); useGDV(); gdNeed(null); const ld0 = zLoaded(); const [op, setOp] = useState<string | null>(null);
-  const [per, setPer] = useState<'d' | 'w' | 'm' | 'a'>('w'); const [g, setG] = useState(0); const [zs, setZs] = useState<string[][]>([[], [], []]); const [all, setAll] = useState(false); const [rf, setRf] = useState<'all' | 'ok' | 'no'>('all');
+  const [per, setPer] = useState<'d' | 'w' | 'm' | 'y'>('w'); const [pmk, setPmk] = useState<string | null>(null); const [pyr, setPyr] = useState<number | null>(null); const [g, setG] = useState(0); const [zs, setZs] = useState<string[][]>([[], [], []]); const [all, setAll] = useState(false); const [rf, setRf] = useState<'all' | 'ok' | 'no'>('all');
   /* 15.11.2026: несколько меток — внутри группы «или», между группами «и» (как «Фильтры»); ничего не выбрано — все законопроекты периода */
   const nSel = zs[0].length + zs[1].length + zs[2].length; const tog = (i: number, v: string) => { setZs(zs.map((a, j) => (j !== i ? a : a.includes(v) ? a.filter((z) => z !== v) : [...a, v]))); setAll(false); setRf('all'); };
   const last = DAYS[DAYS.length - 1];
   if (!last) return <div style={{ ...card(t), padding: '16px 18px', color: t.text.secondary }}>Данных пока нет</div>;
   const ld = pd(last); const mon = new Date(ld.getFullYear(), ld.getMonth(), ld.getDate() - ((ld.getDay() + 6) % 7)); const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+  /* 15.11.2026: «Месяц» и «Год» раскрываются строкой выбора — месяцы и годы, за которые есть заседания (CAL.p) */
+  const MK = [...new Set(CAL.p.map((p: any) => p.d.slice(3)))].sort((a: any, b: any) => (b.slice(3) + b.slice(0, 2)).localeCompare(a.slice(3) + a.slice(0, 2))) as string[];
+  const YR = [...new Set(MK.map((k) => +k.slice(3)))].sort((a, b) => b - a);
+  const mkSel = pmk && MK.includes(pmk) ? pmk : `${String(ld.getMonth() + 1).padStart(2, '0')}.${ld.getFullYear()}`; const ySel = pyr && YR.includes(pyr) ? pyr : ld.getFullYear();
+  const mm0 = +mkSel.slice(0, 2) - 1, my0 = +mkSel.slice(3);
   const P: [string, string, Date, Date, string][] = [['d', 'День', ld, ld, `${ld.getDate()} ${MON[ld.getMonth()]}`], ['w', 'Неделя', mon, sun, `${mon.getDate()} ${MON[mon.getMonth()]} — ${sun.getDate()} ${MON[sun.getMonth()]}`],
-    ['m', 'Месяц', new Date(ld.getFullYear(), ld.getMonth(), 1), new Date(ld.getFullYear(), ld.getMonth() + 1, 0), `${MONN[ld.getMonth()]} ${ld.getFullYear()}`], ['a', 'Все', new Date(2000, 0, 1), new Date(2100, 0, 1), 'все время']];
+    ['m', 'Месяц', new Date(my0, mm0, 1), new Date(my0, mm0 + 1, 0), `${MONN[mm0]} ${my0}`], ['y', 'Год', new Date(ySel, 0, 1), new Date(ySel, 11, 31), `${ySel} год`]];
   const pp = P.find((x) => x[0] === per)!;
   const byNo: Record<string, any> = {};
   for (const p of CAL.p) { const dd = pd(p.d); if (dd < pp[2] || dd > pp[3]) continue;
@@ -3428,9 +3433,10 @@ function Itogi({ m }: { m: boolean }) {
   /* 15.11.2026: «всего / принято / отклонено» — кнопки-фильтр списка (как вкладки дня); выбранная светится своим цветом, нажатие — вдавливание, как у плиток */
   const box = (n: number, l: string, c: string, k: 'all' | 'ok' | 'no') => <button type="button" data-irf={k} aria-pressed={rf === k} onClick={() => { setRf(k); setAll(false); }} style={{ ...nvTile(rf === k ? (k === 'all' ? t.text.accent : c) : undefined), flex: 1, padding: '10px 6px', textAlign: 'center', fontFamily: t.font.family, color: t.text.primary }}><b style={{ display: 'block', fontSize: 22, color: c, fontVariantNumeric: 'tabular-nums' }}>{n}</b><span style={{ fontSize: 13, color: c }}>{l}</span></button>;
   return <div data-itogi="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: m ? 0 : 14 }}>
-    <div style={hh}>Период</div>{seg(P.map((x) => [x[0], x[1]] as [string, string]), per, (k) => { setPer(k as any); setAll(false); setRf('all'); })}
+    <div style={hh}>Период</div>{seg(P.map((x) => [x[0], x[0] === 'm' ? `Месяц ${per === 'm' ? '▴' : '▾'}` : x[0] === 'y' ? `Год ${per === 'y' ? '▴' : '▾'}` : x[1]] as [string, string]), per, (k) => { setPer(k as any); setAll(false); setRf('all'); })}
+    {(per === 'm' || per === 'y') && <div data-iper="1" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{per === 'm' ? MK.map((k) => <ZChip key={k} t={t} on={k === mkSel} pressed={k === mkSel} l={`${MONN[+k.slice(0, 2) - 1]} ${k.slice(3)}`} onClick={() => { setPmk(k); setAll(false); setRf('all'); }} />) : YR.map((y) => <ZChip key={y} t={t} on={y === ySel} pressed={y === ySel} l={String(y)} onClick={() => { setPyr(y); setAll(false); setRf('all'); }} />)}</div>}
     <div style={{ fontSize: 13, color: t.text.tertiary, margin: '0 2px' }}>{pp[4]} · законопроектов: {L.length}{!ld0 ? ' · данные догружаются…' : ''}</div>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: m ? undefined : 560 }}><div style={hh}>Фильтры</div><span style={{ flex: 1 }} />{(per !== 'w' || g !== 0 || nSel > 0 || all) && <button data-ireset="1" type="button" onClick={() => { setPer('w'); setG(0); setZs([[], [], []]); setAll(false); setRf('all'); }} style={{ marginTop: 6, minHeight: 32, padding: '0 10px', border: 'none', borderRadius: 8, background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 14, cursor: 'pointer' }}>Сбросить</button>}</div>{seg([['0', 'Для кого'], ['1', 'Тема'], ['2', 'Что меняется']], String(g), (k) => { setG(+k); })}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: m ? undefined : 560 }}><div style={hh}>Фильтры</div><span style={{ flex: 1 }} />{(per !== 'w' || g !== 0 || nSel > 0 || all) && <button data-ireset="1" type="button" onClick={() => { setPer('w'); setPmk(null); setPyr(null); setG(0); setZs([[], [], []]); setAll(false); setRf('all'); }} style={{ marginTop: 6, minHeight: 32, padding: '0 10px', border: 'none', borderRadius: 8, background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 14, cursor: 'pointer' }}>Сбросить</button>}</div>{seg([['0', 'Для кого'], ['1', 'Тема'], ['2', 'Что меняется']], String(g), (k) => { setG(+k); })}
     <div data-itags="1" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{tags.map((v) => <ZChip key={v} t={t} on={zs[g].includes(v)} pressed={zs[g].includes(v)} l={v} n={cnt[v]} onClick={() => tog(g, v)} />)}</div>
     {nSel > 0 && <div data-isel="1" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}><span style={{ fontSize: 12.5, color: t.text.tertiary }}>Выбрано:</span>{zs.flatMap((a, i) => a.map((v) => <ZChip key={i + v} t={t} on l={v} x onClick={() => tog(i, v)} />))}</div>}
     {L.length ? <>
