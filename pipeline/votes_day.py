@@ -228,6 +228,17 @@ def daterange(a, b):
     while x <= y:
         yield x.strftime('%d.%m.%Y'); x += dt.timedelta(days=1)
 
+def nv_mark(src, day, url):
+    """15.11.2026: официально «ничего не найдено» → запись в NV («голосований не было»); без нее сайт держал такой день
+    в «еще собирается». Уже стоящую запись (в т. ч. с новостями дня, написанную вручную) не трогаем."""
+    pre = 'const NV: Record<string, any> = '; i = src.find(pre)
+    if i < 0: return src
+    j = src.index('\n', i); nv = json.loads(src[i + len(pre):j].rstrip(';'))
+    if day in nv: return src
+    nv[day] = {'nv': 1, 'd': [['Голосований не было', f'На vote.duma.gov.ru за {day} голосований не найдено.', url]]}
+    return src[:i] + pre + json.dumps(nv, ensure_ascii=False) + ';' + src[j:]
+
+
 def run_day(day, args, src, VT):
     report = {'day': day, 'source': f'{BASE}/?from={day}&to={day}', 'fetched_at': dt.datetime.now().isoformat(timespec='seconds')}
     rows, st = fetch_list(day)
@@ -241,7 +252,7 @@ def run_day(day, args, src, VT):
         json.dump({'date': day, 'novotes': 1, 'source': report['source'], 'fetched_at': report['fetched_at'], 'votes': [], 'gaps': []},
                   open(os.path.join(DAYS_DIR, f'{day}.json'), 'w'), ensure_ascii=False, indent=1)
         print(f'[{day}] голосований нет (официально: «ничего не найдено»)')
-        return src, report, 0
+        return nv_mark(src, day, report['source']), report, 0
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
         det = dict(zip([r['id'] for r in rows], ex.map(fetch_vote, [r['id'] for r in rows])))
     votes, gaps = [], []
