@@ -1,0 +1,56 @@
+# Бот @kalendar_zakonov_bot (15.11.2026): деплой Cloudflare Worker (bot/worker.mjs) с базой D1 и настройка Telegram
+# (webhook, меню команд: /stats видно только владельцу). Запуск вручную: Actions → bot → Run workflow.
+# Нужны секреты репозитория (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN  — токен Cloudflare с правами «Edit Cloudflare Workers» и D1 (Account → D1 → Edit)
+#   CLOUDFLARE_ACCOUNT_ID — Account ID из панели Cloudflare
+#   BOT_TOKEN             — токен бота от @BotFather (после /revoke — новый)
+#   OWNER_ID              — ваш числовой id в Telegram (узнать: @userinfobot)
+name: bot
+on:
+  workflow_dispatch:
+concurrency: { group: bot-deploy, cancel-in-progress: false }
+permissions: { contents: read }
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      OWNER_ID: ${{ secrets.OWNER_ID }}
+      WR: npx --yes wrangler@3.99.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Проверка секретов
+        run: |
+          miss=""; for v in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID BOT_TOKEN OWNER_ID; do [ -n "${!v}" ] || miss="$miss $v"; done
+          [ -z "$miss" ] || { echo "::error::Не заданы секреты:$miss (Settings → Secrets and variables → Actions)"; exit 1; }
+          [[ "$OWNER_ID" =~ ^[0-9]+$ ]] || { echo "::error::OWNER_ID должен быть числом (ваш id в Telegram, узнать у @userinfobot)"; exit 1; }
+      - name: Тесты бота
+        run: node tests/js/test_bot.mjs
+      - name: База D1
+        working-directory: bot
+        run: |
+          ID=$($WR d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=JSON.parse(s);const x=a.find(d=>d.name==='kalendar-stats');process.stdout.write(x?x.uuid:'')})")
+          if [ -z "$ID" ]; then $WR d1 create kalendar-stats >/dev/null; ID=$($WR d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{process.stdout.write(JSON.parse(s).find(d=>d.name==='kalendar-stats').uuid)})"); fi
+          echo "D1: $ID"; sed -i "s/__D1_ID__/$ID/" wrangler.toml
+          $WR d1 execute kalendar-stats --remote --file schema.sql --yes
+      - name: Деплой
+        working-directory: bot
+        run: |
+          $WR deploy | tee deploy.log
+          URL=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)
+          [ -n "$URL" ] || { echo "::error::не найден адрес *.workers.dev в выводе wrangler deploy"; exit 1; }
+          echo "URL=$URL" >> "$GITHUB_ENV"
+          printf '%s' "$BOT_TOKEN" | $WR secret put BOT_TOKEN
+          printf '%s' "$OWNER_ID" | $WR secret put OWNER_ID
+      - name: Telegram — webhook и меню команд
+        run: |
+          KEY=$(printf 'webhook' | openssl dgst -sha256 -hmac "$BOT_TOKEN" -hex | sed 's/^.*= //' | cut -c1-32)
+          sleep 5
+          curl -sS --fail "$URL/setup?key=$KEY" | tee setup.json
+          node -e "const r=require('./setup.json'); for (const k of ['webhook','cmd_all','cmd_owner']) if(!r[k]||!r[k].ok){console.error('::error::Telegram отклонил '+k+': '+JSON.stringify(r[k]));process.exit(1)}"
+          echo "### Бот развернут: $URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "Адрес для сайта (STATS_URL): \`$URL\`" >> "$GITHUB_STEP_SUMMARY"

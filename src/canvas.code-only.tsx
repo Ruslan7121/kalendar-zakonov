@@ -21,10 +21,15 @@ const ADAPT = () => { const P: any = DK ? DARK : LIGHT; const v: any = { base: P
    во внешнем браузере, «Поделиться» — выбор чата Telegram со ссылкой t.me/…/app?startapp=… на ту же карточку. */
 const TG: any = (() => { try { const w: any = typeof window !== 'undefined' ? (window as any).Telegram : null; const a = w && w.WebApp; return a && a.platform && a.platform !== 'unknown' ? a : null; } catch (e) { return null; } })();
 const TG_APP = 'https://t.me/kalendar_zakonov_bot/app';
+/* 15.11.2026: статистика пользователей для команды /stats бота (bot/worker.mjs, Cloudflare). При открытии в Telegram приложение
+   один раз отправляет подписанные Telegram данные запуска (initData); сервер проверяет подпись и хранит только хэш id.
+   Пустой адрес — ничего не отправляется (сервер еще не развернут: Actions → bot). */
+const STATS_URL = '';
 const tgShare = (url: string, text: string) => { try { TG.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`); } catch (e) { try { TG.openLink(url); } catch (e2) {} } };
 const tgLinkVote = (day: string, id: string) => `${TG_APP}?startapp=d${day.replace(/\./g, '')}_v${id}`;
 if (TG) {
   try { TG.ready(); TG.expand(); if (TG.disableVerticalSwipes) TG.disableVerticalSwipes(); } catch (e) {}
+  try { if (STATS_URL && TG.initData) fetch(`${STATS_URL}/hit`, { method: 'POST', body: TG.initData, keepalive: true }).catch(() => {}); } catch (e) {}
   /* кнопка «Назад» Telegram видна, пока открыто окно карточки, панель фильтров или выбор месяца; нажатие = Escape */
   try {
     let shown = false; const sync = () => { const open = !!document.querySelector('[data-gdwin], [data-zclose], [data-tgback]'); if (open !== shown) { shown = open; try { open ? TG.BackButton.show() : TG.BackButton.hide(); } catch (e) {} } };
@@ -4117,7 +4122,8 @@ function CalendarApp() {
   };
   const m = w <= 700;
   const Z = 1; GZ = Z;
-  const [mode, setMode] = useState<'d' | 'c' | 'l' | 'i'>(QS && QS.get('tab') === 'l' ? 'l' : QS && QS.get('tab') === 'i' ? 'i' : DLK ? 'c' : QS && (QS.get('tab') === 'd' || (QS.get('v') && QS.get('d') && DAYS.includes(QS.get('d')!))) ? 'd' : 'c');
+  /* 15.11.2026: при запуске без параметров открывается «Вступают в силу» (решение владельца); ?tab=c — календарь */
+  const [mode, setMode] = useState<'d' | 'c' | 'l' | 'i'>(QS && QS.get('tab') === 'l' ? 'l' : QS && QS.get('tab') === 'i' ? 'i' : QS && QS.get('tab') === 'c' ? 'c' : DLK ? 'c' : QS && (QS.get('tab') === 'd' || (QS.get('v') && QS.get('d') && DAYS.includes(QS.get('d')!))) ? 'd' : (QS && ['q', 'w', 't', 'c', 'org', 'd'].some((k) => QS.has(k))) ? 'c' : 'l');
   const [lmk, setLmk] = useState(LMK0); const [lq, setLq] = useState('');
   const [cmk, setCmk] = useState(() => calCk(DLK ? new Date(+DLD!.slice(6), +DLD!.slice(3, 5) - 1, +DLD!.slice(0, 2)) : new Date()));
   useEffect(() => { const h = () => { if (CSNAP) setMode('c'); }; window.addEventListener('popstate', h); return () => window.removeEventListener('popstate', h); }, []);
