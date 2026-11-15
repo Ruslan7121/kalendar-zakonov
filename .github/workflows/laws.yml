@@ -5,6 +5,11 @@
 name: laws
 on:
   workflow_dispatch:
+    inputs:
+      only_check:
+        description: 'Только сверка полноты с подборками Госдумы (без поиска ссылок, без коммита)'
+        type: boolean
+        default: false
 permissions:
   contents: write
 concurrency:
@@ -44,6 +49,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Поиск ссылок (pipeline/laws_src.py)
+        if: ${{ !inputs.only_check }}
         run: |
           cd pipeline && python3 laws_src.py 2>&1 | tee ../laws.log
           cd .. && python3 pipeline/strip_code_only.py && node pipeline/split_data.mjs
@@ -51,14 +57,18 @@ jobs:
         run: |
           cd pipeline && python3 laws_check.py http://duma.gov.ru/news/64396/ http://duma.gov.ru/news/64038/ 2>&1 | tee ../laws_check.log || true
       - name: Проверка схемы данных
+        if: ${{ !inputs.only_check }}
         run: node pipeline/validate_data.mjs
       - name: Проверка типов и тесты
+        if: ${{ !inputs.only_check }}
         run: |
           npm run typecheck
           bash tests/run_all.sh
       - name: Коммит в main (pipeline/commit.sh)
+        if: ${{ !inputs.only_check }}
         run: bash pipeline/commit.sh "Официальные ссылки законов «Вступают в силу» (kremlin.ru)"
       - name: Публикация (pipeline/publish.sh)
+        if: ${{ !inputs.only_check }}
         run: bash pipeline/publish.sh "Официальные ссылки законов «Вступают в силу»"
       - name: Страницы поиска kremlin.ru (для разбора)
         if: always()
