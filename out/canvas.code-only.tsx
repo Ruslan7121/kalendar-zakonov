@@ -2769,13 +2769,13 @@ function Panel({ v, m, day, inl }: { v: Vote; m?: boolean; day: string; inl?: bo
     /* 14.11.2026: картинки карточки для соцсетей — как было: на телефоне сразу под карточкой, на компьютере по кнопке «Сохранить карточку» */
     const imgB = m ? <ShareVote v={v} day={day} m /> : <Exp on={shw}>{() => <ShareVote v={v} day={day} />}</Exp>;
     const trB = b && !isResDoc(v.doc) ? <Track b={b} rd={v.reading} m={!!m} ok={v.ok} nv /> : null;
-    const g2 = (c: string, x: any, y: any) => x && y ? <div style={{ display: 'grid', gridTemplateColumns: c, gap: 12, alignItems: 'start' }}>{x}{y}</div> : (x || y);
+    const g2 = (c: string, x: any, y: any, al = 'start') => x && y ? <div style={{ display: 'grid', gridTemplateColumns: c, gap: 12, alignItems: al }}>{x}{y}</div> : (x || y);
     return (
       <div ref={(el) => { if (el && DEEP === v.id) { DEEP = null; setTimeout(() => { const w = el.parentElement as HTMLElement | null; if (w) { const r = w.getBoundingClientRect(); if (r.top < 0 || r.top > window.innerHeight * 0.6) w.scrollIntoView({ block: 'start' }); } revealCard(v.id); }, 250); } }} data-panel={v.id} className="gd-anim" style={{ padding: m ? '4px 12px 14px' : '4px 18px 18px', background: inl ? 'transparent' : t.bg.subtle, borderBottom: inl ? 'none' : `1px solid ${t.border.subtle}` }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {m ? <>{sutB}{totB}{frB}</> : <>{g2('minmax(0, 1.25fr) minmax(0, 1fr)', sutB, totB)}{frB}</>}
           {b && BUDGET[b] && <Budget b={b} m={!!m} />}
-          {m ? <>{trB}{docB}</> : g2('minmax(0, .8fr) minmax(0, 1.2fr)', trB, docB)}
+          {m ? <>{trB}{docB}</> : g2('minmax(0, .8fr) minmax(0, 1.2fr)', trB, docB, 'stretch') /* 15.11.2026: «Путь закона» по высоте как блок справа */}
           {imgB}
         </div>
       </div>
