@@ -4,7 +4,8 @@
  - bs («Что сейчас» / «Что предлагалось изменить») для законопроектов «О внесении изменений»;
  - sut для законов, автоматически добавленных в «Вступают в силу» (auto: 1);
  - ошибки загрузки (logs/*.log).
-К каждому пункту — путь к выжимке из пояснительной записки (out/extracts/bills/<номер>.json)."""
+К каждому пункту — путь к выжимке из пояснительной записки (extracts/bills/<номер>.json).
+ - tg (метки «Для кого», «Тема», «Что меняется» из ZW/ZT/ZC) для законов «Вступают в силу» — по ним закон попадает в RSS-ленты меток."""
 import sys, os, re, json, glob
 sys.path.insert(0, os.path.dirname(__file__)); import common as C
 src = C.read_canvas()
@@ -28,10 +29,19 @@ for d, vid, doc, q, rd in C.votes(src):
     if not has('sut', vid, doc): miss_s.append(f'- [ ] {d} голосование {vid} ({doc}): sut, who — «{q[:90]}» · выжимка: {ex}')
     if doc != '—' and q.startswith('О внесении изменени') and not has('bs', vid, doc):
         miss_b.append(f'- [ ] {d} голосование {vid} ({doc}): bs — пары [«Что сейчас», «Что предлагалось изменить»] · выжимка: {ex}')
-L += ['## Суть и кого касается', ''] + (miss_s or ['нет']) + ['', '## Что сейчас / что предлагалось изменить', ''] + (miss_b or ['нет'])
+# 15.11.2026: процедурные голосования без документа (doc «—»: порядок работы, Счетная комиссия) текста не требуют — в TODO не идут;
+# постановления — отдельным разделом (по желанию); все списки — сначала свежие дни (бот успевает главное).
+_dk = lambda l: tuple(reversed(re.search(r'(\d\d)\.(\d\d)\.(\d{4})', l).groups()))
+miss_s = [l for l in miss_s if '(—)' not in l]; miss_p = sorted([l for l in miss_s if '(Пост.' in l], key=_dk, reverse=True)
+miss_s = sorted([l for l in miss_s if '(Пост.' not in l], key=_dk, reverse=True); _seen = set(); miss_b = [l for l in sorted(miss_b, key=_dk, reverse=True) if '(Пост.' not in l and not (re.search(r'\(([^)]+)\): bs', l).group(1) in _seen or _seen.add(re.search(r'\(([^)]+)\): bs', l).group(1)))]  # bs — один раз на законопроект
+L += ['## Суть и кого касается — законопроекты', ''] + (miss_s or ['нет']) + ['', '## Что сейчас / что предлагалось изменить (сначала свежие)', ''] + (miss_b or ['нет'])
+L += ['', '## Постановления Госдумы — суть (по желанию)', ''] + (miss_p or ['нет'])
 i = src.index('const LAWS: any = ') + 18; LW = json.loads(src[i:src.index(';\n', i)])
 auto = [f"- [ ] {x['d']} {x['law']} (законопроект {x.get('bill','')}): заголовок и sut" for mk in LW['months'].values() for x in mk if x.get('auto') and not x.get('sut')]
 L += ['', '## Вступают в силу — автодобавленные законы', ''] + (auto or ['нет'])
+# 15.11.2026: метки законов (tg) — без них закон не попадает в ленты feed/<метка>.xml (web/extras.mjs)
+notg = [f"- [ ] {x['d']} {x.get('law','')} — «{x.get('title','')}»: tg = [[«Для кого»…], [«Тема»…], [«Что меняется»…]] из ZW/ZT/ZC" for mk in LW['months'].values() for x in mk if not (x.get('tg') and all(x['tg']))]
+L += ['', '## Вступают в силу — метки законов (tg)', ''] + (notg or ['нет'])
 L += ['', '## Ошибки загрузки', '']
 for f in sorted(glob.glob(os.path.join(C.LOGS, '*.log'))):
     ls = open(f).read().strip().splitlines(); L.append(f'- {os.path.basename(f)}: {len(ls)} строк')
@@ -82,4 +92,4 @@ S += ['', f'- Законы «Вступают в силу» без официа�
 if part: S += ['## Полнота сбора', ''] + part + ['']
 if nosrc: S += ['## Нет официальной ссылки', ''] + nosrc + ['']
 open(os.path.join(ROOT, 'docs', 'STATUS.md'), 'w').write('\n'.join(S))
-print('TODO:', len(miss_s), 'sut,', len(miss_b), 'bs,', len(auto), 'законов')
+print('TODO:', len(miss_s), 'sut,', len(miss_p), 'постановлений,', len(miss_b), 'bs,', len(auto), 'законов,', len(notg), 'без меток tg')

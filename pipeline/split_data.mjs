@@ -4,7 +4,7 @@
 // Канон данных по-прежнему src/canvas.tsx (его пишет конвейер: votes_day, cal_merge, track, organs, bp_merge, …;
 // он же — самодостаточная форма страницы). Этот генератор запускается после каждой правки canvas
 // (pipeline/commit.sh, run_daily.sh, web/build.sh) и ничего не выдумывает: он выполняет тот же код загрузки, что и страница
-// (объединение CAL.p ∪ DATA, ORGX, BP1112, TRACK1112, LAWS_FIX, …), и раскладывает получившиеся значения:
+// (объединение CAL.p ∪ DATA, ORGX, LAWS_FIX, …), и раскладывает получившиеся значения:
 //   data/core.json            — общее: законы месяца (LAWS), ZTAG, PLAIN, PROC, RES_T, депутаты, бюджет, CAL.u/w/n и
 //                               записи о законопроектах/голосованиях, на которые ссылается код или общие данные;
 //   data/months/ГГГГ-ММ.json  — всё, что относится к дням месяца: DATA, SUM (с NV), FULL, GOVA, SFN, CAL.p, CAL.g, ORG,
@@ -67,9 +67,9 @@ function transform(src) {
   decl('FULL'); drop(/^FULL\['\d\d\.\d\d\.\d{4}'\] = /, "FULL['день'] = …", -1);
   drop(/^const TX_RAW\b/, 'const TX_RAW'); decl('TX');
   decl('DAYS', 'GDX.M.DAYS;'); decl('COUNT', 'GDX.M.COUNT;');
-  decl('VT'); decl('TRACK'); drop(/^const TRACK1112\b/, 'const TRACK1112'); drop(/^Object\.keys\(TRACK1112\)\.forEach/, 'TRACK1112 → TRACK');
+  decl('VT'); decl('TRACK');
   decl('BUDGET'); decl('DEP_RAW'); decl('DEP8');
-  drop(/^const INFO_RAW\b/, 'const INFO_RAW'); decl('PLAIN'); decl('BP'); drop(/^const BP1112\b/, 'const BP1112'); drop(/^Object\.keys\(BP1112\)\.forEach/, 'BP1112 → BP');
+  drop(/^const INFO_RAW\b/, 'const INFO_RAW'); decl('PLAIN'); decl('BP');
   decl('PROC'); decl('INFO');
   drop(/^\/\* INIC:start \*\/const INIC\b/, 'const INIC'); drop(/^Object\.keys\(INIC\)\.forEach/, 'INIC → INFO');   // 13.11.2026: инициатор/комитет с sozd уже влиты в INFO
   decl('LAWS'); drop(/^const LAWS_FIX\b/, 'const LAWS_FIX'); drop(/^for \(const k in LAWS_FIX\)/, 'LAWS_FIX → LAWS');
