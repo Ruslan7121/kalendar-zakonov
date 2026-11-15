@@ -1,0 +1,33 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//kalendar-zakonov//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Льготные авиабилеты: эксперимен
+ т завершается
+X-WR-TIMEZONE:Europe/Moscow
+BEGIN:VEVENT
+UID:law-dd4954be@kalendar-zakonov
+DTSTAMP:20261115T003842Z
+DTSTART;VALUE=DATE:20261102
+DTEND;VALUE=DATE:20261103
+SUMMARY:Вступает в силу: Льготные авиабилет
+ ы: эксперимент завершается
+DESCRIPTION:Постановление Правительства РФ о
+ т 13.12.2024 № 1776\nЗавершается эксперимент п
+ о автоматизации процесса управления ль
+ готными и субсидированными пассажирск
+ ими перевозками на воздушном транспорт
+ е. Его результатом должно стать сокраще
+ ние сроков подтверждения права на льго
+ ту при покупке гражданами авиабилетов\,
+  а также создание в будущем специализир
+ ованной цифровой платформы.\nКого коснё
+ тся: Пассажиры\, которые покупают авиаб
+ илеты по льготе или субсидированному т
+ арифу.\nОфициальный источник: http://publication
+ .pravo.gov.ru/document/0001202412160020
+URL:http://publication.pravo.gov.ru/document/0001202412160020
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR
