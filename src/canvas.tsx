@@ -3972,7 +3972,7 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
               <span style={{ fontSize: m ? 16 : 15, fontWeight: t.weight.semibold, color: dO ? t.text.accent : t.text.primary }}>{`${d.getDate()} ${MON[d.getMonth()]}, ${WDL[d.getDay()]}`}</span>
               {s === today && pill('сегодня', blue)}
               {es.some((e: any) => (e.k === 'p' && plan(e.p)) || (e.k === 'g' && gPlan(e.g))) && <span data-plan="1">{pill('ожидается', t.text.secondary, true)}</span>}
-              <span style={{ flex: '0 1 auto', minWidth: 0, fontSize: 13, color: t.text.tertiary }}>{ks.map((k) => CON[k]).join(' · ')}</span>
+              <span data-dayorgs="1" style={{ flex: '1 0 100%', minWidth: 0, fontSize: m ? 14 : 13, color: t.text.tertiary /* 15.11.2026: органы — всегда второй строкой под датой */ }}>{ks.map((k) => CON[k]).join(' · ')}</span>
               </span>
               <span aria-hidden style={{ flex: 'none', fontSize: 20, lineHeight: 1, color: dO ? t.text.accent : t.text.tertiary, transition: 'transform .2s', transform: dO ? 'rotate(90deg)' : 'none' }}>›</span>
             </div>
