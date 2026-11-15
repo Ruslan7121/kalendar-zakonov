@@ -2807,7 +2807,7 @@ function CopyTip({ s }: { s: string }) {
 /* 15.11.2026: «Поделиться» у закона — как у карточки календаря: на телефоне системное меню, на компьютере копирование ссылки с подсказкой над кнопкой (вместо окна alert) */
 function LawShare({ x, st }: { x: any; st: any }) {
   const t = useGrokTheme(); const [ok, setOk] = useState(''); const tm = useRef<any>(null);
-  const go = async (e: any) => { e.stopPropagation(); const u = lawPage(x); const nav: any = navigator; const m = typeof window !== 'undefined' && window.innerWidth < 760; if (m && nav.share) { try { await nav.share({ title: x.title, url: u }); return; } catch (er: any) { if (er && er.name === 'AbortError') return; } } const done = () => { setOk('Ссылка на закон скопирована'); clearTimeout(tm.current); tm.current = setTimeout(() => setOk(''), 2200); }; try { await nav.clipboard.writeText(u); done(); } catch (er) { try { const ta = document.createElement('textarea'); ta.value = u; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); } catch { window.open(u, '_blank'); } } };
+  const go = async (e: any) => { e.stopPropagation(); const u = lawShare(x); const nav: any = navigator; const m = typeof window !== 'undefined' && window.innerWidth < 760; if (m && nav.share) { try { await nav.share({ title: x.title, url: u }); return; } catch (er: any) { if (er && er.name === 'AbortError') return; } } const done = () => { setOk('Ссылка на закон скопирована'); clearTimeout(tm.current); tm.current = setTimeout(() => setOk(''), 2200); }; try { await nav.clipboard.writeText(u); done(); } catch (er) { try { const ta = document.createElement('textarea'); ta.value = u; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); } catch { window.open(u, '_blank'); } } };
   return <span style={{ position: 'relative', display: 'inline-flex' }}><button type="button" data-lawshare={lawId(x)} onClick={go} className="gd-lnk" style={{ ...st, border: 'none', cursor: 'pointer', fontFamily: t.font.family }}>Поделиться</button>{ok && <CopyTip s={ok} />}</span>;
 }
 function ShareBtn({ day, id, m, lk }: { day: string; id: string; m: boolean; lk?: any }) {
@@ -3315,7 +3315,8 @@ const lawSearch = (x: any) => { const n = /№\s*(\d+-ФЗ)/.exec(x.law || ''); 
 const isAct = (u: string) => /kremlin\.ru\/acts\/bank\/\d+|publication\.pravo\.gov\.ru\/document\/\d+/.test(u || '');
 const lawLinks = (x: any): { t: string; u: string }[] => { const off = (x.src || []).filter((l: any) => l && isOff(l.u)); const act = off.find((l: any) => isAct(l.u)); if (act) return [{ t: 'Официальный текст', u: act.u }, ...off.filter((l: any) => !isAct(l.u))]; if (off.length) return off; const q = lawSearch(x); return q ? [{ t: 'Найти официальный текст', u: q }] : []; };
 /* страница закона со своим адресом (web/extras.mjs: law/<lawId>/) */
-const lawPage = (x: any) => `${SITE}/law/${lawId(x)}/`;
+/* 15.11.2026: «Поделиться» у закона — ссылка в приложение: вкладка «Вступают в силу» с открытой карточкой закона (как ссылка на карточку календаря); статическая страница law/<id>/ остается для поисковиков */
+const lawShare = (x: any) => `${SITE}/?tab=l&law=${lawId(x)}`;
 const LAWQ: { mk: string; i: number } | null = (() => { const q = QS && QS.get('law'); if (!q) return null; for (const mk of LKEYS) { const i = (LAWS.months[mk] || []).findIndex((x: any) => lawId(x) === q); if (i >= 0) return { mk, i }; } return null; })();
 const LMK0 = (() => { if (LAWQ) return LAWQ.mk; const q = QS && QS.get('lm'); return q && LKEYS.includes(q) ? q : LKEYS.includes(LCUR) ? LCUR : LKEYS[0]; })();
 const lmname = (k: string) => `${MONN[+k.slice(0, 2) - 1]} ${k.slice(3)}`;
