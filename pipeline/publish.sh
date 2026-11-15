@@ -84,7 +84,7 @@ cp "$STAGE/$JS" app.js            # мост для закэшированног
 mkdir -p data; cp "$STAGE"/data/*.json data/   # имена по хешу содержимого: прежние файлы не перезаписываются
 touch .nojekyll
 # каталоги статики пересоздаются целиком (удалённые законопроекты/ленты не остаются), отдельные файлы — перезаписываются
-for d in bill feed ics; do [ -d "$d" ] && { git rm -q -r --cached "$d" >/dev/null 2>&1 || true; rm -rf "$d"; }; done
+for d in bill feed ics law; do [ -d "$d" ] && { git rm -q -r --cached "$d" >/dev/null 2>&1 || true; rm -rf "$d"; }; done
 [ -d "$STAGE/x" ] && cp -r "$STAGE/x/." .
 # прежние хешированные файлы: оставить последние KEEP (кроме текущего), остальные удалить
 OLD=$(git log --format= --name-only --diff-filter=A -- 'app.*.js' | grep -E '^app\.[0-9a-f]{10}\.js$' | grep -vx "$JS" | awk '!s[$0]++' || true)
@@ -118,7 +118,7 @@ git add -A
 CHANGED=$(git diff --cached --name-only)
 # в коммите допустимы только файлы сайта (14.11.2026: + day/ и fractions/ — страницы дней и статистики фракций из web/extras.mjs;
 # без них с 13.11 падали все выкладки — и deploy, и ежедневный прогон)
-BAD=$(echo "$CHANGED" | grep -v -E '^(index\.html|404\.html|app\.js|app\.[0-9a-f]{10}\.js|README\.md|\.nojekyll|favicon\.svg|og\.png|manifest\.webmanifest|sw\.js|robots\.txt|sitemap\.xml|(bill|feed|ics|day|fractions)/[A-Za-z0-9._/-]+|data/(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json)$' || true)
+BAD=$(echo "$CHANGED" | grep -v -E '^(index\.html|404\.html|app\.js|app\.[0-9a-f]{10}\.js|README\.md|\.nojekyll|favicon\.svg|og\.png|manifest\.webmanifest|sw\.js|robots\.txt|sitemap\.xml|(bill|feed|ics|day|fractions|law)/[A-Za-z0-9._/-]+|data/(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json)$' || true)
 [ -z "$BAD" ] || die "в коммит gh-pages попали неожиданные файлы: $BAD"
 if git diff --cached --quiet -- . ':(exclude)README.md'; then
   echo "publish.sh: сайт не изменился ($JS уже опубликован), коммит не нужен"; exit 0
