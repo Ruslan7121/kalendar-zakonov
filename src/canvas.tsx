@@ -3424,7 +3424,7 @@ function Itogi({ m }: { m: boolean }) {
   return <div data-itogi="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: m ? 0 : 14 }}>
     <div style={hh}>Период</div>{seg(P.map((x) => [x[0], x[1]] as [string, string]), per, (k) => { setPer(k as any); setTag(null); setAll(false); })}
     <div style={{ fontSize: 13, color: t.text.tertiary, margin: '0 2px' }}>{pp[4]} · законопроектов: {L.length}{!ld0 ? ' · данные догружаются…' : ''}</div>
-    <div style={hh}>Фильтры</div>{seg([['0', 'Для кого'], ['1', 'Тема'], ['2', 'Что меняется']], String(g), (k) => { setG(+k); setTag(null); setAll(false); })}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: m ? undefined : 560 }}><div style={hh}>Фильтры</div><span style={{ flex: 1 }} />{(per !== 'w' || g !== 0 || tag !== null || all) && <button data-ireset="1" type="button" onClick={() => { setPer('w'); setG(0); setTag(null); setAll(false); }} style={{ marginTop: 6, minHeight: 32, padding: '0 10px', border: 'none', borderRadius: 8, background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 14, cursor: 'pointer' }}>Сбросить</button>}</div>{seg([['0', 'Для кого'], ['1', 'Тема'], ['2', 'Что меняется']], String(g), (k) => { setG(+k); setTag(null); setAll(false); })}
     <div data-itags="1" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{tags.map((v) => <ZChip key={v} t={t} on={v === tg} l={v} n={cnt[v]} onClick={() => { setTag(v); setAll(false); }} />)}</div>
     {tg ? <>
       <div style={{ ...hh, color: t.text.primary, fontSize: 15 }}>{tg}</div>
