@@ -69,6 +69,8 @@ python3 track.py
 # 14.11.2026: прямые ссылки на официальный текст законов «Вступают в силу» (kremlin.ru/acts/bank), где их ещё нет
 echo "[законы: официальные ссылки]"
 python3 laws_src.py || echo "laws_src: ошибка (см. out/logs/laws_src.log)" >&2
+echo "[временные метки законопроектов без ZTAG]"
+python3 auto_ztag.py || echo "auto_ztag: ошибка" >&2
 echo "[аудит] $DAY"
 python3 audit.py --day "$DAY" --fix
 echo "[список задач]"
