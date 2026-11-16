@@ -55,7 +55,7 @@ for (const [mk, J] of Object.entries(months)) {
   }
   for (const [i, o] of (J.ORG || []).entries()) {
     const w = `ORG[${mk}#${i}]`;
-    if (!['sf', 'minfin', 'mintrud', 'minjust', 'cbr'].includes(o.o)) E(w, `орган «${o.o}»`);
+    if (!['sf', 'minfin', 'mintrud', 'minjust', 'cbr', 'pres', 'gov'].includes(o.o)) /* 16.11.2026: + указы Президента и акты Правительства (organs.py, API pravo) */ E(w, `орган «${o.o}»`);
     if (!okDate(o.d)) E(w, `дата «${o.d}»`); if (!isStr(o.t) || !o.t.trim()) E(w, 'нет заголовка t'); if (!/^https?:\/\//.test(o.u || '')) E(w, `ссылка «${o.u}»`);
   }
 }

@@ -75,4 +75,22 @@ art = open(os.path.join(R, 'tests', 'fixtures', 'minfin_press_article.html')).re
 t_, d_ = O.parse_minfin_article(art); assert d_ and O.d2s(d_) == '14.11.2026' and t_.startswith('В поправках Правительства'), (t_, d_)
 got = O.collect_minfin_news(open(os.path.join(R, 'tests', 'fixtures', 'minfin_press_list.html')).read(), fetch=lambda u: ('ok', art) if '40752' in u else ('error:HTTP 404', ''))
 assert len(got) == 1 and got[0]['ty'] == 'новость' and got[0]['o'] == 'minfin' and got[0]['d'] == '14.11.2026', got
+# 16.11.2026: указы Президента и акты Правительства — API publication.pravo.gov.ru (без ИИ, официальное опубликование)
+import json as _j
+_fx = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fixtures')
+_p = O.parse_pravo_api(open(os.path.join(_fx, 'pravo_api_pres.json')).read(), 'pres')
+assert [e['t'] for e in _p] == ['Указ № 848 от 14.11.2026: О помиловании Чекалиной В.В.', 'Указ № 841 от 10.11.2026: О Чрезвычайном и Полномочном После Российской Федерации в Габонской Республике'], _p
+assert all(e['o'] == 'pres' and e['ty'] == 'решение' and e['k'] == 'Указ' and e['u'].startswith('http://publication.pravo.gov.ru/document/000120261') for e in _p), _p
+_g = O.parse_pravo_api(open(os.path.join(_fx, 'pravo_api_gov.json')).read(), 'gov')
+assert [(e['k'], e['d']) for e in _g] == [('Постановление', '14.11.2026'), ('Распоряжение', '14.11.2026')], _g
+assert _g[1]['t'] == 'Распоряжение № 3383-р от 14.11.2026' and _g[1].get('x') == 'Опубликован 16.11.2026', _g[1]
+# обход страниц: 400 на PageSize=100 → переход на 10; остановка, когда документы старше начала окна
+_calls = []
+def _fetch(u):
+    _calls.append(u)
+    if 'PageSize=100' in u: return 'error:HTTP 400', ''
+    return 'ok', open(os.path.join(_fx, 'pravo_api_pres.json')).read()
+O.WIN_FROM = O.dt.date(2026, 11, 12)
+_r, _st = O.collect_pravo_api('pres_pravo', 'pres', fetch=_fetch)
+assert _st == 'ok' and len(_r) == 2 and len(_calls) == 2 and 'PageSize=10&Index=1' in _calls[1], (_st, _calls)
 print(f'OK test_organs: событий {len(ev)}, с проверенными полями {len(enr)}, ORG/ORGX в canvas совпадают с out/organs')
