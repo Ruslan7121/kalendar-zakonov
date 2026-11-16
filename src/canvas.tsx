@@ -2143,7 +2143,9 @@ const MON = ['января', 'февраля', 'марта', 'апреля', 'м
 /* 14.11.2026 (11Б): будни после последнего собранного дня (последний ключ DATA) и до вчера включительно, не дальше 14 дней — данные за них ещё не пришли.
    В календаре такие дни обведены пунктиром с подписью «сбор», под календарём — одна строка. Ежедневный прогон дособирает пропуски за 7 дней. */
 /* 15.11.2026: день из NV (официально «голосований не было»; в сборке NV влит в SUM с nv: 1) — собран: не «еще собирается», и отсчет идет от него */
-const PEND: string[] = (() => { const NVD = Object.keys(SUM).filter((k) => (SUM as any)[k] && (SUM as any)[k].nv); const last = [...DAYS, ...NVD].sort((a, b) => (a.slice(6, 10) + a.slice(3, 5) + a.slice(0, 2)).localeCompare(b.slice(6, 10) + b.slice(3, 5) + b.slice(0, 2))).pop(); if (!last) return []; const pd0 = (x: string) => new Date(+x.slice(6, 10), +x.slice(3, 5) - 1, +x.slice(0, 2)); const n0 = new Date(); const t0 = new Date(n0.getFullYear(), n0.getMonth(), n0.getDate()); const r: string[] = []; for (let d = new Date(pd0(last).getTime() + 864e5); d < t0; d = new Date(d.getTime() + 864e5)) { const ds = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`; if (d.getDay() % 6 === 0 || t0.getTime() - d.getTime() > 14 * 864e5 || NVD.includes(ds)) continue; r.push(`${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`); } return r; })();
+/* 16.11.2026: пересчитывается, когда приходит месяц (GDX.onMerge): отметка «голосований не было» лежит в файле месяца — без пересчета день оставался «ещё собирается» */
+const calcPend = (): string[] => { const NVD = Object.keys(SUM).filter((k) => (SUM as any)[k] && (SUM as any)[k].nv); const last = [...DAYS, ...NVD].sort((a, b) => (a.slice(6, 10) + a.slice(3, 5) + a.slice(0, 2)).localeCompare(b.slice(6, 10) + b.slice(3, 5) + b.slice(0, 2))).pop(); if (!last) return []; const pd0 = (x: string) => new Date(+x.slice(6, 10), +x.slice(3, 5) - 1, +x.slice(0, 2)); const n0 = new Date(); const t0 = new Date(n0.getFullYear(), n0.getMonth(), n0.getDate()); const r: string[] = []; for (let d = new Date(pd0(last).getTime() + 864e5); d < t0; d = new Date(d.getTime() + 864e5)) { const ds = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`; if (d.getDay() % 6 === 0 || t0.getTime() - d.getTime() > 14 * 864e5 || NVD.includes(ds)) continue; r.push(`${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`); } return r; };
+let PEND: string[] = calcPend();
 const pendTxt = (ds: string[]) => { if (!ds.length) return ''; const mo = ds.map((d) => +d.slice(3, 5) - 1); const same = mo.every((x) => x === mo[0]); const nm = ds.map((d) => String(+d.slice(0, 2)) + (same ? '' : ' ' + MON[+d.slice(3, 5) - 1])); const j = nm.length > 1 ? nm.slice(0, -1).join(', ') + ' и ' + nm[nm.length - 1] : nm[0]; return `${j}${same ? ' ' + MON[mo[0]] : ''} ${ds.length > 1 ? 'ещё собираются' : 'ещё собирается'}`; };
 const MONN = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 const dayLabel = (d: string) => `${Number(d.slice(0, 2))} ${MON[Number(d.slice(3, 5)) - 1]}`;
@@ -4230,7 +4232,7 @@ function ToTop({ t }: { t: any }) {
     </span></button>;
 }
 /* Кэши по всем дням (agShort, plainBill, fullT) пересчитываются после подгрузки месяца. */
-if (GDX) GDX.onMerge = () => { SHB = null; PLB = null; ftDone = false; };
+if (GDX) GDX.onMerge = () => { SHB = null; PLB = null; ftDone = false; PEND = calcPend(); };
 function CalendarApp() {
   const gk: any = useGT0();
   const [tho, setTho] = useState<string | null>(THO0);
