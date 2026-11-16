@@ -3199,8 +3199,8 @@ function newsItems(d: string): NItem[] {
   ORGK.forEach((o) => newsOrg(o, d).forEach((x: any) => out.push({ o, sec: '', tag: null, text: x.st || x.t || '', sub: x.sut || x.x || '', u: x.u && isOff(x.u) ? x.u : '' })));
   return out;
 }
-function NewsFeed({ m, months, more, focus }: { m: boolean; months: string[]; more: null | (() => void); focus?: string }) {
-  const t = useGrokTheme(); useGDV(); const dk = t.kind === 'dark';
+function NewsFeed({ m, peek, months, more, focus }: { m: boolean; peek?: boolean; months: string[]; more: null | (() => void); focus?: string }) {
+  const t = useGrokTheme(); useGDV(); const dk = t.kind === 'dark'; const nslot = useHSlot(m && !peek);
   /* 12.11.2026: день выбирается переключателем «‹ 11 ноября ›» (как месяц во «Вступают в силу»); показаны новости одного дня.
      Дальше самого раннего загруженного дня стрелка «‹» подгружает предыдущий месяц и переходит на его последний день. */
   const [sel, setSel] = useState<string | null>(focus && /^\d\d\.\d\d\.\d{4}$/.test(focus) ? focus : null);
@@ -3223,13 +3223,18 @@ function NewsFeed({ m, months, more, focus }: { m: boolean; months: string[]; mo
   const chip = (k: string, l: string, n: number) => { const on = src === k; return <button key={k} data-nsrc={k} aria-pressed={on} onClick={(e: any) => { setSrc(k); try { e.currentTarget.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); } catch (x) {} }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, minHeight: 30, padding: '0 11px', borderRadius: 9999, border: 'none', background: on ? t.fill.accentSubtle : t.bg.subtle, color: on ? t.text.accent : t.text.secondary, fontFamily: t.font.family, fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{l}<span style={{ fontSize: 12, color: on ? t.text.accent : t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{n}</span></button>; };
   const dd = cur ? pd(cur) : null;
   return <div data-newsfeed="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 0 }}>
-    <div data-nchips="1" style={{ position: 'sticky', top: m ? 0 : 'var(--gd-top, 0px)', zIndex: 6, background: DK ? '#000000' : t.bg.base, margin: m ? '0 -14px' : 0, padding: m ? '2px 14px 8px' : '6px 0 8px' }}>
-      <div data-nday="1" style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
+    <div data-nchips="1" style={{ position: 'sticky', top: 'var(--gd-top, 0px)', zIndex: 6, background: DK ? '#000000' : t.bg.base, margin: m ? '0 -14px' : 0, padding: m ? '2px 14px 8px' : '6px 0 8px' }}>
+      {m ? (peek ? null : nslot ? createPortal(<div data-nday="1" style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: m ? 0 : 6 }}>
         <button aria-label="Предыдущий день" disabled={!older && !more} onClick={goOlder} style={nb(!older && !more)}>‹</button>
         <span style={{ flex: 1, textAlign: 'center', whiteSpace: 'nowrap' }}><span style={{ fontSize: 15, fontWeight: 700, color: t.text.primary }}>{dd ? `${dd.getDate()} ${MON[dd.getMonth()]}` : 'Новости'}</span>{dd && <span style={{ fontSize: 12.5, color: t.text.tertiary, marginLeft: 6 }}>{WDL[dd.getDay()]}</span>}</span>
         <button aria-label="Следующий день" disabled={!newer} onClick={() => newer && setSel(newer)} style={nb(!newer)}>›</button>
         {ix > 0 && <button onClick={() => setSel(days[0])} style={{ height: 28, padding: '0 12px', borderRadius: 14, border: `1px solid ${t.text.accent}`, background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>Последние</button>}
-      </div>
+      </div>, nslot) : null) : <div data-nday="1" style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: m ? 0 : 6 }}>
+        <button aria-label="Предыдущий день" disabled={!older && !more} onClick={goOlder} style={nb(!older && !more)}>‹</button>
+        <span style={{ flex: 1, textAlign: 'center', whiteSpace: 'nowrap' }}><span style={{ fontSize: 15, fontWeight: 700, color: t.text.primary }}>{dd ? `${dd.getDate()} ${MON[dd.getMonth()]}` : 'Новости'}</span>{dd && <span style={{ fontSize: 12.5, color: t.text.tertiary, marginLeft: 6 }}>{WDL[dd.getDay()]}</span>}</span>
+        <button aria-label="Следующий день" disabled={!newer} onClick={() => newer && setSel(newer)} style={nb(!newer)}>›</button>
+        {ix > 0 && <button onClick={() => setSel(days[0])} style={{ height: 28, padding: '0 12px', borderRadius: 14, border: `1px solid ${t.text.accent}`, background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>Последние</button>}
+      </div>}
       <div data-nchiprow="1" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' } as any}>{/* 14.11.2026 (12Б): все органы видны сразу, ряд переносится */}
         {chip('all', 'Все', items.length)}{NSRC.filter(([k]) => cnt[k]).map(([k, l]) => chip(k, l, cnt[k]))}
       </div>
@@ -3447,10 +3452,13 @@ function Laws({ m, mk, setMk, lq = '', setLq = () => {} }: { m: boolean; mk: str
 const KPL: Record<string, string> = { 'приказ': 'приказы', 'указание': 'указания', 'разъяснение': 'разъяснения', 'разъяснения': 'разъяснения', 'информационное письмо': 'информационные письма', 'письмо': 'письма', 'постановление': 'постановления', 'распоряжение': 'распоряжения', 'решение совета директоров': 'решения Совета директоров', 'решение': 'решения', 'положение': 'положения', 'новость': 'новости', 'сообщение': 'сообщения' };
 const orgKinds = (ek: any[]) => { const c: Record<string, number> = {}; const ord: string[] = []; ek.forEach((e: any) => (e.k === 'o' ? e.o : []).forEach((x: any) => { const v = String(x.kind || x.k || '').trim(); if (!v) return; const l = v.toLowerCase(); if (!(l in c)) { c[l] = 0; ord.push(l); } c[l]++; })); return ord.map((l) => (c[l] > 1 ? KPL[l] || l : l.replace('совета директоров', 'Совета директоров'))).join(' · '); };
 const FRO = ['ЕР', 'КПРФ', 'ЛДПР', 'НЛ', 'СРЗП', 'Вне'];
-function Itogi({ m }: { m: boolean }) {
+/* 16.11.2026: строка раздела в закрепленной шапке телефона (data-hslot): у «Итогов» — период и «Фильтры», у «Новостей» — выбор дня.
+   Шапка на всех вкладках одной высоты — при листании верх не дергается. Соседняя страница при свайпе (peek) строку не показывает. */
+function useHSlot(on: boolean) { const [el, setEl] = useState<HTMLElement | null>(null); useEffect(() => { const x = on ? document.querySelector('[data-hslot]') as HTMLElement | null : null; if (x !== el) setEl(x); }); return el; }
+function Itogi({ m, peek }: { m: boolean; peek?: boolean }) {
   const t = useGrokTheme(); useGDV(); gdNeed(null); const ld0 = zLoaded(); const [op, setOp] = useState<string | null>(null);
   /* 16.11.2026: на телефоне фильтры «Итогов» — кнопка «Фильтры» рядом с периодом и окно снизу (как в «Календаре»), вариант Б владельца */
-  const [fo, setFo] = useState(false); const [fxp, setFxp] = useState<Record<number, boolean>>({});
+  const [fo, setFo] = useState(false); const [fxp, setFxp] = useState<Record<number, boolean>>({}); const slot = useHSlot(m && !peek);
   useEffect(() => { if (!fo) return; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setFo(false); }; document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [fo]);
   const [per, setPer] = useState<'d' | 'w' | 'm' | 'y'>('w'); const [pmk, setPmk] = useState<string | null>(null); const [pyr, setPyr] = useState<number | null>(null); const [g, setG] = useState(0); const [zs, setZs] = useState<string[][]>([[], [], []]); const [all, setAll] = useState(false); const [rf, setRf] = useState<'all' | 'ok' | 'no'>('all');
   /* 15.11.2026: несколько меток — внутри группы «или», между группами «и» (как «Фильтры»); ничего не выбрано — все законопроекты периода */
@@ -3526,7 +3534,7 @@ function Itogi({ m }: { m: boolean }) {
     </div>;
   }
   return <div data-itogi="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 0 }}>
-    <div data-iprow="1" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><div style={{ flex: '1 1 0', minWidth: 0 }}>{perSeg}</div><button type="button" data-ifopen="1" aria-haspopup="dialog" aria-expanded={fo} onClick={() => setFo(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, minHeight: 44, padding: '0 12px', borderRadius: 10, border: `1px solid ${nSel ? t.text.accent : t.border.default}`, background: nSel ? t.fill.accentSubtle : t.bg.base, color: nSel ? t.text.accent : t.text.primary, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}><span aria-hidden>☰</span>Фильтры{nSel ? <span style={{ background: t.text.accent, color: t.bg.base, borderRadius: 999, padding: '0 6px', fontSize: 12, fontWeight: 700 }}>{nSel}</span> : null}</button></div>
+    {peek ? null : slot ? createPortal(<div data-iprow="1" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><div style={{ flex: '1 1 0', minWidth: 0 }}>{perSeg}</div><button type="button" data-ifopen="1" aria-haspopup="dialog" aria-expanded={fo} onClick={() => setFo(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, minHeight: 38, padding: '0 12px', borderRadius: 10, border: `1px solid ${nSel ? t.text.accent : t.border.default}`, background: nSel ? t.fill.accentSubtle : t.bg.base, color: nSel ? t.text.accent : t.text.primary, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}><span aria-hidden>☰</span>Фильтры{nSel ? <span style={{ background: t.text.accent, color: t.bg.base, borderRadius: 999, padding: '0 6px', fontSize: 12, fontWeight: 700 }}>{nSel}</span> : null}</button></div>, slot) : null}
     {perPick}
     {(nSel > 0 || resetB) && <div data-isel="1" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>{zs.flatMap((a, i) => a.map((v) => <ZChip key={i + v} t={t} on l={v} x onClick={() => tog(i, v)} />))}{resetB}</div>}
     <div style={{ fontSize: 13, color: t.text.tertiary, margin: '0 2px' }}>{pp[4]} · законопроектов: {L.length}{!ld0 ? ' · данные догружаются…' : ''}</div>
@@ -4295,7 +4303,7 @@ function CalendarApp() {
   /* 15.11.2026: листание вкладок на телефоне как страниц: шапка (вкладки, поиск, «Фильтры») неподвижна; под пальцем едет текущая
      страница, рядом сразу видна соседняя (paneFor), без затухания. Отпустили дальше порога или быстрым жестом — страницы доезжают,
      иначе возвращаются. Пока жест горизонтальный, вертикальная прокрутка не идет. Нажатие на вкладку — то же листание. */
-  const paneFor = (k: string) => (k === 'l' ? <Laws m={m} mk={lmk} setMk={setLmk} lq={lq} setLq={setLq} /> : k === 'i' ? <Itogi m={m} /> : k === 'c' ? <Calendar cq={cq} m={m} day={day} openVote={openHit} cm={cmk} setCm={setCmk} openDay={(d) => { setMode('d'); go(d, true); window.scrollTo(0, 0); }} /> : <>{false && <>
+  const paneFor = (k: string, pk = false) => (k === 'l' ? <Laws m={m} mk={lmk} setMk={setLmk} lq={lq} setLq={setLq} /> : k === 'i' ? <Itogi m={m} peek={pk} /> : k === 'c' ? <Calendar cq={cq} m={m} day={day} openVote={openHit} cm={cmk} setCm={setCmk} openDay={(d) => { setMode('d'); go(d, true); window.scrollTo(0, 0); }} /> : <>{false && <>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 16px', alignItems: 'stretch', marginBottom: !m && !votes.length ? 12 : 0 }}>
         {true ? false && <div style={{ flex: '1 1 100%', fontSize: 14, color: t.text.secondary, padding: '0 2px', fontVariantNumeric: 'tabular-nums' }}>{votes.length ? <><b style={{ color: t.text.primary }}>{votes.length}</b> {plv(votes.length).replace(/^\d+ /, '')} · <b style={{ color: INK[0] }}>{nAcc}</b> принято · <b style={{ color: votes.length - nAcc ? INK[1] : t.text.primary }}>{votes.length - nAcc}</b> отклонено</> : 'Пленарного заседания не было'}</div> :
         <div style={{ ...card(t), padding: m ? '12px 14px' : '14px 18px', color: t.text.primary, lineHeight: 1.45, flex: m ? '1 1 100%' : '0 1 auto' }}>
@@ -4330,7 +4338,7 @@ function CalendarApp() {
         {FAV_ONLY && !qq && !listHits.length && !favLaws.length && <div data-fav-empty="1" style={{ ...card(t), padding: 14, color: t.text.secondary }}>Нажмите ☆ у законопроекта, чтобы сохранить</div>}
         {!FAV_ONLY && !listHits.length && <div style={{ ...card(t), padding: 14, color: t.text.secondary }}>Ничего не найдено</div>}
       </div> : <>
-      {<NewsFeed m={m} months={nms} focus={NDQ} more={nmk < NMS.length ? () => setNmk(nmk + 1) : null} />}
+      {<NewsFeed m={m} peek={pk} months={nms} focus={NDQ} more={nmk < NMS.length ? () => setNmk(nmk + 1) : null} />}
       {open && (() => { const v = votes.find((x) => x.id === open); if (!v) return null; return <div ref={box} data-vid={v.id} style={{ ...card(t), padding: 0, overflow: 'hidden', marginBottom: 8 }}><div style={{ padding: '12px 14px', borderBottom: `1px solid ${t.border.subtle}` }}><div style={{ fontSize: m ? 16 : 15, color: t.text.primary }}>{v.q}</div><div style={{ marginTop: 4, fontSize: 13, fontFamily: t.font.mono, color: t.text.accent }}>{v.doc}</div></div><Panel v={v} m={m} day={day} /><button type="button" className="gd-tap" onClick={() => setOpen(null)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', minHeight: 44, border: 'none', borderTop: `1px solid ${t.border.subtle}`, background: t.fill.accentSubtle, color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Свернуть</button></div>; })()}
       {false && (!votes.length ? <div style={{ ...card(t), padding: '16px 18px', color: t.text.secondary }}>Голосований не было</div> : m ? <div ref={box} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowAnchor: 'none' }}>
         {list.map((v, idx) => {
@@ -4382,6 +4390,7 @@ function CalendarApp() {
       </>}
       </>);
   const swR = useRef<HTMLDivElement | null>(null); const pkR = useRef<HTMLDivElement | null>(null); const clipR = useRef<HTMLDivElement | null>(null);
+  const [hl, setHl] = useState<string | null>(null); /* 16.11.2026: подсветка вкладки переключается сразу, как только решено листать */
   const [peek, setPeek] = useState<null | { k: string; dir: number; top: number }>(null); const peekR = useRef(peek); peekR.current = peek;
   const ORD = TABS.map((x) => x[0]) as string[];
   const peekTop = () => { const c = clipR.current; const b = document.querySelector('[data-gdbar]') as HTMLElement | null; if (!c) return 0; const ct = c.getBoundingClientRect().top; const bb = b ? b.getBoundingClientRect().bottom : 0; return Math.max(0, bb - ct); };
@@ -4390,8 +4399,8 @@ function CalendarApp() {
   const finish = (k: string | null, dir: number, x0: number) => { const W = window.innerWidth; const ms = Math.round(Math.max(160, Math.min(320, 320 * (1 - Math.abs(x0) / W))));
     const tr = `transform ${ms}ms cubic-bezier(.25,.8,.25,1)`;
     if (RMO()) { if (k) goTab(k); setPeek(null); setX(0, dir, 'none'); return; }
-    setX(k ? -dir * W : 0, dir, tr);
-    setTimeout(() => { if (k) goTab(k); setX(0, dir, 'none'); setPeek(null); }, ms + 20); };
+    if (k) setHl(k); setX(k ? -dir * W : 0, dir, tr);
+    setTimeout(() => { if (k) goTab(k); setX(0, dir, 'none'); setPeek(null); setHl(null); }, ms + 20); };
   const goTabA = (k: any) => { const a = ORD.indexOf(modeR.current), b = ORD.indexOf(k); if (!m || a < 0 || b < 0 || a === b || RMO()) { goTab(k); return; }
     const dir = b > a ? 1 : -1; setPeek({ k, dir, top: peekTop() }); requestAnimationFrame(() => requestAnimationFrame(() => { setX(0, dir, 'none'); requestAnimationFrame(() => finish(k, dir, 0)); })); };
   const goTabR = useRef(goTab); goTabR.current = goTab; const finR = useRef(finish); finR.current = finish; const setXR = useRef(setX); setXR.current = setX; const ptR = useRef(peekTop); ptR.current = peekTop;
@@ -4438,7 +4447,8 @@ function CalendarApp() {
         {hid && thBtn}
       </div>{mode === 'c' && <ZBar m={m} chipsOnly />}{mode === 'l' && <ZBar m={m} chipsOnly laws />}{false && votes.length > 0 && <div role="tablist" style={{ display: 'flex', padding: 3, gap: 2, height: 44, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['all', votes.length, plv(votes.length).replace(/^\d+ /, ''), t.text.primary], ['acc', nAcc, 'принято', INK[0]], ['rej', votes.length - nAcc, 'отклонено', votes.length - nAcc ? INK[1] : t.text.primary]] as const).map(([k, n, l, c]) => <button key={k} data-f={k} role="tab" aria-selected={filter === k} onClick={() => setF(k)} style={mt2(filter === k)}><b style={{ color: c }}>{n}</b> {l}</button>)}</div>}</div>}
       
-      {m && <div data-mtop="1" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}><div role="tablist" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{(TABS).map(([k, l]) => <button key={k} role="tab" aria-selected={mode === k} onClick={() => goTabA(k)} style={{ ...mt2(mode === k), minWidth: 0, minHeight: 44, padding: '0 4px', fontSize: 13.5, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', whiteSpace: 'normal', lineHeight: 1.15, flex: k === 'l' ? '1.25 1 0' : k === 'i' ? '0.85 1 0' : '1 1 0' /* 15.11.2026: четыре вкладки — «Вступают в силу» в две строки */ }}>{k === 'l' ? <>Вступают<br />в силу</> : l}</button>)}</div>
+      {m && <div data-mtop="1" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}><div role="tablist" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 3, gap: 2, height: 50, boxSizing: 'border-box', borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{(TABS).map(([k, l]) => <button key={k} role="tab" aria-selected={(hl || mode) === k} onClick={() => goTabA(k)} style={{ ...mt2((hl || mode) === k), transition: 'background-color .18s, color .18s, box-shadow .18s', minWidth: 0, minHeight: 44, padding: '0 4px', fontSize: 13.5, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', whiteSpace: 'normal', lineHeight: 1.15, flex: k === 'l' ? '1.25 1 0' : k === 'i' ? '0.85 1 0' : '1 1 0' /* 15.11.2026: четыре вкладки — «Вступают в силу» в две строки */ }}>{k === 'l' ? <>Вступают<br />в силу</> : l}</button>)}</div>
+        {(mode === 'i' || mode === 'd') && <div data-hslot="1" style={{ height: 46, display: 'flex', flexDirection: 'column', justifyContent: 'center' }} />}
         {(mode === 'c' || mode === 'l') && <div data-msearch="1" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><div style={{ flex: '1 1 0', minWidth: 0 }}>{mode === 'l' ? lbox : cbox}</div>{mode === 'l' ? <ZBar m={m} inline laws /> : <ZBar m={m} inline />}</div>}
         {mode === 'c' && <ZBar m={m} chipsOnly />}{mode === 'l' && <ZBar m={m} chipsOnly laws />}</div>}
       {mode === 'd' && <>
@@ -4446,7 +4456,7 @@ function CalendarApp() {
       {false && <div role="tablist" style={{ display: 'flex', marginTop: 8, padding: 3, gap: 2, borderRadius: 10, background: t.bg.subtle, border: `1px solid ${t.border.subtle}` }}>{([['v', 'Голосования', votes.length], ['s', 'Сводка', null]] as const).map(([k, l, c]) => <button key={k} role="tab" aria-selected={view === k} onClick={() => { setView(k); window.scrollTo(0, 0); }} style={{ flex: 1, minWidth: 0, minHeight: 40, border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: t.font.family, fontSize: 15, fontWeight: view === k ? t.weight.semibold : t.weight.regular, background: view === k ? t.bg.base : 'transparent', boxShadow: view === k ? `0 1px 3px ${t.border.default}` : 'none', color: t.text.primary }}>{l}{c != null && <span style={{ color: t.text.tertiary }}> {c}</span>}</button>)}</div>}
       </>}
       </div>
-      {gdSt && <GdWait st={gdSt} t={t} />}<div data-swclip="1" ref={clipR} style={{ display: gdSt ? 'none' : m ? 'block' : 'contents', position: 'relative', overflowX: 'clip', touchAction: m ? 'pan-y' : undefined } as any}><div data-swipe="1" ref={swR} style={{ display: m ? 'block' : 'contents' }}>{paneFor(mode)}</div>{m && peek && <div data-swpeek="1" ref={pkR} aria-hidden="true" style={{ position: 'absolute', left: 0, right: 0, top: peek.top, transform: `translateX(${peek.dir * 100}%)`, pointerEvents: 'none' }}>{paneFor(peek.k)}</div>}</div>
+      {gdSt && <GdWait st={gdSt} t={t} />}<div data-swclip="1" ref={clipR} style={{ display: gdSt ? 'none' : m ? 'block' : 'contents', position: 'relative', overflowX: 'clip', touchAction: m ? 'pan-y' : undefined } as any}><div data-swipe="1" ref={swR} style={{ display: m ? 'block' : 'contents' }}>{paneFor(mode)}</div>{m && peek && <div data-swpeek="1" ref={pkR} aria-hidden="true" style={{ position: 'absolute', left: 0, right: 0, top: peek.top, transform: `translateX(${peek.dir * 100}%)`, pointerEvents: 'none' }}>{paneFor(peek.k, true)}</div>}</div>
       <div style={{ height: 8 }} />
       <p style={{ fontSize: 14, color: t.text.secondary, lineHeight: 1.5 }}>Источники: {SRCS.map(([s, u], i) => <span key={s}>{i ? ', ' : ''}<a href={u} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>{s}</a></span>)}</p>
       <p data-subs="1" style={{ fontSize: 14, color: t.text.secondary, lineHeight: 1.5, marginTop: -6 }}><a href={`${SITE}/bill/`} style={{ color: t.text.accent }}>Все законопроекты</a> · <a href={`${SITE}/feed/`} style={{ color: t.text.accent }}>Подписки: RSS и календарь .ics</a></p>
