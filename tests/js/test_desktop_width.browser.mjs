@@ -1,5 +1,5 @@
 // 16.11.2026: компьютер (1366 px) с настоящей полосой прокрутки: ширина страницы одинакова на всех вкладках (полоса видна всегда),
-// при открытии карточки страница сзади не сдвигается, затемнение — на весь экран; после закрытия все как было.
+// кнопки вкладок не сдвигаются при переключении (выбранная — жирным, ширина зарезервирована); при открытии карточки страница сзади не сдвигается, затемнение — на весь экран; после закрытия все как было.
 // Как test_org_filter.browser.mjs: без Chrome — SKIP (при GD_REQUIRE_BROWSER=1 — падает). Запуск: node tests/js/test_desktop_width.browser.mjs
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -30,7 +30,7 @@ ws.onmessage = (e) => { const m = JSON.parse(e.data); if (m.id && wait.has(m.id)
 const cmd = (method, params = {}, sessionId) => new Promise((ok, no) => { const id = ++seq; wait.set(id, [ok, no]); ws.send(JSON.stringify({ id, method, params, sessionId })); });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const ST = `(() => { const t = document.querySelector('[data-gdtop]'); return { cw: document.documentElement.clientWidth, iw: innerWidth, left: t ? Math.round(t.getBoundingClientRect().left) : null, right: t ? Math.round(t.getBoundingClientRect().right) : null, win: !!document.querySelector('[data-gdwin]') }; })()`;
+const ST = `(() => { const t = document.querySelector('[data-gdtop]'); return { cw: document.documentElement.clientWidth, iw: innerWidth, left: t ? Math.round(t.getBoundingClientRect().left) : null, right: t ? Math.round(t.getBoundingClientRect().right) : null, win: !!document.querySelector('[data-gdwin]'), tabs: [...document.querySelectorAll('[data-gdtop] [role=tab]')].map((e) => { const r = e.getBoundingClientRect(); return Math.round(r.left) + '-' + Math.round(r.right); }).join(' ') }; })()`;
 const fails = []; const rep = []; const chk = (c, msg) => { if (!c) fails.push(msg); };
 try {
   const { targetId } = await cmd('Target.createTarget', { url: 'about:blank' });
@@ -43,6 +43,7 @@ try {
   for (const tab of ['l', 'c', 'i', 'd']) { await open(`?tab=${tab}`); W[tab] = await ev(ST); rep.push(`${tab}: ${JSON.stringify(W[tab])}`); }
   const cws = new Set(Object.values(W).map((x) => x.cw)), rs = new Set(Object.values(W).map((x) => x.right));
   chk(cws.size === 1 && rs.size === 1, `ширина страницы разная на вкладках: ${JSON.stringify(W)}`);
+  chk(new Set(Object.values(W).map((x) => x.tabs)).size === 1, `кнопки вкладок сдвигаются при переключении: ${Object.entries(W).map(([k, x]) => k + ': ' + x.tabs).join('; ')}`);
   const sb = W.c.iw - W.c.cw; rep.push(`полоса прокрутки: ${sb}px`);
   /* карточка по ссылке: фон не сдвигается */
   await open('?tab=c'); const before = await ev(ST);
