@@ -78,5 +78,7 @@ export async function boot(): Promise<void> {
   if (tick) { clearTimeout(tick); tick = 0; }
   prefetch(ms.filter((k) => loaded.has(k)));
   // 16.11.2026: открытие без месяцев («Вступают в силу») — последний месяц календаря подгружается в фоне, когда страница уже показана
-  if (!ms.length && M.DAYS.length) { const lm = M.DAYS[M.DAYS.length - 1].slice(3); const ric = (window as any).requestIdleCallback; const go = () => G.need([lm]); ric ? ric(go, { timeout: 2500 }) : setTimeout(go, 800); }
+  // 16.11.2026: скачивание начинается сразу (раньше ждало простоя до 2,5 с — в Telegram «Календарь» долго висел на «Загружаю данные»);
+  // страница не ждет его: запрос уходит сразу после boot (до отрисовки по-прежнему только core), месяц вливается, когда придет
+  if (!ms.length && M.DAYS.length) { const lm = M.DAYS[M.DAYS.length - 1].slice(3); setTimeout(() => G.need([lm]), 0); }
 }

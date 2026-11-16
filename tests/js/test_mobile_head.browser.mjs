@@ -4,6 +4,7 @@
 // 3) «Итоги»: в «Фильтрах» есть период; месяцы выбираются по нескольку и суммируются; поиск сужает список.
 // 4) «Новости»: в «Фильтрах» выбирается орган — показаны его новости за все загруженные дни.
 // 5) Клавиатура: когда список листают пальцем, поле поиска теряет фокус.
+// 7) Нажатие «Календарь» на «Вступают в силу»: сетка календаря не подпрыгивает.
 // 6) С первого кадра загрузки шапка и список стоят на месте, строка поиска «Итогов» и «Новостей» не мигает, общий h1 не мелькает.
 // Как test_org_filter.browser.mjs: без Chrome — SKIP (при GD_REQUIRE_BROWSER=1 — падает). Запуск: node tests/js/test_mobile_head.browser.mjs
 import assert from 'node:assert/strict';
@@ -65,6 +66,11 @@ try {
     chk(h && h2 && h2.top === h.top, `${tab}: шапка сдвинулась при прокрутке (${h && h.top} → ${h2 && h2.top})`);
   }
   chk(new Set(Object.values(H).map((h) => h && h.h)).size === 1, `шапка разной высоты на вкладках ${JSON.stringify(Object.fromEntries(Object.entries(H).map(([k, h]) => [k, h && h.h])))}`);
+  /* нажатие «Календарь» на «Вступают в силу»: выезжающая сетка и вставшая на место — на одной высоте (раньше прыжок на 2 px вверх) */
+  await open('l', '[data-lq]'); await ev(`window.__cg = []; (function f() { const k = document.querySelector('[data-swpeek] [data-calgrid]'), g = document.querySelector('[data-swipe] [data-calgrid]'); const e = k || g; if (e) window.__cg.push(Math.round(e.getBoundingClientRect().top)); if (window.__cg.length < 400) requestAnimationFrame(f); })()`);
+  await ev(`[...document.querySelectorAll('[data-mtop] [role=tab]')].find((b) => /Календарь/.test(b.textContent)).click()`); await sleep(1500);
+  const cg = await ev('window.__cg'); const cgs = [...new Set(cg)]; rep.push(`сетка календаря при переходе: ${cgs}`);
+  chk(cg.length > 0 && cgs.length === 1, `календарь подпрыгивает при нажатии «Календарь»: ${cgs}`);
   /* Итоги: два месяца суммируются */
   await open('i', '[data-iq]');
   chk(await ev(CLICK('[data-ifopen]')), 'Итоги: нет кнопки «Фильтры»'); await sleep(400);
