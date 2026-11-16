@@ -37,7 +37,7 @@ ws.onmessage = (e) => { const m = JSON.parse(e.data); if (m.id && wait.has(m.id)
 const cmd = (method, params = {}, sessionId) => new Promise((ok, no) => { const id = ++seq; wait.set(id, [ok, no]); ws.send(JSON.stringify({ id, method, params, sessionId })); });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const HEAD = `(() => { const mt = document.querySelector('[data-mtop]'); if (!mt) return null; const k = [...mt.children].filter((e) => e.getBoundingClientRect().height > 0).map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.bottom)]; });
+const HEAD = `(() => { const mt = document.querySelector('[data-mtop]'); if (!mt) return null; const k = [...mt.children].filter((e) => !e.hasAttribute('data-mnav') && e.getBoundingClientRect().height > 0).map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.bottom)]; });
   const row = mt.querySelector('[data-msearch], [data-hslot]'); return { k, top: Math.round(mt.getBoundingClientRect().top), h: Math.round(document.querySelector('[data-gdbar]').getBoundingClientRect().height),
   input: !!(row && row.querySelector('input')), fbtn: !!(row && [...row.querySelectorAll('button')].some((b) => /Фильтры/.test(b.textContent))) }; })()`;
 const CLICK = (sel) => `(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return false; e.click(); return true; })()`;
@@ -68,10 +68,18 @@ try {
   }
   chk(new Set(Object.values(H).map((h) => h && h.h)).size === 1, `шапка разной высоты на вкладках ${JSON.stringify(Object.fromEntries(Object.entries(H).map(([k, h]) => [k, h && h.h])))}`);
   /* нажатие «Календарь» на «Вступают в силу»: выезжающая сетка и вставшая на место — на одной высоте (раньше прыжок на 2 px вверх) */
-  await open('l', '[data-lq]'); await ev(`window.__cg = []; (function f() { const k = document.querySelector('[data-swpeek] [data-calgrid]'), g = document.querySelector('[data-swipe] [data-calgrid]'); const e = k || g; if (e) window.__cg.push(Math.round(e.getBoundingClientRect().top)); if (window.__cg.length < 400) requestAnimationFrame(f); })()`);
-  await ev(`[...document.querySelectorAll('[data-mtop] [role=tab]')].find((b) => /Календарь/.test(b.textContent)).click()`); await sleep(1500);
-  const cg = await ev('window.__cg'); const cgs = [...new Set(cg)]; rep.push(`сетка календаря при переходе: ${cgs}`);
+  await open('l', '[data-lq]'); await ev(`window.__cg = []; (function f() { const k = document.querySelector('[data-swpeek] [data-calmrow]'), g = document.querySelector('[data-swipe] [data-calmrow]'); const e = k || g; if (e) window.__cg.push(Math.round(e.getBoundingClientRect().top)); if (window.__cg.length < 400) requestAnimationFrame(f); })()`);
+  /* 16.11.2026 (решение владельца): разделы — внизу экрана, «Календарь» называется «Работа министерств», сетка — в окне у кнопки; над списком — строка месяца */
+  const nav = await ev(`(() => { const n = document.querySelector('[data-mnav]'); if (!n) return null; const r = n.getBoundingClientRect(); return { fixed: getComputedStyle(n).position, gap: Math.round(window.innerHeight - r.bottom), tabs: n.querySelectorAll('[role=tab]').length, ic: n.querySelectorAll('[role=tab] svg').length }; })()`);
+  rep.push(`панель разделов: ${JSON.stringify(nav)}`); chk(nav && nav.fixed === 'fixed' && nav.gap === 0 && nav.tabs === 4 && nav.ic === 4, `панель разделов не внизу экрана или без значков: ${JSON.stringify(nav)}`);
+  await ev(`[...document.querySelectorAll('[data-mnav] [role=tab]')].find((b) => /Работа/.test(b.textContent)).click()`); await sleep(1500);
+  const cg = await ev('window.__cg'); const cgs = [...new Set(cg)]; rep.push(`строка месяца при переходе: ${cgs}`);
   chk(cg.length > 0 && cgs.length === 1, `календарь подпрыгивает при нажатии «Календарь»: ${cgs}`);
+  /* окно календаря: закрыто — скрыто, кнопка открывает его над панелью, в нем целый месяц */
+  const POP = `(() => { const c = document.querySelector('[data-swipe] [data-calcol]'), f = document.querySelector('[data-calfab]'); if (!c || !f) return null; const r = c.getBoundingClientRect(); return { vis: getComputedStyle(c).visibility, cells: c.querySelectorAll('[data-calgrid] [role=button]').length, bottom: Math.round(r.bottom), fabTop: Math.round(f.getBoundingClientRect().top) }; })()`;
+  const p0 = await ev(POP); chk(await ev(CLICK('[data-calfab]')), 'нет кнопки календаря'); await sleep(1100); const p1 = await ev(POP); rep.push(`окно календаря: ${JSON.stringify(p0)} → ${JSON.stringify(p1)}`);
+  chk(p0 && p0.vis === 'hidden', `окно календаря видно до нажатия кнопки: ${JSON.stringify(p0)}`); chk(p1 && p1.vis === 'visible' && p1.cells >= 28 && p1.bottom <= p1.fabTop, `окно календаря не открылось над кнопкой или в нем не весь месяц: ${JSON.stringify(p1)}`);
+  await ev(CLICK('[data-calback]')); await sleep(900); const p2 = await ev(POP); chk(p2 && p2.vis === 'hidden', `окно календаря не закрылось по нажатию мимо: ${JSON.stringify(p2)}`);
   const PL = `(() => { const l = document.querySelector('[data-pendline]'); return l ? l.textContent : ''; })()`; const plTap = await ev(PL);
   await open('c', '[data-cq]'); const plDirect = await ev(PL); rep.push(`«ещё собирается»: с главной «${plTap}», по ссылке «${plDirect}»`);
   chk(plTap === plDirect, `строка «ещё собирается» зависит от того, как открыт календарь: с главной «${plTap}», по ссылке «${plDirect}» (не пересчитана после загрузки месяца)`);
