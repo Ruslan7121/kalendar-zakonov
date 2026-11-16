@@ -56,7 +56,12 @@ const G: any = {
 // иначе последний день; календарь — месяц дня из ссылки ?d=&v=, иначе текущий месяц (по часам браузера, как calCk(new Date())).
 export function firstMonths(loc: { search: string; hash: string }, now = new Date()): string[] {
   const q = new URLSearchParams(loc.search); try { new URLSearchParams((loc.hash || '').replace(/^#/, '')).forEach((v, k) => { if (!q.has(k)) q.set(k, v); }); } catch (e) { /* как в canvas */ }
-  const d = q.get('d'); const ms: string[] = [];
+  /* 16.11.2026: без ссылки сайт открывается на «Вступают в силу» (данные — в core), месяцы календаря грузятся уже после первой отрисовки.
+     До отрисовки месяц нужен только ссылкам в календарь: ?d=, поиск/фильтры (q, w, t, c, org), ?tab=c|d|i, startapp Telegram d…_v… / itogi / news. */
+  const sp = q.get('tgWebAppStartParam') || ''; const spm = sp.match(/^d(\d{2})(\d{2})(\d{4})_v\d+$/);
+  const d = q.get('d') || (spm ? `${spm[1]}.${spm[2]}.${spm[3]}` : null); const ms: string[] = [];
+  const cal = !!d || ['q', 'w', 't', 'c', 'org'].some((k) => q.has(k)) || ['c', 'd', 'i'].includes(q.get('tab') || '') || sp === 'itogi' || sp === 'news';
+  if (!cal) return [];
   if (d && M.DAYS.includes(d)) ms.push(d.slice(3));
   if (M.DAYS.length) ms.push(M.DAYS[M.DAYS.length - 1].slice(3));
   ms.push(`${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`);
@@ -72,4 +77,6 @@ export async function boot(): Promise<void> {
   await Promise.all(ms.map(load));            // ошибка месяца не роняет страницу: экран покажет её и «Повторить»
   if (tick) { clearTimeout(tick); tick = 0; }
   prefetch(ms.filter((k) => loaded.has(k)));
+  // 16.11.2026: открытие без месяцев («Вступают в силу») — последний месяц календаря подгружается в фоне, когда страница уже показана
+  if (!ms.length && M.DAYS.length) { const lm = M.DAYS[M.DAYS.length - 1].slice(3); const ric = (window as any).requestIdleCallback; const go = () => G.need([lm]); ric ? ric(go, { timeout: 2500 }) : setTimeout(go, 800); }
 }

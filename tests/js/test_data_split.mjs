@@ -67,11 +67,16 @@ console.log(`  по одному месяцу: ${tot} голосований п�
 
 // 4) первая отрисовка и ссылки в другой месяц
 const last = O.DAYS[O.DAYS.length - 1].slice(3);
-{ const r = await loadSite({ dataDir: dd, names: NAMES }); const now = new Date(); const cur = `${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+// 16.11.2026: без ссылки открывается «Вступают в силу» — до отрисовки только core; календарь (?tab=c) — core + последний и текущий месяц
+{ const r = await loadSite({ dataDir: dd, names: NAMES });
+  assert.deepEqual([...r.first], [], `без ссылки до отрисовки грузятся месяцы ${r.first}, а нужен только core`);
+  assert.equal(r.got.length, 1, `без ссылки до отрисовки запрошено ${r.got}`);
+  console.log(`  без ссылки: до отрисовки только core`); }
+{ const r = await loadSite({ dataDir: dd, names: NAMES, search: '?tab=c' }); const now = new Date(); const cur = `${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
   const exp = [...new Set([last, cur])].filter((k) => MS.includes(k)).sort();
-  assert.deepEqual([...r.first].sort(), exp, `без ссылки до отрисовки грузятся ${r.first}, ожидалось ${exp}`);
-  assert.equal(r.got.length, 1 + exp.length, `до отрисовки запрошено ${r.got}`);
-  console.log(`  без ссылки: до отрисовки core + ${r.first.join(', ')} (${r.got.length} файла)`); }
+  assert.deepEqual([...r.first].sort(), exp, `?tab=c: до отрисовки грузятся ${r.first}, ожидалось ${exp}`);
+  assert.equal(r.got.length, 1 + exp.length, `?tab=c: до отрисовки запрошено ${r.got}`);
+  console.log(`  ?tab=c: до отрисовки core + ${r.first.join(', ')} (${r.got.length} файла)`); }
 for (const [d, v] of [['22.10.2026', '136156'], ['10.11.2026', '136304'], ['11.11.2026', '136361'], ['30.09.2026', '135960']]) {
   const r = await loadSite({ dataDir: dd, names: NAMES, search: `?d=${d}&v=${v}` });
   assert.ok(r.first.includes(d.slice(3)), `?d=${d}: месяц ${d.slice(3)} не загружен до отрисовки (${r.first})`);
