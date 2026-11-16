@@ -42,8 +42,29 @@ function prefetch(ms: string[]) {
   const go = () => nb.forEach((k) => { if (!loaded.has(k) && !err[k]) load(k); });
   const ric = (window as any).requestIdleCallback; ric ? ric(go, { timeout: 1500 }) : setTimeout(go, 300);
 }
+// 16.11.2026: оперативные новости — data/live.json (пишет pipeline/news_live.py по расписанию workflow news, публикует publish.sh --live).
+// Имя постоянное, кэш CDN обходится параметром ?t=. Первый ответ — то, что уже было на момент открытия; всё, что пришло позже,
+// попадает в fresh: экран показывает плашку «N новых» и не вставляет их под палец, пока пользователь не нажмет ее.
+const live: { items: any[]; upd: string; fresh: Set<string>; base: boolean } = { items: [], upd: '', fresh: new Set(), base: false };
+async function pollLive() {
+  try {
+    const r = await fetch(base() + 'live.json?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return;
+    const J = await r.json(); const items = Array.isArray(J && J.items) ? J.items.filter((x: any) => x && x.u && x.t && x.o && x.d) : [];
+    const had = new Set(live.items.map((x) => x.u)); let ch = items.length !== live.items.length;
+    for (const x of items) if (!had.has(x.u)) { ch = true; if (live.base) live.fresh.add(x.u); }
+    live.items = items; live.upd = (J && J.upd) || ''; live.base = true; if (ch) notify();
+  } catch (e) { /* нет файла или сети — новости остаются как были */ }
+}
+function startLive() {
+  if (typeof document === 'undefined' || typeof document.addEventListener !== 'function' || typeof fetch !== 'function') return; // без браузера (тесты на Node) — не опрашиваем
+  pollLive(); let t = 0 as unknown as number;
+  const arm = () => { clearInterval(t); if (document.visibilityState === 'visible') t = setInterval(pollLive, 120000) as unknown as number; };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pollLive(); arm(); }); arm();
+}
 const G: any = {
-  S, M, err, v: 0, onMerge: null as null | (() => void),
+  S, M, err, v: 0, onMerge: null as null | (() => void), live,
+  ackLive() { if (live.fresh.size) { live.fresh.clear(); notify(); } },
+  pollLive: () => pollLive(), // проверить сейчас (тесты; плашку «N новых» показывает только то, что пришло после первого ответа)
   has: (mk: string) => loaded.has(mk),
   // вызывается из render: только запускает загрузку, синхронно ничего не перерисовывает
   need(ms: string[]) { const want = ms.filter((k) => M.file[k] && !loaded.has(k) && !err[k] && !busy[k]); want.forEach((k) => { load(k).then(() => { if (loaded.has(k)) prefetch([k]); }); }); },
@@ -81,4 +102,5 @@ export async function boot(): Promise<void> {
   // 16.11.2026: скачивание начинается сразу (раньше ждало простоя до 2,5 с — в Telegram «Календарь» долго висел на «Загружаю данные»);
   // страница не ждет его: запрос уходит сразу после boot (до отрисовки по-прежнему только core), месяц вливается, когда придет
   if (!ms.length && M.DAYS.length) { const lm = M.DAYS[M.DAYS.length - 1].slice(3); setTimeout(() => G.need([lm]), 0); }
+  setTimeout(startLive, 0); // оперативные новости — после первой отрисовки, раз в 2 минуты, пока вкладка видна
 }

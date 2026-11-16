@@ -1,0 +1,49 @@
+# 16.11.2026: оперативные новости для вкладки «Новости» — каждые 20 минут с 8:00 до 22:00 по Москве, каждый день.
+# pipeline/news_live.py собирает заголовки и ссылки с официальных сайтов (Госдума, Правительство, СФ, ЦБ, Минфин, Минтруд, Минюст),
+# сливает с уже опубликованным data/live.json (7 дней) и pipeline/publish.sh --live выкладывает только этот файл в gh-pages.
+# main не меняется, сайт не пересобирается. Свою очередь (news-live) не делит с daily/laws/organs — вечерний сбор не вытесняется.
+# Запуск вручную: Actions → news → Run workflow.
+name: news
+on:
+  schedule:
+    - cron: '7,27,47 5-18 * * *'   # UTC: 08:07–21:47 МСК
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: news-live
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TZ: Europe/Moscow
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Автор коммитов
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Прежние новости (data/live.json из gh-pages)
+        run: |
+          git fetch -q --depth=1 origin gh-pages
+          git show origin/gh-pages:data/live.json > prev.json 2>/dev/null || echo '{"items":[]}' > prev.json
+          python3 -c "import json;print('прежних новостей:', len(json.load(open('prev.json'))['items']))"
+      - name: Сбор (pipeline/news_live.py)
+        run: cd pipeline && python3 news_live.py --prev ../prev.json 2>&1 | tee ../news.log
+      - name: Публикация (pipeline/publish.sh --live)
+        run: bash pipeline/publish.sh --live out/live/live.json
+      - name: Сводка
+        if: always()
+        run: |
+          { echo '### Новости'; echo '```'; cat news.log 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
