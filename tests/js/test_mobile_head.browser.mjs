@@ -4,6 +4,7 @@
 // 3) «Итоги»: в «Фильтрах» есть период; месяцы выбираются по нескольку и суммируются; поиск сужает список.
 // 4) «Новости»: в «Фильтрах» выбирается орган — показаны его новости за все загруженные дни.
 // 5) Клавиатура: когда список листают пальцем, поле поиска теряет фокус.
+// 8) Строка «… ещё собирается» одинакова при переходе с главной и по ссылке ?tab=c (пересчет после загрузки месяца).
 // 7) Нажатие «Календарь» на «Вступают в силу»: сетка календаря не подпрыгивает.
 // 6) С первого кадра загрузки шапка и список стоят на месте, строка поиска «Итогов» и «Новостей» не мигает, общий h1 не мелькает.
 // Как test_org_filter.browser.mjs: без Chrome — SKIP (при GD_REQUIRE_BROWSER=1 — падает). Запуск: node tests/js/test_mobile_head.browser.mjs
@@ -71,6 +72,9 @@ try {
   await ev(`[...document.querySelectorAll('[data-mtop] [role=tab]')].find((b) => /Календарь/.test(b.textContent)).click()`); await sleep(1500);
   const cg = await ev('window.__cg'); const cgs = [...new Set(cg)]; rep.push(`сетка календаря при переходе: ${cgs}`);
   chk(cg.length > 0 && cgs.length === 1, `календарь подпрыгивает при нажатии «Календарь»: ${cgs}`);
+  const PL = `(() => { const l = document.querySelector('[data-pendline]'); return l ? l.textContent : ''; })()`; const plTap = await ev(PL);
+  await open('c', '[data-cq]'); const plDirect = await ev(PL); rep.push(`«ещё собирается»: с главной «${plTap}», по ссылке «${plDirect}»`);
+  chk(plTap === plDirect, `строка «ещё собирается» зависит от того, как открыт календарь: с главной «${plTap}», по ссылке «${plDirect}» (не пересчитана после загрузки месяца)`);
   /* Итоги: два месяца суммируются */
   await open('i', '[data-iq]');
   chk(await ev(CLICK('[data-ifopen]')), 'Итоги: нет кнопки «Фильтры»'); await sleep(400);
