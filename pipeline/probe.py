@@ -32,6 +32,24 @@ def show(url, body, how):
     if i >= 0: print('  фрагмент HTML у первой даты:', re.sub(r'\s+', ' ', body[max(0, i - 400):i + 400]))
 
 
+# 16.11.2026: --grep ШАБЛОН — для каждой страницы напечатать сырой HTML вокруг первых 4 совпадений (разметка элементов списка новостей);
+# --head — первые 2500 символов ответа (RSS). Ключи действуют на все адреса после них.
+ARGS = sys.argv[1:]; GREP = None; HEAD = False; URLS = []
+i = 0
+while i < len(ARGS):
+    if ARGS[i] == '--grep': GREP = ARGS[i + 1]; i += 2; continue
+    if ARGS[i] == '--head': HEAD = True; i += 1; continue
+    URLS.append(ARGS[i]); i += 1
+if GREP or HEAD:
+    for url in URLS:
+        st, body = O.get(url); print(f'=== {url}: {st}, {len(body)} байт')
+        if HEAD: print(body[:2500])
+        if GREP:
+            for n, m in enumerate(re.finditer(GREP, body)):
+                if n >= 4: break
+                print(f'--- совпадение {n + 1}:', re.sub(r'\s+', ' ', body[max(0, m.start() - 600):m.end() + 900]))
+    sys.exit(0)
+
 for k, url in enumerate(sys.argv[1:]):
     print(f'=== {url}')
     st, body = O.get(url)
