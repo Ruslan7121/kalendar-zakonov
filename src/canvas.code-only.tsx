@@ -1,5 +1,5 @@
 import React from "react";
-import { Page, Text, Segmented, Input, Status as Status0, LinkCards, useGrokTheme as useGT0, useState, useMemo, useRef, useEffect, createPortal, flushSync } from 'grok/canvas';
+import { Page, Text, Segmented, Input, Status as Status0, LinkCards, useGrokTheme as useGT0, useState, useMemo, useRef, useEffect, useLayoutEffect, createPortal, flushSync } from 'grok/canvas';
 import type { ChangeEvent, CSSProperties, ReactNode, KeyboardEvent as KbEvent } from 'grok/canvas';
 const LIGHT = { bg: { base: '#FFFFFF', subtle: '#F4F4F6' }, border: { default: '#D9D9DE', subtle: '#E8E8EC' }, fill: { accentSubtle: '#DDE9FD' }, text: { primary: '#1D1D1F', secondary: '#4E4E55', tertiary: '#6E6E75', accent: '#0A66D6' } };
 const DARK = { bg: { base: '#1C1C1E', subtle: '#2C2C30' }, border: { default: 'rgba(255,255,255,0.28)', subtle: 'rgba(255,255,255,0.2)' }, fill: { accentSubtle: '#14365C' }, text: { primary: '#F5F5F7', secondary: '#D6D6DB', tertiary: '#A5A5AD', accent: '#409CFF' } };
@@ -3279,7 +3279,7 @@ function NewsFeed({ m, peek, months, more, focus }: { m: boolean; peek?: boolean
     </div>
     {!cur && <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>{wantOlder ? 'Загружаю…' : 'Загружаю новости…'}</div>}
     {cur && !shown.length && <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>У этого источника новостей в этот день нет</div>}
-    {cur && shown.length > 0 && <section key={cur} data-newsday={cur} className="gd-anim" style={{ display: 'grid', gridTemplateColumns: m ? '1fr' : 'repeat(2, minmax(0, 1fr))', gap: m ? 10 : 12 }}>
+    {cur && shown.length > 0 && <section key={cur} data-newsday={cur} className={m ? undefined : 'gd-anim'} /* 16.11.2026: на телефоне без проявления — новости не моргают */ style={{ display: 'grid', gridTemplateColumns: m ? '1fr' : 'repeat(2, minmax(0, 1fr))', gap: m ? 10 : 12 }}>
       {/* новый вид, экран 6: широкие плитки — значок органа, рубрика в рамке, текст; нажатие открывает источник */}
       {shown.map((x, i) => { const Tg: any = x.u ? 'a' : 'article'; const c = col(x.o); const ab = ({ gd: 'ГД', gov: 'Пр', sf: 'СФ', cbr: 'ЦБ', minfin: 'МФ', mintrud: 'МТ', minjust: 'МЮ' } as Record<string, string>)[x.o] || ''; return <Tg key={i} data-newsitem={x.o} className="gd-rw" {...(x.u ? { href: x.u, target: '_blank', rel: 'noopener noreferrer', title: `Открыть на ${host(x.u)}` } : {})} style={{ ...nvTile(c), display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', textDecoration: 'none', color: 'inherit', cursor: x.u ? 'pointer' : 'default' }}>
         <OrgMark o={x.o} c={c} />{void ab}
@@ -3503,7 +3503,8 @@ function MSBox({ v, set, k }: { v: string; set: (s: string) => void; k: string }
 function MFBtn({ n, open, onClick, k }: { n: number; open: boolean; onClick: () => void; k: string }) { const t = useGrokTheme();
   return <button type="button" {...{ ['data-' + k]: '1' }} aria-haspopup="dialog" aria-expanded={open} onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0, minHeight: 38, padding: '0 14px', borderRadius: 10, border: `1px solid ${n ? t.text.accent : t.border.default}`, background: n ? t.fill.accentSubtle : t.bg.base, color: n ? t.text.accent : t.text.primary, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}><span aria-hidden>☰</span>Фильтры{n ? <span style={{ background: t.text.accent, color: t.bg.base, borderRadius: 9999, fontSize: 11, padding: '0 6px', lineHeight: '18px' }}>{n}</span> : null}</button>; }
 const mqOk = (q: string, hay: string) => { const h = hay.toLowerCase().replace(/ё/g, 'е'); return q.toLowerCase().replace(/ё/g, 'е').split(/\s+/).filter(Boolean).every((w) => h.includes(w)); };
-function useHSlot(on: boolean) { const [el, setEl] = useState<HTMLElement | null>(null); useEffect(() => { const x = on ? document.querySelector('[data-hslot]') as HTMLElement | null : null; if (x !== el) setEl(x); }); return el; }
+/* 16.11.2026: useLayoutEffect — строка встает в шапку до первой отрисовки, без мигания */
+function useHSlot(on: boolean) { const [el, setEl] = useState<HTMLElement | null>(null); useLayoutEffect(() => { const x = on ? document.querySelector('[data-hslot]') as HTMLElement | null : null; if (x !== el) setEl(x); }); return el; }
 function Itogi({ m, peek }: { m: boolean; peek?: boolean }) {
   const t = useGrokTheme(); useGDV(); gdNeed(null); const ld0 = zLoaded(); const [op, setOp] = useState<string | null>(null);
   /* 16.11.2026: на телефоне фильтры «Итогов» — кнопка «Фильтры» рядом с периодом и окно снизу (как в «Календаре»), вариант Б владельца */
@@ -4200,7 +4201,7 @@ function CalendarApp() {
   useEffect(() => { const h = () => { if (CSNAP) setMode('c'); }; window.addEventListener('popstate', h); return () => window.removeEventListener('popstate', h); }, []);
   const [view, setView] = useState<'v' | 's'>(PIN && QS && QS.get('d') === day ? 'v' : COUNT[day] ? 'v' : 's');
   const [topH, setTopH] = useState(0);
-  const [hid, setHid] = useState(false);
+  const [hid, setHid] = useState(true); /* 16.11.2026: свой заголовок сразу, общий h1 скрыт стилем ниже — при открытии ничего не подпрыгивает */
   useMemo(() => setTimeout(() => { const h = Array.from(document.querySelectorAll('h1')).find((e) => (e.textContent || '').trim() === 'Календарь законов') as HTMLElement | undefined; if (!h) { setHid(false); return; } h.style.display = 'none'; setHid(true); }, 0), [m]);
   const ro2 = useRef<any>(null);
   /* П4 (12.11.2026): верхняя панель (вкладки, поиск, фильтры) уходит вверх при прокрутке пальцем/колесом вниз и возвращается при
@@ -4223,7 +4224,7 @@ function CalendarApp() {
   };
   const ph = useRef<HTMLDivElement>(null);
   /* 16.11.2026: верхний отступ страницы на телефоне; шапка поднимается на него, чтобы при прокрутке не уезжать вверх */
-  const [po, setPo] = useState(0); useEffect(() => { const b = barEl.current; const mn = b && b.closest('main'); const v = m && mn ? parseFloat(getComputedStyle(mn).paddingTop) || 0 : 0; setPo((o) => (o === v ? o : v)); });
+  /* 12 — верхний отступ main на телефоне (web/index.html); сразу, чтобы при открытии страница не подпрыгивала */ const [poM, setPo] = useState(12); const po = m ? poM : 0; useLayoutEffect(() => { const b = barEl.current; const mn = b && b.closest('main'); if (!m || !mn) return; const v = parseFloat(getComputedStyle(mn).paddingTop) || 0; setPo((o) => (o === v ? o : v)); });
   /* 16.11.2026: клавиатура прячется, когда список листают пальцем вверх или вниз */
   useEffect(() => { if (!m) return; let x0 = 0, y0 = 0; const ts = (e: TouchEvent) => { const p = e.touches[0]; x0 = p.clientX; y0 = p.clientY; };
     const tm = (e: TouchEvent) => { const a = document.activeElement as HTMLElement | null; if (!a || !/^(INPUT|TEXTAREA)$/.test(a.tagName)) return; const p = e.touches[0]; const dy = Math.abs(p.clientY - y0); const tg = e.target as any; if (dy > 10 && dy > Math.abs(p.clientX - x0) && !(tg && tg.closest && tg.closest('input, textarea'))) a.blur(); };
@@ -4485,7 +4486,7 @@ function CalendarApp() {
   const thBtn = <button aria-label={DK ? 'Светлая тема' : 'Темная тема'} title={DK ? 'Светлая тема' : 'Темная тема'} onClick={() => { const n = DK ? 'light' : 'dark'; const sys = TG ? (TG.colorScheme === 'dark' ? 'dark' : 'light') : !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'; if (n === sys) { setTho(TG ? sys : null); try { sessionStorage.removeItem('gd_theme'); } catch (e) {} } else { setTho(n); try { sessionStorage.setItem('gd_theme', n); } catch (e) {} } }} style={{ flexShrink: 0, width: m ? 32 : 44, height: m ? 32 : 44, padding: 0, borderRadius: 9999, border: `1px solid ${t.border.default}`, background: t.bg.subtle, color: t.text.primary, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>{DK ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="12" cy="12" r="4.5" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>}</button>;
   return (
     <Page title="Календарь законов" width="wide">
-      <style>{css(t) + `#root,#root>div{background:${DK ? '#000000' : '#FFFFFF'}!important;color:${DK ? '#F5F5F7' : '#1D1D1F'}!important}#root>div{min-height:100vh}` + ADAPT() + (DK ? DKCSS : '')}</style>
+      <style>{css(t) + `main>h1{display:none!important}#root,#root>div{background:${DK ? '#000000' : '#FFFFFF'}!important;color:${DK ? '#F5F5F7' : '#1D1D1F'}!important}#root>div{min-height:100vh}` + ADAPT() + (DK ? DKCSS : '')}</style>
       <div ref={measure} style={{ width: '100%', height: 0 }} />
       <div style={{ zoom: String(Z), color: t.text.primary }}>
       {/* 16.11.2026: на телефоне название и кнопка темы — в закрепленной шапке вместе с вкладками (data-mtop) */}
