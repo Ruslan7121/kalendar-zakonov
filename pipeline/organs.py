@@ -25,7 +25,7 @@ import common as C
 MSK = dt.timezone(dt.timedelta(hours=3))
 UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
 ODIR = os.path.join(C.OUT, 'organs')
-ORGS = {'minfin': 'Минфин', 'mintrud': 'Минтруд', 'minjust': 'Минюст', 'cbr': 'Банк России', 'sf': 'Совет Федерации'}
+ORGS = {'minfin': 'Минфин', 'mintrud': 'Минтруд', 'minjust': 'Минюст', 'cbr': 'Банк России', 'sf': 'Совет Федерации', 'pres': 'Президент', 'gov': 'Правительство'}
 TYPES = ('заседание', 'проект', 'решение', 'разъяснение', 'новость')  # «новость» — во вкладку «Новости» (ORGNEWS), не в календарь
 MONTHS = {m: i + 1 for i, m in enumerate(['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'])}
 SOURCES = {
@@ -41,6 +41,10 @@ SOURCES = {
     'minfin_projects': 'https://minfin.gov.ru/ru/document/npa_projects/',
     'minfin_pravo': 'http://publication.pravo.gov.ru/documents/foiv283/monthly',
     'sf_meetings': 'http://council.gov.ru/activity/meetings/',
+    # 16.11.2026: официальное опубликование (API publication.pravo.gov.ru, с серверов GitHub отвечает напрямую): указы и распоряжения
+    # Президента, постановления и распоряжения Правительства — каждый день, не только с заседаний
+    'pres_pravo': 'http://publication.pravo.gov.ru/api/Documents?block=president',
+    'gov_pravo': 'http://publication.pravo.gov.ru/api/Documents?block=government',
 }
 FIX = {'cbr_news': 'cbr_RssNews.xml', 'cbr_events': 'cbr_eventrss.xml', 'mintrud_docs': 'mintrud_document_rss.xml', 'mintrud_news': 'mintrud_news_list.html',
        'minjust_events': 'minjust_events_list.html', 'minjust_projects': 'minjust_projects.html',
@@ -186,6 +190,42 @@ def parse_pravo_list(txt, org='minfin'):
                       f'Зарегистрирован Минюстом {m.group(5)} № {m.group(6)}'))
     return res
 
+PRAVO_SKIP = ('Федеральный закон', 'Федеральный конституционный закон', 'Закон Российской Федерации о поправке')  # законы — во «Вступают в силу»
+PRAVO_KIND = ('Указ', 'Распоряжение', 'Постановление')
+
+def parse_pravo_api(js, org):
+    """16.11.2026: ответ API publication.pravo.gov.ru/api/Documents (блок president или government) → события «решение»:
+    «Указ № 848 от 14.11.2026: О помиловании …», дата события — дата документа (documentDate), ссылка — страница официального
+    опубликования http://publication.pravo.gov.ru/document/<eoNumber>. Федеральные законы пропускаем (они во «Вступают в силу»)."""
+    items = (json.loads(js) or {}).get('items') or []; res = []
+    for it in items:
+        cn = clean((it.get('complexName') or '').replace('\n', ' ')); eo = it.get('eoNumber') or ''; num = clean(it.get('number') or '')
+        dd = (it.get('documentDate') or '')[:10]
+        if not cn or not eo or not re.match(r'\d{4}-\d\d-\d\d$', dd) or cn.startswith(PRAVO_SKIP): continue
+        kind = next((k for k in PRAVO_KIND if cn.startswith(k)), '')
+        if not kind: continue
+        name = clean(it.get('name') or '').strip(' "«»')
+        d = dt.date(int(dd[:4]), int(dd[5:7]), int(dd[8:10]))
+        pub = (it.get('publishDateShort') or '')[:10]; x = f'Опубликован {pub[8:10]}.{pub[5:7]}.{pub[:4]}' if re.match(r'\d{4}-\d\d-\d\d$', pub) and pub != dd else ''
+        res.append(ev(org, d, 'решение', f'{kind} № {num} от {d2s(d)}' + (f': {name}' if name else ''), f'http://publication.pravo.gov.ru/document/{eo}', kind, x))
+    return res
+
+WIN_FROM = None  # начало окна сбора (main): API листается по страницам, пока документы не станут старше окна
+
+def collect_pravo_api(key, org, fetch=None, pages=6):
+    """Страницы API по 100 документов (если сервер не примет 100 — по 10), от новых к старым, пока не дойдем до начала окна."""
+    fetch = fetch or (lambda u: get(u, 40)); res = []; size = 100
+    for i in range(1, pages + 1):
+        st, body = fetch(f'{SOURCES[key]}&PageSize={size}&Index={i}')
+        if st.startswith('error:HTTP 400') and size == 100 and i == 1: size = 10; st, body = fetch(f'{SOURCES[key]}&PageSize={size}&Index={i}')
+        if st != 'ok': return res, st
+        try: items = (json.loads(body) or {}).get('items') or []
+        except Exception as e: return res, f'parse-error: {e}'
+        res += parse_pravo_api(body, org)
+        old = [it.get('documentDate', '')[:10] for it in items if it.get('documentDate')]
+        if not items or (WIN_FROM and old and min(old) < WIN_FROM.isoformat()): break
+    return res, 'ok'
+
 def parse_sf_meetings(txt):
     """Список заседаний СФ (HTML→текст или сохраненный текст): «622 заседание Совета Федерации 10 ноября 2026 г.», «621 28 октября 2026 г.»."""
     t = clean(re.sub(r'<[^>]+>', ' ', txt)); res = []
@@ -215,6 +255,15 @@ NOT_PARSED = {'mintrud_profstandards': 'проекты профстандарт�
 def collect(args):
     status, events = {}, []
     snaps = dict(s.split('=', 1) for s in args.snapshot)
+    for key, org in (('pres_pravo', 'pres'), ('gov_pravo', 'gov')):
+        if args.offline:
+            p = os.path.join(args.offline, f'pravo_api_{org}.json')
+            if not os.path.exists(p): status[key] = {'url': SOURCES[key], 'status': 'no-fixture'}; continue
+            got, st = parse_pravo_api(open(p).read(), org), 'offline'
+        else:
+            got, st = collect_pravo_api(key, org)
+        status[key] = {'url': SOURCES[key], 'status': st, 'n': len(got)}; events += got
+        if st not in ('ok', 'offline'): C.log('organs.log', f'{key} {st}')
     for key, fn in PARSERS.items():
         src = SOURCES[key]
         if key in snaps:
@@ -259,6 +308,7 @@ def main(argv=None):
     elif args.frm: a, b = s2d(args.frm), s2d(args.to) if args.to else today
     else: a = b = today - dt.timedelta(days=1)
     ahead = max(b, today) + dt.timedelta(days=args.ahead)
+    global WIN_FROM; WIN_FROM = a
     found, status = collect(args)
     found = [e for e in found if in_window(e, a, b, ahead)]
     os.makedirs(ODIR, exist_ok=True); fp = os.path.join(ODIR, 'events.json')

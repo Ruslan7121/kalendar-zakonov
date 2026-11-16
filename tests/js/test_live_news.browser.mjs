@@ -1,7 +1,8 @@
 // 16.11.2026: оперативные новости на сайте (data/live.json → вкладка «Новости»), 390 px:
 // 1) новость из live.json видна в ленте дня со временем публикации; та же ссылка, что уже есть в данных дня, второй раз не показывается;
 // 2) новость, пришедшая после открытия (GDX.pollLive — то же, что опрос раз в 2 минуты), не вставляется под палец: видна плашка «N новая новость»;
-// 3) нажатие плашки показывает новость наверху, плашка исчезает.
+// 3) нажатие плашки показывает новость наверху, плашка исчезает;
+// 4) календарь: новостей нет (они только во вкладке «Новости»); при фильтре органа его заседания и приказы по всем дням сразу раскрыты.
 // Как test_org_filter.browser.mjs: без Chrome — SKIP (при GD_REQUIRE_BROWSER=1 — падает). Запуск: node tests/js/test_live_news.browser.mjs
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -64,6 +65,19 @@ try {
   chk(!r.nnew, 'плашка не исчезла после нажатия');
   /* повтор той же ссылки (новость уже в live) не дублируется */
   chk(r.items.filter((x) => x.includes('пришедшая после открытия')).length === 1, 'новость показана дважды');
+  /* календарь (решение владельца 16.11.2026): новостей в календаре нет — только заседания, приказы, указания;
+     при фильтре органа его события по всем дням сразу раскрыты, без нажатия на день */
+  await cmd('Page.navigate', { url: `${BASE}/?tab=c` }, s);
+  const t1 = Date.now(); while (!(await ev(`!!document.querySelector('[data-calgrid]')`)) && Date.now() - t1 < 20000) await sleep(300); await sleep(1500);
+  const cn = await ev(`({ txt: document.body.innerText.includes('оперативная новость Правительства'), mk: document.querySelectorAll('[data-mk=news],[data-daynews],[data-newsitem]').length })`);
+  rep.push(`календарь: новостей ${cn.mk}, текст новости ${cn.txt}`);
+  chk(!cn.txt && cn.mk === 0, 'в календаре показаны новости — они должны быть только во вкладке «Новости»');
+  await cmd('Page.navigate', { url: `${BASE}/?tab=c&org=minfin` }, s);
+  const t2 = Date.now(); while (!(await ev(`!!document.querySelector('[data-orgfeed] [data-day]')`)) && Date.now() - t2 < 20000) await sleep(300);
+  const of = await ev(`(() => { const ds = [...document.querySelectorAll('[data-orgfeed] [data-day]')]; return { n: ds.length, open: ds.filter((d) => d.getAttribute('data-dayopen') === '1').length, orgs: [...new Set([...document.querySelectorAll('[data-orgfeed] [data-dayorg]')].map((e) => e.getAttribute('data-dayorg')))], news: document.querySelectorAll('[data-orgfeed] [data-newsitem]').length }; })()`);
+  rep.push(`календарь, фильтр «Минфин»: ${JSON.stringify(of)}`);
+  chk(of.n > 0 && of.open === of.n, `при фильтре органа дни не раскрыты: ${JSON.stringify(of)}`);
+  chk(of.orgs.length === 1 && of.orgs[0] === 'minfin' && of.news === 0, `при фильтре органа чужие органы или новости: ${JSON.stringify(of)}`);
   await cmd('Target.closeTarget', { targetId });
 } finally { try { ws.close(); } catch {} ch.kill('SIGKILL'); SITE.close(); setTimeout(() => fs.rmSync(prof, { recursive: true, force: true }), 500); }
 rep.forEach((x) => console.log('  ' + x));
