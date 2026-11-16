@@ -4129,7 +4129,7 @@ function Calendar({ m, openDay: openDay0, openVote, cm, setCm, day, cq }: { cq?:
           const cn = evN;
           const auto = !!qn || fon || osub; /* 16.11.2026: выбран не каждый орган — дни раскрыты, все подряд */
           const svc = (s: string): [string, string, string][] => []; /* 12.11.2026: блоки «Работа в комитетах» / «Работа в регионах» убраны */
-          const real = ev.filter((e: any) => e.k !== 'r');
+          const real = ev.filter((e: any) => e.k !== 'r' && !(e.k === 'p' && plan(e.p)) && !(e.k === 'g' && gPlan(e.g))); /* 16.11.2026: строки «ожидается» в списке не нужны (решение владельца) — запланированное видно только отметкой в сетке */
           const ds: string[] = sd ? [sd] : Array.from(new Set<string>(real.map((e: any) => e.d))).sort((a, b) => +pd(b) - +pd(a));
           const days = ds.map((s) => ({ s, es: real.filter((e: any) => e.d === s), sv: svc(s) })).filter((x) => x.es.length > 0 || (!!sd && x.sv.length > 0));
           if (!days.length) return ev.length ? <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>{auto ? 'Ничего не найдено' : sd ? 'В этот день событий нет' : 'Событий нет'}</div> : null;
