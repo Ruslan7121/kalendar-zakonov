@@ -4,6 +4,7 @@
 // 3) «Итоги»: в «Фильтрах» есть период; месяцы выбираются по нескольку и суммируются; поиск сужает список.
 // 4) «Новости»: в «Фильтрах» выбирается орган — показаны его новости за все загруженные дни.
 // 5) Клавиатура: когда список листают пальцем, поле поиска теряет фокус.
+// 6) С первого кадра загрузки шапка и список стоят на месте, строка поиска «Итогов» и «Новостей» не мигает, общий h1 не мелькает.
 // Как test_org_filter.browser.mjs: без Chrome — SKIP (при GD_REQUIRE_BROWSER=1 — падает). Запуск: node tests/js/test_mobile_head.browser.mjs
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -48,9 +49,16 @@ try {
   await cmd('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, s);
   const ev = async (x) => (await cmd('Runtime.evaluate', { expression: x, returnByValue: true }, s)).result.value;
   const open = async (tab, sel) => { await cmd('Page.navigate', { url: `${BASE}/?tab=${tab}` }, s); const t0 = Date.now(); while (!(await ev(`!!document.querySelector(${JSON.stringify(sel)})`)) && Date.now() - t0 < 20000) await sleep(300); await sleep(600); };
+  /* кадры с самого начала загрузки: шапка, список и строка поиска не прыгают и не мигают */
+  await cmd('Page.addScriptToEvaluateOnNewDocument', { source: `window.__fr = []; (function f() { const b = document.querySelector('[data-gdbar]'), w = document.querySelector('[data-swipe]'), sl = document.querySelector('[data-hslot]'), h1 = document.querySelector('main>h1');
+    if (b && w) window.__fr.push([Math.round(b.getBoundingClientRect().top), Math.round(w.getBoundingClientRect().top), sl ? sl.childElementCount : -1, h1 ? h1.getBoundingClientRect().height : 0]); requestAnimationFrame(f); })();` }, s);
   const H = {};
   for (const [tab, sel] of [['l', '[data-lq]'], ['c', '[data-cq]'], ['i', '[data-iq]'], ['d', '[data-nq]']]) {
     await open(tab, sel); const h = await ev(HEAD); H[tab] = h; rep.push(`${tab}: ${JSON.stringify(h)}`);
+    const fr = await ev('window.__fr'); const bt = new Set(fr.map((x) => x[0])), wt = new Set(fr.map((x) => x[1]));
+    chk(bt.size === 1 && wt.size === 1, `${tab}: при открытии шапка или список сдвигаются (шапка ${[...bt]}, список ${[...wt]})`);
+    chk(fr.every((x) => x[3] === 0), `${tab}: при открытии мелькает общий заголовок страницы`);
+    if (tab === 'i' || tab === 'd') chk(fr.every((x) => x[2] === 1), `${tab}: строка поиска в шапке мигает (${fr.map((x) => x[2]).join('')})`);
     chk(h && h.input && h.fbtn, `${tab}: в шапке нет строки «поиск + Фильтры» ${JSON.stringify(h)}`);
     if (h) { const gaps = h.k.slice(1).map((r, i) => r[0] - h.k[i][1]); chk(gaps.every((g) => g === gaps[0]), `${tab}: разные промежутки в шапке ${gaps}`); }
     await ev('window.scrollTo(0, 600)'); await sleep(400); const h2 = await ev(HEAD);
