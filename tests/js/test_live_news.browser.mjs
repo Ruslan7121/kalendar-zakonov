@@ -1,7 +1,8 @@
 // 16.11.2026: оперативные новости на сайте (data/live.json → вкладка «Новости»), 390 px:
 // 1) новость из live.json видна в ленте дня со временем публикации; та же ссылка, что уже есть в данных дня, второй раз не показывается;
 // 2) новость, пришедшая после открытия (GDX.pollLive — то же, что опрос раз в 2 минуты), не вставляется под палец: видна плашка «N новая новость»;
-// 3) нажатие плашки показывает новость наверху, плашка исчезает.
+// 3) нажатие плашки показывает новость наверху, плашка исчезает;
+// 4) календарь: день с новостями (как понедельник без заседаний) есть в списке, в нем «Новости дня»; при фильтре органа — лента его новостей сразу.
 // Как test_org_filter.browser.mjs: без Chrome — SKIP (при GD_REQUIRE_BROWSER=1 — падает). Запуск: node tests/js/test_live_news.browser.mjs
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -64,6 +65,19 @@ try {
   chk(!r.nnew, 'плашка не исчезла после нажатия');
   /* повтор той же ссылки (новость уже в live) не дублируется */
   chk(r.items.filter((x) => x.includes('пришедшая после открытия')).length === 1, 'новость показана дважды');
+  /* календарь: день с новостями есть в списке (так и понедельник без заседаний), в раскрытом дне — «Новости дня» */
+  await cmd('Page.navigate', { url: `${BASE}/?tab=c` }, s);
+  const t1 = Date.now(); while (!(await ev(`!!document.querySelector('[data-day="${D}"]')`)) && Date.now() - t1 < 20000) await sleep(300);
+  await ev(`(() => { const d = document.querySelector('[data-day="${D}"]'); if (d && d.getAttribute('data-dayopen') !== '1') d.querySelector('[data-dayhdr]').click(); })()`); await sleep(600);
+  const cd = await ev(`(() => { const d = document.querySelector('[data-day="${D}"]'); return d ? d.innerText : ''; })()`); rep.push(`календарь, ${D}: ${cd.slice(0, 80).replace(/\n/g, ' | ')}`);
+  chk(/Новости/.test(cd), `в календаре нет дня ${D} с новостями`);
+  chk(cd.includes('оперативная новость Правительства'), 'в раскрытом дне календаря нет новостей дня');
+  /* календарь с фильтром органа: лента его новостей и документов сразу, без нажатия на день */
+  await cmd('Page.navigate', { url: `${BASE}/?tab=c&org=gov` }, s);
+  const t2 = Date.now(); while (!(await ev(`!!document.querySelector('[data-orgfeed] [data-newsitem]')`)) && Date.now() - t2 < 20000) await sleep(300);
+  const of = await ev(`(() => { const f = document.querySelector('[data-orgfeed]'); return f ? { txt: f.innerText, orgs: [...new Set([...f.querySelectorAll('[data-newsitem]')].map((e) => e.getAttribute('data-newsitem')))] } : null; })()`);
+  rep.push(`календарь, фильтр «Правительство»: ${of ? of.orgs.join(',') + ' · ' + of.txt.slice(0, 60).replace(/\n/g, ' | ') : 'нет ленты'}`);
+  chk(of && of.txt.includes('оперативная новость Правительства') && of.orgs.length === 1 && of.orgs[0] === 'gov', `при фильтре органа нет ленты его новостей: ${JSON.stringify(of && of.orgs)}`);
   await cmd('Target.closeTarget', { targetId });
 } finally { try { ws.close(); } catch {} ch.kill('SIGKILL'); SITE.close(); setTimeout(() => fs.rmSync(prof, { recursive: true, force: true }), 500); }
 rep.forEach((x) => console.log('  ' + x));
