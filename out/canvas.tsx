@@ -3209,14 +3209,20 @@ function buildFS0(day: string, votes: Vote[]): Record<string, FSub[]> {
 /* 12.11.2026: раздел «Новости» — лента официальных новостей по дням (новые сверху) с фильтром по источнику;
    вместо переключателя дня и «Сводки дня». Месяцы подгружаются кнопкой «Показать ранее». */
 const NSRC: [string, string][] = [['gd', 'Госдума'], ['gov', 'Правительство'], ['sf', 'Совет Федерации'], ['cbr', 'Банк России'], ['minfin', 'Минфин'], ['mintrud', 'Минтруд'], ['minjust', 'Минюст']];
-type NItem = { o: string; sec: string; tag: string | null; text: string; sub: string; u: string };
+type NItem = { o: string; sec: string; tag: string | null; text: string; sub: string; u: string; tm?: string; live?: boolean };
+/* 16.11.2026: оперативные новости (data/live.json, GDX.live) — заголовок и ссылка с официального сайта, время публикации; приходят в течение дня.
+   Новость, уже собранная в данные дня (та же ссылка), второй раз не показывается; пришедшие после открытия (fresh) ждут нажатия плашки. */
+const liveAll = (): any[] => (GDX && GDX.live ? GDX.live.items : []);
+const liveFresh = (): Set<string> => (GDX && GDX.live ? GDX.live.fresh : new Set());
 function newsItems(d: string): NItem[] {
   const out: NItem[] = []; const fs = buildFS(d, DATA[d] ? parse(DATA[d]) : []);
   ([['gd', fs['Госдума'] || []], ['gov', fs['Правительство'] || []]] as [string, FSub[]][]).forEach(([o, subs]) => subs.forEach(([h, it]) => it.forEach(([x, u]) => {
     const [tg, tx] = /Главное|Постановления|Законопроекты/.test(h) ? splitTag(x) : [null, x];
     out.push({ o, sec: /^Главное/.test(h) ? '' : h, tag: tg, text: tx, sub: '', u: u || '' }); })));
   ORGK.forEach((o) => newsOrg(o, d).forEach((x: any) => out.push({ o, sec: '', tag: null, text: x.st || x.t || '', sub: x.sut || x.x || '', u: x.u && isOff(x.u) ? x.u : '' })));
-  return out;
+  const have = new Set(out.map((x) => x.u).filter(Boolean)); const fr = liveFresh();
+  const lv = liveAll().filter((x: any) => x.d === d && !have.has(x.u) && !fr.has(x.u) && isOff(x.u)).sort((a: any, b: any) => (b.tm || '').localeCompare(a.tm || ''));
+  return [...lv.map((x: any) => ({ o: x.o, sec: '', tag: null, text: x.t, sub: x.x || '', u: x.u, tm: x.tm || '', live: true })), ...out];
 }
 function NewsFeed({ m, peek, months, more, focus }: { m: boolean; peek?: boolean; months: string[]; more: null | (() => void); focus?: string }) {
   const t = useGrokTheme(); useGDV(); const dk = t.kind === 'dark'; const nslot = useHSlot(m && !peek);
@@ -3228,8 +3234,8 @@ function NewsFeed({ m, peek, months, more, focus }: { m: boolean; peek?: boolean
   useEffect(() => { if (!fo) return; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setFo(false); }; document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [fo]);
   const col = (o: string) => (o === 'gd' ? t.text.accent : o === 'gov' ? (dk ? '#3CCB9C' : '#009E73') : orgCol(o, dk));
   const name = (o: string) => (NSRC.find((x) => x[0] === o) || [o, ORGN[o] || o])[1];
-  const keys = new Set<string>([...Object.keys(FULL), ...Object.keys(SUM), ...Object.keys(SFN), ...ORGNEWS.map((x: any) => x.d)]);
-  const days = [...keys].filter((d) => /^\d\d\.\d\d\.\d{4}$/.test(d) && months.includes(d.slice(3)) && newsItems(d).length > 0).sort((a, b) => +pd(b) - +pd(a));
+  const keys = new Set<string>([...Object.keys(FULL), ...Object.keys(SUM), ...Object.keys(SFN), ...ORGNEWS.map((x: any) => x.d), ...liveAll().filter((x: any) => !liveFresh().has(x.u)).map((x: any) => x.d)]);
+  const days = [...keys].filter((d) => /^\d\d\.\d\d\.\d{4}$/.test(d) && (months.includes(d.slice(3)) || liveAll().some((x: any) => x.d === d)) && newsItems(d).length > 0).sort((a, b) => +pd(b) - +pd(a));
   useEffect(() => { if (!wantOlder) return; const o = days.find((d) => pd(d) < pd(wantOlder)); if (o) { setSel(o); setWantOlder(null); } else if (!more) setWantOlder(null); });
   const cur = sel && days.includes(sel) ? sel : days[0] || null;
   const ix = cur ? days.indexOf(cur) : -1;
@@ -3251,15 +3257,17 @@ function NewsFeed({ m, peek, months, more, focus }: { m: boolean; peek?: boolean
   const tile = (x: NItem, i: number) => { const Tg: any = x.u ? 'a' : 'article'; const c = col(x.o); return <Tg key={i} data-newsitem={x.o} className="gd-rw" {...(x.u ? { href: x.u, target: '_blank', rel: 'noopener noreferrer', title: `Открыть на ${host(x.u)}` } : {})} style={{ ...nvTile(c), display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', textDecoration: 'none', color: 'inherit', cursor: x.u ? 'pointer' : 'default' }}>
         <OrgMark o={x.o} c={c} />
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-          <span style={nvPill(c)}>{x.tag || name(x.o)}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}><span style={nvPill(c)}>{x.tag || name(x.o)}</span>{x.tm ? <span data-ntm="1" style={{ fontSize: 12, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{x.tm}</span> : null}</span>
           <div style={{ fontSize: m ? 14.5 : 14, lineHeight: 1.4, color: t.text.primary, overflowWrap: 'anywhere' }}>{x.text}</div>
           {x.sub ? <div className="gd-cl2" style={{ fontSize: 13, lineHeight: 1.4, color: t.text.secondary }}>{x.sub}</div> : null}
         </div>
         {x.u && <span aria-hidden style={{ flex: 'none', color: t.text.tertiary }}>↗</span>}
       </Tg>; };
   const fN = src !== 'all' ? 1 : 0;
+  const nNew = [...liveFresh()].length; const ackNew = () => { if (GDX) GDX.ackLive(); setSel(null); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); } };
+  const newBar = nNew > 0 && !peek ? <button type="button" data-nnew={nNew} onClick={ackNew} style={{ alignSelf: 'center', display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 36, padding: '0 16px', borderRadius: 9999, border: 'none', background: t.text.accent, color: '#fff', fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(10,100,214,.35)' }}>↑ {nNew} {nNew % 10 === 1 && nNew % 100 !== 11 ? 'новая новость' : nNew % 10 >= 2 && nNew % 10 <= 4 && (nNew % 100 < 10 || nNew % 100 >= 20) ? 'новые новости' : 'новых новостей'}</button> : null;
   const mrow = m && !peek && nslot ? createPortal(<div data-nprow="1" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><div style={{ flex: '1 1 0', minWidth: 0 }}><MSBox v={nq} set={setNq} k="nq" /></div><MFBtn k="nfopen" n={fN} open={fo} onClick={() => setFo(true)} /></div>, nslot) : null;
-  if (allM) return <div data-newsfeed="1" data-nall="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 0 }}>{mrow}
+  if (allM) return <div data-newsfeed="1" data-nall="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 0 }}>{mrow}{newBar}
     <div data-nact="1" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>{src !== 'all' && <ZChip t={t} on l={name(src)} x onClick={() => setSrc('all')} />}<span style={{ fontSize: 13, color: t.text.tertiary }}>{nq.trim() ? 'Найдено' : 'Новостей'}: <b style={{ color: t.text.primary }}>{allN}</b> за {days.length ? `${days.length} ${days.length % 10 === 1 && days.length % 100 !== 11 ? 'день' : days.length % 10 >= 2 && days.length % 10 <= 4 && (days.length % 100 < 10 || days.length % 100 >= 20) ? 'дня' : 'дней'}` : '—'}</span></div>
     {!allN && <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>{nq.trim() ? 'Ничего не найдено' : 'У этого источника новостей за загруженные дни нет'}</div>}
     {allS.map(([d, a]) => { const z = pd(d); return <section key={d} data-newsday={d} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}><div data-ndayh="1" style={{ position: 'sticky', top: 'var(--gd-top, 0px)', zIndex: 5, background: DK ? '#000000' : t.bg.base, padding: '4px 2px', fontSize: 15, fontWeight: 700, color: t.text.primary }}>{z.getDate()} {MON[z.getMonth()]}<span style={{ fontSize: 12.5, fontWeight: 400, color: t.text.tertiary, marginLeft: 6 }}>{WDL[z.getDay()]}</span></div>{a.map(tile)}</section>; })}
@@ -3284,6 +3292,7 @@ function NewsFeed({ m, peek, months, more, focus }: { m: boolean; peek?: boolean
       {!m && <div data-nchiprow="1" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' } as any}>{/* 14.11.2026 (12Б): все органы видны сразу, ряд переносится */}
         {chip('all', 'Все', items.length)}{NSRC.filter(([k]) => cnt[k]).map(([k, l]) => chip(k, l, cnt[k]))}
       </div>}
+      {newBar && <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8 }}>{newBar}</div>}
     </div>
     {!cur && <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>{wantOlder ? 'Загружаю…' : 'Загружаю новости…'}</div>}
     {cur && !shown.length && <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>У этого источника новостей в этот день нет</div>}
@@ -3292,7 +3301,7 @@ function NewsFeed({ m, peek, months, more, focus }: { m: boolean; peek?: boolean
       {shown.map((x, i) => { const Tg: any = x.u ? 'a' : 'article'; const c = col(x.o); const ab = ({ gd: 'ГД', gov: 'Пр', sf: 'СФ', cbr: 'ЦБ', minfin: 'МФ', mintrud: 'МТ', minjust: 'МЮ' } as Record<string, string>)[x.o] || ''; return <Tg key={i} data-newsitem={x.o} className="gd-rw" {...(x.u ? { href: x.u, target: '_blank', rel: 'noopener noreferrer', title: `Открыть на ${host(x.u)}` } : {})} style={{ ...nvTile(c), display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', textDecoration: 'none', color: 'inherit', cursor: x.u ? 'pointer' : 'default' }}>
         <OrgMark o={x.o} c={c} />{void ab}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-          <span style={nvPill(c)}>{x.tag || name(x.o)}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}><span style={nvPill(c)}>{x.tag || name(x.o)}</span>{x.tm ? <span data-ntm="1" style={{ fontSize: 12, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{x.tm}</span> : null}</span>
           <div style={{ fontSize: m ? 14.5 : 14, lineHeight: 1.4, color: t.text.primary, overflowWrap: 'anywhere' }}>{x.text}</div>
           {x.sub ? <div className="gd-cl2" style={{ fontSize: 13, lineHeight: 1.4, color: t.text.secondary }}>{x.sub}</div> : null}
         </div>

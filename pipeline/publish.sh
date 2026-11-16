@@ -24,6 +24,24 @@ BRANCH=gh-pages
 REMOTE=origin
 
 DRY=0; MSG=""
+# 16.11.2026: --live ФАЙЛ — оперативные новости (pipeline/news_live.py): в gh-pages меняется только data/live.json, сайт не пересобирается.
+# Источник данных не main, а сам файл; при гонке с другой выкладкой (push не fast-forward) — до 3 повторов поверх свежего gh-pages.
+if [ "${1:-}" = "--live" ]; then
+  LF="${2:-}"; [ -s "$LF" ] || { echo "publish.sh --live: нет файла $LF" >&2; exit 1; }
+  node -e 'const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); if(!Array.isArray(j.items)) throw new Error("нет items"); for (const x of j.items) { if(!/^https?:\/\//.test(x.u)||!x.t||!x.o||!/^\d\d\.\d\d\.\d{4}$/.test(x.d)) throw new Error("плохая запись: "+JSON.stringify(x)); }' "$LF" || { echo "publish.sh --live: $LF не прошел проверку" >&2; exit 1; }
+  ROOT="$(cd "$(dirname "$0")/.." && pwd)"; cd "$ROOT"; LF="$(cd "$(dirname "$LF")" && pwd)/$(basename "$LF")"
+  for try in 1 2 3; do
+    git fetch -q "$REMOTE" "$BRANCH"; WT=$(mktemp -d); git worktree add -q --detach "$WT" "$REMOTE/$BRANCH"
+    mkdir -p "$WT/data"; cp "$LF" "$WT/data/live.json"
+    r=1; if ( cd "$WT"; git add data/live.json
+      if git diff --cached --quiet; then echo "publish.sh --live: новости не изменились"; exit 0; fi
+      git commit -q -m "Новости (оперативно): $(date +%d.%m.%Y\ %H:%M)" && git push -q "$REMOTE" "HEAD:refs/heads/$BRANCH" ); then r=0; fi
+    git worktree remove --force "$WT" >/dev/null 2>&1; rm -rf "$WT"
+    [ $r = 0 ] && { echo "publish.sh --live: готово"; exit 0; }
+    echo "publish.sh --live: push отклонен (попытка $try), повторяю" >&2; sleep $((try * 5))
+  done
+  echo "publish.sh --live: не удалось опубликовать" >&2; exit 1
+fi
 for a in "$@"; do
   case "$a" in
     --dry-run) DRY=1 ;;
@@ -96,7 +114,7 @@ for f in $OLD; do
 done
 # data/*.json: оставить те, на которые ссылается текущий или оставленный прежний app.<hash>.js (и мост app.js), остальные удалить
 KEEPDATA=$(for f in app.js app.*.js; do [ -e "$f" ] && grep -oE '(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json' "$f"; done | sort -u || true)
-for f in data/*.json; do [ -e "$f" ] || continue; echo "$KEEPDATA" | grep -qx "$(basename "$f")" && continue; git rm -q --cached "$f" 2>/dev/null || true; rm -f "$f"; done
+for f in data/*.json; do [ -e "$f" ] || continue; [ "$f" = data/live.json ] && continue; echo "$KEEPDATA" | grep -qx "$(basename "$f")" && continue; git rm -q --cached "$f" 2>/dev/null || true; rm -f "$f"; done
 cat > README.md <<MD
 # Календарь законов: собранный сайт
 
@@ -118,7 +136,7 @@ git add -A
 CHANGED=$(git diff --cached --name-only)
 # в коммите допустимы только файлы сайта (14.11.2026: + day/ и fractions/ — страницы дней и статистики фракций из web/extras.mjs;
 # без них с 13.11 падали все выкладки — и deploy, и ежедневный прогон)
-BAD=$(echo "$CHANGED" | grep -v -E '^(index\.html|404\.html|app\.js|app\.[0-9a-f]{10}\.js|README\.md|\.nojekyll|favicon\.svg|og\.png|manifest\.webmanifest|tg-web-app\.js|sw\.js|robots\.txt|sitemap\.xml|(bill|feed|ics|day|fractions|law|v)/[A-Za-z0-9._/-]+|data/(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json)$' || true)
+BAD=$(echo "$CHANGED" | grep -v -E '^(index\.html|404\.html|app\.js|app\.[0-9a-f]{10}\.js|README\.md|\.nojekyll|favicon\.svg|og\.png|manifest\.webmanifest|tg-web-app\.js|sw\.js|robots\.txt|sitemap\.xml|(bill|feed|ics|day|fractions|law|v)/[A-Za-z0-9._/-]+|data/(core|m-[0-9]{4}-[0-9]{2})\.[0-9a-f]{10}\.json|data/live\.json)$' || true)
 [ -z "$BAD" ] || die "в коммит gh-pages попали неожиданные файлы: $BAD"
 if git diff --cached --quiet -- . ':(exclude)README.md'; then
   echo "publish.sh: сайт не изменился ($JS уже опубликован), коммит не нужен"; exit 0
