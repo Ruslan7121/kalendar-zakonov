@@ -1,12 +1,12 @@
 {
-"upd": "16.11.2026 16:18",
+"upd": "16.11.2026 16:38",
 "status": {
 "gd": "ok n=9",
 "gov": "ok n=20",
 "sf": "ok n=20",
 "cbr": "ok n=12",
 "minfin": "blocked:HTTP 503, страница ограничения доступа",
-"mintrud": "blocked:нет соединения (curl 28)",
+"mintrud": "ok n=12",
 "minjust": "ok n=20"
 },
 "items": [
