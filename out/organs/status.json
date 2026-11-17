@@ -1,5 +1,5 @@
 {
- "run": "17.11.2026 16:18 МСК",
+ "run": "17.11.2026 19:03 МСК",
  "window": [
   "10.11.2026",
   "17.11.2026"
@@ -9,7 +9,7 @@
   "pres_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=president",
    "status": "ok",
-   "n": 89
+   "n": 83
   },
   "gov_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=government",
@@ -19,12 +19,12 @@
   "cbr_news": {
    "url": "https://www.cbr.ru/rss/RssNews",
    "status": "ok",
-   "n": 15
+   "n": 13
   },
   "cbr_events": {
    "url": "https://www.cbr.ru/rss/eventrss",
-   "status": "ok",
-   "n": 6
+   "status": "blocked:нет соединения (curl 28)",
+   "n": 0
   },
   "mintrud_docs": {
    "url": "https://mintrud.gov.ru/document/rss",
@@ -33,13 +33,13 @@
   },
   "mintrud_news": {
    "url": "https://mintrud.gov.ru/news/news/list",
-   "status": "ok",
-   "n": 12
+   "status": "blocked:нет соединения (curl 28)",
+   "n": 0
   },
   "minfin_news": {
    "url": "https://minfin.gov.ru/ru/press-center/",
-   "status": "ok",
-   "n": 18
+   "status": "blocked:HTTP 403, страница ограничения доступа",
+   "n": 0
   },
   "minjust_events": {
    "url": "https://minjust.gov.ru/ru/events/list/",
@@ -49,7 +49,7 @@
   "minfin_pravo": {
    "url": "http://publication.pravo.gov.ru/documents/foiv283/monthly",
    "status": "ok",
-   "n": 10
+   "n": 11
   },
   "sf_meetings": {
    "url": "http://council.gov.ru/activity/meetings/",
@@ -58,7 +58,7 @@
   },
   "minfin_projects": {
    "url": "https://minfin.gov.ru/ru/document/npa_projects/",
-   "status": "ok (разбор не реализован)"
+   "status": "blocked:HTTP 403, страница ограничения доступа"
   },
   "mintrud_profstandards": {
    "url": "https://regulation.gov.ru/",
@@ -76,6 +76,6 @@
    "why": "реестр регистрации НПА (publication.pravo.gov.ru, pravo.minjust.ru) — с этой машины нет соединения/HTTP 500"
   }
  },
- "new": 1,
- "total": 286
+ "new": 4,
+ "total": 290
 }
