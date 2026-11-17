@@ -93,4 +93,17 @@ def _fetch(u):
 O.WIN_FROM = O.dt.date(2026, 11, 12)
 _r, _st = O.collect_pravo_api('pres_pravo', 'pres', fetch=_fetch)
 assert _st == 'ok' and len(_r) == 2 and len(_calls) == 2 and 'PageSize=10&Index=1' in _calls[1], (_st, _calls)
+# 17.11.2026: --only pres — длинный сбор только указов Президента (без Правительства и остальных органов), с уже имеющимися событиями не теряется
+_T2 = tempfile.mkdtemp(prefix='gd-organs-only-')
+try:
+    _od = os.path.join(_T2, 'organs'); os.makedirs(_od); _saved = O.ODIR
+    json.dump([{'id': 'gov:keep', 'o': 'gov', 'd': '10.11.2026', 'ty': 'решение', 't': 'Постановление № 1 от 10.11.2026', 'u': 'http://x', 'k': 'Постановление'}], open(os.path.join(_od, 'events.json'), 'w'), ensure_ascii=False)
+    O.ODIR = _od
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            _ev, _run = O.main(['--offline', os.path.join(R, 'tests', 'fixtures'), '--from', '01.11.2026', '--to', '16.11.2026', '--ahead', '0', '--only', 'pres', '--pages', '40'])
+    finally: O.ODIR = _saved
+    assert set(_run['sources']) == {'pres_pravo'} and _run['sources']['pres_pravo']['n'] == 2, _run['sources']
+    assert sorted(e['o'] for e in _ev) == ['gov', 'pres', 'pres'], [e['o'] for e in _ev]  # чужое событие осталось, добавлены два указа
+finally: shutil.rmtree(_T2, ignore_errors=True)
 print(f'OK test_organs: событий {len(ev)}, с проверенными полями {len(enr)}, ORG/ORGX в canvas совпадают с out/organs')
