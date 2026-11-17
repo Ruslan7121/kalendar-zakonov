@@ -713,7 +713,76 @@ const SHORT_RAW = `136087|Порядок работы (за основу)
 136408|Оформление земельных участков в собственность
 136409|Адаптивный режим труда
 136410|Режим занятий в школах
-136411|Леса для отгонного животноводства`;
+136411|Леса для отгонного животноводства
+136418|Порядок работы (за основу)
+136419|Порядок работы (в целом)
+136420|Ратификация: соглашение с Зимбабве
+136421|Представитель Думы: способ голосования
+136422|Представитель Думы: назначение
+136423|ЕГРЮЛ: доступ к закрытым сведениям
+136424|Жилье военнослужащих
+136425|Жилье военнослужащих
+136426|Жилье военнослужащих
+136427|Индексация пенсий по решению суда
+136428|Индексация пенсий по решению суда
+136429|Штрафы за экономические преступления
+136430|Штрафы за экономические преступления
+136431|Штрафы за экономические преступления
+136432|Подземные гаражи и участки
+136433|Подземные гаражи и участки
+136434|Подземные гаражи и участки
+136435|Реализация конфискованного имущества
+136436|Реализация конфискованного имущества
+136437|Конфискованное имущество у приставов
+136438|Конфискованное имущество у приставов
+136439|Конфискованное имущество у приставов
+136440|Упразднение судов в Красноярском крае
+136441|Упразднение судов в Красноярском крае
+136442|Упразднение судов в Красноярском крае
+136443|Число мировых судей
+136444|Число мировых судей
+136445|Число мировых судей
+136446|Реклама: образ многодетной семьи
+136447|Госзакупки: продление временных мер
+136448|Гигиеническая подготовка работников
+136449|Рост штрафов за нарушения порядка
+136450|Гособоронзаказ: возврат платежей
+136451|Предельный возраст военнослужащих-женщин
+136452|Антикоррупционные требования к фондам ОМС
+136453|Трудовой кодекс: статья 349.2
+136454|Пенсионное обеспечение: статьи 5 и 8
+136455|Места перемещения товаров: требования
+136456|Статус сельхозпроизводителя до 2029 года
+136457|Семеноводство: перенос сроков на 2028 год
+136458|Продление особенностей для новых регионов
+136459|Состав комитетов: утверждение депутатов
+136460|Комитет по цифровому развитию: состав
+136461|Комиссия Думы: состав
+136462|Рефинансирование проектных кредитов
+136463|Бесплатная юридическая помощь: статьи 15 и 16
+136464|Бесплатная юридическая помощь: детский уполномоченный
+136465|Штраф за нарушение расписания перевозок
+136466|Штрафы за детский отдых вне реестра
+136467|Штраф за призывы против прав женщин
+136468|Жестокое обращение с животными
+136469|Выдворение за агитацию иностранцев
+136470|Штрафы за найм жилья мигрантам
+136471|Мораторий на рост платы за ЖКУ
+136472|Подарки работникам: предел стоимости
+136473|Соразмерность взыскания долгов
+136474|Второй тур в одномандатных округах
+136475|Реклама финансовых услуг
+136476|Пособия гражданам с детьми
+136477|Подарки работникам: до 10 тысяч
+136478|Минимальный размер алиментов
+136479|Коллекторы с иностранным участием
+136480|ИИ в предвыборной агитации
+136481|Профилактика правонарушений: глава 4
+136482|Недвижимость за рубежом: запрет
+136483|Концессии: одобрение депутатами
+136484|Жилищный кодекс: перечень лиц
+136485|Международный медицинский кластер
+136486|Гарантии сиротам при платном обучении`;
 const SHORT: Record<string,string> = Object.fromEntries(SHORT_RAW.split('\n').map((l) => l.split('|')));
 const NV: Record<string, any> = {} as any;
 DATA['23.10.2026'] = '';
@@ -3605,8 +3674,8 @@ function Itogi({ m, peek }: { m: boolean; peek?: boolean }) {
   const t = useGrokTheme(); useGDV(); gdNeed(null); const ld0 = zLoaded(); const [op, setOp] = useState<string | null>(null);
   /* 16.11.2026: на телефоне фильтры «Итогов» — кнопка «Фильтры» рядом с периодом и окно снизу (как в «Календаре»), вариант Б владельца */
   const [fo, setFo] = useState(false); const [fxp, setFxp] = useState<Record<number, boolean>>({}); const slot = useHSlot(m && !peek);
-  useEffect(() => { if (!fo) return; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setFo(false); }; document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [fo]);
-  const [per, setPer] = useState<'d' | 'w' | 'm' | 'y'>('d' /* 17.11.2026: при открытии «Пленарных заседаний» — последний день с голосованиями, а не неделя */); const [pmk, setPmk] = useState<string[]>([]); const [pyr, setPyr] = useState<number[]>([]); const [pdy, setPdy] = useState<string[] | null>(null); const [iq, setIq] = useState(''); const [g, setG] = useState(0); const [zs, setZs] = useState<string[][]>([[], [], []]); const [all, setAll] = useState(false); const [rf, setRf] = useState<'all' | 'ok' | 'no'>('all');
+  useEffect(() => { if (fo) setPOpen(false); }, [fo]); useEffect(() => { if (!fo) return; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setFo(false); }; document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [fo]);
+  const [pOpen, setPOpen] = useState(false); /* 17.11.2026: списки дней, месяцев и лет свернуты, пока не нажать на период; повторное нажатие сворачивает */ const [per, setPer] = useState<'d' | 'w' | 'm' | 'y'>('d' /* 17.11.2026: при открытии «Пленарных заседаний» — последний день с голосованиями, а не неделя */); const [pmk, setPmk] = useState<string[]>([]); const [pyr, setPyr] = useState<number[]>([]); const [pdy, setPdy] = useState<string[] | null>(null); const [iq, setIq] = useState(''); const [g, setG] = useState(0); const [zs, setZs] = useState<string[][]>([[], [], []]); const [all, setAll] = useState(false); const [rf, setRf] = useState<'all' | 'ok' | 'no'>('all');
   /* 15.11.2026: несколько меток — внутри группы «или», между группами «и» (как «Фильтры»); ничего не выбрано — все законопроекты периода */
   const nSel = zs[0].length + zs[1].length + zs[2].length; const tog = (i: number, v: string) => { setZs(zs.map((a, j) => (j !== i ? a : a.includes(v) ? a.filter((z) => z !== v) : [...a, v]))); setAll(false); setRf('all'); };
   const last = DAYS[DAYS.length - 1];
@@ -3642,13 +3711,13 @@ function Itogi({ m, peek }: { m: boolean; peek?: boolean }) {
   const hh = { fontSize: 13, fontWeight: 700, color: t.text.secondary, margin: '6px 2px 0' } as any;
   /* 15.11.2026: «всего / принято / отклонено» — кнопки-фильтр списка (как вкладки дня); выбранная светится своим цветом, нажатие — вдавливание, как у плиток */
   const box = (n: number, l: string, c: string, k: 'all' | 'ok' | 'no') => <button type="button" data-irf={k} aria-pressed={rf === k} onClick={() => { setRf(k); setAll(false); }} style={{ ...nvTile(rf === k ? (k === 'all' ? t.text.accent : c) : undefined), flex: 1, padding: '10px 6px', textAlign: 'center', fontFamily: t.font.family, color: t.text.primary }}><b style={{ display: 'block', fontSize: 22, color: c, fontVariantNumeric: 'tabular-nums' }}>{n}</b><span style={{ fontSize: 13, color: c }}>{l}</span></button>;
-  const perSeg = seg(P.map((x) => [x[0], x[0] === 'm' ? `Месяц ${per === 'm' ? '▴' : '▾'}` : x[0] === 'y' ? `Год ${per === 'y' ? '▴' : '▾'}` : x[0] === 'd' ? `День ${per === 'd' ? '▴' : '▾'}` : x[1]] as [string, string]), per, (k) => { setPer(k as any); setAll(false); setRf('all'); });
+  const perSeg = seg(P.map((x) => [x[0], x[0] === 'm' ? `Месяц ${per === 'm' && pOpen ? '▴' : '▾'}` : x[0] === 'y' ? `Год ${per === 'y' && pOpen ? '▴' : '▾'}` : x[0] === 'd' ? `День ${per === 'd' && pOpen ? '▴' : '▾'}` : x[1]] as [string, string]), per, (k) => { if (m && k === per && k !== 'w') setPOpen(!pOpen); else { setPer(k as any); setPOpen(m && k !== 'w'); } setAll(false); setRf('all'); });
   /* 16.11.2026 (решение владельца): на телефоне «День», «Месяц», «Год» раскрываются списком — в нем отмечают сколько угодно дней, месяцев или лет; на компьютере — прежние чипы */
   const pItems: { k: string; l: string; on: boolean; f: () => void }[] = per === 'd' ? DL.map((k) => { const x = pd(k); return { k, l: `${x.getDate()} ${MON[x.getMonth()]} ${x.getFullYear()}`, on: dS.includes(k), f: () => { setPdy(dS.includes(k) ? dS.filter((z) => z !== k) : [...dS, k]); } }; })
     : per === 'm' ? MK.map((k) => ({ k, l: `${MONN[+k.slice(0, 2) - 1]} ${k.slice(3)}`, on: mkS.includes(k), f: () => { const nx = mkS.includes(k) ? mkS.filter((z) => z !== k) : [...mkS, k]; if (nx.length) setPmk(nx); } }))
     : per === 'y' ? YR.map((y) => ({ k: String(y), l: String(y), on: yS.includes(y), f: () => { const nx = yS.includes(y) ? yS.filter((z) => z !== y) : [...yS, y]; if (nx.length) setPyr(nx); } })) : [];
   const pAttr = per === 'd' ? { 'data-iday': '1' } : { 'data-iper': '1' }; const pTap = (f: () => void) => () => { f(); setAll(false); setRf('all'); };
-  const perPick = !pItems.length ? null : m ? <div {...pAttr} data-ilist="1" role="listbox" aria-multiselectable="true" style={{ display: 'flex', flexDirection: 'column', maxHeight: 228, overflowY: 'auto', overscrollBehavior: 'contain', borderRadius: 12, border: `1px solid ${t.border.default}`, background: t.bg.base }}>
+  const perPick = !pItems.length || (m && !pOpen) ? null : m ? <div {...pAttr} data-ilist="1" role="listbox" aria-multiselectable="true" style={{ display: 'flex', flexDirection: 'column', maxHeight: 228, overflowY: 'auto', overscrollBehavior: 'contain', borderRadius: 12, border: `1px solid ${t.border.default}`, background: t.bg.base }}>
       <div style={{ position: 'sticky', top: 0, zIndex: 1, padding: '7px 14px', fontSize: 12.5, color: t.text.tertiary, background: t.bg.base, borderBottom: `1px solid ${t.border.subtle}` }}>{per === 'd' ? 'Дни' : per === 'm' ? 'Месяцы' : 'Годы'} · выбрано: {pItems.filter((x) => x.on).length}</div>
       {pItems.map((x, i) => <button key={x.k} type="button" role="option" aria-selected={x.on} aria-pressed={x.on} onClick={pTap(x.f)} style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, minHeight: 44, padding: '0 14px', border: 'none', borderTop: i ? `1px solid ${t.border.subtle}` : 'none', background: x.on ? nvMix(t.text.accent, 12) : 'transparent', color: t.text.primary, fontFamily: t.font.family, fontSize: 15, fontWeight: x.on ? 600 : 400, textAlign: 'left', cursor: 'pointer' }}>{x.l}<span aria-hidden style={{ width: 22, height: 22, borderRadius: 6, flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#FFFFFF', background: x.on ? t.text.accent : 'transparent', border: `1.5px solid ${x.on ? t.text.accent : t.border.default}` }}>{x.on ? '✓' : ''}</span></button>)}</div>
     : <div {...pAttr} style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{pItems.map((x) => <ZChip key={x.k} t={t} on={x.on} pressed={x.on} l={per === 'd' ? x.l.replace(/ \d{4}$/, '') : x.l} onClick={pTap(x.f)} />)}</div>;
@@ -3670,9 +3739,9 @@ function Itogi({ m, peek }: { m: boolean; peek?: boolean }) {
   const totFix = <div data-itot="1" style={{ display: 'flex', gap: 8 }}>{box(sel.length, 'всего', t.text.primary, 'all')}{box(okL.length, 'принято', INK[0], 'ok')}{box(noL.length, 'отклонено', INK[1], 'no')}</div>;
   const totRow = sel.length > 0 ? <div data-itot="1" style={{ display: 'flex', gap: 8, maxWidth: m ? undefined : 560 }}>{box(sel.length, 'всего', t.text.primary, 'all')}{box(okL.length, 'принято', INK[0], 'ok')}{box(noL.length, 'отклонено', INK[1], 'no')}</div> : null;
   const tilesB = <><div style={{ display: 'grid', gridTemplateColumns: `repeat(${m ? 2 : 4}, minmax(0, 1fr))`, gap: 10 }}>{shown.map((b: any) => { const rc = b.v.ok ? INK[0] : INK[1]; const za = b.v.total[0] || 0; const go = () => setOp(b.x[0]);
-        return <div key={b.x[0]} className="gd-rw" data-itile="1" role="button" tabIndex={0} onClick={go} onKeyDown={(k: any) => { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); go(); } }} title={b.x[4]} style={{ ...nvTile(rc), display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 6, padding: '12px 8px' }}>
-          <NvRing n={String(za)} p={za / 4.5} c={rc} />{b.ty && <span style={nvPill(nvStg(b.ty))}>{b.ty}</span>}<span style={{ fontSize: 13.5, lineHeight: 1.3, fontWeight: 600, color: t.text.primary, overflowWrap: 'anywhere' }}>{agShort(b.x[0], b.x[1])}</span>
-          <span style={{ fontSize: 11.5, color: t.text.tertiary }}>{b.d.slice(0, 5)} · за: {FRO.filter((f) => { const z = b.v.fr && b.v.fr[f]; return z && z.v[0] > z.size / 2; }).join(', ') || '—'}</span></div>; })}</div>
+        return <div key={b.x[0]} className="gd-rw" data-itile="1" role="button" tabIndex={0} onClick={go} onKeyDown={(k: any) => { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); go(); } }} title={b.x[4]} style={{ ...nvTile(rc), display: 'flex', flexDirection: 'column', alignItems: 'stretch', textAlign: 'left', gap: 6, padding: '10px 10px' /* 17.11.2026 (выбор владельца, макет 4): компактная плитка — этап слева, кольцо справа в углу, название слева мельче */ }}>
+          <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>{b.ty ? <span style={nvPill(nvStg(b.ty))}>{b.ty}</span> : <span />}<NvRing n={String(za)} p={za / 4.5} c={rc} size={34} /></span><span style={{ fontSize: 11.5, lineHeight: 1.3, fontWeight: 600, color: t.text.primary, overflowWrap: 'anywhere' }}>{agShort(b.x[0], b.x[1])}</span>
+          <span style={{ fontSize: 10.5, color: t.text.tertiary }}>{b.d.slice(0, 5)} · за: {FRO.filter((f) => { const z = b.v.fr && b.v.fr[f]; return z && z.v[0] > z.size / 2; }).join(', ') || '—'}</span></div>; })}</div>
       {false ? <button onClick={() => setAll(!all)} style={{ minHeight: 42, borderRadius: 12, border: `1px solid ${t.text.accent}`, background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>{all ? 'Свернуть' : `Показать все (${list.length})`}</button> : null}</>;
   const modal = (() => { const b: any = op && byNo[op]; if (!b) return null; const x = b.x, v2 = b.v, rc2 = v2.ok ? INK[0] : INK[1]; /* то же окно карточки, что в календаре */
       return <NvModal onClose={() => setOp(null)} c={rc2} m={m} k={x[0]}><div data-iv="1" data-ivk={b.d + x[0]}><div data-ivs="1" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: m ? '10px 48px 8px 14px' : '16px 56px 10px 18px' }}><NvRing n={String(v2.total[0] || 0)} p={(v2.total[0] || 0) / 4.5} c={rc2} size={56} /><div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}><div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}><span style={{ fontFamily: t.font.mono, fontSize: 13, color: t.text.accent }}>{x[0]}</span>{billNo(x[0]) && <FavStar bill={billNo(x[0])!} />}{b.ty && <span style={nvPill(nvStg(b.ty))}>{b.ty}</span>}</div><span style={{ fontSize: m ? 17 : 19, fontWeight: 700, lineHeight: 1.25, color: t.text.primary, overflowWrap: 'anywhere' }}>{agShort(x[0], x[1])}</span></div></div>{(x[4] || ZTAG[x[0]]) && <div style={{ padding: m ? '0 14px 8px' : '0 18px 10px', fontSize: 14, overflowWrap: 'anywhere' } as any}>{x[4] && <span style={{ color: t.text.secondary }}>{x[4]}</span>}{ZTAG[x[0]] ? <ZTags k={x[0]} /> : null}</div>}<Panel v={v2} m={m} day={b.bv[0]} inl /></div></NvModal>; })();
@@ -3703,7 +3772,7 @@ function Itogi({ m, peek }: { m: boolean; peek?: boolean }) {
     {fo && createPortal(<><div className="gd-fade" onClick={() => setFo(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(8,12,18,.5)', zIndex: 60 }} />
       <div className="gd-sheet" role="dialog" aria-label="Фильтры итогов" style={{ position: 'fixed', left: 10, right: 10, bottom: 'calc(10px + env(safe-area-inset-bottom, 0px))', maxHeight: 'calc(82vh - 10px)', borderRadius: 22, overflow: 'hidden', zIndex: 61, display: 'flex', flexDirection: 'column', background: t.bg.base, boxShadow: `inset 0 0 9px 0 ${nvMix(t.text.accent, 45)}, inset 0 0 0 1.5px ${nvMix(t.text.accent, 60)}, 0 0 22px 2px ${nvMix(t.text.accent, 30)}, 0 24px 60px rgba(0,0,0,.3)`, fontFamily: t.font.family }}>
         <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, padding: '14px 16px 6px' }}><b style={{ fontSize: 17, color: t.text.primary }}>Фильтры</b><span style={{ flex: 1 }} /><button type="button" onClick={() => { setZs([[], [], []]); setPer('d'); setPmk([]); setPyr([]); setAll(false); setRf('all'); }} style={{ border: 'none', background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 14, cursor: 'pointer' }}>Сбросить</button><button type="button" data-zclose="1" aria-label="Закрыть" onClick={() => setFo(false)} style={{ marginLeft: 6, width: 32, height: 32, border: 'none', borderRadius: 16, background: 'transparent', color: t.text.secondary, fontSize: 22, lineHeight: 1, cursor: 'pointer' }}>×</button></div>
-        <div style={{ overflowY: 'auto', flex: '1 1 auto', minHeight: 0, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 10 }}><div data-iperiod="1" style={{ ...nvBlk(), padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}><span style={{ fontSize: 13, fontWeight: 600, color: t.text.secondary }}>Период</span>{perSeg}{perPick}{(per === 'm' || per === 'y') && <span style={{ fontSize: 12.5, color: t.text.tertiary }}>Можно выбрать несколько — итоги суммируются</span>}</div>{([[0, 'Для кого'], [1, 'Тема'], [2, 'Что меняется']] as [number, string][]).map(([gi, gl]) => { const c = cntG(gi); const vs = Object.keys(c).sort((a, b) => c[b] - c[a] || a.localeCompare(b)); const top = vs.slice(0, 8); const shownT = fxp[gi] ? vs : vs.filter((v) => top.includes(v) || zs[gi].includes(v));
+        <div style={{ overflowY: 'auto', flex: '1 1 auto', minHeight: 0, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 10 }}><div data-iperiod="1" style={{ ...nvBlk(), padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}><span style={{ fontSize: 13, fontWeight: 600, color: t.text.secondary }}>Период</span>{perSeg}{m && !pOpen && per !== 'w' && <span data-isel="1" style={{ fontSize: 12.5, color: t.text.tertiary }}>Выбрано: {pp[4]}</span>}{perPick}{(per === 'm' || per === 'y') && <span style={{ fontSize: 12.5, color: t.text.tertiary }}>Можно выбрать несколько — итоги суммируются</span>}</div>{([[0, 'Для кого'], [1, 'Тема'], [2, 'Что меняется']] as [number, string][]).map(([gi, gl]) => { const c = cntG(gi); const vs = Object.keys(c).sort((a, b) => c[b] - c[a] || a.localeCompare(b)); const top = vs.slice(0, 8); const shownT = fxp[gi] ? vs : vs.filter((v) => top.includes(v) || zs[gi].includes(v));
           return <div key={gi} data-igroup={gi} style={{ ...nvBlk(), padding: '10px 12px' }}><div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}><span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: t.text.secondary }}>{gl}</span>{vs.length > shownT.length || fxp[gi] ? <button type="button" onClick={() => setFxp({ ...fxp, [gi]: !fxp[gi] })} style={{ border: 'none', background: 'transparent', padding: 0, color: t.text.accent, fontFamily: t.font.family, fontSize: 13, cursor: 'pointer' }}>{fxp[gi] ? 'свернуть' : `все ${vs.length}`}</button> : null}</div>
             <div data-itags="1" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{shownT.length ? shownT.map((v) => <ZChip key={v} t={t} on={zs[gi].includes(v)} pressed={zs[gi].includes(v)} l={v} n={c[v]} onClick={() => tog(gi, v)} />) : <span style={{ fontSize: 13, color: t.text.tertiary }}>Нет меток за период</span>}</div></div>; })}<div style={{ height: 4 }} /></div>
         <div style={{ padding: 12, flexShrink: 0, borderTop: `1px solid ${t.border.subtle}` }}><button type="button" onClick={() => setFo(false)} style={{ width: '100%', minHeight: 46, border: 'none', borderRadius: 12, background: t.text.accent, color: '#fff', fontFamily: t.font.family, fontSize: 16, fontWeight: 600, cursor: 'pointer' }}>{(() => { const q = sel.length, a = q % 10, b2 = q % 100; return `Показать ${q} ${a === 1 && b2 !== 11 ? 'законопроект' : a >= 2 && a <= 4 && (b2 < 12 || b2 > 14) ? 'законопроекта' : 'законопроектов'}`; })()}</button></div>
@@ -3777,7 +3846,7 @@ function calCks(): string[] { const n = new Date(); const st = new Set<string>([
 const calCnt = (k: string) => GDX && GDX.M.cnt[k] && !GDX.has(k) ? (() => { const c = GDX.M.cnt[k]; return (cof('gd') ? c.p : 0) + (cof('gov') ? c.g : 0) + new Set(Object.keys(c.o).filter(cof).flatMap((o) => c.o[o])).size; })() : (cof('gd') ? CAL.p.filter((x: any) => calCk(pd(x.d)) === k).length : 0) + (cof('gov') ? CAL.g.filter((x: any) => calCk(pd(x[0])) === k).length : 0) + new Set(ORG.filter((x: any) => cof(x.o) && calCk(pd(x.d)) === k).map((x: any) => x.d)).size;
 const AGSH: Record<string, string> = { '1291843-8': 'Больничные для иностранцев', '1205970-8': 'Сервис рассрочки', '1246473-8': 'Централизованная кадровая работа', '332027-8': 'Продажа вина через Почту России', '332033-8': 'Дистанционная продажа вина', '1327114-8': 'Архивное дело', '1249111-8': 'Ответственность почты за платежки', '1240307-8': 'Права на секреты производства' };
 let SHB: Record<string, string> | null = null;
-function agShort(bn: string, raw: string): string { if (!billNo(bn)) return raw; /* 14.11.2026: у пункта без номера законопроекта нет своего короткого названия (раньше подставлялось «Порядок работы» от процедурного голосования) */ if (!SHB) { SHB = {}; for (const d of Object.keys(DATA)) for (const l of DATA[d].split('\n')) { const p = l.split('|'); if (p[1] && SHORT[p[0]] && !SHB[p[1]]) SHB[p[1]] = SHORT[p[0]]; } } return SHB[bn] || AGSH[bn] || raw; }
+function agShort(bn: string, raw: string): string { if (!billNo(bn)) return raw; /* 14.11.2026: у пункта без номера законопроекта нет своего короткого названия (раньше подставлялось «Порядок работы» от процедурного голосования) */ if (!SHB) { SHB = {}; for (const d of Object.keys(DATA)) for (const l of DATA[d].split('\n')) { const p = l.split('|'); if (p[1] && SHORT[p[0]] && !SHB[p[1]] && !/таб\./.test(p[3] || '')) SHB[p[1]] = SHORT[p[0]]; /* 17.11.2026: название законопроекта не берется от голосования по таблице поправок */ } } return SHB[bn] || AGSH[bn] || raw; }
 function billVote(bn: string, pref?: string): [string, string] | null { if (!billNo(bn)) return null; const f = (d: string) => { const l = (DATA[d] || '').split('\n').find((x) => x.split('|')[1] === bn); return l ? [d, l.split('|')[0]] as [string, string] : null; }; if (pref) return f(pref); for (const d of [...DAYS].reverse()) { const r = f(d); if (r) return r; } return null; }
 const RD: Record<string, string> = { '1-е': '1-е чтение', '2-е': '2-е чтение', '3-е': '3-е чтение', '2-е, поправки': '2-е чтение', 'отклонение': 'отклонение', 'ратификация': 'ратификация' };
 const RSTAT: Record<string, number> = {};
