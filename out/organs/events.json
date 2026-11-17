@@ -56,6 +56,33 @@
   "x": "Зарегистрирован Минюстом 16.11.2026 № 89148"
  },
  {
+  "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40758-minfin_rossii_prodolzhaet_dialog_s_professionalnymi_uchastnikami_rynka_tsennykh_bumag#17.11.2026",
+  "o": "minfin",
+  "d": "17.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Минфин России продолжает диалог с профессиональными участниками рынка ценных бумаг",
+  "u": "https://minfin.gov.ru/ru/press-center/?id_4=40758-minfin_rossii_prodolzhaet_dialog_s_professionalnymi_uchastnikami_rynka_tsennykh_bumag"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611170026#17.11.2026",
+  "o": "gov",
+  "d": "17.11.2026",
+  "ty": "решение",
+  "k": "Распоряжение",
+  "t": "Распоряжение № 3406-р от 17.11.2026",
+  "u": "http://publication.pravo.gov.ru/document/0001202611170026"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611170024#17.11.2026",
+  "o": "gov",
+  "d": "17.11.2026",
+  "ty": "решение",
+  "k": "Постановление",
+  "t": "Постановление № 1531 от 17.11.2026: О внесении изменений в некоторые акты Правительства Российской Федерации",
+  "u": "http://publication.pravo.gov.ru/document/0001202611170024"
+ },
+ {
   "id": "cbr:https://www.cbr.ru/Queries/UniDbQuery/File/90134/8627#17.11.2026",
   "o": "cbr",
   "d": "17.11.2026",
@@ -137,6 +164,16 @@
   "k": "Новость",
   "t": "Минфин России подвел итоги функционирования контрактной системы в сфере закупок за III квартал 2026 года",
   "u": "https://minfin.gov.ru/ru/press-center/?id_4=40754-minfin_rossii_podvel_itogi_funktsionirovaniya_kontraktnoi_sistemy_v_sfere_zakupok_za_iii_kvartal_2026_goda"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611170023#16.11.2026",
+  "o": "gov",
+  "d": "16.11.2026",
+  "ty": "решение",
+  "k": "Распоряжение",
+  "t": "Распоряжение № 3405-р от 16.11.2026: Об Аврамове С.В.",
+  "u": "http://publication.pravo.gov.ru/document/0001202611170023",
+  "x": "Опубликован 17.11.2026"
  },
  {
   "id": "gov:http://publication.pravo.gov.ru/document/0001202611160028#16.11.2026",
@@ -245,6 +282,16 @@
   "k": "Новость",
   "t": "В поправках Правительства ко второму чтению закона о федеральном бюджете распределены 97% межбюджетных трансфертов регионам",
   "u": "https://minfin.gov.ru/ru/press-center/?id_4=40752-v_popravkakh_pravitelstva_ko_vtoromu_chteniyu_zakona_o_federalnom_byudzhete_raspredeleny_97_mezhbyudzhetnykh_transfertov_regionam"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611170027#14.11.2026",
+  "o": "gov",
+  "d": "14.11.2026",
+  "ty": "решение",
+  "k": "Распоряжение",
+  "t": "Распоряжение № 3390-р от 14.11.2026",
+  "u": "http://publication.pravo.gov.ru/document/0001202611170027",
+  "x": "Опубликован 17.11.2026"
  },
  {
   "id": "gov:http://publication.pravo.gov.ru/document/0001202611160019#14.11.2026",
@@ -477,6 +524,16 @@
   "k": "Постановление",
   "t": "Постановление № 1513 от 14.11.2026: О внесении изменения в постановление Правительства Российской Федерации от 14 ноября 2024 г. № 1546",
   "u": "http://publication.pravo.gov.ru/document/0001202611140002"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611170025#14.11.2026",
+  "o": "gov",
+  "d": "14.11.2026",
+  "ty": "решение",
+  "k": "Постановление",
+  "t": "Постановление № 1511 от 14.11.2026: О внесении изменений в постановление Правительства Российской Федерации от 13 июля 2024 г. № 959",
+  "u": "http://publication.pravo.gov.ru/document/0001202611170025",
+  "x": "Опубликован 17.11.2026"
  },
  {
   "id": "gov:http://publication.pravo.gov.ru/document/0001202611160014#14.11.2026",
