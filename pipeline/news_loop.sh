@@ -18,8 +18,8 @@ hour() { TZ=Europe/Moscow date +%-H; }
 minute_of_day() { TZ=Europe/Moscow date +%-H:%-M | awk -F: '{print $1*60+$2}'; }
 in_hours() { local h; h=$(hour); [ "$h" -ge 8 ] && [ "$h" -lt 22 ]; }
 weekday() { TZ=Europe/Moscow date +%u; }
-# есть ли за последние 3 часа запуск workflow $1 в состоянии queued / in_progress / success (чтобы не запускать повторно)
-recent_run() { local since; since=$(date -u -d '3 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+# есть ли запуск workflow $1 (за последние 3 часа или с времени $2) в состоянии queued / in_progress / success (чтобы не запускать повторно)
+recent_run() { local since; since=${2:-$(date -u -d '3 hours ago' +%Y-%m-%dT%H:%M:%SZ)}
   local n; n=$(gh run list --workflow "$1" --created ">=$since" --json status,conclusion -q '[.[] | select(.status=="queued" or .status=="in_progress" or .conclusion=="success")] | length' 2>/dev/null || echo 0)
   [ "${n:-0}" -gt 0 ]; }
 kick() { # kick <workflow> <причина>
@@ -41,7 +41,8 @@ while :; do
     kick organs.yml "догон: сегодня еще не было" && ORG_DONE=$h; fi
   # ежедневный сбор: будни, с 21:17 МСК (расписание daily в GitHub задерживается), по разу
   if [ "$(weekday)" -le 5 ] && [ "$m" -ge $((21*60+17)) ] && [ "${DAILY_DONE:-}" != "$(TZ=Europe/Moscow date +%F)" ]; then
-    if recent_run daily.yml; then DAILY_DONE=$(TZ=Europe/Moscow date +%F); echo "news_loop: daily сегодня уже запущен/успешен"
+    # учитываем только запуски после 21:00 МСК: дневной ручной прогон не отменяет вечерний (голосования идут до вечера)
+    if recent_run daily.yml "$(date -u +%Y-%m-%dT18:00:00Z)"; then DAILY_DONE=$(TZ=Europe/Moscow date +%F); echo "news_loop: daily сегодня уже запущен/успешен"
     else kick daily.yml "ежедневный сбор, будни после 21:17" && DAILY_DONE=$(TZ=Europe/Moscow date +%F); fi
   fi
   FIRST=0
