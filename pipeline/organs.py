@@ -255,15 +255,18 @@ NOT_PARSED = {'mintrud_profstandards': 'проекты профстандарт�
 def collect(args):
     status, events = {}, []
     snaps = dict(s.split('=', 1) for s in args.snapshot)
+    only = {x.strip() for x in (args.only or '').split(',') if x.strip()}
     for key, org in (('pres_pravo', 'pres'), ('gov_pravo', 'gov')):
+        if only and org not in only: continue
         if args.offline:
             p = os.path.join(args.offline, f'pravo_api_{org}.json')
             if not os.path.exists(p): status[key] = {'url': SOURCES[key], 'status': 'no-fixture'}; continue
             got, st = parse_pravo_api(open(p).read(), org), 'offline'
         else:
-            got, st = collect_pravo_api(key, org)
+            got, st = collect_pravo_api(key, org, pages=args.pages)
         status[key] = {'url': SOURCES[key], 'status': st, 'n': len(got)}; events += got
         if st not in ('ok', 'offline'): C.log('organs.log', f'{key} {st}')
+    if only: return events, status  # 17.11.2026: --only — остальные источники (СФ, ЦБ, министерства) не опрашиваются и не меняются
     for key, fn in PARSERS.items():
         src = SOURCES[key]
         if key in snaps:
@@ -301,6 +304,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument('--day'); ap.add_argument('--from', dest='frm'); ap.add_argument('--to')
     ap.add_argument('--snapshot', action='append', default=[]); ap.add_argument('--offline')
+    ap.add_argument('--only', help='17.11.2026: собирать только указанное, через запятую: pres (указы Президента), gov (акты Правительства); остальные источники не трогаются')
+    ap.add_argument('--pages', type=int, default=6, help='сколько страниц по 100 документов листать у API publication.pravo.gov.ru (для длинного окна — больше)')
     ap.add_argument('--embed', action='store_true'); ap.add_argument('--ahead', type=int, default=3, help='дней вперед для объявленных заседаний')
     args = ap.parse_args(argv)
     today = dt.datetime.now(MSK).date()

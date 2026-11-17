@@ -181,7 +181,7 @@ const ics = (name, evs) => ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//kalenda
   ...evs.flatMap((e) => ['BEGIN:VEVENT', fold(`UID:${e.uid}@kalendar-zakonov`), `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${ymd(e.d)}`, `DTEND;VALUE=DATE:${nextDay(e.d)}`, fold(`SUMMARY:${icsEsc(e.s)}`), fold(`DESCRIPTION:${icsEsc(e.x)}`), ...(e.u ? [fold(`URL:${e.u}`)] : []), 'TRANSP:TRANSPARENT', 'END:VEVENT']),
   'END:VCALENDAR'].join('\r\n') + '\r\n';
 // постоянный номер закона — тот же расчёт, что lawId в src/canvas.tsx (FNV-1a от даты, реквизитов и названия)
-const lawId = (x) => { let h = 0x811c9dc5; for (const ch of `${x.d}|${x.law || ''}|${x.title || ''}`) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
+const lawId = (x) => { if (x.lid) return String(x.lid); /* 17.11.2026: как в canvas — заголовок можно менять без смены адреса */ let h = 0x811c9dc5; for (const ch of `${x.d}|${x.law || ''}|${x.title || ''}`) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
 // только официальные источники (правило проекта): *.gov.ru, kremlin.ru, government.ru, cbr.ru — тот же список, что isOff в canvas.tsx
 const isOff = (u) => { const h = String(u || '').replace(/^https?:\/\//i, '').split(/[/?#]/)[0].toLowerCase().replace(/^www\./, ''); return /\.gov\.ru$/.test(h) || h === 'kremlin.ru' || h === 'government.ru' || h === 'cbr.ru'; };
 // ссылка события — официальный источник закона (kremlin.ru, pravo.gov.ru, duma.gov.ru…), если его нет — поиск закона по номеру на kremlin.ru

@@ -8,6 +8,15 @@ on:
   schedule:
     - cron: '13 7,10,13,16 * * *'   # UTC: 10:13, 13:13, 16:13, 19:13 МСК
   workflow_dispatch:
+    inputs:
+      from:
+        description: 'Длинный сбор: с какой даты (ДД.ММ.ГГГГ). Пусто — обычные 7 дней'
+        required: false
+        default: ''
+      only:
+        description: 'Только указанное, через запятую: pres (указы Президента) или gov (акты Правительства). Пусто — всё'
+        required: false
+        default: ''
 permissions:
   contents: write
 concurrency:
@@ -41,9 +50,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Сбор органов (pipeline/organs.py)
+        env:
+          IN_FROM: ${{ github.event.inputs.from }}
+          IN_ONLY: ${{ github.event.inputs.only }}
         run: |
-          FROM="$(date -d '7 days ago' +%d.%m.%Y)"; TO="$(date +%d.%m.%Y)"
-          cd pipeline && python3 organs.py --from "$FROM" --to "$TO" --embed 2>&1 | tee ../organs.log
+          FROM="$(date -d '7 days ago' +%d.%m.%Y)"; TO="$(date +%d.%m.%Y)"; XARGS=()
+          # 17.11.2026: длинный сбор вручную (например, указы Президента с 1 октября): даты и «только» — из полей запуска, в команду как аргументы
+          [[ "$IN_FROM" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{4}$ ]] && { FROM="$IN_FROM"; XARGS+=(--pages 60); }
+          [[ "$IN_ONLY" =~ ^(pres|gov)(,(pres|gov))?$ ]] && XARGS+=(--only "$IN_ONLY")
+          cd pipeline && python3 organs.py --from "$FROM" --to "$TO" "${XARGS[@]}" --embed 2>&1 | tee ../organs.log
           cd .. && python3 pipeline/strip_code_only.py && node pipeline/split_data.mjs
       - name: Проверка схемы данных
         run: node pipeline/validate_data.mjs

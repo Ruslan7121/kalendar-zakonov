@@ -3415,7 +3415,7 @@ for (const k in LAWS_FIX) for (const i in LAWS_FIX[k]) Object.assign(LAWS.months
 const LKEYS = Object.keys(LAWS.months).sort((a, b) => (a.slice(3) + a.slice(0, 2)).localeCompare(b.slice(3) + b.slice(0, 2)));
 const LCUR = (() => { const n = new Date(); return `${String(n.getMonth() + 1).padStart(2, '0')}.${n.getFullYear()}`; })();
 /* 14.11.2026: постоянный номер закона (FNV-1a от даты, реквизитов и названия; тот же расчёт в web/extras.mjs) — для ссылки на карточку ?tab=l&law=… и файла ics/law/<номер>.ics */
-const lawId = (x: any) => { let h = 0x811c9dc5; for (const ch of `${x.d}|${x.law || ''}|${x.title || ''}`) { h ^= ch.codePointAt(0)!; h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
+const lawId = (x: any) => { if (x.lid) return String(x.lid) /* 17.11.2026: заголовок закона можно менять без смены адреса его карточки */; let h = 0x811c9dc5; for (const ch of `${x.d}|${x.law || ''}|${x.title || ''}`) { h ^= ch.codePointAt(0)!; h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
 /* 14.11.2026: ссылки закона — только официальные; если в данных их нет, вместо главной страницы портала — поиск закона по номеру
    на kremlin.ru (тот же поиск, по которому pipeline/laws_src.py находит прямую ссылку kremlin.ru/acts/bank/<id> при ежедневном сборе) */
 const lawSearch = (x: any) => { const n = /№\s*(\d+-ФЗ)/.exec(x.law || ''); return n ? 'http://kremlin.ru/acts/bank/search?query=' + encodeURIComponent('№ ' + n[1]) : ''; };
