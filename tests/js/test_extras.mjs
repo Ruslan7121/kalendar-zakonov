@@ -64,7 +64,8 @@ try {
   }
   // 14.11.2026: у каждого закона «Вступают в силу» свой файл ics/law/<lawId>.ics (кнопка «Добавить в календарь»), в событии — ссылка на официальный источник
   const LAWS = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'core.json'), 'utf8')).LAWS || { months: {} };
-  const lawId = (x) => { let h = 0x811c9dc5; for (const ch of `${x.d}|${x.law || ''}|${x.title || ''}`) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
+  // 17.11.2026: необязательное поле lid закрепляет адрес карточки, когда заголовок закона меняется (312-ФЗ) — эталон учитывает его, как canvas.tsx и web/extras.mjs
+  const lawId = (x) => { if (x.lid) return String(x.lid); let h = 0x811c9dc5; for (const ch of `${x.d}|${x.law || ''}|${x.title || ''}`) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
   const LL = Object.values(LAWS.months).flat().filter((x) => x && x.d && x.title); const lids = LL.map(lawId);
   assert.equal(new Set(lids).size, lids.length, 'lawId повторяется у разных законов');
   for (const x of LL) assert.equal(T.lawId(x), lawId(x), `lawId в canvas.tsx и web/extras.mjs расходятся: ${x.title}`);
