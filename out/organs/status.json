@@ -1,5 +1,5 @@
 {
- "run": "17.11.2026 13:15 МСК",
+ "run": "17.11.2026 16:18 МСК",
  "window": [
   "10.11.2026",
   "17.11.2026"
@@ -24,7 +24,7 @@
   "cbr_events": {
    "url": "https://www.cbr.ru/rss/eventrss",
    "status": "ok",
-   "n": 7
+   "n": 6
   },
   "mintrud_docs": {
    "url": "https://mintrud.gov.ru/document/rss",
@@ -49,7 +49,7 @@
   "minfin_pravo": {
    "url": "http://publication.pravo.gov.ru/documents/foiv283/monthly",
    "status": "ok",
-   "n": 9
+   "n": 10
   },
   "sf_meetings": {
    "url": "http://council.gov.ru/activity/meetings/",
@@ -76,6 +76,6 @@
    "why": "реестр регистрации НПА (publication.pravo.gov.ru, pravo.minjust.ru) — с этой машины нет соединения/HTTP 500"
   }
  },
- "new": 3,
- "total": 285
+ "new": 1,
+ "total": 286
 }
