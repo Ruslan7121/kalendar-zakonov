@@ -124,6 +124,24 @@
   "u": "https://minfin.gov.ru/ru/press-center/?id_4=40761-gosduma_prinyala_v_pervom_chtenii_zakonoproekt_o_rasshirenii_lgotnogo_poryadka_rascheta_sroka_vladeniya_zhilem"
  },
  {
+  "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40763-gosduma_podderzhala_v_pervom_chtenii_zakonoproekt_napravlennyi_na_dalneishuyu_tsifrovizatsiyu_byudzhetnykh_protsedur#18.11.2026",
+  "o": "minfin",
+  "d": "18.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Госдума поддержала в первом чтении законопроект, направленный на дальнейшую цифровизацию бюджетных процедур",
+  "u": "https://minfin.gov.ru/ru/press-center/?id_4=40763-gosduma_podderzhala_v_pervom_chtenii_zakonoproekt_napravlennyi_na_dalneishuyu_tsifrovizatsiyu_byudzhetnykh_protsedur"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611180028#18.11.2026",
+  "o": "gov",
+  "d": "18.11.2026",
+  "ty": "решение",
+  "k": "Распоряжение",
+  "t": "Распоряжение № 3408-р от 18.11.2026",
+  "u": "http://publication.pravo.gov.ru/document/0001202611180028"
+ },
+ {
   "id": "cbr:https://www.cbr.ru/Crosscut/LawActs/File/12279#18.11.2026",
   "o": "cbr",
   "d": "18.11.2026",
@@ -227,6 +245,16 @@
   "u": "https://minfin.gov.ru/ru/press-center/?id_4=40759-anton_siluanov_tovarooborot_rossii_i_kitaya_v_2026_godu_dostignet_rekordnogo_urovnya"
  },
  {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611180033#17.11.2026",
+  "o": "gov",
+  "d": "17.11.2026",
+  "ty": "решение",
+  "k": "Распоряжение",
+  "t": "Распоряжение № 3407-р от 17.11.2026",
+  "u": "http://publication.pravo.gov.ru/document/0001202611180033",
+  "x": "Опубликован 18.11.2026"
+ },
+ {
   "id": "gov:http://publication.pravo.gov.ru/document/0001202611170026#17.11.2026",
   "o": "gov",
   "d": "17.11.2026",
@@ -234,6 +262,16 @@
   "k": "Распоряжение",
   "t": "Распоряжение № 3406-р от 17.11.2026",
   "u": "http://publication.pravo.gov.ru/document/0001202611170026"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611180027#17.11.2026",
+  "o": "gov",
+  "d": "17.11.2026",
+  "ty": "решение",
+  "k": "Постановление",
+  "t": "Постановление № 1532 от 17.11.2026: О принятии Соглашения об учреждении Всемирной организации сотрудничества по искусственному интеллекту",
+  "u": "http://publication.pravo.gov.ru/document/0001202611180027",
+  "x": "Опубликован 18.11.2026"
  },
  {
   "id": "gov:http://publication.pravo.gov.ru/document/0001202611170024#17.11.2026",
@@ -469,6 +507,16 @@
   "k": "Постановление",
   "t": "Постановление № 1528 от 16.11.2026: О внесении изменений в постановление Правительства Российской Федерации от 30 июня 2021 г. № 1064",
   "u": "http://publication.pravo.gov.ru/document/0001202611160015"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611180029#16.11.2026",
+  "o": "gov",
+  "d": "16.11.2026",
+  "ty": "решение",
+  "k": "Постановление",
+  "t": "Постановление № 1525 от 16.11.2026: О внесении изменений в постановление Правительства Российской Федерации от 29 декабря 2023 г. № 2394",
+  "u": "http://publication.pravo.gov.ru/document/0001202611180029",
+  "x": "Опубликован 18.11.2026"
  },
  {
   "id": "gov:http://publication.pravo.gov.ru/document/0001202611160032#16.11.2026",
