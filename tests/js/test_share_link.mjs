@@ -20,7 +20,7 @@ for (const d of Object.keys(T.DATA)) for (const l of (T.DATA[d] || '').split('\n
   const q = new URL(u); assert.deepEqual([...q.searchParams.keys()], ['d', 'v']); assert.equal(q.hash, '');
   // 15.11.2026: «Поделиться» — страница с превью v/<id>/ (голосование по законопроекту) или прямой shareLink (процедурное)
   const c = T.cardLink(d, id); const f = l.split('|');
-  if (f.length >= 6 && /^\d+-\d+$/.test(f[1])) assert.equal(c, `https://ruslan7121.github.io/kalendar-zakonov/v/${id}/`); else assert.equal(c, u);
+  if (f.length >= 6 && /^\d+-\d+$/.test(f[1])) assert.equal(c, `https://ruslan7121.github.io/kalendar-zakonov/v/${id}/?p=2`); else assert.equal(c, u);
   n++;
 }
 assert.ok(n > 300, `мало голосований для проверки ссылок: ${n}`);
