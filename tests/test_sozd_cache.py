@@ -83,8 +83,22 @@ note_ok[0] = True
 assert B.one(k2, '11.11.2026', '2') == 'ok' and not B.needs_fetch(k2)
 # 14. скан без текста: повтор не раньше TTL
 k3 = '1000012-8'
-json.dump({'n': k3, 'note': '\x0c', 'status': 'note_unreadable', 'tried_at': time.strftime('%Y-%m-%d %H:%M:%S')}, open(J(k3), 'w'))
+json.dump({'n': k3, 'note': '\x0c', 'status': 'note_unreadable', 'fb': 1, 'tried_at': time.strftime('%Y-%m-%d %H:%M:%S')}, open(J(k3), 'w'))
 assert not B.needs_fetch(k3)
-json.dump({'n': k3, 'note': '', 'status': 'note_unreadable', 'tried_at': '2026-01-01 00:00:00'}, open(J(k3), 'w'))
+# 18.11.2026: если запасные документы (текст законопроекта, заключение комитета) еще не пробовали — повтор сразу
+json.dump({'n': k3, 'note': '', 'status': 'note_unreadable', 'tried_at': time.strftime('%Y-%m-%d %H:%M:%S')}, open(J(k3), 'w'))
 assert B.needs_fetch(k3)
+json.dump({'n': k3, 'note': '', 'status': 'note_unreadable', 'fb': 1, 'tried_at': '2026-01-01 00:00:00'}, open(J(k3), 'w'))
+assert B.needs_fetch(k3)
+# 15. 18.11.2026: записка — скан, но есть текст законопроекта к первому чтению → берем его (note_kind), запись полная
+k4 = '1000013-8'
+HTML4 = '<h1>Законопроект № 1000013-8</h1><a href="/download/aaa"><div>Пояснительная записка</div></a><a href="/download/bbb"><div>Текст законопроекта, подготовленного к рассмотрению Государственной Думой в первом чтении (Комитет)</div></a>'
+_ls, _fr = B.load_sozd, B.fetch_retry
+B.load_sozd = lambda n, refresh=False: (HTML4, 'fetched')
+def fr4(url, out, deadline=90, tries=3):
+    docx(out, '' if url.endswith('/aaa') else 'Текст законопроекта: статья 1'); return True
+B.fetch_retry = fr4
+assert B.one(k4, '17.11.2026', '5') == 'ok'
+r = json.load(open(J(k4))); assert r['status'] == 'ok' and r['note_kind'] == 'текст законопроекта к первому чтению' and 'статья 1' in r['note'] and r['fb'] == 1 and not B.needs_fetch(k4)
+B.load_sozd, B.fetch_retry = _ls, _fr
 print('test_sozd_cache: OK')
