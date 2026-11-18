@@ -7,6 +7,7 @@ HTML sozd — единый кэш sozd_cache ($GD_DUMA/bills/<номер>.html, 
 Повтор (пункт 6): JSON без непустой записки или со status != 'ok' перезапрашивается (note_fail/sozd_fail — каждый прогон,
 note_unreadable/no_note — не чаще раза в SOZD_TTL_HOURS);
 полная запись не трогается; уже полученный текст записки неудачной загрузкой не затирается.
+запасные документы (FALLBACK) при скане записки: note_kind в записи; fb=1 — уже пробовали.
 status: ok | note_fail (не скачалась) | note_unreadable (скан) | no_note (нет на sozd) | sozd_fail.
 Запуск: python3 bills.py [DD.MM.YYYY ...]   (без аргументов — все дни из canvas)
          python3 bills.py --one 123456-8 [--force]   (ручная догрузка одного; --force — мимо TTL)"""
@@ -22,6 +23,11 @@ WORKERS = int(os.environ.get('BILLS_WORKERS', '10'))
 MIN_GAP = float(os.environ.get('BILLS_GAP', '0.12'))
 _lock = threading.Lock()
 _last = [0.0]
+
+# запасные документы (подпись файла на sozd) по порядку предпочтения
+FALLBACK = [('текст законопроекта к первому чтению', r'Текст законопроекта, подготовленного к рассмотрению'),
+            ('текст внесенного законопроекта', r'Текст внесенного законопроекта|Текст законопроекта, внесенного'),
+            ('заключение ответственного комитета', r'Заключение ответственного комитета')]
 
 def note_text(path):
     b = open(path, 'rb').read(4)
@@ -71,6 +77,8 @@ def needs_fetch(n, force=False):
         return False
     # скан без текстового слоя / записки на sozd нет: повтор не чаще раза в SOZD_TTL_HOURS (страница успеет обновиться);
     # note_fail, sozd_fail и старые записи без status — на каждом прогоне
+    if rec.get('status') in ('note_unreadable', 'no_note') and not rec.get('fb'):
+        return True  # запасные документы еще не пробовали
     if rec.get('status') in ('note_unreadable', 'no_note') and rec.get('tried_at'):
         try:
             return time.time() - time.mktime(time.strptime(rec['tried_at'], '%Y-%m-%d %H:%M:%S')) >= S.TTL_OK
@@ -110,6 +118,7 @@ def one(n, day, vid, force=False):
     dl = [(u, C.text(a)) for u, a in re.findall(r'href="(/download/[^"]+)"[^>]*>(.{0,3000}?)</a>', src, re.S)]
     pz = next((u for u, a in dl if 'ояснительн' in a), None)
     status = 'ok'
+    fb_done = False
     if pz:
         f = f'/tmp/pz_{n}.bin'
         rec['note_url'] = 'https://sozd.duma.gov.ru' + pz
@@ -124,6 +133,22 @@ def one(n, day, vid, force=False):
     else:
         status = 'no_note'
         C.log('bills_fail.log', f'{day} {vid} {n}: на sozd нет пояснительной записки (sozd: {st})')
+    # 18.11.2026: записка — скан или ее нет → берем другие официальные документы той же карточки sozd:
+    # текст законопроекта к первому чтению, внесенный текст, заключение ответственного комитета
+    if status in ('note_unreadable', 'no_note'):
+        fb_done = True
+        for kind, pat in FALLBACK:
+            u = next((u for u, a in dl if re.search(pat, a, re.I) and u != pz), None)
+            if not u:
+                continue
+            f = f'/tmp/fb_{n}.bin'
+            if not fetch_retry('https://sozd.duma.gov.ru' + u, f, 150, 2):
+                continue
+            tx = note_text(f)[:60000]
+            if tx.strip():
+                rec['note'], rec['note_url'], rec['note_kind'] = tx, 'https://sozd.duma.gov.ru' + u, kind
+                C.log('bills_fail.log', f'{day} {vid} {n}: записка не читается, взят документ «{kind}»')
+                break
     # не затирать уже полученный официальный текст неудачной/пустой загрузкой
     if note_ok(old) and not note_ok(rec):
         rec['note'], rec['note_url'] = old['note'], old.get('note_url', '')
@@ -132,6 +157,10 @@ def one(n, day, vid, force=False):
         rec['title'] = old['title']
     rec['status'] = status if not note_ok(rec) else 'ok'
     rec['sozd'] = st
+    if fb_done or old.get('fb'):
+        rec['fb'] = 1
+    if note_ok(old) and not rec.get('note_kind') and old.get('note_kind') and rec['note'] == old.get('note'):
+        rec['note_kind'] = old['note_kind']
     rec['tried_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
     rec['amend'] = bool(re.match(r'О внесении изменени', rec['title'] or ''))
     json.dump(rec, open(out, 'w'), ensure_ascii=False, indent=1)
