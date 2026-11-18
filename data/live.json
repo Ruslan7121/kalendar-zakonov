@@ -1,5 +1,5 @@
 {
-"upd": "18.11.2026 20:21",
+"upd": "18.11.2026 20:22",
 "status": {
 "gd": "ok n=12",
 "gov": "ok n=20",
@@ -7,7 +7,9 @@
 "cbr": "ok n=12",
 "minfin": "ok n=18",
 "mintrud": "ok n=12",
-"minjust": "ok n=20"
+"minjust": "ok n=20",
+"minzdrav": "ok n=10",
+"economy": "blocked:нет соединения (curl 28)"
 },
 "items": [
 {
@@ -277,6 +279,20 @@
 "tm": ""
 },
 {
+"o": "minzdrav",
+"d": "18.11.2026",
+"t": "Михаил Мурашко: Взаимодействие России и Китая в здравоохранении находится на самом высоком уровне за последние годы",
+"u": "https://minzdrav.gov.ru/news/2026/11/18/33419-mihail-murashko-vzaimodeystvie-rossii-i-kitaya-v-zdravoohranenii-nahoditsya-na-samom-vysokom-urovne-za-poslednie-gody",
+"tm": ""
+},
+{
+"o": "minzdrav",
+"d": "18.11.2026",
+"t": "Михаил Мурашко направил приветствие участникам Всероссийского слета студенческих отрядов",
+"u": "https://minzdrav.gov.ru/news/2026/11/18/33423-mihail-murashko-napravil-privetstvie-uchastnikam-vserossiyskogo-sleta-studencheskih-otryadov",
+"tm": ""
+},
+{
 "o": "minfin",
 "d": "17.11.2026",
 "tm": "21:10",
@@ -520,6 +536,13 @@
 "tm": "07:40",
 "t": "Вячеслав Володин рассказал, какой срок тюремного заключения может грозить главе Евродипломатии Каллас",
 "u": "http://duma.gov.ru/news/64500/"
+},
+{
+"o": "minzdrav",
+"d": "17.11.2026",
+"t": "Евгений Шляхто: Людям с сердечно-сосудистыми заболеваниями важно ежегодно вакцинироваться против гриппа",
+"u": "https://minzdrav.gov.ru/news/2026/11/17/33420-evgeniy-shlyahto-lyudyam-s-serdechno-sosudistymi-zabolevaniyami-vazhno-ezhegodno-vaktsinirovatsya-protiv-grippa",
+"tm": ""
 },
 {
 "o": "gov",
@@ -779,6 +802,13 @@
 "tm": "08:05",
 "t": "Вячеслав Володин: планируем 25 ноября в рамках «правительственного часа», посвященного инфраструктуре для жизни, обсудить вопросы тарифов в сфере ЖКХ и стоимости жилья",
 "u": "http://duma.gov.ru/news/64486/"
+},
+{
+"o": "minzdrav",
+"d": "14.11.2026",
+"t": "Михаил Мурашко открыл новый корпус детской больницы в Ставропольском крае",
+"u": "https://minzdrav.gov.ru/news/2026/11/14/33398-mihail-murashko-otkryl-novyy-korpus-detskoy-bolnitsy-v-stavropolskom-krae",
+"tm": ""
 },
 {
 "o": "minfin",
