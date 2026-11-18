@@ -1,5 +1,5 @@
 // 18.11.2026: окно дня «Работа госорганов» — органы собраны в группы (вариант 2, решение владельца), 390 px и 1366 px:
-//  — день 17.11 открывается группами, в строке дня «Парламент N · Президент и Правительство N …»;
+//  — день 17.11 открывается группами, в строке дня короткие названия без цифр «Парламент · Власть · Экономика …»;
 //  — все группы закрыты (сам день ничего не разворачивает); нажатие на другую открывает ее и закрывает прежнюю;
 //  — в сетке календаря отметки идут по группам (data-mk). Каркас — как в test_search_url.browser.mjs; без Chrome — SKIP.
 import assert from 'node:assert/strict';
@@ -48,7 +48,7 @@ try {
       return { s, close: () => cmd('Target.closeTarget', { targetId }) }; };
     { const p = await open('/?tab=c');
       const hdr = await until(p.s, `!!document.querySelector('[data-day="17.11.2026"] [data-dayhdr]')`); chk(hdr, 'нет дня 17.11.2026'); 
-      const line = await ev(p.s, `(document.querySelector('[data-day="17.11.2026"] [data-dayorgs]') || {}).textContent`); chk(/Парламент \d+ · Президент и Правительство \d+/.test(line || ''), `строка дня: «${line}»`);
+      const line = await ev(p.s, `(document.querySelector('[data-day="17.11.2026"] [data-dayorgs]') || {}).textContent`); chk(/^Парламент · Власть · Экономика/.test(line || '') && !/\d/.test(line || ''), `строка дня: «${line}»`);
       await ev(p.s, `document.querySelector('[data-day="17.11.2026"] [data-dayhdr]').click()`); await sleep(700);
       const st = () => ev(p.s, `[...document.querySelectorAll('[data-day="17.11.2026"] [data-grphdr]')].map((h) => h.getAttribute('aria-expanded') === 'true' ? 1 : 0).join('')`);
       const s0 = await st(); chk(/^0+$/.test(s0), `день открылся с уже развернутой группой (разворачивать не должно): ${s0}`);
