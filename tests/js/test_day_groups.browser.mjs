@@ -1,6 +1,6 @@
 // 18.11.2026: окно дня «Работа госорганов» — органы собраны в группы (вариант 2, решение владельца), 390 px и 1366 px:
 //  — день 17.11 открывается группами, в строке дня «Парламент N · Президент и Правительство N …»;
-//  — первая непустая группа открыта, остальные закрыты; нажатие на другую открывает ее и закрывает прежнюю;
+//  — все группы закрыты (сам день ничего не разворачивает); нажатие на другую открывает ее и закрывает прежнюю;
 //  — в сетке календаря отметки идут по группам (data-mk). Каркас — как в test_search_url.browser.mjs; без Chrome — SKIP.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -51,9 +51,13 @@ try {
       const line = await ev(p.s, `(document.querySelector('[data-day="17.11.2026"] [data-dayorgs]') || {}).textContent`); chk(/Парламент \d+ · Президент и Правительство \d+/.test(line || ''), `строка дня: «${line}»`);
       await ev(p.s, `document.querySelector('[data-day="17.11.2026"] [data-dayhdr]').click()`); await sleep(700);
       const st = () => ev(p.s, `[...document.querySelectorAll('[data-day="17.11.2026"] [data-grphdr]')].map((h) => h.getAttribute('aria-expanded') === 'true' ? 1 : 0).join('')`);
-      const s1 = await st(); chk(/^1(0)+$/.test(s1), `открыта не только первая группа: ${s1}`);
-      await ev(p.s, `document.querySelectorAll('[data-day="17.11.2026"] [data-grphdr]')[1].click()`); await sleep(700);
+      const s0 = await st(); chk(/^0+$/.test(s0), `день открылся с уже развернутой группой (разворачивать не должно): ${s0}`);
+      await ev(p.s, `document.querySelectorAll('[data-day="17.11.2026"] [data-grphdr]')[0].click()`); await sleep(700);
+      const s1 = await st(); chk(/^10+$/.test(s1), `после нажатия на первую группу: ${s1}`);
+      await ev(p.s, `document.querySelectorAll('[data-day="17.11.2026"] [data-grphdr]')[1].click()`); await sleep(900);
       const s2 = await st(); chk(s2.startsWith('01') && !s2.slice(2).includes('1'), `после нажатия на вторую группу: ${s2}`);
+      const gone = await ev(p.s, `!document.querySelector('[data-day="17.11.2026"] [data-daygrp="par"] [data-grpbody]')`); chk(gone, 'прежняя группа не убрана сразу');
+      const hy = await ev(p.s, `Math.round(document.querySelector('[data-day="17.11.2026"] [data-daygrp="pg"]').getBoundingClientRect().top)`); chk(hy >= 0 && hy < 260, `заголовок открытой группы ушел с экрана: top=${hy}`);
       const mk = await ev(p.s, `new Set([...document.querySelectorAll('[data-mk]')].map((i) => i.getAttribute('data-mk'))).size`); chk(mk >= 2, `отметки сетки по группам: ${mk}`);
       rep.push(tag(`17.11: «${line}», открыта группа ${s1} → ${s2}, отметок-групп в сетке ${mk}`)); await p.close(); }
   }
