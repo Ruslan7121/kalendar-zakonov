@@ -1,7 +1,7 @@
 {
- "run": "18.11.2026 16:48 МСК",
+ "run": "18.11.2026 18:23 МСК",
  "window": [
-  "11.11.2026",
+  "04.11.2026",
   "18.11.2026"
  ],
  "ahead_to": "21.11.2026",
@@ -13,6 +13,46 @@
   },
   "gov_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=government",
+   "status": "ok",
+   "n": 200
+  },
+  "economy_pravo": {
+   "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=59ad7c35-7d14-424e-b305-f964615734bd",
+   "status": "ok",
+   "n": 100
+  },
+  "promtorg_pravo": {
+   "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=852b803d-4d5b-4ed1-aaca-03284c0bc35e",
+   "status": "ok",
+   "n": 100
+  },
+  "minzdrav_pravo": {
+   "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=a2b99d08-29c7-4a3f-901a-d1a7174428f8",
+   "status": "ok",
+   "n": 100
+  },
+  "mintrans_pravo": {
+   "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=d87efe50-9a6f-4ad5-aa06-452d4cd2e772",
+   "status": "ok",
+   "n": 100
+  },
+  "digital_pravo": {
+   "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=1ac1ee36-2621-4c4f-917f-9bffc35d4671",
+   "status": "ok",
+   "n": 100
+  },
+  "mvd_pravo": {
+   "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=ff850c93-e869-42ec-9547-a63dad38c204",
+   "status": "ok",
+   "n": 100
+  },
+  "mnr_pravo": {
+   "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=d67a404e-260a-4a5b-b340-d34558da8bd6",
+   "status": "ok",
+   "n": 100
+  },
+  "minstroy_pravo": {
+   "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=efa6da4b-4c1a-4fa8-8caf-860c17b205fd",
    "status": "ok",
    "n": 100
   },
@@ -38,8 +78,8 @@
   },
   "minfin_news": {
    "url": "https://minfin.gov.ru/ru/press-center/",
-   "status": "ok",
-   "n": 18
+   "status": "blocked:HTTP 503, страница ограничения доступа",
+   "n": 0
   },
   "minjust_events": {
    "url": "https://minjust.gov.ru/ru/events/list/",
@@ -49,7 +89,7 @@
   "minfin_pravo": {
    "url": "http://publication.pravo.gov.ru/documents/foiv283/monthly",
    "status": "ok",
-   "n": 11
+   "n": 12
   },
   "sf_meetings": {
    "url": "http://council.gov.ru/activity/meetings/",
@@ -58,7 +98,7 @@
   },
   "minfin_projects": {
    "url": "https://minfin.gov.ru/ru/document/npa_projects/",
-   "status": "ok (разбор не реализован)"
+   "status": "blocked:HTTP 503, страница ограничения доступа"
   },
   "mintrud_profstandards": {
    "url": "https://regulation.gov.ru/",
@@ -76,6 +116,6 @@
    "why": "реестр регистрации НПА (publication.pravo.gov.ru, pravo.minjust.ru) — с этой машины нет соединения/HTTP 500"
   }
  },
- "new": 1,
- "total": 302
+ "new": 105,
+ "total": 407
 }
