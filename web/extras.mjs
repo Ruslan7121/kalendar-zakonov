@@ -140,7 +140,7 @@ for (const b of ALL) for (const v of b.votes) {
   const body = `<script>location.replace(${JSON.stringify(to)})</script><div class="top"><span class="no">${esc(b.no)}</span>${v.read ? `<span>${esc(v.read)}</span>` : ''}<span class="st ${v.ok ? 'ok' : 'rej'}">${v.ok ? 'принят' : 'отклонен'}</span><span class="meta">${esc(hd(v.day))}</span></div>
 <h1>${esc(b.title)}</h1><p>За ${v.za}, против ${v.pr}, воздержались ${v.vz}, не голосовали ${v.ng}.</p>${b.sut.length ? `<div class="box">${b.sut.map((p) => `<p>${esc(p)}</p>`).join('')}</div>` : ''}
 <p><a href="${esc(to)}">Открыть карточку в календаре</a> · <a href="../../bill/${esc(b.no)}/">Страница законопроекта</a></p>`;
-  put(`v/${v.id}/index.html`, page({ title, desc, url: `${SITE}v/${v.id}/`, body, depth: 2 }).replace('<link rel="canonical"', '<meta name="robots" content="noindex"><link rel="canonical"'));
+  put(`v/${v.id}/index.html`, page({ title, desc, url: `${SITE}v/${v.id}/?p=2`, body, depth: 2 }).replace('<link rel="canonical"', '<meta name="robots" content="noindex"><link rel="canonical"'));
 }
 put('bill/index.html', page({ title: 'Все законопроекты', desc: `Законопроекты, по которым голосовала Госдума: ${ALL.length}.`, url: `${SITE}bill/`, depth: 1,
   body: `<h1>Все законопроекты</h1><p class="meta">${ALL.length} законопроектов, по которым есть голосования в календаре; последнее голосование — сверху.</p><div class="list">${ALL.map((b) => `<a class="row" href="${esc(b.no)}/"><span class="no">${esc(b.no)}</span> · ${esc(b.last.read || '')} · <span class="st ${b.last.ok ? 'ok' : 'rej'}">${b.last.ok ? 'принят' : 'отклонен'}</span> · <span class="meta">${esc(hd(b.last.day))}</span><b>${esc(b.title)}</b></a>`).join('')}</div>` }));
