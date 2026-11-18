@@ -106,4 +106,19 @@ _src = "const CAL: any = " + json.dumps({'p': [{'d': '17.11.2026', 'a': [['99999
 _ai = B.agenda_items(_src, [], set())
 assert [x[2] for x in _ai] == ['999991-8', '999992-8'] and _ai[0][:2] == ('17.11.2026', '0')
 assert B.agenda_items(_src, ['01.01.2026'], set()) == [] and [x[2] for x in B.agenda_items(_src, [], {'999991-8'})] == ['999992-8']
+# 17. 18.11.2026: единый сбор — сравнительная таблица, ФЭО, заключение комитета и список документов сохраняются у любой карточки; старая запись (v=1) перезапрашивается один раз без повторной загрузки записки
+k5 = '1000014-8'
+HTML5 = '<h1>Законопроект № 1000014-8</h1><a href="/download/n1"><div>Пояснительная записка</div></a><a href="/download/t1"><div>Сравнительная таблица к законопроекту</div></a><a href="/download/f1"><div>Финансово-экономическое обоснование</div></a><a href="/download/c1"><div>Заключение ответственного комитета (Комитет)</div></a>'
+B.load_sozd = lambda n, refresh=False: (HTML5, 'fetched')
+_calls = []
+def fr5(url, out, deadline=90, tries=3):
+    _calls.append(url); docx(out, {'n1': 'Записка', 't1': 'Было — стало', 'f1': 'Расходы нет', 'c1': 'Принять'}[url.rsplit('/', 1)[1]]); return True
+B.fetch_retry = fr5
+json.dump({'n': k5, 'day': '17.11.2026', 'vote': '9', 'title': 'Т', 'note': 'Старая записка', 'note_url': 'u', 'status': 'ok'}, open(J(k5), 'w'))
+assert B.needs_fetch(k5) and B.one(k5, '17.11.2026', '9') == 'ok'
+r = json.load(open(J(k5)))
+assert r['note'] == 'Старая записка' and not any(u.endswith('/n1') for u in _calls), 'записка не должна скачиваться заново'
+assert r['table'] == 'Было — стало' and r['fin'] == 'Расходы нет' and r['committee'] == 'Принять' and r['v'] == B.REC_V and len(r['docs']) == 4
+assert not B.needs_fetch(k5)
+B.load_sozd, B.fetch_retry = _ls, _fr
 print('test_sozd_cache: OK')

@@ -23,12 +23,20 @@ def has(key, vid, doc):
     return bool(BP.get(doc, {}).get('bs'))
 L = ['# TODO для бота', '', 'Писать только по выжимкам и официальным источникам. Без «ё» в карточках. Ничего не придумывать.', '']
 miss_s, miss_b = [], []
+def dinfo(n):
+    """18.11.2026: какие документы карточки уже скачаны (единый сбор): таблица, ФЭО, заключение комитета, вид текста."""
+    try: r = json.load(open(os.path.join(C.EXTR, 'bills', n + '.json')))
+    except (OSError, ValueError): return ''
+    t = [('таблица', 'table'), ('ФЭО', 'fin'), ('заключение комитета', 'committee')]
+    got = [a for a, k in t if (r.get(k) or '').strip()]
+    k = r.get('note_kind') or ('записка' if (r.get('note') or '').strip() else 'текста нет')
+    return f" · текст: {k}" + (f"; есть: {', '.join(got)}" if got else '')
 for d, vid, doc, q, rd in C.votes(src):
     ex = os.path.join(C.EXTR, 'bills', doc + '.json') if doc != '—' else ''
     ex = ex if ex and os.path.exists(ex) else '(выжимки нет — см. logs/bills_fail.log)' if doc != '—' else '—'
-    if not has('sut', vid, doc): miss_s.append(f'- [ ] {d} голосование {vid} ({doc}): sut, who — «{q[:90]}» · выжимка: {ex}')
+    if not has('sut', vid, doc): miss_s.append(f'- [ ] {d} голосование {vid} ({doc}): sut, who — «{q[:90]}» · выжимка: {ex}{dinfo(doc)}')
     if doc != '—' and q.startswith('О внесении изменени') and not has('bs', vid, doc):
-        miss_b.append(f'- [ ] {d} голосование {vid} ({doc}): bs — пары [«Что сейчас», «Что предлагалось изменить»] · выжимка: {ex}')
+        miss_b.append(f'- [ ] {d} голосование {vid} ({doc}): bs — пары [«Что сейчас», «Что предлагалось изменить»] · выжимка: {ex}{dinfo(doc)}')
 # 18.11.2026: законопроекты повестки без голосования («не рассматривались») — тоже нужна «Суть» (по записке или тексту законопроекта к 1-му чтению)
 _voted = {x[2] for x in C.votes(src)}
 try:
@@ -41,9 +49,12 @@ for _p in _cal.get('p', []):
         _n = _a[0] if _a else ''
         if not re.fullmatch(r'\d+-\d+', _n or '') or _n in _voted or _n in _seen: continue
         _seen.add(_n)
+        _t = (_a[4] if len(_a) > 4 and _a[4] else _a[1])
+        if _t.startswith('О внесении изменени') and not BP.get(_n, {}).get('bs'):
+            miss_b.append(f"- [ ] {_p['d']} не рассматривался ({_n}): bs — пары [«Что сейчас», «Что предлагалось изменить»] · выжимка: {os.path.join(C.EXTR, 'bills', _n + '.json')}{dinfo(_n)}")
         if not BP.get(_n, {}).get('sut'):
             _ex = os.path.join(C.EXTR, 'bills', _n + '.json')
-            miss_s.append(f"- [ ] {_p['d']} не рассматривался ({_n}): sut, who — «{(_a[4] if len(_a) > 4 and _a[4] else _a[1])[:90]}» · выжимка: {_ex if os.path.exists(_ex) else '(выжимки нет — запусти notes)'}")
+            miss_s.append(f"- [ ] {_p['d']} не рассматривался ({_n}): sut, who — «{(_a[4] if len(_a) > 4 and _a[4] else _a[1])[:90]}» · выжимка: {_ex if os.path.exists(_ex) else '(выжимки нет — запусти notes)'}{dinfo(_n)}")
 # 15.11.2026: процедурные голосования без документа (doc «—»: порядок работы, Счетная комиссия) текста не требуют — в TODO не идут;
 # постановления — отдельным разделом (по желанию); все списки — сначала свежие дни (бот успевает главное).
 _dk = lambda l: tuple(reversed(re.search(r'(\d\d)\.(\d\d)\.(\d{4})', l).groups()))
