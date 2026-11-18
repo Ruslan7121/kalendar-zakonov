@@ -34,11 +34,12 @@ def show(url, body, how):
 
 # 16.11.2026: --grep ШАБЛОН — для каждой страницы напечатать сырой HTML вокруг первых 4 совпадений (разметка элементов списка новостей);
 # --head — первые 2500 символов ответа (RSS). Ключи действуют на все адреса после них.
-ARGS = sys.argv[1:]; GREP = None; HEAD = False; FIND = None; URLS = []
+ARGS = sys.argv[1:]; GREP = None; HEAD = False; FIND = None; MANY = False; URLS = []
 i = 0
 while i < len(ARGS):
     if ARGS[i] == '--grep': GREP = ARGS[i + 1]; i += 2; continue
     if ARGS[i] == '--head': HEAD = True; i += 1; continue
+    if ARGS[i] == '--many': MANY = True; i += 1; continue  # 18.11.2026: --grep печатает до 80 совпадений, только сами совпадения
     if ARGS[i] == '--find': FIND = ARGS[i + 1]; i += 2; continue  # 18.11.2026: JSON-ответ — напечатать объекты, где любое строковое поле подходит под шаблон
     URLS.append(ARGS[i]); i += 1
 if GREP or HEAD or FIND:
@@ -57,6 +58,9 @@ if GREP or HEAD or FIND:
         if HEAD: print(body[:2500])
         if GREP:
             for n, m in enumerate(re.finditer(GREP, body)):
+                if MANY:
+                    if n >= 80: break
+                    print('  ', m.group(0)[:300]); continue
                 if n >= 4: break
                 print(f'--- совпадение {n + 1}:', re.sub(r'\s+', ' ', body[max(0, m.start() - 600):m.end() + 900]))
     sys.exit(0)
