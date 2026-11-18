@@ -83,12 +83,15 @@ note_ok[0] = True
 assert B.one(k2, '11.11.2026', '2') == 'ok' and not B.needs_fetch(k2)
 # 14. скан без текста: повтор не раньше TTL
 k3 = '1000012-8'
-json.dump({'n': k3, 'note': '\x0c', 'status': 'note_unreadable', 'fb': 1, 'tried_at': time.strftime('%Y-%m-%d %H:%M:%S')}, open(J(k3), 'w'))
+json.dump({'n': k3, 'note': '\x0c', 'status': 'note_unreadable', 'fb': 1, 'v': B.REC_V, 'tried_at': time.strftime('%Y-%m-%d %H:%M:%S')}, open(J(k3), 'w'))
 assert not B.needs_fetch(k3)
 # 18.11.2026: если запасные документы (текст законопроекта, заключение комитета) еще не пробовали — повтор сразу
 json.dump({'n': k3, 'note': '', 'status': 'note_unreadable', 'tried_at': time.strftime('%Y-%m-%d %H:%M:%S')}, open(J(k3), 'w'))
 assert B.needs_fetch(k3)
-json.dump({'n': k3, 'note': '', 'status': 'note_unreadable', 'fb': 1, 'tried_at': '2026-01-01 00:00:00'}, open(J(k3), 'w'))
+# запись старого формата (v<2) перезапрашивается один раз, даже со сканом и свежей попыткой
+json.dump({'n': k3, 'note': '', 'status': 'note_unreadable', 'fb': 1, 'tried_at': time.strftime('%Y-%m-%d %H:%M:%S')}, open(J(k3), 'w'))
+assert B.needs_fetch(k3)
+json.dump({'n': k3, 'note': '', 'status': 'note_unreadable', 'fb': 1, 'v': B.REC_V, 'tried_at': '2026-01-01 00:00:00'}, open(J(k3), 'w'))
 assert B.needs_fetch(k3)
 # 15. 18.11.2026: записка — скан, но есть текст законопроекта к первому чтению → берем его (note_kind), запись полная
 k4 = '1000013-8'
