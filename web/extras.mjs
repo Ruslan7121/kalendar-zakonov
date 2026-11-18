@@ -160,7 +160,7 @@ put('feed/gd.xml', rss('Календарь законов: голосовани�
 // 14.11.2026: ленты органов — feed/org-<орган>.xml: новости и документы Правительства, Совета Федерации, Банка России и министерств
 // (для «Моей ленты» из фильтров). Ссылки только официальные; новые сверху, до 100 материалов.
 const offU = (u) => /^https?:\/\/([a-z0-9-]+\.)*(gov\.ru|kremlin\.ru|government\.ru|cbr\.ru)(\/|$)/i.test(u || '');
-const ORGF = { gov: 'Правительство РФ', sf: 'Совет Федерации', cbr: 'Банк России', minfin: 'Минфин России', mintrud: 'Минтруд России', minjust: 'Минюст России' };
+const ORGF = { gov: 'Правительство РФ', sf: 'Совет Федерации', cbr: 'Банк России', minfin: 'Минфин России', mintrud: 'Минтруд России', minjust: 'Минюст России', economy: 'Минэкономразвития России', promtorg: 'Минпромторг России', minzdrav: 'Минздрав России', mintrans: 'Минтранс России', digital: 'Минцифры России', mvd: 'МВД России', mnr: 'Минприроды России', minstroy: 'Минстрой России' };
 const oItems = Object.fromEntries(Object.keys(ORGF).map((o) => [o, []]));
 for (const x of ORGA) if (oItems[x.o] && offU(x.u)) oItems[x.o].push({ d: x.d, t: x.st || x.t, x: x.sut || x.x || x.full || '', u: x.u, k: x.kind || x.k || '' });
 for (const [d, arr] of Object.entries(pick('SFN'))) for (const x of arr || []) if (offU(x.u)) oItems.sf.push({ d, t: x.st || x.t, x: x.sut || x.x || '', u: x.u, k: x.k || 'Новость' });
@@ -190,7 +190,7 @@ const ics = (name, evs) => ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//kalenda
 // постоянный номер закона — тот же расчёт, что lawId в src/canvas.tsx (FNV-1a от даты, реквизитов и названия)
 const lawId = (x) => { if (x.lid) return String(x.lid); /* 17.11.2026: как в canvas — заголовок можно менять без смены адреса */ let h = 0x811c9dc5; for (const ch of `${x.d}|${x.law || ''}|${x.title || ''}`) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
 // только официальные источники (правило проекта): *.gov.ru, kremlin.ru, government.ru, cbr.ru — тот же список, что isOff в canvas.tsx
-const isOff = (u) => { const h = String(u || '').replace(/^https?:\/\//i, '').split(/[/?#]/)[0].toLowerCase().replace(/^www\./, ''); return /\.gov\.ru$/.test(h) || h === 'kremlin.ru' || h === 'government.ru' || h === 'cbr.ru'; };
+const isOff = (u) => { const h = String(u || '').replace(/^https?:\/\//i, '').split(/[/?#]/)[0].toLowerCase().replace(/^www\./, ''); return /\.gov\.ru$/.test(h) || h === 'kremlin.ru' || h === 'government.ru' || h === 'cbr.ru' || h === 'xn--b1aew.xn--p1ai'; };
 // ссылка события — официальный источник закона (kremlin.ru, pravo.gov.ru, duma.gov.ru…), если его нет — поиск закона по номеру на kremlin.ru
 const lawSearch = (x) => { const n = /№\s*(\d+-ФЗ)/.exec(x.law || ''); return n ? 'http://kremlin.ru/acts/bank/search?query=' + encodeURIComponent('№ ' + n[1]) : ''; };
 const isAct = (u) => /kremlin\.ru\/acts\/bank\/\d+|publication\.pravo\.gov\.ru\/document\/\d+/.test(u || '');
@@ -232,7 +232,7 @@ const lawItem = (x) => { const due = +pd(x.d); const ts = Math.min(NOWMS, due - 
 // правила AUTOZ (слова в официальном названии и описании) берутся из src/canvas.tsx как есть, без копии. Только официальные ссылки.
 const CANV = fs.readFileSync(path.join(ROOT, 'src', 'canvas.tsx'), 'utf8');
 const AUTOZ = (() => { const a = CANV.indexOf('const AUTOZ: [number, string, RegExp][] = ['); if (a < 0) return []; const i = CANV.indexOf('= [', a) + 2; return new Function(`return ${CANV.slice(i, CANV.indexOf('\n];', i) + 2)}`)(); })();
-const CONN = { sf: 'Совет Федерации', gov: 'Правительство', pres: 'Президент', minfin: 'Минфин', mintrud: 'Минтруд', minjust: 'Минюст', cbr: 'Банк России' };
+const CONN = { sf: 'Совет Федерации', gov: 'Правительство', pres: 'Президент', minfin: 'Минфин', mintrud: 'Минтруд', minjust: 'Минюст', cbr: 'Банк России', economy: 'Минэкономразвития', promtorg: 'Минпромторг', minzdrav: 'Минздрав', mintrans: 'Минтранс', digital: 'Минцифры', mvd: 'МВД', mnr: 'Минприроды', minstroy: 'Минстрой' };
 const oTags = (x) => { const txt = [x.t, x.st, x.no, x.full, x.sut, x.x, x.who, x.kind, x.k, x.stt, CONN[x.o] || ''].filter((z) => typeof z === 'string').join(' ');
   const g = [[], [], []]; for (const [i, v, re] of AUTOZ) if (re.test(txt) && !g[i].includes(v)) g[i].push(v); if (!g[0].length) g[0].push('Все граждане'); return g; };
 const orgItem = (x) => { const ts = +pd(x.d) + 12 * 36e5; const k = x.kind || x.k || ''; return { t: `${ORGF[x.o]}: ${(k && k !== 'Новость' && k !== 'новость' ? k + ': ' : '') + (x.st || x.t)}`, l: x.u, g: `kalendar-zakonov:${x.o}:${x.u}#${x.d}`, ts, p: new Date(ts).toUTCString(),

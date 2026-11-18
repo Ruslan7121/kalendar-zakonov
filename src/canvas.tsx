@@ -2452,7 +2452,7 @@ const WORD = ['За', 'Против', 'Воздержались', 'Не голо
 const pZa = (v: number[]) => `${Math.round(((v[0] || 0) / (v.reduce((a, b) => a + b, 0) || 1)) * 100)}%`;
 function pos(v: number[]) { const s = v.reduce((a, b) => a + b, 0) || 1; let m = 0; v.forEach((x, i) => { if (x > v[m]) m = i; }); return { pct: `${Math.round((v[m] / s) * 100)}%`, word: WORD[m] }; }
 /* 14.11.2026: только официальные источники (правило проекта): *.gov.ru (Госдума, СФ, pravo.gov.ru, министерства), kremlin.ru, government.ru, cbr.ru */
-const isOff = (u: string) => { const h = String(u || '').replace(/^https?:\/\//i, '').split(/[/?#]/)[0].toLowerCase().replace(/^www\./, ''); return /\.gov\.ru$/.test(h) || h === 'kremlin.ru' || h === 'government.ru' || h === 'cbr.ru'; };
+const isOff = (u: string) => { const h = String(u || '').replace(/^https?:\/\//i, '').split(/[/?#]/)[0].toLowerCase().replace(/^www\./, ''); return /\.gov\.ru$/.test(h) || h === 'kremlin.ru' || h === 'government.ru' || h === 'cbr.ru' || h === 'xn--b1aew.xn--p1ai'; }; /* 18.11.2026: мвд.рф — официальный сайт МВД */
 function billNo(doc: string) { const m = doc.match(/(\d+-\d+)/); return m ? m[1] : null; }
 const normRead = (r: string) => (r === '2 чтение' ? '2-е' : r === '3 чтение' ? '3-е' : r.startsWith('2 чтение таб') ? '2-е, поправки' : r);
 
@@ -3375,7 +3375,7 @@ function buildFS0(day: string, votes: Vote[]): Record<string, FSub[]> {
 }
 /* 12.11.2026: раздел «Новости» — лента официальных новостей по дням (новые сверху) с фильтром по источнику;
    вместо переключателя дня и «Сводки дня». Месяцы подгружаются кнопкой «Показать ранее». */
-const NSRC: [string, string][] = [['gd', 'Госдума'], ['gov', 'Правительство'], ['sf', 'Совет Федерации'], ['cbr', 'Банк России'], ['minfin', 'Минфин'], ['mintrud', 'Минтруд'], ['minjust', 'Минюст']];
+const NSRC: [string, string][] = [['gd', 'Госдума'], ['gov', 'Правительство'], ['sf', 'Совет Федерации'], ['cbr', 'Банк России'], ['minfin', 'Минфин'], ['mintrud', 'Минтруд'], ['minjust', 'Минюст'], ['economy', 'Минэкономразвития'], ['promtorg', 'Минпромторг'], ['minzdrav', 'Минздрав'], ['mintrans', 'Минтранс'], ['digital', 'Минцифры'], ['mvd', 'МВД'], ['mnr', 'Минприроды'], ['minstroy', 'Минстрой']];
 type NItem = { o: string; sec: string; tag: string | null; text: string; sub: string; u: string; tm?: string; live?: boolean; b?: string[]; d?: string };
 /* 16.11.2026: оперативные новости (data/live.json, GDX.live) — заголовок и ссылка с официального сайта, время публикации; приходят в течение дня.
    Новость, уже собранная в данные дня (та же ссылка), второй раз не показывается; пришедшие после открытия (fresh) ждут нажатия плашки. */
