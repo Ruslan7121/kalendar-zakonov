@@ -8,7 +8,7 @@ X-WR-CALNAME:Госплатежи: оплата без ручного в
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:law-606bb60d@kalendar-zakonov
-DTSTAMP:20261118T082524Z
+DTSTAMP:20261118T091900Z
 DTSTART;VALUE=DATE:20261101
 DTEND;VALUE=DATE:20261102
 SUMMARY:Вступает в силу: Госплатежи: оплата 
