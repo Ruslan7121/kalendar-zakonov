@@ -84,6 +84,12 @@ assert all(e['o'] == 'pres' and e['ty'] == 'решение' and e['k'] == 'Ук�
 _g = O.parse_pravo_api(open(os.path.join(_fx, 'pravo_api_gov.json')).read(), 'gov')
 assert [(e['k'], e['d']) for e in _g] == [('Постановление', '14.11.2026'), ('Распоряжение', '14.11.2026')], _g
 assert _g[1]['t'] == 'Распоряжение № 3383-р от 14.11.2026' and _g[1].get('x') == 'Опубликован 16.11.2026', _g[1]
+# 18.11.2026: восемь министерств — приказы с официального опубликования; событие стоит на дне опубликования, не подписания
+assert set(O.MIN8) == {'economy', 'promtorg', 'minzdrav', 'mintrans', 'digital', 'mvd', 'mnr', 'minstroy'} and all(O.SOURCES[o + '_pravo'].endswith(i) and 'block=federal_authorities' in O.SOURCES[o + '_pravo'] for o, i in O.MIN8.items())
+_e = O.parse_pravo_api(open(os.path.join(_fx, 'pravo_api_economy.json')).read(), 'economy', True)
+assert [(e['k'], e['d']) for e in _e] == [('Приказ', '10.11.2026'), ('Приказ', '06.11.2026')], _e
+assert _e[0]['t'] == 'Приказ № 689 от 05.10.2026: О внесении изменения в пункт 2 приказа Минэкономразвития России от 14 октября 2020 г. № 678', _e[0]['t']
+assert _e[0]['x'] == 'Зарегистрирован Минюстом 09.11.2026 № 89097. Опубликован 10.11.2026' and _e[0]['u'] == 'http://publication.pravo.gov.ru/document/0001202611100011', _e[0]
 # обход страниц: 400 на PageSize=100 → переход на 10; остановка, когда документы старше начала окна
 _calls = []
 def _fetch(u):
