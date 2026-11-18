@@ -3363,7 +3363,7 @@ function buildFS0(day: string, votes: Vote[]): Record<string, FSub[]> {
 /* 12.11.2026: раздел «Новости» — лента официальных новостей по дням (новые сверху) с фильтром по источнику;
    вместо переключателя дня и «Сводки дня». Месяцы подгружаются кнопкой «Показать ранее». */
 const NSRC: [string, string][] = [['gd', 'Госдума'], ['gov', 'Правительство'], ['sf', 'Совет Федерации'], ['cbr', 'Банк России'], ['minfin', 'Минфин'], ['mintrud', 'Минтруд'], ['minjust', 'Минюст']];
-type NItem = { o: string; sec: string; tag: string | null; text: string; sub: string; u: string; tm?: string; live?: boolean };
+type NItem = { o: string; sec: string; tag: string | null; text: string; sub: string; u: string; tm?: string; live?: boolean; b?: string[]; d?: string };
 /* 16.11.2026: оперативные новости (data/live.json, GDX.live) — заголовок и ссылка с официального сайта, время публикации; приходят в течение дня.
    Новость, уже собранная в данные дня (та же ссылка), второй раз не показывается; пришедшие после открытия (fresh) ждут нажатия плашки. */
 const liveAll = (): any[] => (GDX && GDX.live ? GDX.live.items : []);
@@ -3376,7 +3376,9 @@ function newsItems(d: string): NItem[] {
   ORGK.forEach((o) => newsOrg(o, d).forEach((x: any) => out.push({ o, sec: '', tag: null, text: x.st || x.t || '', sub: x.sut || x.x || '', u: x.u && isOff(x.u) ? x.u : '' })));
   const have = new Set(out.map((x) => x.u).filter(Boolean)); const fr = liveFresh();
   const lv = liveAll().filter((x: any) => x.d === d && !have.has(x.u) && !fr.has(x.u) && isOff(x.u)).sort((a: any, b: any) => (b.tm || '').localeCompare(a.tm || ''));
-  return [...lv.map((x: any) => ({ o: x.o, sec: '', tag: null, text: x.t, sub: x.x || '', u: x.u, tm: x.tm || '', live: true })), ...out];
+  /* 18.11.2026: текст новости (b) приходит из live.json; новость, уже попавшая в данные дня (та же ссылка), тоже получает его — нажатие открывает карточку */
+  const lb = new Map<string, string[]>(); liveAll().forEach((x: any) => { if (x.u && Array.isArray(x.b) && x.b.length) lb.set(x.u, x.b); });
+  return [...lv.map((x: any) => ({ o: x.o, sec: '', tag: null, text: x.t, sub: x.x || '', u: x.u, tm: x.tm || '', live: true, b: lb.get(x.u), d: x.d })), ...out.map((x) => (x.u && lb.has(x.u) ? { ...x, b: lb.get(x.u), d } : x))];
 }
 /* 16.11.2026: лента для календаря — orgs: выбранные в «Фильтрах» органы, новости и документы всех дней подряд (без нажатия на день);
    only: один день (новости под событиями выбранного дня — так и в понедельник, когда у Госдумы и Правительства заседаний нет, видно, что было) */
@@ -3388,7 +3390,7 @@ function NewsFeed({ m, peek, months, more, focus, orgs, only }: { m: boolean; pe
      Дальше самого раннего загруженного дня стрелка «‹» подгружает предыдущий месяц и переходит на его последний день. */
   const [sel, setSel] = useState<string | null>(focus && /^\d\d\.\d\d\.\d{4}$/.test(focus) ? focus : null);
   const [wantOlder, setWantOlder] = useState<string | null>(null);
-  const [src, setSrc] = useState<string>('all'); const [nq, setNq] = useState(''); const [fo, setFo] = useState(false);
+  const [src, setSrc] = useState<string>('all'); const [nq, setNq] = useState(''); const [fo, setFo] = useState(false); const [nop, setNop] = useState<NItem | null>(null);
   useEffect(() => { if (!fo) return; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setFo(false); }; document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [fo]);
   const col = (o: string) => (o === 'gd' ? t.text.accent : o === 'gov' ? (dk ? '#3CCB9C' : '#009E73') : orgCol(o, dk));
   const name = (o: string) => (NSRC.find((x) => x[0] === o) || [o, ORGN[o] || o])[1];
@@ -3412,14 +3414,14 @@ function NewsFeed({ m, peek, months, more, focus, orgs, only }: { m: boolean; pe
   const allD: [string, NItem[]][] = allM || fo ? days.map((d) => [d, dayItems(d).filter(nok)] as [string, NItem[]]) : [];
   const acnt: Record<string, number> = {}; allD.forEach(([, a]) => a.forEach((x) => { acnt[x.o] = (acnt[x.o] || 0) + 1; })); const atot = allD.reduce((n, [, a]) => n + a.length, 0);
   const allS = allD.map(([d, a]) => [d, src === 'all' || orgs ? a : a.filter((x) => x.o === src)] as [string, NItem[]]).filter(([, a]) => a.length > 0); const allN = allS.reduce((n, [, a]) => n + a.length, 0);
-  const tile = (x: NItem, i: number) => { const Tg: any = x.u ? 'a' : 'article'; const c = col(x.o); return <Tg key={i} data-newsitem={x.o} className="gd-rw" {...(x.u ? { href: x.u, target: '_blank', rel: 'noopener noreferrer', title: `Открыть на ${host(x.u)}` } : {})} style={{ ...nvTile(c), display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', textDecoration: 'none', color: 'inherit', cursor: x.u ? 'pointer' : 'default' }}>
+  const tile = (x: NItem, i: number) => { const hb = !!(x.b && x.b.length); const Tg: any = hb ? 'div' : x.u ? 'a' : 'article'; const c = col(x.o); return <Tg key={i} data-newsitem={x.o} {...(hb ? { 'data-ntext': '1', role: 'button', tabIndex: 0, onClick: () => setNop(x), onKeyDown: (k: any) => { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); setNop(x); } } } : {})} className="gd-rw" {...(!hb && x.u ? { href: x.u, target: '_blank', rel: 'noopener noreferrer', title: `Открыть на ${host(x.u)}` } : {})} style={{ ...nvTile(c), display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', textDecoration: 'none', color: 'inherit', cursor: x.u || hb ? 'pointer' : 'default' }}>
         <OrgMark o={x.o} c={c} />
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}><span style={nvPill(c)}>{x.tag || name(x.o)}</span>{x.tm ? <span data-ntm="1" style={{ fontSize: 12, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{x.tm}</span> : null}</span>
           <div style={{ fontSize: m ? 14.5 : 14, lineHeight: 1.4, color: t.text.primary, overflowWrap: 'anywhere' }}>{x.text}</div>
           {x.sub ? <div className="gd-cl2" style={{ fontSize: 13, lineHeight: 1.4, color: t.text.secondary }}>{x.sub}</div> : null}
         </div>
-        {x.u && <span aria-hidden style={{ flex: 'none', color: t.text.tertiary }}>↗</span>}
+        {hb ? <span aria-hidden style={{ flex: 'none', color: t.text.tertiary }}>›</span> : x.u && <span aria-hidden style={{ flex: 'none', color: t.text.tertiary }}>↗</span>}
       </Tg>; };
   const fN = src !== 'all' ? 1 : 0;
   const nNew = [...liveFresh()].length; const ackNew = () => { if (GDX) GDX.ackLive(); setSel(null); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); } };
@@ -3431,7 +3433,17 @@ function NewsFeed({ m, peek, months, more, focus, orgs, only }: { m: boolean; pe
     {allS.map(([d, a]) => { const z = pd(d); return <section key={d} data-newsday={d} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{only ? null : <div data-ndayh="1" style={{ position: 'sticky', top: 'var(--gd-top, 0px)', zIndex: 5, background: DK ? '#000000' : t.bg.base, padding: '4px 2px', fontSize: 15, fontWeight: 700, color: t.text.primary }}>{z.getDate()} {MON[z.getMonth()]}<span style={{ fontSize: 12.5, fontWeight: 400, color: t.text.tertiary, marginLeft: 6 }}>{WDL[z.getDay()]}</span></div>}{a.map(tile)}</section>; })}
     {more && !only && <button type="button" data-nmore="1" onClick={more} style={{ minHeight: 42, borderRadius: 12, border: `1px solid ${t.text.accent}`, background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Показать более ранние дни</button>}
     {fo && nSheet()}
+    {nop && newsCard(nop)}
   </div>;
+  /* 18.11.2026: нажатие на заголовок новости открывает карточку с текстом с официального сайта (поле b — абзацы; пока для новостей Правительства) */
+  function newsCard(x: NItem) { const c = col(x.o); const dd = x.d ? pd(x.d) : null;
+    return <NvModal onClose={() => setNop(null)} c={c} m={m} k="news"><div data-ncard="1" style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: m ? '10px 16px 18px' : '14px 20px 20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingRight: 36 }}><OrgMark o={x.o} c={c} /><span style={nvPill(c)}>{name(x.o)}</span><span style={{ fontSize: 13, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{dd ? `${dd.getDate()} ${MON[dd.getMonth()]}` : ''}{x.tm && x.tm !== '00:00' ? ` · ${x.tm}` : ''}</span></div>
+      <div data-ncardh="1" style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.3, color: t.text.primary, overflowWrap: 'anywhere' }}>{x.text}</div>
+      <div data-ncardb="1" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{(x.b || []).map((p, i) => <p key={i} style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: t.text.primary, overflowWrap: 'anywhere' }}>{p}</p>)}</div>
+      {x.u && <a href={x.u} target="_blank" rel="noopener noreferrer" data-ncardsrc="1" style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 16px', borderRadius: 12, border: `1px solid ${t.text.accent}`, color: t.text.accent, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>Открыть на {host(x.u)} ↗</a>}
+      <div style={{ fontSize: 12, color: t.text.tertiary }}>Текст с официального сайта, без изменений.</div>
+    </div></NvModal>; }
   function nSheet() { return createPortal(<><div className="gd-fade" onClick={() => setFo(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(8,12,18,.5)', zIndex: 60 }} />
       <div className="gd-sheet" role="dialog" aria-label="Фильтры новостей" style={{ position: 'fixed', left: 10, right: 10, bottom: 'calc(10px + env(safe-area-inset-bottom, 0px))', maxHeight: 'calc(82vh - 10px)', borderRadius: 22, overflow: 'hidden', zIndex: 61, display: 'flex', flexDirection: 'column', background: t.bg.base, boxShadow: `inset 0 0 9px 0 ${nvMix(t.text.accent, 45)}, inset 0 0 0 1.5px ${nvMix(t.text.accent, 60)}, 0 0 22px 2px ${nvMix(t.text.accent, 30)}, 0 24px 60px rgba(0,0,0,.3)`, fontFamily: t.font.family }}>
         <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, padding: '14px 16px 6px' }}><b style={{ fontSize: 17, color: t.text.primary }}>Фильтры</b><span style={{ flex: 1 }} /><button type="button" onClick={() => setSrc('all')} style={{ border: 'none', background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 14, cursor: 'pointer' }}>Сбросить</button><button type="button" data-zclose="1" aria-label="Закрыть" onClick={() => setFo(false)} style={{ marginLeft: 6, width: 32, height: 32, border: 'none', borderRadius: 16, background: 'transparent', color: t.text.secondary, fontSize: 22, lineHeight: 1, cursor: 'pointer' }}>×</button></div>
@@ -3456,17 +3468,10 @@ function NewsFeed({ m, peek, months, more, focus, orgs, only }: { m: boolean; pe
     {cur && !shown.length && <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>У этого источника новостей в этот день нет</div>}
     {cur && shown.length > 0 && <section key={cur} data-newsday={cur} className={m ? undefined : 'gd-anim'} /* 16.11.2026: на телефоне без проявления — новости не моргают */ style={{ display: 'grid', gridTemplateColumns: m ? '1fr' : 'repeat(2, minmax(0, 1fr))', gap: m ? 10 : 12 }}>
       {/* новый вид, экран 6: широкие плитки — значок органа, рубрика в рамке, текст; нажатие открывает источник */}
-      {shown.map((x, i) => { const Tg: any = x.u ? 'a' : 'article'; const c = col(x.o); const ab = ({ gd: 'ГД', gov: 'Пр', sf: 'СФ', cbr: 'ЦБ', minfin: 'МФ', mintrud: 'МТ', minjust: 'МЮ' } as Record<string, string>)[x.o] || ''; return <Tg key={i} data-newsitem={x.o} className="gd-rw" {...(x.u ? { href: x.u, target: '_blank', rel: 'noopener noreferrer', title: `Открыть на ${host(x.u)}` } : {})} style={{ ...nvTile(c), display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', textDecoration: 'none', color: 'inherit', cursor: x.u ? 'pointer' : 'default' }}>
-        <OrgMark o={x.o} c={c} />{void ab}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}><span style={nvPill(c)}>{x.tag || name(x.o)}</span>{x.tm ? <span data-ntm="1" style={{ fontSize: 12, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{x.tm}</span> : null}</span>
-          <div style={{ fontSize: m ? 14.5 : 14, lineHeight: 1.4, color: t.text.primary, overflowWrap: 'anywhere' }}>{x.text}</div>
-          {x.sub ? <div className="gd-cl2" style={{ fontSize: 13, lineHeight: 1.4, color: t.text.secondary }}>{x.sub}</div> : null}
-        </div>
-        {x.u && <span aria-hidden style={{ flex: 'none', color: t.text.tertiary }}>↗</span>}
-      </Tg>; })}
+      {shown.map((x, i) => tile(x, i))}
     </section>}
     {fo && nSheet()}
+    {nop && newsCard(nop)}
   </div>;
 }
 
