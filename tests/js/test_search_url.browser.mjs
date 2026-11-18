@@ -79,7 +79,7 @@ try {
       chk((await ev(p.s, LOC)).includes('q=пенсии') && (await ev(p.s, LOC)).includes('w=Пенсионеры'), `адрес не обновлён: ${await ev(p.s, LOC)}`);
       rep.push(tag(`+ «пенсии»: ${N3}; адрес ${await ev(p.s, LOC)}`)); await p.close(); }
     // 3) ввод на странице со ссылкой «Поделиться»: d и v уходят из адреса
-    { const p = await open('/?d=11.11.2026&v=136361&q=zzzz&w=' + encodeURIComponent('Пенсионеры'));
+    { const p = await open('/?tab=c&d=11.11.2026&v=136361&q=zzzz&w=' + encodeURIComponent('Пенсионеры')); // 18.11.2026: без tab=c ссылка «Поделиться» открывает «Пленарные заседания» (решение владельца); поведение календаря проверяем явно
       const k = '11.11.20261059864-7'; const ok = await until(p.s, `!!document.querySelector('[data-ivk="${k}"] [data-ivs]') || !!document.querySelector('[data-ivk="${k}"][data-ivside] ') && !!document.querySelector('[data-cardpane] [data-panecard]')`); // П12: от 1200 px карточка — в панели справа
       chk(ok, '?d=&v= с лишними параметрами: карточка не раскрыта'); await sleep(1500);
       const m = await ev(p.s, `(() => { let w = document.querySelector('[data-ivk="${k}"]'); let h = w && w.querySelector('[data-ivs]'); if (!h && w && w.hasAttribute('data-ivside')) { w = document.querySelector('[data-cardpane] [data-panecard]'); h = w && w.firstElementChild; } if (!h) return null; const r = h.getBoundingClientRect(); return { top: r.top, bot: r.bottom, wTop: w.getBoundingClientRect().top, vh: innerHeight }; })()`);
