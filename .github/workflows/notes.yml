@@ -34,7 +34,7 @@ jobs:
           python-version: '3.12'
       - name: Зависимости (pdftotext для записок)
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils >/dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils antiword catdoc >/dev/null
           mkdir -p "$GD_DUMA/lists" "$GD_DUMA/bills" "$GD_DUMA/days"
       - name: Кэш конвейера (страницы sozd, списки прокси)
         uses: actions/cache@v5
@@ -58,6 +58,10 @@ jobs:
           f = p(sys.argv[1]); out = []
           for d, v, n, q, r in C.votes(C.read_canvas()):
               if re.fullmatch(r'\d+-\d+', n) and p(d) >= f and d not in out: out.append(d)
+          import json
+          cal = json.loads(re.search(r'const CAL: any = (\{.*\});', C.read_canvas()).group(1))
+          for q in cal.get('p', []):
+              if q.get('a') and p(q['d']) >= f and q['d'] not in out: out.append(q['d'])
           print(' '.join(out))
           PY
           )"

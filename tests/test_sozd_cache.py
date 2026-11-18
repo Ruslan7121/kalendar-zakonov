@@ -101,4 +101,9 @@ B.fetch_retry = fr4
 assert B.one(k4, '17.11.2026', '5') == 'ok'
 r = json.load(open(J(k4))); assert r['status'] == 'ok' and r['note_kind'] == 'текст законопроекта к первому чтению' and 'статья 1' in r['note'] and r['fb'] == 1 and not B.needs_fetch(k4)
 B.load_sozd, B.fetch_retry = _ls, _fr
+# 16. 18.11.2026: законопроекты повестки без голосования берутся тоже (для «Сути» по записке/тексту законопроекта)
+_src = "const CAL: any = " + json.dumps({'p': [{'d': '17.11.2026', 'a': [['999991-8', 'Т', None, '', 'Полное название'], ['999992-8', 'Т'], ['не-номер', 'x']]}]}) + ";\n"
+_ai = B.agenda_items(_src, [], set())
+assert [x[2] for x in _ai] == ['999991-8', '999992-8'] and _ai[0][:2] == ('17.11.2026', '0')
+assert B.agenda_items(_src, ['01.01.2026'], set()) == [] and [x[2] for x in B.agenda_items(_src, [], {'999991-8'})] == ['999992-8']
 print('test_sozd_cache: OK')

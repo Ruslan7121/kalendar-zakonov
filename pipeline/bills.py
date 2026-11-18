@@ -34,6 +34,20 @@ def note_text(path):
     if b == b'PK\x03\x04':
         x = zipfile.ZipFile(path).read('word/document.xml').decode('utf8', 'ignore')
         return '\n'.join(re.sub(r'\s+', ' ', ''.join(re.findall(r'<w:t[^>]*>([^<]*)</w:t>', p))).strip() for p in re.findall(r'<w:p[ >].*?</w:p>', x, re.S))
+    if b == b'\xd0\xcf\x11\xe0':  # старый .doc (OLE): antiword, затем catdoc, затем LibreOffice
+        for cmd in (['antiword', '-w', '0', path], ['catdoc', '-w', path]):
+            try:
+                r = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+                if r.returncode == 0 and r.stdout.strip(): return r.stdout
+            except (OSError, subprocess.SubprocessError): pass
+        try:
+            import tempfile, shutil
+            with tempfile.TemporaryDirectory() as td:
+                src = os.path.join(td, 'x.doc'); shutil.copy(path, src)
+                subprocess.run(['soffice', '--headless', '--convert-to', 'txt:Text', '--outdir', td, src], capture_output=True, timeout=120)
+                t = os.path.join(td, 'x.txt')
+                return open(t, encoding='utf8', errors='ignore').read() if os.path.exists(t) else ''
+        except (OSError, subprocess.SubprocessError): return ''
     if b[:4] == b'%PDF':
         r = subprocess.run(['pdftotext', '-layout', path, '-'], capture_output=True, text=True); return r.stdout
     return ''
@@ -85,6 +99,24 @@ def needs_fetch(n, force=False):
         except ValueError:
             return True
     return True
+
+
+def agenda_items(src, days, have):
+    """18.11.2026: законопроекты повестки, по которым голосования не было («не рассматривались»): (день, '0', номер).
+    Для них тоже нужен текст (записка или запасные документы), чтобы написать «Суть»."""
+    m = re.search(r'const CAL: any = (\{.*\});', src)
+    if not m: return []
+    try: cal = json.loads(m.group(1))
+    except ValueError: return []
+    voted = {n for _, _, n, _, _ in C.votes(src)} | set(have)
+    res = []
+    for p in cal.get('p', []):
+        if days and p.get('d') not in days: continue
+        for a in p.get('a') or []:
+            n = a[0] if a else ''
+            if re.fullmatch(r'\d+-\d+', n or '') and n not in voted and n not in {r[2] for r in res}:
+                res.append((p['d'], '0', n))
+    return res
 
 
 def load_sozd(n, refresh=False):
@@ -176,6 +208,7 @@ if __name__ == '__main__':
 
     src = C.read_canvas(); days = sys.argv[1:]
     items = [(d, v, n) for d, v, n, q, r in C.votes(src) if re.fullmatch(r'\d+-\d+', n) and (not days or d in days)]
+    items += agenda_items(src, days, {n for _, _, n in items})
     seen = {}
     for d, v, n in items:
         if n not in seen:
