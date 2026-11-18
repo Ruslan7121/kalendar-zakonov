@@ -25,6 +25,13 @@ _lock = threading.Lock()
 _last = [0.0]
 
 # запасные документы (подпись файла на sozd) по порядку предпочтения
+# версия формата записи: 2 — сохранены все документы карточки и тексты таблицы/ФЭО/заключения (единый сбор для всех карточек)
+REC_V = 2
+# дополнительные документы: поле записи, подпись на sozd, предел текста
+EXTRA = [('table', r'равнительн|соответствия', 'сравнительная таблица'),
+         ('fin', r'Финансово-экономическ', 'финансово-экономическое обоснование'),
+         ('committee', r'Заключение ответственного комитета', 'заключение ответственного комитета')]
+
 FALLBACK = [('текст законопроекта к первому чтению', r'Текст законопроекта, подготовленного к рассмотрению'),
             ('текст внесенного законопроекта', r'Текст внесенного законопроекта|Текст законопроекта, внесенного'),
             ('заключение ответственного комитета', r'Заключение ответственного комитета')]
@@ -87,7 +94,7 @@ def needs_fetch(n, force=False):
     rec = load_rec(n)
     if force or not rec:
         return True
-    if note_ok(rec) and rec.get('status', 'ok') == 'ok':
+    if note_ok(rec) and rec.get('status', 'ok') == 'ok' and rec.get('v', 1) >= REC_V:
         return False
     # скан без текстового слоя / записки на sozd нет: повтор не чаще раза в SOZD_TTL_HOURS (страница успеет обновиться);
     # note_fail, sozd_fail и старые записи без status — на каждом прогоне
@@ -151,7 +158,10 @@ def one(n, day, vid, force=False):
     pz = next((u for u, a in dl if 'ояснительн' in a), None)
     status = 'ok'
     fb_done = False
-    if pz:
+    if note_ok(old) and not force:  # текст записки уже есть — не скачиваем заново (повтор только ради дополнительных документов)
+        rec['note'], rec['note_url'] = old['note'], old.get('note_url', '')
+        if old.get('note_kind'): rec['note_kind'] = old['note_kind']
+    elif pz:
         f = f'/tmp/pz_{n}.bin'
         rec['note_url'] = 'https://sozd.duma.gov.ru' + pz
         if fetch_retry(rec['note_url'], f, 150, 3):
@@ -181,6 +191,22 @@ def one(n, day, vid, force=False):
                 rec['note'], rec['note_url'], rec['note_kind'] = tx, 'https://sozd.duma.gov.ru' + u, kind
                 C.log('bills_fail.log', f'{day} {vid} {n}: записка не читается, взят документ «{kind}»')
                 break
+    # 18.11.2026: единый сбор для всех карточек — все документы карточки (тип, подпись, ссылка) и тексты
+    # сравнительной таблицы, ФЭО и заключения комитета (ничего не затирается пустым результатом)
+    rec['docs'] = [{'label': re.sub(r'\s+', ' ', a).strip()[:200], 'url': 'https://sozd.duma.gov.ru' + u} for u, a in dl]
+    for fld, pat, kind in EXTRA:
+        u = next((u for u, a in dl if re.search(pat, a, re.I)), None)
+        if not u:
+            if old.get(fld): rec[fld] = old[fld]
+            continue
+        f = f'/tmp/x_{fld}_{n}.bin'
+        tx = ''
+        if fetch_retry('https://sozd.duma.gov.ru' + u, f, 150, 2):
+            tx = note_text(f)[:30000].strip()
+        if tx: rec[fld], rec[fld + '_url'] = tx, 'https://sozd.duma.gov.ru' + u
+        elif old.get(fld): rec[fld], rec[fld + '_url'] = old[fld], old.get(fld + '_url', '')
+        else: rec[fld + '_url'] = 'https://sozd.duma.gov.ru' + u  # документ есть, текст не прочитан (скан)
+    rec['v'] = REC_V
     # не затирать уже полученный официальный текст неудачной/пустой загрузкой
     if note_ok(old) and not note_ok(rec):
         rec['note'], rec['note_url'] = old['note'], old.get('note_url', '')
