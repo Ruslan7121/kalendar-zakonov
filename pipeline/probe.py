@@ -2,7 +2,7 @@
 """Разбор устройства страницы источника (для написания парсера): скачать напрямую (как organs.py) и через RU-прокси
 (как остальной конвейер), напечатать статус, размер, заголовок, ссылки с текстом и найденные даты.
 Запуск: python3 probe.py URL [URL ...]; страницы сохраняются в out/probe/ (артефакт запуска probe)."""
-import sys, os, re, html
+import sys, os, re, html, json
 sys.path.insert(0, os.path.dirname(__file__)); import common as C, organs as O
 
 DIR = os.path.join(C.OUT, 'probe'); os.makedirs(DIR, exist_ok=True)
@@ -34,15 +34,26 @@ def show(url, body, how):
 
 # 16.11.2026: --grep ШАБЛОН — для каждой страницы напечатать сырой HTML вокруг первых 4 совпадений (разметка элементов списка новостей);
 # --head — первые 2500 символов ответа (RSS). Ключи действуют на все адреса после них.
-ARGS = sys.argv[1:]; GREP = None; HEAD = False; URLS = []
+ARGS = sys.argv[1:]; GREP = None; HEAD = False; FIND = None; URLS = []
 i = 0
 while i < len(ARGS):
     if ARGS[i] == '--grep': GREP = ARGS[i + 1]; i += 2; continue
     if ARGS[i] == '--head': HEAD = True; i += 1; continue
+    if ARGS[i] == '--find': FIND = ARGS[i + 1]; i += 2; continue  # 18.11.2026: JSON-ответ — напечатать объекты, где любое строковое поле подходит под шаблон
     URLS.append(ARGS[i]); i += 1
-if GREP or HEAD:
+if GREP or HEAD or FIND:
     for url in URLS:
         st, body = O.get(url); print(f'=== {url}: {st}, {len(body)} байт')
+        if FIND:
+            try:
+                def walk(o):
+                    if isinstance(o, dict):
+                        if any(isinstance(v, str) and re.search(FIND, v, re.I) for v in o.values()): print('  ', json.dumps(o, ensure_ascii=False)[:600])
+                        for v in o.values(): walk(v)
+                    elif isinstance(o, list):
+                        for v in o: walk(v)
+                walk(json.loads(body))
+            except Exception as e: print('  не JSON:', e, body[:300])
         if HEAD: print(body[:2500])
         if GREP:
             for n, m in enumerate(re.finditer(GREP, body)):
