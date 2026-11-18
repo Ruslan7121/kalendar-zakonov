@@ -90,8 +90,10 @@ try {
   for (const [d, txt] of idx.months.flatMap((mk) => Object.entries(JSON.parse(fs.readFileSync(path.join(ROOT, 'data', idx.file[mk]), 'utf8')).DATA || {}))) for (const l of String(txt).split('\n')) {
     const f = l.split('|'); if (f.length < 6 || !/^\d+$/.test(f[0]) || !/^\d+-\d+$/.test(f[1])) continue;
     const fp = path.join(out, 'v', f[0], 'index.html'); assert.ok(fs.existsSync(fp), `нет v/${f[0]}/`); const h = fs.readFileSync(fp, 'utf8');
-    assert.ok(/<meta property="og:title" content="[^"]+ — (принят|отклонен)">/.test(h), `v/${f[0]}/: нет og:title с итогом`);
-    assert.ok(/<meta property="og:description" content="[^"]*за \d+, против \d+/.test(h), `v/${f[0]}/: нет голосов в og:description`);
+    assert.ok(/<meta property="og:title" content="Законопроект [^"]+ — (принят|отклонен)">/.test(h), `v/${f[0]}/: нет og:title «Законопроект … — итог»`);
+    // 18.11.2026 (решение владельца): карточка-превью — этап и дата, затем «Что предлагалось изменить:» (или «Суть:»); голосов в ней нет
+    assert.ok(/<meta property="og:description" content="(?:[^"\n]*? · )?\d{1,2} [а-я]+ \d{4}(?:\n(?:Что предлагалось изменить|Суть):\n[^"]+)?">/.test(h), `v/${f[0]}/: og:description не «этап · дата / Что предлагалось изменить:»`);
+    assert.ok(/<meta property="og:site_name" content="Календарь законов">/.test(h), `v/${f[0]}/: нет og:site_name`);
     assert.ok(h.includes(`location.replace("../../?d=${d}&v=${f[0]}")`), `v/${f[0]}/: не переводит в карточку`);
     assert.ok(/<meta name="robots" content="noindex">/.test(h), `v/${f[0]}/: должна быть noindex`);
     assert.ok(!sm.includes(`/v/${f[0]}/`), `v/${f[0]}/ не должна быть в sitemap.xml`); nv++; }

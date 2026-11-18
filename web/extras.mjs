@@ -34,7 +34,7 @@ for (const mk of IDX.months) {
   }
 }
 const pick = (n) => Object.assign({}, CORE[n] || {}, M[n] || {});
-const DATA = M.DATA || {}; const VT = pick('VT'); const BP = pick('BP'); const INFO = pick('INFO'); const PLAIN = pick('PLAIN');
+const DATA = M.DATA || {}; const SHORTN = pick('SHORT'); const VT = pick('VT'); const BP = pick('BP'); const INFO = pick('INFO'); const PLAIN = pick('PLAIN');
 const TRACK = pick('TRACK'); const ZTAG = CORE.ZTAG || {}; const LAWS = CORE.LAWS || { months: {} };
 
 const pd = (d) => { const [a, b, c] = d.split('.').map(Number); return new Date(Date.UTC(c, b - 1, a)); };
@@ -64,7 +64,7 @@ const billOf = (no) => {
   const short = (b.ag && b.ag.short) || '';
   const sut = (bp.sut && bp.sut.length ? bp.sut : inf.sut && inf.sut.length ? inf.sut : pl.sut) || [];
   const who = bp.who || inf.who || pl.who || '';
-  return { ...b, last, full, short, title: short || full, sut: Array.isArray(sut) ? sut : [sut], who, ini: inf.ini || '', com: inf.com || '', tags: ZTAG[no] || [[], [], []], tr: TRACK[no] || null };
+  return { ...b, last, full, short, title: short || full, sut: Array.isArray(sut) ? sut : [sut], bs: Array.isArray(bp.bs) ? bp.bs : [], who, ini: inf.ini || '', com: inf.com || '', tags: ZTAG[no] || [[], [], []], tr: TRACK[no] || null };
 };
 const ALL = Object.keys(BILLS).map(billOf).sort((a, b) => pd(b.last.day) - pd(a.last.day) || +b.last.id - +a.last.id);
 
@@ -92,6 +92,9 @@ const page = ({ title, desc, url, body, depth }) => {
 <footer>Только официальные источники: sozd.duma.gov.ru, vote.duma.gov.ru, duma.gov.ru. Страница собрана автоматически из данных календаря.</footer></main></body></html>`;
 };
 const cut = (s, n) => (s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : s);
+/* «Законопроект о выплате …»: берется оборот «(о …)» из полного названия или само название «О …», если он не длиннее 75 знаков; иначе — «Законопроект «Короткое название»» */
+const billName = (b, v) => { const m = b.full.match(/\((о[б]?\s[^()]+)\)\s*$/i); let c = m ? m[1].trim() : /^Об?\s/.test(b.full) && !/внесени/i.test(b.full) ? b.full.replace(/^О/, 'о') : '';
+  c = c.split(/\s+(?:в связи|в целях|для того)\s/)[0]; return c && c.length <= 75 ? `Законопроект ${c}` : `Законопроект «${(v && SHORTN[v.id]) || b.title}»`; };
 const share = (v) => `${SITE}?d=${v.day}&v=${v.id}`;
 
 // ---------- slug для меток ----------
@@ -128,8 +131,12 @@ ${b.ini || b.com ? `<h2>Кто внёс и ведёт</h2><div class="box">${b.i
 // Поисковикам эти страницы не нужны (noindex, в sitemap их нет) — для них есть bill/<номер>/.
 for (const b of ALL) for (const v of b.votes) {
   const to = `../../?d=${v.day}&v=${v.id}`;
-  const title = `${b.title} — ${v.ok ? 'принят' : 'отклонен'}`;
-  const desc = cut(`${v.read ? v.read + ' · ' : ''}${hd(v.day)} · за ${v.za}, против ${v.pr}, воздержались ${v.vz}. ${b.sut.join(' ') || b.full}`, 220);
+  /* 18.11.2026 (решение владельца): карточка-превью сообщения — «Календарь законов» (og:site_name), «Законопроект о … — отклонен»,
+     «1-е чтение · 17 ноября 2026», затем «Что предлагалось изменить:» (первые пары из BP.bs) или, если пар нет, «Суть:» */
+  const nm = billName(b, v); const title = `${nm} — ${v.ok ? 'принят' : 'отклонен'}`;
+  const pairs = b.bs.map((p) => (Array.isArray(p) ? p[1] : '')).filter(Boolean).slice(0, 2);
+  const tail = pairs.length ? `Что предлагалось изменить:\n${pairs.map((x) => cut(x, 140)).join('\n')}` : b.sut.length ? `Суть:\n${cut(b.sut.join(' '), 180)}` : '';
+  const desc = [`${v.read ? v.read + ' · ' : ''}${hd(v.day)}`, tail].filter(Boolean).join('\n');
   const body = `<script>location.replace(${JSON.stringify(to)})</script><div class="top"><span class="no">${esc(b.no)}</span>${v.read ? `<span>${esc(v.read)}</span>` : ''}<span class="st ${v.ok ? 'ok' : 'rej'}">${v.ok ? 'принят' : 'отклонен'}</span><span class="meta">${esc(hd(v.day))}</span></div>
 <h1>${esc(b.title)}</h1><p>За ${v.za}, против ${v.pr}, воздержались ${v.vz}, не голосовали ${v.ng}.</p>${b.sut.length ? `<div class="box">${b.sut.map((p) => `<p>${esc(p)}</p>`).join('')}</div>` : ''}
 <p><a href="${esc(to)}">Открыть карточку в календаре</a> · <a href="../../bill/${esc(b.no)}/">Страница законопроекта</a></p>`;
