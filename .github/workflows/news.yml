@@ -24,6 +24,7 @@ jobs:
     timeout-minutes: 355
     env:
       TZ: Europe/Moscow
+      ORGANS_PROXY: '1'   # 18.11.2026: сайт Минэкономразвития закрыт для серверов GitHub — берем через RU-прокси конвейера (как в organs)
     steps:
       - uses: actions/checkout@v5
         with:

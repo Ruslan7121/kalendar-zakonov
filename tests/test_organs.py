@@ -90,6 +90,9 @@ _e = O.parse_pravo_api(open(os.path.join(_fx, 'pravo_api_economy.json')).read(),
 assert [(e['k'], e['d']) for e in _e] == [('Приказ', '10.11.2026'), ('Приказ', '06.11.2026')], _e
 assert _e[0]['t'] == 'Приказ № 689 от 05.10.2026: О внесении изменения в пункт 2 приказа Минэкономразвития России от 14 октября 2020 г. № 678', _e[0]['t']
 assert _e[0]['x'] == 'Зарегистрирован Минюстом 09.11.2026 № 89097. Опубликован 10.11.2026' and _e[0]['u'] == 'http://publication.pravo.gov.ru/document/0001202611100011', _e[0]
+# 18.11.2026: проверка схемы (validate_data.mjs) знает каждый орган из ORGS — иначе сбор нового органа роняет весь прогон (так упал первый запуск organs с министерствами)
+_vd = open(os.path.join(R, 'pipeline', 'validate_data.mjs'), encoding='utf-8').read()
+assert all(f"'{k}'" in _vd for k in O.ORGS), [k for k in O.ORGS if f"'{k}'" not in _vd]
 # обход страниц: 400 на PageSize=100 → переход на 10; остановка, когда документы старше начала окна
 _calls = []
 def _fetch(u):

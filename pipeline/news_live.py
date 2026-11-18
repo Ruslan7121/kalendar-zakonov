@@ -29,8 +29,11 @@ SRC = {
     'minfin': O.SOURCES['minfin_news'],
     'mintrud': O.SOURCES['mintrud_news'],
     'minjust': O.SOURCES['minjust_events'],
+    # 18.11.2026: новостные разделы сайтов восьми министерств (решение владельца: «с каждого новостного раздела сайта именно этого органа»)
+    'minzdrav': 'https://minzdrav.gov.ru/news',
+    'economy': 'https://economy.gov.ru/material/news/',
 }
-FIX = {'gd': 'duma_news.html', 'gov': 'gov_all_rss.xml', 'sf': 'council_news.html', 'cbr': 'cbr_RssPress.xml',
+FIX = {'economy': 'economy_news.html', 'minzdrav': 'minzdrav_news.html', 'gd': 'duma_news.html', 'gov': 'gov_all_rss.xml', 'sf': 'council_news.html', 'cbr': 'cbr_RssPress.xml',
        'mintrud': 'mintrud_news_list.html', 'minjust': 'minjust_events_list.html'}
 
 
@@ -99,7 +102,52 @@ def p_minfin(h, known):
     return res
 
 
-PARSE = {'gd': p_gd, 'gov': p_gov, 'sf': p_sf, 'cbr': p_cbr, 'minjust': p_minjust, 'mintrud': p_mintrud}
+RU_DATE = re.compile(r'(\d{1,2})\s+(' + '|'.join(O.MONTHS) + r')\s+(\d{4})|(\d\d)\.(\d\d)\.(\d{4})')
+
+
+def links(h, o, base, rx, near=420):
+    """Новости министерства из списка на странице: ссылки <a href> по шаблону rx (адрес новости), заголовок — текст ссылки; дата — из адреса
+    (…/2026/11/18/…) или из текста рядом со ссылкой («18 ноября 2026», «18.11.2026»); времени нет (рядом может стоять время чужой новости). Без даты запись пропускаем."""
+    res, seen = [], set()
+    for m in re.finditer(r'(?is)<a\b[^>]*href="([^"#]+)"[^>]*>(.*?)</a>', h):
+        href = m.group(1)
+        if not re.search(rx, href): continue
+        t = O.clean(re.sub(r'<[^>]+>', ' ', m.group(2)))
+        if len(t) < 15: continue
+        u = href if href.startswith('http') else base.rstrip('/') + '/' + href.lstrip('/')
+        if u in seen: continue
+        d = None; dm = re.search(r'/(20\d\d)/(\d\d)/(\d\d)/', href)
+        if dm: d = dt.date(int(dm.group(1)), int(dm.group(2)), int(dm.group(3)))
+        if not d:  # дата рядом с ссылкой: берем ближайшую к заголовку (до или после него — у сайтов по-разному)
+            a0 = max(0, m.start() - near); near_txt = O.clean(re.sub(r'<[^>]+>', ' ', h[a0:m.end() + near])); ti = near_txt.find(t[:30]); ti = ti if ti >= 0 else len(near_txt) // 2
+            best = None
+            for r in RU_DATE.finditer(near_txt):
+                try: dd = dt.date(int(r.group(3)), O.MONTHS[r.group(2)], int(r.group(1))) if r.group(1) else dt.date(int(r.group(6)), int(r.group(5)), int(r.group(4)))
+                except Exception: continue
+                dist = abs(r.start() - ti)
+                if best is None or dist < best[0]: best = (dist, dd)
+            d = best[1] if best else None
+        if not d: continue
+        seen.add(u); res.append(item(o, d, t, u))  # время не берем: рядом может стоять время другой новости
+    return res
+
+
+def p_economy(h):
+    """economy.gov.ru/material/news/: <article class="e-news__item"> … <div class="e-date e-news__date"> 18 ноября 2026 16:44 </div> …
+    <header class="e-title e-news__title"><a href="/material/news/<адрес>.html" title="…">заголовок</a>. Дата и время стоят перед заголовком в той же карточке."""
+    res, seen = [], set()
+    for blk in re.split(r'<article\b[^>]*e-news__item', h)[1:]:
+        dm = re.search(r'e-news__date[^>]*>\s*(\d{1,2})\s+(' + '|'.join(O.MONTHS) + r')\s+(\d{4})(?:\s+(\d{1,2}:\d\d))?', blk)
+        a = re.search(r'(?is)<a[^>]+href="(/material/news/[^"]+\.html)"[^>]*>(.*?)</a>', blk)
+        if not dm or not a: continue
+        t = O.clean(re.sub(r'<[^>]+>', ' ', a.group(2))); u = 'https://economy.gov.ru' + a.group(1)
+        if u in seen or len(t) < 10: continue
+        seen.add(u); res.append(item('economy', dt.date(int(dm.group(3)), O.MONTHS[dm.group(2)], int(dm.group(1))), t, u, (dm.group(4) or '').zfill(5) if dm.group(4) else ''))
+    return res
+def p_minzdrav(h): return links(h, 'minzdrav', 'https://minzdrav.gov.ru', r'^/news/20\d\d/\d\d/\d\d/\d+')
+
+
+PARSE = {'economy': p_economy, 'minzdrav': p_minzdrav, 'gd': p_gd, 'gov': p_gov, 'sf': p_sf, 'cbr': p_cbr, 'minjust': p_minjust, 'mintrud': p_mintrud}
 
 
 def collect(prev, offline=None):

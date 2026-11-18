@@ -19,9 +19,15 @@ for o in ('gd', 'gov', 'sf', 'cbr', 'mintrud'):
 for x in items:
     assert x['u'].startswith('http') and x['t'] and len(x['t']) >= 10 and x['d'], x
     assert 'ё' not in x['t'], x
-host = {'gd': 'duma.gov.ru', 'gov': 'government.ru', 'sf': 'council.gov.ru', 'cbr': 'cbr.ru', 'mintrud': 'mintrud.gov.ru', 'minjust': 'minjust.gov.ru'}
+host = {'economy': 'economy.gov.ru', 'minzdrav': 'minzdrav.gov.ru', 'gd': 'duma.gov.ru', 'gov': 'government.ru', 'sf': 'council.gov.ru', 'cbr': 'cbr.ru', 'mintrud': 'mintrud.gov.ru', 'minjust': 'minjust.gov.ru'}
 for x in items: assert host[x['o']] in x['u'], f'чужая ссылка у {x["o"]}: {x["u"]}'
 
+# 1а) 18.11.2026: Минэкономразвития (дата и время в карточке) и Минздрав (дата в адресе новости) — парсеры на сохраненных страницах
+# (в общий файл за окно «сегодня 16.11» они не попадают: новости от 18.11 — позже «сегодня»); пункты меню и формы не попадают
+ec = {x['u']: x for x in N.p_economy(open(os.path.join(FIX, 'economy_news.html'), encoding='utf-8').read())}; assert len(ec) == 2, ec
+e1 = ec['https://economy.gov.ru/material/news/pravitelstvo_vvodit_obyazatelnuyu_ocenku_koncessiy.html']; assert (e1['d'], e1['tm'], e1['o']) == ('18.11.2026', '16:44', 'economy'), e1
+mz = {x['u']: x for x in N.p_minzdrav(open(os.path.join(FIX, 'minzdrav_news.html'), encoding='utf-8').read())}; assert len(mz) == 3, mz
+assert mz['https://minzdrav.gov.ru/news/2026/11/14/33398-mihail-murashko-otkryl-novyy-korpus-detskoy-bolnitsy-v-stavropolsko']['d'] == '14.11.2026' and all(not x['tm'] for x in mz.values()), mz
 # 2) Госдума: только статьи списка (не пункты меню), время из datetime, &laquo; раскрыт
 gd = {x['u']: x for x in by['gd']}
 assert set(gd) == {'http://duma.gov.ru/news/64487/', 'http://duma.gov.ru/news/64490/'}, gd.keys()
