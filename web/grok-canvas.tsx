@@ -31,7 +31,7 @@ export function Status({ tone, children }: any) {
   return <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 9999, background: c[0], color: c[1], fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', justifySelf: 'start' }}>{children}</span>;
 }
 export function LinkCards({ links }: any) {
-  return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{links.map((l: any, i: number) => <a key={i} href={l.href} target="_blank" rel="noreferrer" style={{ flex: '1 1 14rem', display: 'block', padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border.subtle}`, background: T.bg.base, textDecoration: 'none', color: T.text.primary }}><div style={{ fontWeight: 600, fontSize: 14 }}>{l.title} ↗</div><div style={{ fontSize: 12, color: T.text.secondary }}>{l.site}</div></a>)}</div>;
+  return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{links.map((l: any, i: number) => <a key={i} href={l.href} style={{ flex: '1 1 14rem', display: 'block', padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border.subtle}`, background: T.bg.base, textDecoration: 'none', color: T.text.primary }}><div style={{ fontWeight: 600, fontSize: 14 }}>{l.title} ↗</div><div style={{ fontSize: 12, color: T.text.secondary }}>{l.site}</div></a>)}</div>;
 }
 // Not used by CalendarApp; stand-ins kept for the paused maket (maket/maket.tsx), should it be restored.
 export function Section({ children }: any) { return <section>{children}</section>; }
