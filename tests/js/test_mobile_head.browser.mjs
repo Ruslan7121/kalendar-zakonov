@@ -82,7 +82,7 @@ try {
   /* 17.11.2026: «Что значат цвета?» — легенда раскрывается, календарь сверху сужается и окно не уходит под шапку; позиция легенды подсвечивает дни, при закрытии окна все сбрасывается */
   const LG = `(() => { const c = document.querySelector('[data-swipe] [data-calcol]'), b = document.querySelector('[data-lgbar]'), hd = document.querySelector('[data-gdbar]'); if (!c || !b) return null; const cells = [...c.querySelectorAll('[data-calgrid] [role=button]')].filter((e) => getComputedStyle(e).pointerEvents !== 'none'); return { open: b.getAttribute('aria-expanded'), top: Math.round(c.getBoundingClientRect().top), hdr: Math.round(hd.getBoundingClientRect().bottom), ch: Math.round(cells[0].getBoundingClientRect().height), items: c.querySelectorAll('[data-lgi]').length, dim: cells.filter((e) => getComputedStyle(e).opacity !== '1').length, on: c.querySelectorAll('[data-lgi][aria-pressed=true]').length }; })()`;
   const l0 = await ev(LG); chk(await ev(CLICK('[data-lgbar]')), 'нет кнопки «Что значат цвета?»'); await sleep(900); const l1 = await ev(LG);
-  chk(await ev(CLICK('[data-lgi="pres"]')), 'нет позиции «Президент» в легенде'); await sleep(500); const l2 = await ev(LG);
+  chk(await ev(CLICK('[data-lgi="pg"]')), 'нет позиции «Президент и Правительство» в легенде'); await sleep(500); const l2 = await ev(LG);
   rep.push(`легенда: ${JSON.stringify(l0)} → ${JSON.stringify(l1)} → ${JSON.stringify(l2)}`);
   chk(l0 && l0.open === 'false' && l0.dim === 0, `легенда закрыта по умолчанию: ${JSON.stringify(l0)}`);
   chk(l1 && l1.open === 'true' && l1.items === 10 && l1.ch < l0.ch && l1.top >= l1.hdr - 2, `легенда не раскрылась / календарь не сузился / окно под шапкой: ${JSON.stringify(l1)}`);

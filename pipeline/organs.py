@@ -25,7 +25,14 @@ import common as C
 MSK = dt.timezone(dt.timedelta(hours=3))
 UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
 ODIR = os.path.join(C.OUT, 'organs')
-ORGS = {'minfin': 'Минфин', 'mintrud': 'Минтруд', 'minjust': 'Минюст', 'cbr': 'Банк России', 'sf': 'Совет Федерации', 'pres': 'Президент', 'gov': 'Правительство'}
+ORGS = {'minfin': 'Минфин', 'mintrud': 'Минтруд', 'minjust': 'Минюст', 'cbr': 'Банк России', 'sf': 'Совет Федерации', 'pres': 'Президент', 'gov': 'Правительство',
+        'economy': 'Минэкономразвития', 'promtorg': 'Минпромторг', 'minzdrav': 'Минздрав', 'mintrans': 'Минтранс', 'digital': 'Минцифры',
+        'mvd': 'МВД', 'mnr': 'Минприроды', 'minstroy': 'Минстрой'}
+# 18.11.2026: восемь министерств — приказы с официального опубликования (API publication.pravo.gov.ru, блок «ФОИВ и ФГО РФ»,
+# идентификаторы органов — из справочника /api/SignatoryAuthorities)
+MIN8 = {'economy': '59ad7c35-7d14-424e-b305-f964615734bd', 'promtorg': '852b803d-4d5b-4ed1-aaca-03284c0bc35e', 'minzdrav': 'a2b99d08-29c7-4a3f-901a-d1a7174428f8',
+        'mintrans': 'd87efe50-9a6f-4ad5-aa06-452d4cd2e772', 'digital': '1ac1ee36-2621-4c4f-917f-9bffc35d4671', 'mvd': 'ff850c93-e869-42ec-9547-a63dad38c204',
+        'mnr': 'd67a404e-260a-4a5b-b340-d34558da8bd6', 'minstroy': 'efa6da4b-4c1a-4fa8-8caf-860c17b205fd'}
 TYPES = ('заседание', 'проект', 'решение', 'разъяснение', 'новость')  # «новость» — во вкладку «Новости» (ORGNEWS), не в календарь
 MONTHS = {m: i + 1 for i, m in enumerate(['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'])}
 SOURCES = {
@@ -45,6 +52,7 @@ SOURCES = {
     # Президента, постановления и распоряжения Правительства — каждый день, не только с заседаний
     'pres_pravo': 'http://publication.pravo.gov.ru/api/Documents?block=president',
     'gov_pravo': 'http://publication.pravo.gov.ru/api/Documents?block=government',
+    **{f'{o}_pravo': f'http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId={i}' for o, i in MIN8.items()},
 }
 FIX = {'cbr_news': 'cbr_RssNews.xml', 'cbr_events': 'cbr_eventrss.xml', 'mintrud_docs': 'mintrud_document_rss.xml', 'mintrud_news': 'mintrud_news_list.html',
        'minjust_events': 'minjust_events_list.html', 'minjust_projects': 'minjust_projects.html',
@@ -209,9 +217,9 @@ def parse_pravo_list(txt, org='minfin'):
     return res
 
 PRAVO_SKIP = ('Федеральный закон', 'Федеральный конституционный закон', 'Закон Российской Федерации о поправке')  # законы — во «Вступают в силу»
-PRAVO_KIND = ('Указ', 'Распоряжение', 'Постановление')
+PRAVO_KIND = ('Указ', 'Распоряжение', 'Постановление', 'Приказ')
 
-def parse_pravo_api(js, org):
+def parse_pravo_api(js, org, by_pub=False):
     """16.11.2026: ответ API publication.pravo.gov.ru/api/Documents (блок president или government) → события «решение»:
     «Указ № 848 от 14.11.2026: О помиловании …», дата события — дата документа (documentDate), ссылка — страница официального
     опубликования http://publication.pravo.gov.ru/document/<eoNumber>. Федеральные законы пропускаем (они во «Вступают в силу»)."""
@@ -224,7 +232,15 @@ def parse_pravo_api(js, org):
         if not kind: continue
         name = clean(it.get('name') or '').strip(' "«»')
         d = dt.date(int(dd[:4]), int(dd[5:7]), int(dd[8:10]))
-        pub = (it.get('publishDateShort') or '')[:10]; x = f'Опубликован {pub[8:10]}.{pub[5:7]}.{pub[:4]}' if re.match(r'\d{4}-\d\d-\d\d$', pub) and pub != dd else ''
+        pub = (it.get('publishDateShort') or '')[:10]; ok = bool(re.match(r'\d{4}-\d\d-\d\d$', pub))
+        x = f'Опубликован {pub[8:10]}.{pub[5:7]}.{pub[:4]}' if ok and pub != dd else ''
+        reg = it.get('jdRegNumber')
+        if by_pub:  # министерства: приказ подписан давно, а новостью он становится при опубликовании — на этот день и ставим событие
+            if reg: x = f'Зарегистрирован Минюстом {(it.get("jdRegDate") or "")[8:10]}.{(it.get("jdRegDate") or "")[5:7]}.{(it.get("jdRegDate") or "")[:4]} № {reg}. ' + x
+            if ok: ev_d = dt.date(int(pub[:4]), int(pub[5:7]), int(pub[8:10]))
+            else: ev_d = d
+            res.append(ev(org, ev_d, 'решение', f'{kind} № {num} от {d2s(d)}' + (f': {name}' if name else ''), f'http://publication.pravo.gov.ru/document/{eo}', kind, x.strip()))
+            continue
         res.append(ev(org, d, 'решение', f'{kind} № {num} от {d2s(d)}' + (f': {name}' if name else ''), f'http://publication.pravo.gov.ru/document/{eo}', kind, x))
     return res
 
@@ -239,8 +255,9 @@ def collect_pravo_api(key, org, fetch=None, pages=6):
         if st != 'ok': return res, st
         try: items = (json.loads(body) or {}).get('items') or []
         except Exception as e: return res, f'parse-error: {e}'
-        res += parse_pravo_api(body, org)
-        old = [it.get('documentDate', '')[:10] for it in items if it.get('documentDate')]
+        bp = org in MIN8
+        res += parse_pravo_api(body, org, bp)
+        old = [it.get('publishDateShort' if bp else 'documentDate', '')[:10] for it in items if it.get('publishDateShort' if bp else 'documentDate')]
         if not items or (WIN_FROM and old and min(old) < WIN_FROM.isoformat()): break
     return res, 'ok'
 
@@ -274,12 +291,12 @@ def collect(args):
     status, events = {}, []
     snaps = dict(s.split('=', 1) for s in args.snapshot)
     only = {x.strip() for x in (args.only or '').split(',') if x.strip()}
-    for key, org in (('pres_pravo', 'pres'), ('gov_pravo', 'gov')):
+    for key, org in (('pres_pravo', 'pres'), ('gov_pravo', 'gov'), *((f'{o}_pravo', o) for o in MIN8)):
         if only and org not in only: continue
         if args.offline:
             p = os.path.join(args.offline, f'pravo_api_{org}.json')
             if not os.path.exists(p): status[key] = {'url': SOURCES[key], 'status': 'no-fixture'}; continue
-            got, st = parse_pravo_api(open(p).read(), org), 'offline'
+            got, st = parse_pravo_api(open(p).read(), org, org in MIN8), 'offline'
         else:
             got, st = collect_pravo_api(key, org, pages=args.pages)
         status[key] = {'url': SOURCES[key], 'status': st, 'n': len(got)}; events += got

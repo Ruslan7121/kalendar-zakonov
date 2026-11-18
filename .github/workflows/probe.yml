@@ -15,6 +15,7 @@ jobs:
     timeout-minutes: 20
     env:
       TZ: Europe/Moscow
+      ORGANS_PROXY: '1'  # 18.11.2026: как в organs/news — сайты министерств с серверов GitHub закрыты, берем через RU-прокси
       GD_DUMA: ${{ github.workspace }}/../duma
     steps:
       - uses: actions/checkout@v5
@@ -26,7 +27,9 @@ jobs:
         with:
           path: ${{ github.workspace }}/../duma
           key: duma-${{ github.run_id }}
-          restore-keys: duma-
+          restore-keys: |
+            duma-organs-
+            duma-
       - name: Страницы
         env:
           URLS: ${{ github.event.inputs.urls }}
