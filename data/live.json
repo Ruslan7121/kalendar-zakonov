@@ -1,5 +1,5 @@
 {
-"upd": "18.11.2026 18:39",
+"upd": "18.11.2026 18:59",
 "status": {
 "gd": "ok n=12",
 "gov": "ok n=20",
@@ -10,6 +10,13 @@
 "minjust": "ok n=20"
 },
 "items": [
+{
+"o": "minfin",
+"d": "18.11.2026",
+"tm": "18:39",
+"t": "Законопроект о недопущении незаконной добычи драгоценных металлов позволит усовершенствовать контроль на всех этапах оборота",
+"u": "https://minfin.gov.ru/ru/press-center/?id_4=40762-zakonoproekt_o_nedopushchenii_nezakonnoi_dobychi_dragotsennykh_metallov_pozvolit_usovershenstvovat_kontrol_na_vsekh_etapakh_oborota"
+},
 {
 "o": "minfin",
 "d": "18.11.2026",
