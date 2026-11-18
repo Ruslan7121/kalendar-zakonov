@@ -94,7 +94,9 @@ def needs_fetch(n, force=False):
     rec = load_rec(n)
     if force or not rec:
         return True
-    if note_ok(rec) and rec.get('status', 'ok') == 'ok' and rec.get('v', 1) >= REC_V:
+    if rec.get('v', 1) < REC_V:
+        return True  # запись старого формата: один раз перезапросить ради docs/таблицы/ФЭО/заключения (даже если записка — скан)
+    if note_ok(rec) and rec.get('status', 'ok') == 'ok':
         return False
     # скан без текстового слоя / записки на sozd нет: повтор не чаще раза в SOZD_TTL_HOURS (страница успеет обновиться);
     # note_fail, sozd_fail и старые записи без status — на каждом прогоне
