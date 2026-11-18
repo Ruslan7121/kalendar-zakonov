@@ -74,7 +74,25 @@ def ev(o, d, ty, t, u, k='', x=''):
 
 BLOCK_MARKERS = ('Доступ временно ограничен', 'Access denied', 'UserGate', '<h1>Forbidden')
 def get(url, timeout=25):
-    """Прямой GET. Возвращает (status, text). status: ok | blocked:<причина> | error:<код>."""
+    """GET. Возвращает (status, text). status: ok | blocked:<причина> | error:<код>.
+    18.11.2026: если сайт министерства закрыт для серверов GitHub (503 «доступ ограничен», нет соединения) и задано ORGANS_PROXY=1
+    (workflow organs), страница берется через RU-прокси конвейера (fetch.sh), как sozd и vote.duma.gov.ru."""
+    st, body = _direct(url, timeout)
+    if st.startswith('blocked') and os.environ.get('ORGANS_PROXY') == '1':
+        import tempfile, hashlib
+        f = os.path.join(tempfile.gettempdir(), 'organs_px_' + hashlib.md5(url.encode()).hexdigest() + '.html')
+        try:
+            if C.fetch(url, f, int(os.environ.get('ORGANS_PROXY_DEADLINE', '70'))):
+                b = open(f, encoding='utf-8', errors='replace').read()
+                if not any(m in b for m in BLOCK_MARKERS): return 'ok', b
+        except Exception: pass
+        finally:
+            try: os.remove(f)
+            except OSError: pass
+    return st, body
+
+def _direct(url, timeout=25):
+    """Прямой GET без прокси."""
     r = subprocess.run(['curl', '-s', '-L', '--compressed', '-m', str(timeout), '-A', UA, '-H', 'Accept-Language: ru-RU,ru;q=0.9',
                         '-w', '\n__HTTP__%{http_code}', url], capture_output=True)
     out = r.stdout.decode('utf-8', 'replace'); i = out.rfind('\n__HTTP__'); code = out[i + 9:].strip() if i >= 0 else '000'; body = out[:i] if i >= 0 else out

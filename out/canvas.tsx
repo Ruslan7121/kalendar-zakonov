@@ -4682,7 +4682,7 @@ function CalendarApp() {
   /* 12.11.2026: цвет строки состояния и панелей браузера на телефоне — как фон страницы в выбранной теме (раньше был синий) */
   useEffect(() => { try { const c = DK ? '#000000' : '#FFFFFF'; const ms = document.querySelectorAll('meta[name="theme-color"]'); if (!ms.length) { const x = document.createElement('meta'); x.name = 'theme-color'; document.head.appendChild(x); } document.querySelectorAll('meta[name="theme-color"]').forEach((x: any) => { x.removeAttribute('media'); x.content = c; }); document.documentElement.style.background = c; } catch (e) {} }, [DK]);
   /* 15.11.2026: порядок вкладок — «Вступают в силу», «Календарь», «Итоги», «Новости» (решение владельца); на телефоне — свайп влево/вправо */
-  const TABS = [['l', 'Вступают в силу'], ['c', 'Работа министерств'], ['i', 'Пленарные заседания'], ['d', 'Новости']] as const; /* 16.11.2026: «Итоги» → «Итоги голосований» (решение владельца) */
+  const TABS = [['l', 'Вступают в силу'], ['c', 'Работа госорганов'], ['i', 'Пленарные заседания'], ['d', 'Новости']] as const; /* 16.11.2026: «Итоги» → «Итоги голосований» (решение владельца) */
   const goTab = (k: any) => { if (k === 'l') { CSNAP = null; setCmk(calCk(new Date())); } setMode(k); setView('v'); window.scrollTo(0, 0); };
   /* 15.11.2026: листание вкладок на телефоне как страниц: шапка (вкладки, поиск, «Фильтры») неподвижна; под пальцем едет текущая
      страница, рядом сразу видна соседняя (paneFor), без затухания. Отпустили дальше порога или быстрым жестом — страницы доезжают,

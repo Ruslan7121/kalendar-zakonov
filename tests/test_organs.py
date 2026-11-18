@@ -106,4 +106,14 @@ try:
     assert set(_run['sources']) == {'pres_pravo'} and _run['sources']['pres_pravo']['n'] == 2, _run['sources']
     assert sorted(e['o'] for e in _ev) == ['gov', 'pres', 'pres'], [e['o'] for e in _ev]  # чужое событие осталось, добавлены два указа
 finally: shutil.rmtree(_T2, ignore_errors=True)
+# 18.11.2026: сайт министерства закрыт для GitHub (blocked) → при ORGANS_PROXY=1 страница берется через RU-прокси; без переменной — как раньше
+import tempfile as _tf
+_d, _f = O._direct, O.C.fetch
+O._direct = lambda u, t=25: ('blocked:HTTP 503, страница ограничения доступа', '')
+def _fake_fetch(u, out, deadline=120): open(out, 'w', encoding='utf-8').write('<html>' + 'Приказ ' * 400 + '</html>'); return True
+O.C.fetch = _fake_fetch
+os.environ.pop('ORGANS_PROXY', None); assert O.get('https://minfin.gov.ru/x')[0].startswith('blocked')
+os.environ['ORGANS_PROXY'] = '1'; st, b = O.get('https://minfin.gov.ru/x'); assert st == 'ok' and 'Приказ' in b, (st, b[:40])
+O.C.fetch = lambda u, out, deadline=120: False; assert O.get('https://minfin.gov.ru/x')[0].startswith('blocked')
+os.environ.pop('ORGANS_PROXY', None); O._direct, O.C.fetch = _d, _f
 print(f'OK test_organs: событий {len(ev)}, с проверенными полями {len(enr)}, ORG/ORGX в canvas совпадают с out/organs')
