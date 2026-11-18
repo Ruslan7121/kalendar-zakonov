@@ -53,7 +53,7 @@ const MEASURE = (k) => `(() => {
   const sr = s0 && s0.getBoundingClientRect(); const pr = p && p.getBoundingClientRect();
   const share = s0 ? { n: sh.length, bottom: !!s0.closest('[data-share-bottom]'), inRow: lk.some((l) => l.parentElement === s0.parentElement.parentElement), last: lk.every((l) => l.getBoundingClientRect().bottom <= sr.top + 1), gap: pr.bottom - sr.bottom } : null;
   const bd = document.querySelector('[data-gdmodal]'); const br = bd && bd.getBoundingClientRect();
-  return { hTop: hr.top, hBot: hr.bottom, wTop: wr.top, wBot: wr.bottom, wH: wr.height, st: win.scrollTop, vh: innerHeight, copy, raw, share, links: lk.length, closeBtn: !!win.querySelector('[data-gdclose]'), backdrop: !!br && br.width >= innerWidth - 1 && br.height >= innerHeight - 1, sheet: wr.bottom >= innerHeight - 40 && wr.bottom <= innerHeight - 4 && wr.left >= 6 && innerWidth - wr.right >= 6 };
+  const gbEl = document.querySelector('[data-gdbar]'); const gbB = gbEl ? Math.max(0, Math.round(gbEl.getBoundingClientRect().bottom)) : 0; return { hTop: hr.top, hBot: hr.bottom, wTop: wr.top, wBot: wr.bottom, wH: wr.height, st: win.scrollTop, vh: innerHeight, copy, raw, share, links: lk.length, closeBtn: !!win.querySelector('[data-gdclose]'), backdrop: !!br && br.width >= innerWidth - 1 && br.height >= innerHeight - gbB - 2, /* 18.11.2026 (решение владельца): на телефоне шапка («Календарь законов», поиск, «Фильтры») остается видна над затемнением, затемнение — от нижнего края шапки до низа экрана */ sheet: wr.bottom >= innerHeight - 40 && wr.bottom <= innerHeight - 4 && wr.left >= 6 && innerWidth - wr.right >= 6 };
 })()`;
 
 const fails = []; const rep = [];
