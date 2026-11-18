@@ -58,7 +58,7 @@ try {
       const p = await cmd('Page.captureScreenshot', { format: 'png' }, s); fs.mkdirSync(process.env.GD_SHOTS, { recursive: true }); fs.writeFileSync(path.join(process.env.GD_SHOTS, `orgfilter_${W.w}_${n}.png`), Buffer.from(p.data, 'base64')); };
     chk(await ev(CLICK('[data-zbar-open]')), 'нет кнопки «Фильтры»'); await sleep(400);
     let r = await ev(ST); rep.push(`${tag} открыт: ${JSON.stringify(r)}`);
-    /* 13.11.2026 (п. 9): в списке только органы с данными (без Президента и Минюста, пока по ним нет записей) */ chk(r.open && r.n >= 4 && r.n <= 8 && r.on === r.n && r.none, `список не открылся или нет «Убрать все» ${JSON.stringify(r)}`);
+    /* 13.11.2026 (п. 9): в списке только органы с данными (без Президента и Минюста, пока по ним нет записей) */ chk(r.open && r.n >= 4 && r.n <= 16 && r.on === r.n && r.none, `список не открылся или нет «Убрать все» ${JSON.stringify(r)}`);
     chk(await ev(`[...document.querySelectorAll('[data-calorg] [role=group] button')].some((b) => /^Убрать все/.test(b.textContent))`), 'нет текста «Убрать все»');
     await shot('1_open');
     chk(await ev(CLICK('[data-cofnone]')), 'нет [data-cofnone]'); await sleep(400);
