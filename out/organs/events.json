@@ -1,5 +1,41 @@
 [
  {
+  "id": "mintrud:https://mintrud.gov.ru/events/1486#18.11.2026",
+  "o": "mintrud",
+  "d": "18.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Всероссийский рейтинг лучших работодателей, обеспечивающих трудоустройство участников чемпионатов «Абилимпикс»",
+  "u": "https://mintrud.gov.ru/events/1486"
+ },
+ {
+  "id": "mintrud:https://mintrud.gov.ru/social/606#18.11.2026",
+  "o": "mintrud",
+  "d": "18.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Антон Котяков обсудил ключевые проекты отрасли с членами Комитета Госдумы по труду, социальной политике и делам ветеранов",
+  "u": "https://mintrud.gov.ru/social/606"
+ },
+ {
+  "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40760-mishustin_rets_dovel_summu_eksportnykh_kontraktov_do_130_mlrd_rublei#18.11.2026",
+  "o": "minfin",
+  "d": "18.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Мишустин: РЭЦ довел сумму экспортных контрактов до 130 млрд рублей",
+  "u": "https://minfin.gov.ru/ru/press-center/?id_4=40760-mishustin_rets_dovel_summu_eksportnykh_kontraktov_do_130_mlrd_rublei"
+ },
+ {
+  "id": "cbr:https://www.cbr.ru/Crosscut/LawActs/File/12279#18.11.2026",
+  "o": "cbr",
+  "d": "18.11.2026",
+  "ty": "разъяснение",
+  "k": "Информационное письмо",
+  "t": "Информационное письмо № ИН-018-34/44 от 12.11.2026",
+  "u": "https://www.cbr.ru/Crosscut/LawActs/File/12279"
+ },
+ {
   "id": "pres:http://publication.pravo.gov.ru/document/0001202611170020#17.11.2026",
   "o": "pres",
   "d": "17.11.2026",
