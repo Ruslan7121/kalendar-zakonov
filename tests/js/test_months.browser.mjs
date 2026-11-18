@@ -56,7 +56,10 @@ try {
       if (!months().includes('m-2026-09')) fails.push(tag(`?d=30.09.2026: сентябрь не запрошен: ${months()}`));
       rep.push(tag(`?d=30.09.2026&tab=d: ${months().join(', ')}`)); await p.close(); }
     // 3) октябрьская карточка и законопроекты вне повестки
-    { const p = await open('/?d=22.10.2026&v=136156'); const ok = await until(p.s, `!!document.querySelector('[data-gdwin] [data-ivk="22.10.2026851582-8"] [data-ivs]')`); // П12: от 1200 px карточка — в панели справа
+    { /* 18.11.2026 (решение владельца): ссылка ?d=&v= на голосование по законопроекту открывает «Пленарные заседания» на дне голосования, карточка поверх */
+      const q0 = await open('/?d=22.10.2026&v=136156'); const itg = await until(q0.s, `!!document.querySelector('[data-itogi]') && !!document.querySelector('[data-iv][data-ivk="22.10.2026851582-8"] [data-ivs]')`);
+      if (!itg) fails.push(tag('?d=22.10.2026&v=136156: нет «Пленарных заседаний» с карточкой 851582-8')); await q0.close(); }
+    { const p = await open('/?tab=c&d=22.10.2026&v=136156'); const ok = await until(p.s, `!!document.querySelector('[data-gdwin] [data-ivk="22.10.2026851582-8"] [data-ivs]')`); // П12: от 1200 px карточка — в панели справа
       if (!ok) fails.push(tag('?d=22.10.2026&v=136156: карточка 851582-8 не раскрыта'));
       // новый вид: в плитке нет номера законопроекта — плитки ищем по атрибуту data-ivt (день + номер)
       const seen = await ev(p.s, `(() => ${JSON.stringify(off)}.filter((b) => !!document.querySelector('[data-ivt="22.10.2026' + b + '"]')).length)()`);
