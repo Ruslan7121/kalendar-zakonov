@@ -26,15 +26,20 @@ def show(url, body, how):
         if len(txt) < 25: continue
         near = O.clean(re.sub(r'<[^>]+>', ' ', body[max(0, m.start() - 300):m.end() + 300]))
         d = DATE.findall(near)
+        if DATED:  # 18.11.2026: --dated — только ссылки с датой рядом, коротко (карточки новостей)
+            if not d: continue
+            print(f'  {m.group(1)[:80]} | {txt[:70]} | {d[:1]}'); n += 1
+            if n >= 25: break
+            continue
         print(f'  {m.group(1)[:90]} | {txt[:110]} | даты рядом: {d[:2]}'); n += 1
         if n >= 60: break
     i = body.find(DATE.findall(body)[0]) if DATE.findall(body) else -1
-    if i >= 0: print('  фрагмент HTML у первой даты:', re.sub(r'\s+', ' ', body[max(0, i - 400):i + 400]))
+    if i >= 0 and not DATED: print('  фрагмент HTML у первой даты:', re.sub(r'\s+', ' ', body[max(0, i - 400):i + 400]))
 
 
 # 16.11.2026: --grep ШАБЛОН — для каждой страницы напечатать сырой HTML вокруг первых 4 совпадений (разметка элементов списка новостей);
 # --head — первые 2500 символов ответа (RSS). Ключи действуют на все адреса после них.
-ARGS = sys.argv[1:]; GREP = None; HEAD = False; FIND = None; MANY = False; URLS = []
+ARGS = sys.argv[1:]; DATED = '--dated' in ARGS; ARGS = [a for a in ARGS if a != '--dated']; GREP = None; HEAD = False; FIND = None; MANY = False; URLS = []
 i = 0
 while i < len(ARGS):
     if ARGS[i] == '--grep': GREP = ARGS[i + 1]; i += 2; continue
@@ -65,11 +70,12 @@ if GREP or HEAD or FIND:
                 print(f'--- совпадение {n + 1}:', re.sub(r'\s+', ' ', body[max(0, m.start() - 600):m.end() + 900]))
     sys.exit(0)
 
-for k, url in enumerate(sys.argv[1:]):
+for k, url in enumerate(ARGS):
     print(f'=== {url}')
     st, body = O.get(url)
     print(f'напрямую: {st}')
     if st == 'ok' or body: open(os.path.join(DIR, f'{k}_direct.html'), 'w').write(body); show(url, body, 'напрямую')
+    if DATED and st == 'ok': continue
     f = os.path.join(DIR, f'{k}_proxy.html')
     if C.fetch(url, f, 90):
         show(url, open(f, errors='ignore').read(), 'через прокси')
