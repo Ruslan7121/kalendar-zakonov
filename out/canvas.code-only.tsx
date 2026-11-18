@@ -3375,7 +3375,9 @@ function newsItems(d: string): NItem[] {
   ORGK.forEach((o) => newsOrg(o, d).forEach((x: any) => out.push({ o, sec: '', tag: null, text: x.st || x.t || '', sub: x.sut || x.x || '', u: x.u && isOff(x.u) ? x.u : '' })));
   const have = new Set(out.map((x) => x.u).filter(Boolean)); const fr = liveFresh();
   const lv = liveAll().filter((x: any) => x.d === d && !have.has(x.u) && !fr.has(x.u) && isOff(x.u)).sort((a: any, b: any) => (b.tm || '').localeCompare(a.tm || ''));
-  return [...lv.map((x: any) => ({ o: x.o, sec: '', tag: null, text: x.t, sub: x.x || '', u: x.u, tm: x.tm || '', live: true, b: Array.isArray(x.b) ? x.b : undefined, d: x.d })), ...out];
+  /* 18.11.2026: текст новости (b) приходит из live.json; новость, уже попавшая в данные дня (та же ссылка), тоже получает его — нажатие открывает карточку */
+  const lb = new Map<string, string[]>(); liveAll().forEach((x: any) => { if (x.u && Array.isArray(x.b) && x.b.length) lb.set(x.u, x.b); });
+  return [...lv.map((x: any) => ({ o: x.o, sec: '', tag: null, text: x.t, sub: x.x || '', u: x.u, tm: x.tm || '', live: true, b: lb.get(x.u), d: x.d })), ...out.map((x) => (x.u && lb.has(x.u) ? { ...x, b: lb.get(x.u), d } : x))];
 }
 /* 16.11.2026: лента для календаря — orgs: выбранные в «Фильтрах» органы, новости и документы всех дней подряд (без нажатия на день);
    only: один день (новости под событиями выбранного дня — так и в понедельник, когда у Госдумы и Правительства заседаний нет, видно, что было) */
@@ -3465,15 +3467,7 @@ function NewsFeed({ m, peek, months, more, focus, orgs, only }: { m: boolean; pe
     {cur && !shown.length && <div style={{ ...card(t), padding: '14px 16px', color: t.text.secondary }}>У этого источника новостей в этот день нет</div>}
     {cur && shown.length > 0 && <section key={cur} data-newsday={cur} className={m ? undefined : 'gd-anim'} /* 16.11.2026: на телефоне без проявления — новости не моргают */ style={{ display: 'grid', gridTemplateColumns: m ? '1fr' : 'repeat(2, minmax(0, 1fr))', gap: m ? 10 : 12 }}>
       {/* новый вид, экран 6: широкие плитки — значок органа, рубрика в рамке, текст; нажатие открывает источник */}
-      {shown.map((x, i) => { const Tg: any = x.u ? 'a' : 'article'; const c = col(x.o); const ab = ({ gd: 'ГД', gov: 'Пр', sf: 'СФ', cbr: 'ЦБ', minfin: 'МФ', mintrud: 'МТ', minjust: 'МЮ' } as Record<string, string>)[x.o] || ''; return <Tg key={i} data-newsitem={x.o} className="gd-rw" {...(x.u ? { href: x.u, target: '_blank', rel: 'noopener noreferrer', title: `Открыть на ${host(x.u)}` } : {})} style={{ ...nvTile(c), display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', textDecoration: 'none', color: 'inherit', cursor: x.u ? 'pointer' : 'default' }}>
-        <OrgMark o={x.o} c={c} />{void ab}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}><span style={nvPill(c)}>{x.tag || name(x.o)}</span>{x.tm ? <span data-ntm="1" style={{ fontSize: 12, color: t.text.tertiary, fontVariantNumeric: 'tabular-nums' }}>{x.tm}</span> : null}</span>
-          <div style={{ fontSize: m ? 14.5 : 14, lineHeight: 1.4, color: t.text.primary, overflowWrap: 'anywhere' }}>{x.text}</div>
-          {x.sub ? <div className="gd-cl2" style={{ fontSize: 13, lineHeight: 1.4, color: t.text.secondary }}>{x.sub}</div> : null}
-        </div>
-        {x.u && <span aria-hidden style={{ flex: 'none', color: t.text.tertiary }}>↗</span>}
-      </Tg>; })}
+      {shown.map((x, i) => tile(x, i))}
     </section>}
     {fo && nSheet()}
     {nop && newsCard(nop)}
