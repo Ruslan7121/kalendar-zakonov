@@ -1,7 +1,7 @@
 {
- "run": "19.11.2026 08:25 МСК",
+ "run": "19.11.2026 10:04 МСК",
  "window": [
-  "01.10.2026",
+  "12.11.2026",
   "19.11.2026"
  ],
  "ahead_to": "22.11.2026",
@@ -9,12 +9,12 @@
   "pres_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=president",
    "status": "ok",
-   "n": 178
+   "n": 83
   },
   "gov_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=government",
    "status": "ok",
-   "n": 600
+   "n": 100
   },
   "economy_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=59ad7c35-7d14-424e-b305-f964615734bd",
@@ -78,8 +78,8 @@
   },
   "minfin_news": {
    "url": "https://minfin.gov.ru/ru/press-center/",
-   "status": "ok",
-   "n": 18
+   "status": "blocked:HTTP 503, страница ограничения доступа",
+   "n": 0
   },
   "minjust_events": {
    "url": "https://minjust.gov.ru/ru/events/list/",
@@ -98,7 +98,7 @@
   },
   "minfin_projects": {
    "url": "https://minfin.gov.ru/ru/document/npa_projects/",
-   "status": "ok (разбор не реализован)"
+   "status": "blocked:HTTP 503, страница ограничения доступа"
   },
   "mintrud_profstandards": {
    "url": "https://regulation.gov.ru/",
@@ -116,6 +116,6 @@
    "why": "реестр регистрации НПА (publication.pravo.gov.ru, pravo.minjust.ru) — с этой машины нет соединения/HTTP 500"
   }
  },
- "new": 542,
+ "new": 0,
  "total": 956
 }
