@@ -80,6 +80,8 @@ C.LOGS = os.path.join(R, 'out', 'logs')
 os.makedirs(C.LOGS, exist_ok=True)
 assert texts_check.org_gap(open(C.CANVAS, encoding='utf-8').read(), '05.11.2026')
 assert texts_check.main('05.11.2026') == 0  # долг есть, суффикса нет
-assert texts_check.org_gap(open(C.CANVAS, encoding='utf-8').read(), '18.11.2026') == []
+# 19.11.2026: проверка «за 18.11 долга органов нет» по настоящему canvas убрана — она зависела от живых данных
+# (новые акты Правительства, подписанные 18.11, приходят без «Сути» и роняли плановый прогон organs).
+# Правило «долг до ORG_HIDE_FROM не ставит суффикс» проверено выше на синтетическом canvas.
 shutil.rmtree(T, ignore_errors=True)
 print('test_texts_org: OK')
