@@ -68,11 +68,18 @@ try {
       const gone = await ev(p.s, `!document.querySelector('[data-day="17.11.2026"] [data-daygrp="par"] [data-grpbody]')`); chk(gone, 'прежняя группа не убрана сразу');
       const hy = await ev(p.s, `Math.round(document.querySelector('[data-day="17.11.2026"] [data-daygrp="pg"]').getBoundingClientRect().top)`); chk(hy >= 0 && hy < 260, `заголовок открытой группы ушел с экрана: top=${hy}`);
       const mk = await ev(p.s, `new Set([...document.querySelectorAll('[data-mk]')].map((i) => i.getAttribute('data-mk'))).size`); chk(mk >= 2, `отметки сетки по группам: ${mk}`);
-      // 19.11.2026: на каждой плитке документа органа — название органа (data-orgname)
+      // 19.11.2026: плитки под капсулой органа — без повторной подписи органа; в окне документа орган есть
       await ev(p.s, `document.querySelectorAll('[data-day="17.11.2026"] [data-grphdr]').forEach((h) => { if (h.getAttribute('aria-expanded') !== 'true') h.click(); })`); await sleep(1200);
-      const tiles = await ev(p.s, `(() => { const a = [...document.querySelectorAll('[data-orgitem]')]; return [a.length, a.filter((e) => !e.querySelector('[data-orgname]')).length]; })()`);
-      chk(tiles && tiles[1] === 0, `плитки документов без органа: ${JSON.stringify(tiles)}`);
-      rep.push(tag(`17.11: «${line}», подписи ${JSON.stringify(lbl)}, плиток органов ${tiles && tiles[0]}, открыта группа ${s1} → ${s2}, отметок-групп в сетке ${mk}`)); await p.close(); }
+      const tiles = await ev(p.s, `(() => { const a = [...document.querySelectorAll('[data-dayorg] [data-orgitem]')]; return [a.length, a.filter((e) => e.querySelector('[data-orgrow] [data-orgname]')).length, a.filter((e) => !e.closest('[data-dayorg]').querySelector('[data-orglbl]')).length]; })()`);
+      chk(tiles && tiles[0] > 0 && tiles[1] === 0 && tiles[2] === 0, `плитки под капсулой: [всего, с органом, без капсулы] ${JSON.stringify(tiles)}`);
+      await ev(p.s, `document.querySelector('[data-dayorg] [data-orgrow]').click()`); await sleep(700);
+      const mo = await ev(p.s, `!!document.querySelector('[data-orgbody] [data-orgname]')`); chk(mo, 'в окне документа нет органа');
+      await ev(p.s, `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`); await sleep(500);
+      // 19.11.2026: капсула органа прилипает под строкой группы (не наезжает на неё и на шапку сайта)
+      await ev(p.s, `(() => { const os = [...document.querySelectorAll('[data-day="17.11.2026"] [data-dayorg]')].sort((x, y) => y.offsetHeight - x.offsetHeight); const o = os[0]; if (!o) return; o.setAttribute('data-stk', '1'); const r0 = o.getBoundingClientRect(); window.scrollTo(0, window.scrollY + r0.top - 40 + Math.min(220, o.offsetHeight / 3)); })()`); await sleep(500);
+      const stk = await ev(p.s, `(() => { const o = document.querySelector('[data-stk]'); if (!o) return { err: 'нет органа' }; const c = o.querySelector('[data-orglbl]'); const g = o.closest('[data-daygrp]').querySelector('[data-grphdr]'); const bar = document.querySelector('[data-gdbar]'); return { k: o.getAttribute('data-dayorg'), h: o.offsetHeight, cTop: Math.round(c.getBoundingClientRect().top), gBot: Math.round(g.getBoundingClientRect().bottom), oTop: Math.round(o.getBoundingClientRect().top), bar: bar ? Math.round(bar.getBoundingClientRect().bottom) : 0, pos: getComputedStyle(c).position }; })()`);
+      chk(stk && stk.pos === 'sticky' && (stk.oTop > stk.gBot || Math.abs(stk.cTop - stk.gBot) <= 3) && stk.cTop >= stk.bar - 1, `капсула органа не прилипла под строкой группы: ${JSON.stringify(stk)}`);
+      rep.push(tag(`капсула ${JSON.stringify(stk)}`)); rep.push(tag(`17.11: «${line}», подписи ${JSON.stringify(lbl)}, плиток органов ${tiles && tiles[0]}, открыта группа ${s1} → ${s2}, отметок-групп в сетке ${mk}`)); await p.close(); }
   }
 } finally { try { ws.close(); } catch {} ch.kill('SIGKILL'); SITE.close(); setTimeout(() => fs.rmSync(prof, { recursive: true, force: true }), 500); }
 rep.forEach((x) => console.log('  ' + x));
