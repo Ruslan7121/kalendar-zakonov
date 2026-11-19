@@ -1,5 +1,5 @@
 {
- "run": "19.11.2026 03:34 МСК",
+ "run": "19.11.2026 04:42 МСК",
  "window": [
   "15.11.2026",
   "18.11.2026"
@@ -68,8 +68,8 @@
   },
   "mintrud_docs": {
    "url": "https://mintrud.gov.ru/document/rss",
-   "status": "blocked:нет соединения (curl 6)",
-   "n": 0
+   "status": "ok",
+   "n": 64
   },
   "mintrud_news": {
    "url": "https://mintrud.gov.ru/news/news/list",
