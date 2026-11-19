@@ -3663,11 +3663,14 @@ const OBODY = (t: any, m?: boolean) => ({ padding: m ? '10px 10px 12px' : '14px 
 /* 19.11.2026: абзацы «Сути» документа органа: массив или строка с пустой строкой между абзацами */
 const orgSut = (x: any): string[] => (Array.isArray(x.sut) ? x.sut : typeof x.sut === 'string' ? x.sut.split(/\n\s*\n|\n/) : []).map((q: any) => String(q).trim()).filter(Boolean);
 const orgWho = (x: any) => (typeof x.who === 'string' ? x.who : Array.isArray(x.who) ? x.who.join('\n') : '').trim();
-/* 19.11.2026 (правило 15): плитка документа органа — только если есть и «Суть», и «Кого коснётся»; заседания и новости — как раньше. Документ без официального текста (поле nt) на сайте не плиткой, а строкой «Также опубликовано без текста» в блоке «Документ и даты» дня. */
+/* 19.11.2026 (правило 15): плитки документов без «Сути» и «Кого коснётся» скрываются только с ORG_HIDE_FROM; более ранние дни видны как раньше (пустые блоки «Суть»/«Кого коснётся» не показываются). Заседания и новости — как раньше. Документ без официального текста (поле nt) — строкой «Также опубликовано без текста» в блоке «Документ и даты» дня. Та же дата — pipeline/common.py. */
+const ORG_HIDE_FROM = '19.11.2026';
+const orgDayKey = (d: string) => (d || '').slice(6, 10) + (d || '').slice(3, 5) + (d || '').slice(0, 2);
+const orgHideFrom = (d: string) => orgDayKey(d) >= orgDayKey(ORG_HIDE_FROM);
 const orgIsDoc = (x: any) => x.ty !== 'новость' && x.ty !== 'заседание';
 const orgHasTexts = (x: any) => orgSut(x).length > 0 && !!orgWho(x);
-const orgPub = (x: any) => !orgIsDoc(x) || orgHasTexts(x);
 const orgNoText = (x: any) => orgIsDoc(x) && !!x.nt && !orgHasTexts(x);
+const orgPub = (x: any) => !orgIsDoc(x) || orgHasTexts(x) || (!orgNoText(x) && !orgHideFrom(x.d));
 const orgNo = (x: any) => { const r = /№\s*([^\s,;:]+)/.exec(x.no || x.st || x.t || ''); return r ? '№ ' + r[1] : ''; };
 function OrgItem({ x, m, noOrg }: { x: any; m?: boolean; noOrg?: boolean }) { /* 19.11.2026: noOrg — плитка под капсулой органа: орган не повторяется справа от плашки вида (в окне документа — остаётся) */
   const t = useGrokTheme(); const [op, setOp] = useState(false);
@@ -3687,7 +3690,7 @@ function OrgItem({ x, m, noOrg }: { x: any; m?: boolean; noOrg?: boolean }) { /*
       {op && <NvModal onClose={() => setOp(false)} c={gl} m={m}><div data-orgbody="1">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: m ? '10px 48px 8px 14px' : '16px 56px 10px 18px' }}>{hdr(true)}</div>
         <div style={{ padding: m ? '4px 12px 14px' : '4px 18px 18px', display: 'grid', gridTemplateColumns: m || !((sutO || x.who) && (x.no || x.full || dl.length || x.nb)) ? '1fr' : '1fr 1fr', gap: 12, alignItems: 'start' }}>
-        {(!!sutO || !!x.who) && <div style={{ ...blk, display: 'flex', flexDirection: 'column', gap: 14 }}>{sutO && <div data-orgsut="1"><div style={h}>Суть</div>{sutP.map((q, i) => <p key={i} style={{ ...p15, marginTop: i ? 10 : 0 }}>{q}</p>)}</div>}{x.who && <div><div style={h}>Кого коснётся</div><p style={p15}>{x.who}</p></div>}</div>}
+        {(!!sutO || !!x.who) && <div style={{ ...blk, display: 'flex', flexDirection: 'column', gap: 14 }}>{sutO && <div data-orgsut="1"><div style={h}>Суть</div>{sutP.map((q, i) => <p key={i} style={{ ...p15, marginTop: i ? 10 : 0 }}>{q}</p>)}</div>}{x.who && <div data-orgwho="1"><div style={h}>Кого коснётся</div><p style={p15}>{x.who}</p></div>}</div>}
         <div data-orgdoc="1" style={blk}><div style={h}>Документ и даты</div>
           <p style={{ ...p15, fontSize: 13, color: t.text.secondary }}>{ORGN[x.o]}{x.stt ? ` · ${x.stt}` : ''}</p>
           {x.no && <p style={{ ...p15, marginTop: 4, fontWeight: t.weight.semibold }}>{x.no}</p>}

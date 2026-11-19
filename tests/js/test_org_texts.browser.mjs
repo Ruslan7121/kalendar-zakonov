@@ -1,5 +1,5 @@
-// 19.11.2026 (правило 15): на странице нет видимой плитки документа органа без «Сути» и «Кого коснётся».
-// 390 px и 1366 px. Каркас — как test_day_groups.browser.mjs. Без Chrome — SKIP (при GD_REQUIRE_BROWSER=1 — падает).
+// Правило 15: до ORG_HIDE_FROM плитка без текстов видна, пустых блоков «Суть»/«Кого коснётся» нет;
+// с этой даты плитка без текстов скрыта. 390 и 1366 px. Без Chrome — SKIP (при GD_REQUIRE_BROWSER=1 — падает).
 // Запуск: node tests/js/test_org_texts.browser.mjs
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -40,36 +40,49 @@ try {
       if (!(await until(s, `!!document.querySelector('main') && !document.querySelector('[data-gd-load]')`))) { rep.push(tag(`${url}: пустая страница, перезагрузка`)); await cmd('Page.reload', { ignoreCache: true }, s); await until(s, `!!document.querySelector('main') && !document.querySelector('[data-gd-load]')`); }
       return { s, close: () => cmd('Target.closeTarget', { targetId }) }; };
     const p = await open('/?tab=c');
-    // 17.11 — все документы с текстами: раскрыть день и группы, открыть плитку, проверить «Суть» и «Кого коснётся»
-    const hdr = await until(p.s, `!!document.querySelector('[data-day="17.11.2026"] [data-dayhdr]')`);
-    chk(hdr, 'нет дня 17.11.2026');
-    await ev(p.s, `document.querySelector('[data-day="17.11.2026"] [data-dayhdr]').click()`); await sleep(700);
-    await ev(p.s, `[...document.querySelectorAll('[data-day="17.11.2026"] [data-grphdr]')].forEach((h) => { if (h.getAttribute('aria-expanded') !== 'true') h.click(); })`); await sleep(1200);
-    const n17 = await ev(p.s, `document.querySelectorAll('[data-day="17.11.2026"] [data-orgitem]').length`);
-    chk(n17 > 0, `17.11: нет плиток органов (${n17})`);
-    const row = await ev(p.s, `(() => { const r = document.querySelector('[data-day="17.11.2026"] [data-orgrow]'); if (!r) return false; r.click(); return true; })()`);
-    chk(row, '17.11: не нажалась плитка органа');
+
+    // 05.11 — день до границы: приказ № 131н без «Кого коснётся» виден; в карточке есть «Суть», пустого блока who нет
+    const d05 = await until(p.s, `!!document.querySelector('[data-day="05.11.2026"] [data-dayhdr]')`);
+    chk(d05, 'нет дня 05.11.2026');
+    await ev(p.s, `document.querySelector('[data-day="05.11.2026"] [data-dayhdr]').scrollIntoView()`);
+    await ev(p.s, `document.querySelector('[data-day="05.11.2026"] [data-dayhdr]').click()`); await sleep(800);
+    // в дне открыта одна группа: «Экономика» — там Минфин и приказ № 131н
+    const eco = await ev(p.s, `(() => { const h = document.querySelector('[data-day="05.11.2026"] [data-daygrp="eco"] [data-grphdr]'); if (!h) return false; if (h.getAttribute('aria-expanded') !== 'true') h.click(); return true; })()`);
+    chk(eco, '05.11: нет группы «Экономика»');
+    // плитка показывает краткое название (st), не номер «131н» из полного заголовка
+    const TILE = '/бюджетной отчетности об исполнении бюджетов/';
+    await until(p.s, `document.querySelector('[data-day="05.11.2026"] [data-daygrp="eco"] [data-grphdr]')?.getAttribute('aria-expanded') === 'true'`, 5000);
+    await until(p.s, `[...document.querySelectorAll('[data-day="05.11.2026"] [data-orgitem]')].some((e) => ${TILE}.test(e.innerText || ''))`, 5000);
+    const hit = await ev(p.s, `(() => { const tiles = [...document.querySelectorAll('[data-day="05.11.2026"] [data-orgitem]')].filter((e) => ${TILE}.test(e.innerText || '')); if (!tiles.length) return { n: 0, titles: [...document.querySelectorAll('[data-day="05.11.2026"] [data-orgitem]')].map((e) => (e.innerText || '').replace(/\\s+/g, ' ').slice(0, 80)) }; tiles[0].querySelector('[data-orgrow]')?.click(); return { n: tiles.length }; })()`);
+    chk(hit && hit.n > 0, `05.11: плитки приказа № 131н нет (${JSON.stringify(hit)})`);
     await sleep(700);
-    const card = await ev(p.s, `(() => { const b = document.querySelector('[data-orgbody]'); if (!b) return { err: 'нет окна' }; const sut = !!b.querySelector('[data-orgsut]'); const who = /кого косн[её]тся/i.test(b.innerText || ''); return { sut, who, t: (b.innerText || '').slice(0, 180) }; })()`);
-    chk(card && card.sut && card.who, `17.11: в карточке нет «Сути» и «Кого коснётся»: ${JSON.stringify(card)}`);
+    const card = await ev(p.s, `(() => { const b = document.querySelector('[data-orgbody]'); if (!b) return { err: 'нет окна' }; const sut = !!b.querySelector('[data-orgsut]'); const who = !!b.querySelector('[data-orgwho]'); const empty = /кого косн[её]тся/i.test(b.innerText || '') && !who; return { sut, who, empty, t: (b.innerText || '').slice(0, 200) }; })()`);
+    chk(card && card.sut && !card.who && !card.empty, `05.11 № 131н: ожидалась «Суть» без пустого «Кого коснётся»: ${JSON.stringify(card)}`);
     await ev(p.s, `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`); await sleep(400);
 
-    // 05.11: приказ № 131н без «Кого коснётся» в данных есть, на странице плитки быть не должно
-    const d05 = await ev(p.s, `!!document.querySelector('[data-day="05.11.2026"]')`);
-    if (d05) {
-      await ev(p.s, `document.querySelector('[data-day="05.11.2026"] [data-dayhdr]').click()`); await sleep(700);
-      await ev(p.s, `[...document.querySelectorAll('[data-day="05.11.2026"] [data-grphdr]')].forEach((h) => { if (h.getAttribute('aria-expanded') !== 'true') h.click(); })`); await sleep(1200);
+    // с 19.11: если есть плитка документа (приказ/указ/…), в карточке должны быть оба текста
+    await ev(p.s, `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`); await sleep(300);
+    const lateDoc = await ev(p.s, `(() => {
+      const kinds = /приказ|указ|постановление|распоряжение|указание|письмо/i;
+      const tiles = [...document.querySelectorAll('[data-day] [data-orgitem]')].filter((e) => {
+        const d = e.closest('[data-day]')?.getAttribute('data-day') || '';
+        return d.slice(6) + d.slice(3, 5) + d.slice(0, 2) >= '20261119' && kinds.test(e.innerText || '');
+      });
+      if (!tiles.length) return { n: 0 };
+      tiles[0].querySelector('[data-orgrow]')?.click();
+      return { n: tiles.length, t: (tiles[0].innerText || '').slice(0, 80) };
+    })()`);
+    await sleep(700);
+    let lateCard = { n: lateDoc && lateDoc.n };
+    if (lateDoc && lateDoc.n > 0) {
+      lateCard = await ev(p.s, `(() => { const b = document.querySelector('[data-orgbody]'); if (!b) return { err: 'нет окна' }; return { sut: !!b.querySelector('[data-orgsut]'), who: !!b.querySelector('[data-orgwho]'), t: (b.innerText || '').slice(0, 120) }; })()`);
+      chk(lateCard && lateCard.sut && lateCard.who, `с 19.11 открыта плитка документа без обоих текстов: ${JSON.stringify(lateCard)} / ${JSON.stringify(lateDoc)}`);
+      await ev(p.s, `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
     }
-    const hit = await ev(p.s, `(() => { const t = [...document.querySelectorAll('[data-day="05.11.2026"] [data-orgitem], [data-orgitem]')].map((e) => e.innerText || '').join('\\n'); return /131н/.test(t); })()`);
-    chk(!hit, '05.11: на странице видна плитка приказа № 131н без «Кого коснётся»');
-    // поиск по номеру тоже не должен открывать скрытую плитку
-    await ev(p.s, `(() => { const i = document.querySelector('input[data-cq]'); if (!i) return false; const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; set.call(i, '131н'); i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`); await sleep(900);
-    const sh = await ev(p.s, `(() => { const tiles = [...document.querySelectorAll('[data-orgitem]')].filter((e) => /131н/.test(e.innerText || '')); return tiles.length; })()`);
-    chk(sh === 0, `поиск «131н» показал скрытую плитку: ${sh}`);
-    rep.push(tag(`17.11 плиток ${n17}, карточка ${JSON.stringify(card && { sut: card.sut, who: card.who })}, 131н на странице ${hit}, в поиске ${sh}`));
+    rep.push(tag(`05.11 131н плиток ${hit && hit.n}, карточка ${JSON.stringify(card && { sut: card.sut, who: card.who, empty: card.empty })}, с 19.11 док. плиток ${lateDoc && lateDoc.n}`));
     await p.close();
   }
 } finally { try { ws.close(); } catch {} ch.kill('SIGKILL'); SITE.close(); setTimeout(() => fs.rmSync(prof, { recursive: true, force: true }), 500); }
 rep.forEach((x) => console.log('  ' + x));
-assert.deepEqual(fails, [], 'плитки ORG без текстов:\n  ' + fails.join('\n  '));
-console.log(`OK test_org_texts.browser: нет видимых плиток без «Сути» и «Кого коснётся» (${WIDTHS.map((w) => w.w + 'px').join(', ')})`);
+assert.deepEqual(fails, [], 'плитки ORG по правилу 15:\n  ' + fails.join('\n  '));
+console.log(`OK test_org_texts.browser: до 19.11 плитки без текстов видны без пустых блоков; с 19.11 скрыты (${WIDTHS.map((w) => w.w + 'px').join(', ')})`);

@@ -99,8 +99,10 @@ def write_canvas(src, path=None):
     return True
 
 # 19.11.2026 (правило 15): документы органов (указы, постановления, распоряжения, приказы, указания, письма ЦБ и т. д.).
-# Заседания и новости плитки «Суть»/«Кого коснётся» не требуют. Документ без обоих текстов на сайт не выводится.
+# Заседания и новости плитки «Суть»/«Кого коснётся» не требуют.
+# Скрытие плиток без обоих текстов — только для дней с ORG_HIDE_FROM; та же константа в src/canvas.tsx и pipeline/split_data.mjs.
 ORG_SKIP_TY = ('новость', 'заседание')
+ORG_HIDE_FROM = '19.11.2026'
 
 def org_sut(e):
     s = e.get('sut')
@@ -121,6 +123,14 @@ def org_is_doc(e):
 
 def org_has_texts(e):
     return bool(org_sut(e)) and bool(org_who(e))
+
+def org_day_key(d):
+    d = d or ''
+    return (d[6:10] + d[3:5] + d[0:2]) if len(d) >= 10 else ''
+
+def org_hide_from(d):
+    """День подпадает под скрытие плиток без текстов (с ORG_HIDE_FROM включительно)."""
+    return org_day_key(d) >= org_day_key(ORG_HIDE_FROM)
 
 def org_no(e):
     r = re.search(r'№\s*([^\s,;:]+)', str((e or {}).get('no') or (e or {}).get('st') or (e or {}).get('t') or ''))

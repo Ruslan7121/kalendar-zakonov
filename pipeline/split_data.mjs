@@ -130,11 +130,13 @@ export async function split(file = CANVAS) {
     for (const [k, v] of Object.entries(T[n])) { const ms = coreText.includes(k) ? [] : MS.filter((m) => mText[m].includes(k)); if (!ms.length) core[n][k] = v; else ms.forEach((m) => { M[m][n][k] = v; }); } }
   for (const m of MS) for (const n of Object.keys(M[m])) if (Array.isArray(M[m][n]) ? !M[m][n].length : !Object.keys(M[m][n]).length) delete M[m][n];
   // счётчики месяца для переключателя месяцев, пока сам месяц не загружен (та же формула, что calCnt в canvas).
-  // 19.11.2026 (правило 15): в счётчик органа день попадает только если есть видимая плитка (есть «Суть» и «Кого коснётся»,
-  // либо это заседание/новость) или строка «без текста» (поле nt). Документы без текстов, ожидающие написания, не считаются.
+  // Правило 15: скрытие документов без текстов — только с ORG_HIDE_FROM (та же константа в src/canvas.tsx и pipeline/common.py).
+  // В счётчик дня органа входят видимые плитки (в т. ч. дни до границы без текстов) и строка «без текста» (поле nt).
+  const ORG_HIDE_FROM = '19.11.2026';
+  const orgDayKey = (d) => (d || '').slice(6, 10) + (d || '').slice(3, 5) + (d || '').slice(0, 2);
   const orgSut = (x) => (Array.isArray(x.sut) ? x.sut : typeof x.sut === 'string' ? x.sut.split(/\n\s*\n|\n/) : []).map((q) => String(q).trim()).filter(Boolean);
   const orgWho = (x) => (typeof x.who === 'string' ? x.who : Array.isArray(x.who) ? x.who.join('\n') : '').trim();
-  const orgShow = (x) => x.ty === 'новость' || x.ty === 'заседание' || (!!(orgSut(x).length && orgWho(x))) || !!x.nt;
+  const orgShow = (x) => x.ty === 'новость' || x.ty === 'заседание' || (!!(orgSut(x).length && orgWho(x))) || !!x.nt || orgDayKey(x.d) < orgDayKey(ORG_HIDE_FROM);
   const cnt = Object.fromEntries(MS.map((m) => { const o = {}; T.ORG.filter((x) => mkOf(x.d) === m && orgShow(x)).forEach((x) => { (o[x.o] = o[x.o] || []); if (!o[x.o].includes(x.d)) o[x.o].push(x.d); });
     return [m, { p: T.CAL.p.filter((x) => mkOf(x.d) === m).length, g: T.CAL.g.filter((x) => mkOf(x[0]) === m).length, o }]; }));
   const files = { core: dump(core) }; for (const m of MS) files[m] = dump(M[m]);
