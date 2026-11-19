@@ -35,7 +35,6 @@ jobs:
           CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
           test -n "$CHROME" && "$CHROME" --version
           echo "CHROME=$CHROME" >> "$GITHUB_ENV"
-      - name: Проверка типов (npm run typecheck, П15)
-        run: npm run typecheck
-      - name: Тесты (bash tests/run_all.sh)
-        run: bash tests/run_all.sh
+      # 19.11.2026: pipeline/ci_tests.sh — проверка типов и тесты; код 3 («тексты не готовы»: SHORT, «Суть», метки) — предупреждение, не ошибка
+      - name: Проверка типов и тесты (pipeline/ci_tests.sh)
+        run: bash pipeline/ci_tests.sh; rc=$?; [ $rc = 0 ] || [ $rc = 3 ]

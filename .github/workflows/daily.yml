@@ -92,19 +92,31 @@ jobs:
           # Н2: источник не ответил — остальное всё равно собираем и публикуем, но прогон в конце помечается неуспешным (сработает повтор)
           if grep -q "список голосований за .* не загружен" daily.log; then echo "src_fail=1" >> "$GITHUB_OUTPUT"; fi
       - name: Проверка схемы данных
+        id: schema
         run: node pipeline/validate_data.mjs
       - name: Проверка типов и тесты
-        run: |
-          npm run typecheck
-          bash tests/run_all.sh
+        id: tests
+        # 19.11.2026: pipeline/ci_tests.sh — если не готовы только тексты (SHORT, «Суть», метки, тексты органов; код 3),
+        # голосования и данные дня коммитятся и публикуются, тексты бот дописывает отдельным проходом (22:30 МСК).
+        # Любой другой упавший тест — без публикации, сырые данные дня уходят в main (шаг ниже), прогон помечается ошибкой.
+        run: bash pipeline/ci_tests.sh || true
       - name: Коммит в main (pipeline/commit.sh)
+        if: steps.tests.outputs.ok == '1'
         run: |
           # 19.11.2026 (правило 13): короткие названия и «Суть» дня пишет бот — без них коммит помечен «тексты не готовы»
           MSG="Ежедневный прогон ${{ steps.run.outputs.day }} (автоматически)"
           ( cd pipeline && python3 texts_check.py "${{ steps.run.outputs.day }}" ) || MSG="$MSG — тексты не готовы"
           bash pipeline/commit.sh "$MSG"
       - name: Публикация (pipeline/publish.sh)
+        if: steps.tests.outputs.ok == '1'
         run: bash pipeline/publish.sh "Ежедневный прогон ${{ steps.run.outputs.day }}"
+      # 19.11.2026: проверка схемы или тесты упали — собранное за день не теряется: в main только сырые данные
+      # (ответ vote.duma.gov.ru за день → out/raw/days/, выжимки extracts/, out/days/, органы), без canvas и data/; сайт не публикуется.
+      - name: Коммит сырых данных дня без публикации (тесты не прошли)
+        if: always() && steps.run.outcome == 'success' && steps.tests.outputs.ok != '1'
+        run: |
+          bash pipeline/commit_raw.sh "Сырые данные ${{ steps.run.outputs.day }} без публикации (тесты не прошли)" "${{ steps.run.outputs.day }}"
+          echo 'Тесты или проверка схемы не прошли: сырые данные дня в main, сайт не опубликован'; exit 1
       - name: Источник голосований не ответил
         if: steps.run.outputs.src_fail == '1'
         run: |

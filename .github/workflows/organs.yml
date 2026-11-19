@@ -76,17 +76,9 @@ jobs:
         run: node pipeline/validate_data.mjs
       - name: Проверка типов и тесты
         id: tests
-        # 19.11.2026: проверка готовности текстов (test_texts_org — «Суть»/«Кого коснётся») коммит и публикацию не блокирует:
-        # новые документы органов с ORG_HIDE_FROM (19.11.2026) без текстов и так скрыты на сайте. Любой другой упавший тест — блокирует.
-        run: |
-          set +e
-          npm run typecheck; tc=$?
-          bash tests/run_all.sh 2>&1 | tee "$RUNNER_TEMP/tests.log"; rc=${PIPESTATUS[0]}
-          hard=$(grep '^FAIL: ' "$RUNNER_TEMP/tests.log" | grep -v -E '^FAIL: python3 tests/test_texts_org\.py$')
-          if [ $tc = 0 ] && [ $rc = 0 ]; then echo 'ok=1' >> "$GITHUB_OUTPUT"
-          elif [ $tc = 0 ] && [ -z "$hard" ]; then echo 'ok=1' >> "$GITHUB_OUTPUT"; echo '::warning::Тексты органов не готовы (test_texts_org) — данные коммитятся, документы без «Сути» скрыты'
-          else echo 'ok=0' >> "$GITHUB_OUTPUT"; echo "::error::Тесты не прошли: ${hard:-typecheck}"; fi
-          exit 0
+        # 19.11.2026: pipeline/ci_tests.sh — непрошедшая проверка готовности текстов («Суть»/«Кого коснётся», метки; код 3)
+        # коммит и публикацию не блокирует: новые документы органов с ORG_HIDE_FROM без текстов и так скрыты. Любой другой тест — блокирует.
+        run: bash pipeline/ci_tests.sh || true
       - name: Коммит в main (pipeline/commit.sh)
         if: steps.tests.outputs.ok == '1'
         run: bash pipeline/commit.sh "Документы и новости органов (автоматически)"
@@ -99,15 +91,8 @@ jobs:
       - name: Коммит собранных данных без публикации (тесты не прошли)
         if: always() && steps.collect.outcome == 'success' && steps.tests.outputs.ok != '1'
         run: |
-          git reset -q
-          git add out/organs/events.json out/organs/status.json 2>/dev/null || true
-          git add extracts/organs/*.json 2>/dev/null || true
-          if ! git diff --cached --quiet; then
-            git commit -q -m "Органы: собранные документы и тексты без публикации (тесты не прошли)"
-            git stash -q --include-untracked || true
-            for try in 1 2 3; do git pull -q --rebase origin main && git push -q origin main && break; sleep 5; done
-          fi
-          echo 'Тесты не прошли: данные органов закоммичены, сайт не опубликован'; exit 1
+          bash pipeline/commit_raw.sh "Органы: собранные документы и тексты без публикации (тесты не прошли)"
+          echo 'Тесты или проверка схемы не прошли: сырые данные органов в main, сайт не опубликован'; exit 1
       - name: Сводка
         if: always()
         run: |

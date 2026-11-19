@@ -61,9 +61,11 @@ jobs:
         run: node pipeline/validate_data.mjs
       - name: Проверка типов и тесты
         if: ${{ !inputs.only_check }}
+        id: tests
+        # 19.11.2026: неготовые тексты (код 3 pipeline/ci_tests.sh) публикацию не блокируют, любой другой тест — блокирует
         run: |
-          npm run typecheck
-          bash tests/run_all.sh
+          bash pipeline/ci_tests.sh || true
+          [ "$(grep -h '^ok=' "$GITHUB_OUTPUT" | tail -1)" = ok=1 ] || { echo 'тесты не прошли'; exit 1; }
       - name: Коммит в main (pipeline/commit.sh)
         if: ${{ !inputs.only_check }}
         run: bash pipeline/commit.sh "Официальные ссылки законов «Вступают в силу» (kremlin.ru)"

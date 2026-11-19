@@ -61,27 +61,25 @@ new[0]['who'] = 'Распорядители бюджета.'
 write('19.11.2026', new)
 assert texts_check.main('19.11.2026') == 0, 'после «Кого коснётся» тексты за 19.11 готовы'
 
-# --- todo.py по настоящему canvas: ранние документы остаются в долге ---
-env = dict(os.environ, GD_ROOT=R, CANVAS=os.path.join(R, 'src', 'canvas.tsx'))
-status = os.path.join(R, 'docs', 'STATUS.md')
+# --- todo.py на синтетическом canvas: ранние документы остаются в долге ---
+# 19.11.2026: раньше эта часть шла по настоящему src/canvas.tsx и ждала долг у Приказа № 131н за 05.11 —
+# тест ломался бы, как только этот долг допишут. Теперь только синтетические данные.
+write('05.11.2026', old)
+# заглушки блоков, которые читает todo.py (на синтетическом canvas их нет)
+open(CV, 'a').write("const PROC: Record<string, any> = {};\nconst PLAIN: Record<string, any> = {\n};\n"
+    "const ZTAG: Record<string, any> = {};\nconst CAL: any = {\"p\": []};\nconst ZAUTO: string[] = [];\nconst LAWS: any = {\"months\": {}};\n"
+    "const ORGN: Record<string, string> = { minfin: 'Минфин', gov: 'Правительство', sf: 'Совет Федерации' };\nconst SFM: any = {};\n")
+env = dict(os.environ, GD_ROOT=T, CANVAS=CV)
+status = os.path.join(R, 'docs', 'STATUS.md')  # todo.py дописывает docs/STATUS.md клона — вернуть как было
 prev = open(status).read() if os.path.exists(status) else None
-r = subprocess.run([sys.executable, os.path.join(R, 'pipeline', 'todo.py')], cwd=R, env=env, capture_output=True, text=True)
+r = subprocess.run([sys.executable, os.path.join(R, 'pipeline', 'todo.py')], cwd=T, env=env, capture_output=True, text=True)
 if prev is not None:
     open(status, 'w').write(prev)
 assert r.returncode == 0, r.stderr
-todo = open(os.path.join(R, 'out', 'TODO.md')).read()
+todo = open(os.path.join(T, 'out', 'TODO.md')).read()
 assert '## Документы органов' in todo, 'в TODO.md нет раздела «Документы органов»'
 assert 'Приказ № 131н' in todo and '05.11.2026' in todo and 'Кого коснётся' in todo
-
-C.CANVAS = os.path.join(R, 'src', 'canvas.tsx')
-C.ROOT = R
-C.OUT = os.path.join(R, 'out')
-C.LOGS = os.path.join(R, 'out', 'logs')
-os.makedirs(C.LOGS, exist_ok=True)
-assert texts_check.org_gap(open(C.CANVAS, encoding='utf-8').read(), '05.11.2026')
+assert texts_check.org_gap(open(CV, encoding='utf-8').read(), '05.11.2026')
 assert texts_check.main('05.11.2026') == 0  # долг есть, суффикса нет
-# 19.11.2026: проверка «за 18.11 долга органов нет» по настоящему canvas убрана — она зависела от живых данных
-# (новые акты Правительства, подписанные 18.11, приходят без «Сути» и роняли плановый прогон organs).
-# Правило «долг до ORG_HIDE_FROM не ставит суффикс» проверено выше на синтетическом canvas.
 shutil.rmtree(T, ignore_errors=True)
 print('test_texts_org: OK')

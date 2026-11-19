@@ -20,7 +20,7 @@ in_hours() { local h; h=$(hour); [ "$h" -ge 8 ] && [ "$h" -lt 22 ]; }
 weekday() { TZ=Europe/Moscow date +%u; }
 # есть ли запуск workflow $1 (за последние 3 часа или с времени $2) в состоянии queued / in_progress / success (чтобы не запускать повторно)
 recent_run() { local since; since=${2:-$(date -u -d '3 hours ago' +%Y-%m-%dT%H:%M:%SZ)}
-  local n; n=$(gh run list --workflow "$1" --created ">=$since" --json status,conclusion -q '[.[] | select(.status=="queued" or .status=="in_progress" or .conclusion=="success")] | length' 2>/dev/null || echo 0)
+  local n; n=$(gh run list --workflow "$1" --created ">=$since" --json status,conclusion -q '[.[] | select(.status=="queued" or .status=="in_progress" or .status=="pending" or .status=="waiting" or .status=="requested" or .conclusion=="success")] | length' 2>/dev/null || echo 0)
   [ "${n:-0}" -gt 0 ]; }
 kick() { # kick <workflow> <причина>
   gh workflow run "$1" --ref main && echo "news_loop: запущен $1 ($2)" || echo "news_loop: не удалось запустить $1"; }
@@ -44,6 +44,12 @@ while :; do
     # учитываем только запуски после 21:00 МСК: дневной ручной прогон не отменяет вечерний (голосования идут до вечера)
     if recent_run daily.yml "$(date -u +%Y-%m-%dT18:00:00Z)"; then DAILY_DONE=$(TZ=Europe/Moscow date +%F); echo "news_loop: daily сегодня уже запущен/успешен"
     else kick daily.yml "ежедневный сбор, будни после 21:17" && DAILY_DONE=$(TZ=Europe/Moscow date +%F); fi
+  fi
+  # 19.11.2026: повтор daily, если вечерний прогон упал или отменен (в очереди daily-run новый запуск отменяет ожидающий):
+  # с 22:30 до 23:45 МСК, раз в 30 минут, не больше двух повторов за вечер; не нужен, если daily уже идет или прошел успешно
+  if [ "$(weekday)" -le 5 ] && [ "${DAILY_DONE:-}" = "$(TZ=Europe/Moscow date +%F)" ] && [ "$m" -ge $((22*60+30)) ] && [ "$m" -lt $((23*60+45)) ] \
+     && [ "${DAILY_RETRY:-0}" -lt 2 ] && [ $(( $(date +%s) - ${DAILY_RETRY_AT:-0} )) -ge 1800 ] && ! recent_run daily.yml "$(date -u +%Y-%m-%dT18:00:00Z)"; then
+    kick daily.yml "повтор: вечерний daily не прошел" && { DAILY_RETRY=$(( ${DAILY_RETRY:-0} + 1 )); DAILY_RETRY_AT=$(date +%s); }
   fi
   FIRST=0
   if in_hours; then S=$EVERY; else S=$NIGHT; fi
