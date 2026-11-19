@@ -98,7 +98,11 @@ jobs:
           npm run typecheck
           bash tests/run_all.sh
       - name: Коммит в main (pipeline/commit.sh)
-        run: bash pipeline/commit.sh "Ежедневный прогон ${{ steps.run.outputs.day }} (автоматически)"
+        run: |
+          # 19.11.2026 (правило 13): короткие названия и «Суть» дня пишет бот — без них коммит помечен «тексты не готовы»
+          MSG="Ежедневный прогон ${{ steps.run.outputs.day }} (автоматически)"
+          ( cd pipeline && python3 texts_check.py "${{ steps.run.outputs.day }}" ) || MSG="$MSG — тексты не готовы"
+          bash pipeline/commit.sh "$MSG"
       - name: Публикация (pipeline/publish.sh)
         run: bash pipeline/publish.sh "Ежедневный прогон ${{ steps.run.outputs.day }}"
       - name: Источник голосований не ответил

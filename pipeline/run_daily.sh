@@ -54,10 +54,13 @@ for MD in $MISS; do
   echo "[дозагрузка пропущенного дня] $MD"
   python3 votes_day.py "$MD" || echo "votes_day $MD: не загружен (см. logs/votes_day_fail.log)" >&2
   python3 bills.py "$MD" || true
+  python3 bill_titles.py "$MD" || true
   python3 vote_times.py "$MD" || true
 done
 echo "[законопроекты] $DAY"
 python3 bills.py "$DAY"
+# 19.11.2026: полное официальное название с sozd → INIC.t (в карточке — без многоточия vote.duma.gov.ru)
+python3 bill_titles.py "$DAY" || echo "bill_titles: ошибка (см. out/logs/bill_titles.log)" >&2
 echo "[время голосований] $DAY"
 python3 vote_times.py "$DAY"
 echo "[органы власти: СФ, Минфин, Минтруд, Минюст, ЦБ] $DAY"
@@ -75,6 +78,8 @@ echo "[аудит] $DAY"
 python3 audit.py --day "$DAY" --fix
 echo "[список задач]"
 python3 todo.py
+# 19.11.2026 (правило 13): тексты дня пишет бот; прогон только сообщает, готовы ли они (код 1 — «тексты не готовы»)
+python3 texts_check.py "$DAY" || true
 echo "[копии: src/canvas.code-only.tsx, out/canvas.tsx, out/canvas.code-only.tsx]"
 python3 strip_code_only.py || echo "strip_code_only: ошибка" >&2
 echo "[данные сайта по месяцам: data/core.json, data/months/*.json, data/index.json]"

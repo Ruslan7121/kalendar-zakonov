@@ -36,6 +36,19 @@ FALLBACK = [('текст законопроекта к первому чтени
             ('текст внесенного законопроекта', r'Текст внесенного законопроекта|Текст законопроекта, внесенного'),
             ('заключение ответственного комитета', r'Заключение ответственного комитета')]
 
+
+def sozd_title(src):
+    """19.11.2026: полное официальное название со страницы sozd — «наименование» (oz_name) и уточнение в скобках
+    (oz_name_comment). Раньше бралось содержимое <h1> («Законопроект № …» со значками кнопок), а не название."""
+    a = re.search(r'id="oz_name"[^>]*>(.*?)</span>', src, re.S)
+    if not a:
+        m = re.search(r'<h1[^>]*>(.*?)</h1>', src, re.S)
+        return C.text(m.group(1)).strip() if m else ''
+    t = C.text(a.group(1)).strip()
+    b = re.search(r'id="oz_name_comment"[^>]*>(.*?)</p>', src, re.S)
+    c = C.text(b.group(1)).strip() if b else ''
+    return re.sub(r'\s+', ' ', f'{t} {c}' if c else t).strip()
+
 def note_text(path):
     b = open(path, 'rb').read(4)
     if b == b'PK\x03\x04':
@@ -151,10 +164,9 @@ def one(n, day, vid, force=False):
             old['tried_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
             json.dump(old, open(out, 'w'), ensure_ascii=False, indent=1)
         return 'fail'
-    m = re.search(r'<h1[^>]*>(.*?)</h1>', src, re.S)
     rec = {'n': n, 'day': old.get('day') if old.get('day') not in (None, '', 'manual') else day,
            'vote': old.get('vote') if old.get('vote') not in (None, '', '0') else vid,
-           'title': C.text(m.group(1)).strip() if m else '', 'note': '', 'note_url': ''}
+           'title': sozd_title(src), 'note': '', 'note_url': ''}
     # подпись файла на sozd обёрнута в div-ы с ~500 пробелами — окно 400 символов её не видело (пустые записки)
     dl = [(u, C.text(a)) for u, a in re.findall(r'href="(/download/[^"]+)"[^>]*>(.{0,3000}?)</a>', src, re.S)]
     pz = next((u for u, a in dl if 'ояснительн' in a), None)

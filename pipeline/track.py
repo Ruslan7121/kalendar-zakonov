@@ -329,7 +329,7 @@ if __name__ == '__main__':
         IN = C.get_block(src, 'INIC')
         for n, p in PASS.items():
             IN[n] = {**IN.get(n, {}), **p}
-        src = C.set_block(src, 'INIC', 'const INIC: Record<string, { ini?: string; com?: string }>', IN)
+        src = C.set_block(src, 'INIC', 'const INIC: Record<string, { ini?: string; com?: string; t?: string }>', IN)
         print(f'инициатор/комитет с sozd: {len(PASS)} законопроектов, всего {len(IN)}', flush=True)
     C.write_canvas(src)
     print('TRACK written', len(T), flush=True)
