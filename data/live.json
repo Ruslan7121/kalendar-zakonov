@@ -1,11 +1,11 @@
 {
-"upd": "19.11.2026 10:24",
+"upd": "19.11.2026 10:45",
 "status": {
 "gd": "ok n=12",
 "gov": "ok n=20",
 "sf": "ok n=20",
 "cbr": "ok n=12",
-"minfin": "ok n=18",
+"minfin": "error:HTTP 502",
 "mintrud": "blocked:нет соединения (curl 6)",
 "minjust": "ok n=20",
 "minzdrav": "ok n=10",
