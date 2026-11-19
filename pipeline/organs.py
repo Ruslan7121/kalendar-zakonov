@@ -33,6 +33,11 @@ ORGS = {'minfin': 'Минфин', 'mintrud': 'Минтруд', 'minjust': 'Ми�
 MIN8 = {'economy': '59ad7c35-7d14-424e-b305-f964615734bd', 'promtorg': '852b803d-4d5b-4ed1-aaca-03284c0bc35e', 'minzdrav': 'a2b99d08-29c7-4a3f-901a-d1a7174428f8',
         'mintrans': 'd87efe50-9a6f-4ad5-aa06-452d4cd2e772', 'digital': '1ac1ee36-2621-4c4f-917f-9bffc35d4671', 'mvd': 'ff850c93-e869-42ec-9547-a63dad38c204',
         'mnr': 'd67a404e-260a-4a5b-b340-d34558da8bd6', 'minstroy': 'efa6da4b-4c1a-4fa8-8caf-860c17b205fd'}
+# 19.11.2026: Минтруд и Минюст — их зарегистрированные приказы тоже берем с официального опубликования (раньше у Минтруда был только
+# RSS сайта, у Минюста — только лента событий, поэтому Минюст № 325 и Минтруд № 482н/483н от 19.11.2026 не попали). Идентификаторы —
+# signatoryAuthorityId из ответа API (лента /documents/daily за 19.11.2026).
+FOIV = {**MIN8, 'mintrud': '2c4929b0-9323-4541-9705-76185b9e284b', 'minjust': 'f69ec43f-3fa5-4611-a286-52acdcc77334'}
+FOIV_BY_ID = {v: k for k, v in FOIV.items()}
 TYPES = ('заседание', 'проект', 'решение', 'разъяснение', 'новость')  # «новость» — во вкладку «Новости» (ORGNEWS), не в календарь
 MONTHS = {m: i + 1 for i, m in enumerate(['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'])}
 SOURCES = {
@@ -52,7 +57,9 @@ SOURCES = {
     # Президента, постановления и распоряжения Правительства — каждый день, не только с заседаний
     'pres_pravo': 'http://publication.pravo.gov.ru/api/Documents?block=president',
     'gov_pravo': 'http://publication.pravo.gov.ru/api/Documents?block=government',
-    **{f'{o}_pravo': f'http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId={i}' for o, i in MIN8.items()},
+    **{f'{o}_pravo': f'http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId={i}' for o, i in FOIV.items()},
+    # 19.11.2026: страховка — все приказы ФОИВ, опубликованные сегодня (как страница /documents/daily), одним запросом; берем органы из FOIV
+    'foiv_daily': 'http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&periodType=daily',
 }
 FIX = {'cbr_news': 'cbr_RssNews.xml', 'cbr_events': 'cbr_eventrss.xml', 'mintrud_docs': 'mintrud_document_rss.xml', 'mintrud_news': 'mintrud_news_list.html',
        'minjust_events': 'minjust_events_list.html', 'minjust_projects': 'minjust_projects.html',
@@ -254,13 +261,41 @@ def collect_pravo_api(key, org, fetch=None, pages=6):
         st, body = fetch(f'{SOURCES[key]}&PageSize={size}&Index={i}')
         if st.startswith('error:HTTP 400') and size == 100 and i == 1: size = 10; st, body = fetch(f'{SOURCES[key]}&PageSize={size}&Index={i}')
         if st != 'ok': return res, st
-        try: items = (json.loads(body) or {}).get('items') or []
+        try: js = json.loads(body) or {}; items = js.get('items') or []
         except Exception as e: return res, f'parse-error: {e}'
-        bp = org in MIN8
+        bp = org in FOIV
         res += parse_pravo_api(body, org, bp)
         old = [it.get('publishDateShort' if bp else 'documentDate', '')[:10] for it in items if it.get('publishDateShort' if bp else 'documentDate')]
-        if not items or (WIN_FROM and old and min(old) < WIN_FROM.isoformat()): break
+        if not items or (WIN_FROM and old and min(old) < WIN_FROM.isoformat()) or i >= int(js.get('pagesTotalCount') or pages): break
     return res, 'ok'
+
+def parse_pravo_daily(js):
+    """19.11.2026: ответ API за сегодня (periodType=daily, блок federal_authorities) → приказы органов из FOIV (по signatoryAuthorityId),
+    дата события — день опубликования, как у сбора по органу (id совпадают, при слиянии дублей нет). Чужие органы пропускаются."""
+    items = (json.loads(js) or {}).get('items') or []; res = []
+    for it in items:
+        org = FOIV_BY_ID.get(it.get('signatoryAuthorityId') or '')
+        if org: res += parse_pravo_api(json.dumps({'items': [it]}, ensure_ascii=False), org, True)
+    return res
+
+def collect_pravo_daily(fetch=None, pages=3):
+    """Лента «опубликовано сегодня» постранично по 200 (обычно одна страница)."""
+    fetch = fetch or (lambda u: get(u, 40)); res = []
+    for i in range(1, pages + 1):
+        st, body = fetch(f"{SOURCES['foiv_daily']}&PageSize=200&Index={i}")
+        if st != 'ok': return res, st
+        try: js = json.loads(body) or {}
+        except Exception as e: return res, f'parse-error: {e}'
+        res += parse_pravo_daily(body)
+        if i >= int(js.get('pagesTotalCount') or 1): break
+    return res, 'ok'
+
+PRIKAZ_NO = re.compile(r'^Приказ № (\S+)')
+def drop_rss_dupes(events):
+    """19.11.2026: приказ Минтруда, найденный и на официальном опубликовании, и в RSS сайта Минтруда, оставляем один раз — с опубликования."""
+    pub = {(e['o'], m.group(1)) for e in events if 'publication.pravo.gov.ru/document/' in e.get('u', '') and (m := PRIKAZ_NO.match(e['t']))}
+    return [e for e in events if not (e['ty'] == 'решение' and 'publication.pravo.gov.ru' not in e.get('u', '')
+                                      and (m := PRIKAZ_NO.match(e['t'])) and (e['o'], m.group(1)) in pub)]
 
 def parse_sf_meetings(txt):
     """Список заседаний СФ (HTML→текст или сохраненный текст): «622 заседание Совета Федерации 10 ноября 2026 г.», «621 28 октября 2026 г.»."""
@@ -285,23 +320,31 @@ PARSERS = {'cbr_news': parse_cbr_news, 'cbr_events': parse_cbr_events, 'mintrud_
            'minjust_events': parse_minjust_events, 'minfin_pravo': parse_pravo_list, 'sf_meetings': parse_sf_meetings}
 NOT_PARSED = {'mintrud_profstandards': 'проекты профстандартов публикуются на regulation.gov.ru — с этой машины нет соединения',
               'minjust_projects': 'страница проектов документов Минюста отдается без списка (пустая выдача)',
-              'minjust_registration': 'реестр регистрации НПА (publication.pravo.gov.ru, pravo.minjust.ru) — с этой машины нет соединения/HTTP 500',
               'minfin_projects': 'minfin.gov.ru отвечает HTTP 503 «Доступ временно ограничен»'}
 
 def collect(args):
     status, events = {}, []
     snaps = dict(s.split('=', 1) for s in args.snapshot)
     only = {x.strip() for x in (args.only or '').split(',') if x.strip()}
-    for key, org in (('pres_pravo', 'pres'), ('gov_pravo', 'gov'), *((f'{o}_pravo', o) for o in MIN8)):
+    for key, org in (('pres_pravo', 'pres'), ('gov_pravo', 'gov'), *((f'{o}_pravo', o) for o in FOIV)):
         if only and org not in only: continue
         if args.offline:
             p = os.path.join(args.offline, f'pravo_api_{org}.json')
             if not os.path.exists(p): status[key] = {'url': SOURCES[key], 'status': 'no-fixture'}; continue
-            got, st = parse_pravo_api(open(p).read(), org, org in MIN8), 'offline'
+            got, st = parse_pravo_api(open(p).read(), org, org in FOIV), 'offline'
         else:
             got, st = collect_pravo_api(key, org, pages=args.pages)
         status[key] = {'url': SOURCES[key], 'status': st, 'n': len(got)}; events += got
         if st not in ('ok', 'offline'): C.log('organs.log', f'{key} {st}')
+    if not only or only & set(FOIV):
+        if args.offline:
+            p = os.path.join(args.offline, 'pravo_api_daily.json')
+            got, st = (parse_pravo_daily(open(p).read()), 'offline') if os.path.exists(p) else ([], 'no-fixture')
+        else:
+            got, st = collect_pravo_daily()
+        if only: got = [e for e in got if e['o'] in only]
+        status['foiv_daily'] = {'url': SOURCES['foiv_daily'], 'status': st, 'n': len(got)}; events += got
+        if st not in ('ok', 'offline', 'no-fixture'): C.log('organs.log', f'foiv_daily {st}')
     if only: return events, status  # 17.11.2026: --only — остальные источники (СФ, ЦБ, министерства) не опрашиваются и не меняются
     for key, fn in PARSERS.items():
         src = SOURCES[key]
@@ -323,7 +366,7 @@ def collect(args):
     if not args.offline and 'minfin_projects' not in snaps:
         st, _ = get(SOURCES['minfin_projects']); status['minfin_projects'] = {'url': SOURCES['minfin_projects'], 'status': st if st != 'ok' else 'ok (разбор не реализован)'}
     for k, why in NOT_PARSED.items(): status.setdefault(k, {'url': SOURCES[k], 'status': 'not-collected', 'why': why})
-    return events, status
+    return drop_rss_dupes(events), status
 
 ENRICH = os.path.join(ODIR, 'enrich.json')
 def load_enrich():

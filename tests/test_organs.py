@@ -90,6 +90,33 @@ _e = O.parse_pravo_api(open(os.path.join(_fx, 'pravo_api_economy.json')).read(),
 assert [(e['k'], e['d']) for e in _e] == [('Приказ', '10.11.2026'), ('Приказ', '06.11.2026')], _e
 assert _e[0]['t'] == 'Приказ № 689 от 05.10.2026: О внесении изменения в пункт 2 приказа Минэкономразвития России от 14 октября 2020 г. № 678', _e[0]['t']
 assert _e[0]['x'] == 'Зарегистрирован Минюстом 09.11.2026 № 89097. Опубликован 10.11.2026' and _e[0]['u'] == 'http://publication.pravo.gov.ru/document/0001202611100011', _e[0]
+# 19.11.2026: пропуск приказов за 19.11 (МВД № 801, Минюст № 325, Минздрав № 878н, Минтруд № 483н/482н). Фикстура — настоящий ответ API
+# «опубликовано сегодня» (periodType=daily, блок federal_authorities) за 19.11.2026: 18 приказов, из них 5 — органов из нашего списка.
+assert set(O.FOIV) == set(O.MIN8) | {'mintrud', 'minjust'} and O.SOURCES['mintrud_pravo'].endswith(O.FOIV['mintrud']) and O.SOURCES['minjust_pravo'].endswith(O.FOIV['minjust'])
+_dj = open(os.path.join(_fx, 'pravo_api_daily.json')).read()
+_d = O.parse_pravo_daily(_dj)
+assert sorted((e['o'], e['t'].split(':')[0]) for e in _d) == [('minjust', 'Приказ № 325 от 13.11.2026'), ('mintrud', 'Приказ № 482н от 15.10.2026'),
+    ('mintrud', 'Приказ № 483н от 15.10.2026'), ('minzdrav', 'Приказ № 878н от 15.10.2026'), ('mvd', 'Приказ № 801 от 06.10.2026')], _d
+assert all(e['d'] == '19.11.2026' and e['ty'] == 'решение' and e['k'] == 'Приказ' for e in _d), _d  # день опубликования, не подписания
+assert {e['u'] for e in _d if e['o'] == 'mvd'} == {'http://publication.pravo.gov.ru/document/0001202611190013'}
+assert not any('спорта' in e['t'] or 'антимонопольн' in e['t'] for e in _d), 'органы вне списка (Минспорт, ФАС …) не собираются'
+# тот же документ из сбора по органу и из ленты «сегодня» — один id (при слиянии в events.json дубля нет)
+_one = O.parse_pravo_api(_j.dumps({'items': [x for x in _j.loads(_dj)['items'] if x['number'] == '801']}), 'mvd', True)
+assert [e['id'] for e in _one] == [e['id'] for e in _d if e['o'] == 'mvd']
+_dc = []
+def _fd(u):
+    _dc.append(u); return 'ok', _dj
+_r, _st = O.collect_pravo_daily(fetch=_fd)
+assert _st == 'ok' and len(_r) == 5 and len(_dc) == 1 and 'periodType=daily' in _dc[0] and 'PageSize=200&Index=1' in _dc[0], (_st, _dc)
+# сбор по органу: API отдает документы от новых к старым по дню опубликования — свежий приказ (подписан в октябре) в окне 12–19.11 не теряется
+O.WIN_FROM = O.dt.date(2026, 11, 12)
+_r, _st = O.collect_pravo_api('mvd_pravo', 'mvd', fetch=lambda u: ('ok', _j.dumps({'items': [x for x in _j.loads(_dj)['items'] if x['number'] == '801'], 'pagesTotalCount': 1})))
+assert _st == 'ok' and [e['d'] for e in _r] == ['19.11.2026'], _r
+# приказ Минтруда и в RSS сайта, и на опубликовании — остается один, с опубликования
+_rss = O.ev('mintrud', O.dt.date(2026, 11, 18), 'решение', 'Приказ № 483н от 15.10.2026: Об утверждении Порядка', 'https://mintrud.gov.ru/docs/mintrud/orders/9999', 'Приказ')
+_keep = O.ev('mintrud', O.dt.date(2026, 11, 18), 'решение', 'Приказ № 506 от 09.11.2026: О внесении', 'https://mintrud.gov.ru/docs/mintrud/orders/3278', 'Приказ')
+_dd = O.drop_rss_dupes(_d + [_rss, _keep])
+assert _rss not in _dd and _keep in _dd and len(_dd) == 6, _dd
 # 18.11.2026: проверка схемы (validate_data.mjs) знает каждый орган из ORGS — иначе сбор нового органа роняет весь прогон (так упал первый запуск organs с министерствами)
 _vd = open(os.path.join(R, 'pipeline', 'validate_data.mjs'), encoding='utf-8').read()
 assert all(f"'{k}'" in _vd for k in O.ORGS), [k for k in O.ORGS if f"'{k}'" not in _vd]
