@@ -1,5 +1,5 @@
 {
-"upd": "19.11.2026 14:44",
+"upd": "19.11.2026 15:05",
 "status": {
 "gd": "ok n=11",
 "gov": "ok n=20",
@@ -7,11 +7,18 @@
 "cbr": "ok n=12",
 "minfin": "ok n=18",
 "mintrud": "blocked:нет соединения (curl 6)",
-"minjust": "blocked:нет соединения (curl 28)",
+"minjust": "ok n=20",
 "minzdrav": "ok n=10",
 "economy": "blocked:нет соединения (curl 28)"
 },
 "items": [
+{
+"o": "gov",
+"d": "19.11.2026",
+"tm": "14:50",
+"t": "Михаил Мишустин принял участие в работе XX Международного форума и выставки «Транспорт России» в рамках Транспортной недели – 2026",
+"u": "http://government.ru/news/60498/"
+},
 {
 "o": "gd",
 "d": "19.11.2026",
@@ -171,6 +178,13 @@
 "d": "19.11.2026",
 "t": "Михаил Мурашко поздравил преподавателей медицинских вузов с Днем преподавателя высшей школы",
 "u": "https://minzdrav.gov.ru/news/2026/11/19/33435-mihail-murashko-pozdravil-prepodavateley-meditsinskih-vuzov-s-dnem-prepodavatelya-vysshey-shkoly",
+"tm": ""
+},
+{
+"o": "minjust",
+"d": "19.11.2026",
+"t": "В Москве состоялся форум, посвященный развитию системы бесплатной юридической помощи",
+"u": "https://minjust.gov.ru/ru/events/51478/",
 "tm": ""
 },
 {
@@ -466,6 +480,13 @@
 "tm": "21:10",
 "t": "Антон Силуанов: товарооборот России и Китая в 2026 году достигнет рекордного уровня",
 "u": "https://minfin.gov.ru/ru/press-center/?id_4=40759-anton_siluanov_tovarooborot_rossii_i_kitaya_v_2026_godu_dostignet_rekordnogo_urovnya"
+},
+{
+"o": "minfin",
+"d": "17.11.2026",
+"tm": "20:00",
+"t": "Алексей Яковлев в выпуске подкаста «Экономика в деталях»",
+"u": "https://minfin.gov.ru/ru/press-center/?id_4=40766-aleksei_yakovlev_v_vypuske_podkasta_ekonomika_v_detalyakh"
 },
 {
 "o": "gd",
