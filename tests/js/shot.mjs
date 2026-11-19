@@ -16,6 +16,8 @@ try {
   const { targetId } = await cmd('Target.createTarget', { url: 'about:blank' }); const { sessionId: s } = await cmd('Target.attachToTarget', { targetId, flatten: true });
   await cmd('Page.enable', {}, s); await cmd('Runtime.enable', {}, s);
   await cmd('Emulation.setDeviceMetricsOverride', { width: W, height: mobile ? 844 : 900, deviceScaleFactor: mobile ? 2 : 1, mobile }, s);
+  // 20.11.2026: THEME=dark|light — тема сайта по prefers-color-scheme
+  if (process.env.THEME) await cmd('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: process.env.THEME }] }, s);
   if (mobile) await cmd('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, s);
   await cmd('Page.navigate', { url: SITE.BASE + URL0 }, s); await sleep(3000);
   for (const st of STEPS.split(';;').filter(Boolean)) { if (/^wait:\d+$/.test(st)) { await sleep(+st.slice(5)); continue; } const r = await ev(s, st); if (r !== undefined) console.log('step →', JSON.stringify(r).slice(0, 400)); await sleep(900); }
