@@ -97,3 +97,63 @@ def write_canvas(src, path=None):
         write_atomic(os.path.join(OUT, 'cache', 'canvas.prev.tsx'), old)
     write_atomic(path, src)
     return True
+
+# 19.11.2026 (правило 15): документы органов (указы, постановления, распоряжения, приказы, указания, письма ЦБ и т. д.).
+# Заседания и новости плитки «Суть»/«Кого коснётся» не требуют. Документ без обоих текстов на сайт не выводится.
+ORG_SKIP_TY = ('новость', 'заседание')
+
+def org_sut(e):
+    s = e.get('sut')
+    if isinstance(s, list):
+        return [str(q).strip() for q in s if str(q).strip()]
+    if isinstance(s, str):
+        return [q.strip() for q in re.split(r'\n\s*\n|\n', s) if q.strip()]
+    return []
+
+def org_who(e):
+    w = e.get('who')
+    if isinstance(w, list):
+        return ' '.join(str(q).strip() for q in w if str(q).strip()).strip()
+    return (w or '').strip() if isinstance(w, str) else ''
+
+def org_is_doc(e):
+    return (e or {}).get('ty') not in ORG_SKIP_TY
+
+def org_has_texts(e):
+    return bool(org_sut(e)) and bool(org_who(e))
+
+def org_no(e):
+    r = re.search(r'№\s*([^\s,;:]+)', str((e or {}).get('no') or (e or {}).get('st') or (e or {}).get('t') or ''))
+    return ('№ ' + r.group(1)) if r else ''
+
+def org_missing(e):
+    """Каких текстов нет у документа органа. Не документ — пустой список."""
+    if not org_is_doc(e):
+        return []
+    miss = []
+    if not org_sut(e):
+        miss.append('«Суть»')
+    if not org_who(e):
+        miss.append('«Кого коснётся»')
+    return miss
+
+def org_items(src, day=None):
+    """Записи ORG из canvas с наложенным ORGX (как на сайте). day — ДД.ММ.ГГГГ или все дни."""
+    try:
+        org = get_block(src, 'ORG')
+    except Exception:
+        return []
+    try:
+        ox = get_block(src, 'ORGX') or {}
+    except Exception:
+        ox = {}
+    out = []
+    for e in org or []:
+        if day and e.get('d') != day:
+            continue
+        k = f"{e.get('o')}:{e.get('u')}#{e.get('d')}"
+        if k in ox:
+            e = {**e, **ox[k]}
+        out.append(e)
+    return out
+

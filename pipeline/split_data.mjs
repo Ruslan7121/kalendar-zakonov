@@ -129,8 +129,13 @@ export async function split(file = CANVAS) {
   for (const n of BILLREC) { core[n] = {}; for (const m of MS) M[m][n] = {};
     for (const [k, v] of Object.entries(T[n])) { const ms = coreText.includes(k) ? [] : MS.filter((m) => mText[m].includes(k)); if (!ms.length) core[n][k] = v; else ms.forEach((m) => { M[m][n][k] = v; }); } }
   for (const m of MS) for (const n of Object.keys(M[m])) if (Array.isArray(M[m][n]) ? !M[m][n].length : !Object.keys(M[m][n]).length) delete M[m][n];
-  // счётчики месяца для переключателя месяцев, пока сам месяц не загружен (та же формула, что calCnt в canvas)
-  const cnt = Object.fromEntries(MS.map((m) => { const o = {}; T.ORG.filter((x) => mkOf(x.d) === m).forEach((x) => { (o[x.o] = o[x.o] || []); if (!o[x.o].includes(x.d)) o[x.o].push(x.d); });
+  // счётчики месяца для переключателя месяцев, пока сам месяц не загружен (та же формула, что calCnt в canvas).
+  // 19.11.2026 (правило 15): в счётчик органа день попадает только если есть видимая плитка (есть «Суть» и «Кого коснётся»,
+  // либо это заседание/новость) или строка «без текста» (поле nt). Документы без текстов, ожидающие написания, не считаются.
+  const orgSut = (x) => (Array.isArray(x.sut) ? x.sut : typeof x.sut === 'string' ? x.sut.split(/\n\s*\n|\n/) : []).map((q) => String(q).trim()).filter(Boolean);
+  const orgWho = (x) => (typeof x.who === 'string' ? x.who : Array.isArray(x.who) ? x.who.join('\n') : '').trim();
+  const orgShow = (x) => x.ty === 'новость' || x.ty === 'заседание' || (!!(orgSut(x).length && orgWho(x))) || !!x.nt;
+  const cnt = Object.fromEntries(MS.map((m) => { const o = {}; T.ORG.filter((x) => mkOf(x.d) === m && orgShow(x)).forEach((x) => { (o[x.o] = o[x.o] || []); if (!o[x.o].includes(x.d)) o[x.o].push(x.d); });
     return [m, { p: T.CAL.p.filter((x) => mkOf(x.d) === m).length, g: T.CAL.g.filter((x) => mkOf(x[0]) === m).length, o }]; }));
   const files = { core: dump(core) }; for (const m of MS) files[m] = dump(M[m]);
   const hash = Object.fromEntries(Object.entries(files).map(([k, s]) => [k, h10(s)]));

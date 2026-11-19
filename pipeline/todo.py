@@ -80,6 +80,35 @@ L += ['', '## Вступают в силу — автодобавленные з
 # 15.11.2026: метки законов (tg) — без них закон не попадает в ленты feed/<метка>.xml (web/extras.mjs)
 notg = [f"- [ ] {x['d']} {x.get('law','')} — «{x.get('title','')}»: tg = [[«Для кого»…], [«Тема»…], [«Что меняется»…]] из ZW/ZT/ZC" for mk in LW['months'].values() for x in mk if not (x.get('tg') and all(x['tg']))]
 L += ['', '## Вступают в силу — метки законов (tg)', ''] + (notg or ['нет'])
+# 19.11.2026 (правило 15): документы органов без «Сути» или «Кого коснётся» — обязательные тексты дня
+# (на сайт документ попадает только с обоими текстами). Дата, орган, номер, название, чего не хватает.
+def _org_names():
+    try:
+        i = src.index('const ORGN: Record<string, string> = ')
+        chunk = src[i:src.index('};', i) + 1]
+        return dict(re.findall(r"(\w+): '([^']+)'", chunk))
+    except Exception:
+        return {}
+def _org_docs_todo():
+    import datetime as _dt
+    names = _org_names()
+    out = []
+    for e in sorted(C.org_items(src), key=lambda e: _dt.datetime.strptime(e['d'], '%d.%m.%Y'), reverse=True):
+        miss = C.org_missing(e)
+        if not miss:
+            continue
+        organ = names.get(e.get('o'), e.get('o') or '')
+        no = C.org_no(e)
+        title = (e.get('t') or e.get('st') or '').replace('\n', ' ')
+        if len(title) > 140:
+            title = title[:137] + '…'
+        why = 'нет ' + ' и '.join(miss)
+        bit = (', ' + no) if no else ''
+        out.append(f"- [ ] {e['d']} {organ}{bit}: «{title}» — {why}")
+    return out
+_od = _org_docs_todo()
+L += ['', f'## Документы органов ({len(_od)})', ''] + (_od or ['нет']) + ['']
+
 # 19.11.2026: документы органов (кроме Госдумы) без подробной «Сути» (3–4 абзаца по официальному тексту) — свежие сначала.
 # Текст документа — extracts/organs/<ключ>.json (pipeline/organ_texts.py); перенос — pipeline/orgx_merge.py.
 def _org_todo():
