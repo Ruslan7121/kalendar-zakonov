@@ -1,5 +1,23 @@
 [
  {
+  "id": "mintrud:https://mintrud.gov.ru/social/607#19.11.2026",
+  "o": "mintrud",
+  "d": "19.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Ольга Баталина приняла участие в форуме «Транспорт России»",
+  "u": "https://mintrud.gov.ru/social/607"
+ },
+ {
+  "id": "minjust:https://minjust.gov.ru/ru/events/51478/#19.11.2026",
+  "o": "minjust",
+  "d": "19.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "В Москве состоялся форум, посвященный развитию системы бесплатной юридической помощи",
+  "u": "https://minjust.gov.ru/ru/events/51478/"
+ },
+ {
   "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40764-mnogie_privykli_dumat_chto_pechat_auditora_garantiruet_vsyo#19.11.2026",
   "o": "minfin",
   "d": "19.11.2026",
@@ -256,6 +274,15 @@
   "k": "Новость",
   "t": "Антон Силуанов: товарооборот России и Китая в 2026 году достигнет рекордного уровня",
   "u": "https://minfin.gov.ru/ru/press-center/?id_4=40759-anton_siluanov_tovarooborot_rossii_i_kitaya_v_2026_godu_dostignet_rekordnogo_urovnya"
+ },
+ {
+  "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40766-aleksei_yakovlev_v_vypuske_podkasta_ekonomika_v_detalyakh#17.11.2026",
+  "o": "minfin",
+  "d": "17.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Алексей Яковлев в выпуске подкаста «Экономика в деталях»",
+  "u": "https://minfin.gov.ru/ru/press-center/?id_4=40766-aleksei_yakovlev_v_vypuske_podkasta_ekonomika_v_detalyakh"
  },
  {
   "id": "gov:http://publication.pravo.gov.ru/document/0001202611180033#17.11.2026",
