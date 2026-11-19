@@ -90,6 +90,11 @@ def main(argv=None):
     today = dt.datetime.now(O.MSK).date()
     lo = O.s2d(a.frm) if a.frm else today - dt.timedelta(days=7); hi = O.s2d(a.to) if a.to else today
     org = C.get_block(C.read_canvas(), 'ORG'); os.makedirs(TDIR, exist_ok=True)
+    # 19.11.2026: плюс события из out/organs/events.json (сбор), которых еще нет в канве — тексты скачиваются, даже если
+    # прогон organs не дошел до публикации (например, упал на тестах), и «Суть» можно написать до появления карточки
+    have = {f"{e['o']}:{e['u']}#{e['d']}" for e in org}; fp_ev = os.path.join(O.ODIR, 'events.json')
+    if os.path.exists(fp_ev):
+        org = org + [e for e in json.load(open(fp_ev)) if e.get('id') not in have]
     todo = [e for e in org if need(e) and lo <= O.s2d(e['d']) <= hi]
     todo.sort(key=lambda e: O.s2d(e['d']), reverse=True)
     n = {'ok': 0, 'fail': 0, 'skip': 0}
