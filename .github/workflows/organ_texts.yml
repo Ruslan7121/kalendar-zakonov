@@ -67,10 +67,16 @@ jobs:
           cd pipeline && python3 organ_texts.py "${A[@]}" 2>&1 | tee ../texts.log
       - name: Коммит текстов (extracts/organs) в main
         run: |
-          git add extracts/organs/*.json 2>/dev/null || true
-          if git diff --cached --quiet; then echo "новых текстов нет"; exit 0; fi
-          git commit -m "Тексты документов органов (автоматически)"
-          for try in 1 2 3 4 5; do git pull --rebase --autostash origin main && git push origin HEAD:main && break || sleep 7; done
+          # тексты могли параллельно прийти из workflow organs: берем свежий main и добавляем только новые и улучшенные (не fail) файлы
+          T=$(mktemp -d); cp extracts/organs/*.json "$T"/ 2>/dev/null || true
+          for try in 1 2 3 4 5; do
+            git fetch -q origin main && git reset -q --hard origin/main && mkdir -p extracts/organs
+            for f in "$T"/*.json; do [ -e "$f" ] || continue; b=extracts/organs/$(basename "$f")
+              if [ ! -e "$b" ] || { grep -q '"kind": "fail"' "$b" && ! grep -q '"kind": "fail"' "$f"; }; then cp "$f" "$b"; fi; done
+            git add extracts/organs/*.json 2>/dev/null || true
+            if git diff --cached --quiet; then echo "новых текстов нет"; exit 0; fi
+            git commit -q -m "Тексты документов органов (автоматически)" && git push origin HEAD:main && break || sleep 7
+          done
       - name: Сводка
         if: always()
         run: |
