@@ -27,7 +27,7 @@ MAXC = 60000  # символов текста в файле (для «Сути»
 
 def key(e):
     m = re.search(r'publication\.pravo\.gov\.ru/document/(\d{10,})', e['u'])
-    return m.group(1) if m else e['o'] + '-' + hashlib.md5(e['u'].encode()).hexdigest()[:12]
+    return m.group(1) if m else e['o'] + '-' + hashlib.md5((e['u'] + '#' + e['d']).encode()).hexdigest()[:12]  # одна страница (ленты ЦБ) бывает в разные дни
 
 def src_url(u):
     m = re.search(r'publication\.pravo\.gov\.ru/document/(\d{10,})', u)
