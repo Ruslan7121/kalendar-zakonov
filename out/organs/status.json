@@ -1,20 +1,20 @@
 {
- "run": "19.11.2026 22:19 МСК",
+ "run": "20.11.2026 01:18 МСК",
  "window": [
-  "12.11.2026",
-  "19.11.2026"
+  "13.11.2026",
+  "20.11.2026"
  ],
- "ahead_to": "22.11.2026",
+ "ahead_to": "23.11.2026",
  "sources": {
   "pres_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=president",
-   "status": "ok",
-   "n": 83
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "gov_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=government",
-   "status": "ok",
-   "n": 100
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "economy_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=59ad7c35-7d14-424e-b305-f964615734bd",
@@ -28,23 +28,23 @@
   },
   "minzdrav_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=a2b99d08-29c7-4a3f-901a-d1a7174428f8",
-   "status": "ok",
-   "n": 100
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "mintrans_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=d87efe50-9a6f-4ad5-aa06-452d4cd2e772",
-   "status": "ok",
-   "n": 100
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "digital_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=1ac1ee36-2621-4c4f-917f-9bffc35d4671",
-   "status": "ok",
-   "n": 100
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "mvd_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=ff850c93-e869-42ec-9547-a63dad38c204",
-   "status": "ok",
-   "n": 100
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "mnr_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=d67a404e-260a-4a5b-b340-d34558da8bd6",
@@ -68,8 +68,8 @@
   },
   "foiv_daily": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&periodType=daily",
-   "status": "ok",
-   "n": 5
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "cbr_news": {
    "url": "https://www.cbr.ru/rss/RssNews",
@@ -126,6 +126,6 @@
    "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
   }
  },
- "new": 25,
- "total": 994
+ "new": 1,
+ "total": 995
 }
