@@ -1,20 +1,20 @@
 {
- "run": "19.11.2026 05:35 МСК",
+ "run": "19.11.2026 08:25 МСК",
  "window": [
-  "15.11.2026",
-  "18.11.2026"
+  "01.10.2026",
+  "19.11.2026"
  ],
  "ahead_to": "22.11.2026",
  "sources": {
   "pres_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=president",
    "status": "ok",
-   "n": 83
+   "n": 178
   },
   "gov_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=government",
    "status": "ok",
-   "n": 100
+   "n": 600
   },
   "economy_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=59ad7c35-7d14-424e-b305-f964615734bd",
@@ -116,6 +116,6 @@
    "why": "реестр регистрации НПА (publication.pravo.gov.ru, pravo.minjust.ru) — с этой машины нет соединения/HTTP 500"
   }
  },
- "new": 0,
- "total": 414
+ "new": 542,
+ "total": 956
 }
