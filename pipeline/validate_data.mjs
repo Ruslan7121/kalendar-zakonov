@@ -57,6 +57,10 @@ for (const [mk, J] of Object.entries(months)) {
     const w = `ORG[${mk}#${i}]`;
     if (!['sf', 'minfin', 'mintrud', 'minjust', 'cbr', 'pres', 'gov', 'economy', 'promtorg', 'minzdrav', 'mintrans', 'digital', 'mvd', 'mnr', 'minstroy'].includes(o.o)) /* 16.11.2026: + указы Президента и акты Правительства (organs.py, API pravo) */ E(w, `орган «${o.o}»`);
     if (!okDate(o.d)) E(w, `дата «${o.d}»`); if (!isStr(o.t) || !o.t.trim()) E(w, 'нет заголовка t'); if (!/^https?:\/\//.test(o.u || '')) E(w, `ссылка «${o.u}»`);
+    // 19.11.2026: «Суть» документа органа — строка (абзацы через пустую строку) или массив абзацев; служебная строка о регистрации/опубликовании — не «Суть»
+    if (o.sut !== undefined && !(isStr(o.sut) || (Array.isArray(o.sut) && o.sut.every(isStr)))) E(w, 'sut — не строки');
+    if (isStr(o.sut) && /^(Зарегистрирован|Опубликован)\S*\s/.test(o.sut.trim())) E(w, 'sut — служебная строка о регистрации/опубликовании, а не «Суть»');
+    if (o.tf !== undefined && !isStr(o.tf)) E(w, 'tf — не строка');
   }
 }
 

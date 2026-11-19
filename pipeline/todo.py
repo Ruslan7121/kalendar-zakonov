@@ -80,6 +80,27 @@ L += ['', '## Вступают в силу — автодобавленные з
 # 15.11.2026: метки законов (tg) — без них закон не попадает в ленты feed/<метка>.xml (web/extras.mjs)
 notg = [f"- [ ] {x['d']} {x.get('law','')} — «{x.get('title','')}»: tg = [[«Для кого»…], [«Тема»…], [«Что меняется»…]] из ZW/ZT/ZC" for mk in LW['months'].values() for x in mk if not (x.get('tg') and all(x['tg']))]
 L += ['', '## Вступают в силу — метки законов (tg)', ''] + (notg or ['нет'])
+# 19.11.2026: документы органов (кроме Госдумы) без подробной «Сути» (3–4 абзаца по официальному тексту) — свежие сначала.
+# Текст документа — extracts/organs/<ключ>.json (pipeline/organ_texts.py); перенос — pipeline/orgx_merge.py.
+def _org_todo():
+    import datetime as _dt
+    try: org = C.get_block(src, 'ORG'); ox = C.get_block(src, 'ORGX')
+    except Exception: return []
+    tx = {}
+    for f in glob.glob(os.path.join(C.EXTR, 'organs', '*.json')):
+        try: r = json.load(open(f)); tx[r['id']] = (os.path.relpath(f, C.ROOT), r.get('kind'), r.get('why', ''))
+        except Exception: pass
+    out = []
+    for e in sorted(org, key=lambda e: _dt.datetime.strptime(e['d'], '%d.%m.%Y'), reverse=True):
+        if e.get('ty') in ('новость', 'заседание'): continue
+        k = f"{e['o']}:{e['u']}#{e['d']}"; sut = (ox.get(k) or {}).get('sut') or ''
+        if isinstance(sut, list): sut = '\n\n'.join(sut)
+        if len([q for q in re.split(r'\n\s*\n', sut) if q.strip()]) >= 3: continue
+        t = tx.get(k); src_ = f'текст: {t[0]} ({t[1]}' + (f', {t[2]}' if t[2] else '') + ')' if t else 'текста нет — pipeline/organ_texts.py'
+        out.append(f"- {e['d']} {e['o']}: {e['t'][:110]} — id `{k}`; {src_}")
+    return out
+_ot = _org_todo()
+L += ['', f'## Суть документов органов — 3–4 абзаца по официальному тексту ({len(_ot)})', ''] + (_ot[:150] or ['нет']) + ([f'… и еще {len(_ot) - 150}'] if len(_ot) > 150 else [])
 L += ['', '## Ошибки загрузки', '']
 for f in sorted(glob.glob(os.path.join(C.LOGS, '*.log'))):
     ls = open(f).read().strip().splitlines(); L.append(f'- {os.path.basename(f)}: {len(ls)} строк')

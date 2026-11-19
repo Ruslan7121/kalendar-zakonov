@@ -77,6 +77,7 @@ def cut(s, n):
 def ev(o, d, ty, t, u, k='', x=''):
     assert o in ORGS and ty in TYPES and u.startswith('http')
     e = {'id': f'{o}:{u}#{d2s(d)}', 'o': o, 'd': d2s(d), 'ty': ty, 'k': k, 't': cut(t, 220), 'u': u}
+    if e['t'] != clean(t): e['tf'] = clean(t)  # 19.11.2026 (правило 13): полное официальное название — для раскрытой карточки, без многоточия
     if x: e['x'] = cut(x, 600)
     return e
 

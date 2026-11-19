@@ -51,6 +51,15 @@ try {
       const line = await ev(p.s, `(document.querySelector('[data-day="17.11.2026"] [data-dayorgs]') || {}).textContent`); chk(/^Парламент · Власть · Экономика/.test(line || '') && !/\d/.test(line || ''), `строка дня: «${line}»`);
       await ev(p.s, `document.querySelector('[data-day="17.11.2026"] [data-dayhdr]').click()`); await sleep(700);
       const st = () => ev(p.s, `[...document.querySelectorAll('[data-day="17.11.2026"] [data-grphdr]')].map((h) => h.getAttribute('aria-expanded') === 'true' ? 1 : 0).join('')`);
+      // 19.11.2026: у раскрытого дня строка-сводка групп плавно уходит (прозрачность 0, высота 0), текст остается в DOM
+      const dorg = await until(p.s, `(() => { const e = document.querySelector('[data-day="17.11.2026"] [data-dayorgs]'); return e && getComputedStyle(e).opacity === '0' && e.getBoundingClientRect().height < 2; })()`, 3000); chk(dorg, 'строка-сводка не скрылась у раскрытого дня');
+      // 19.11.2026: подпись органа у каждого органа каждой группы; в «Парламенте» первой — «Госдума»
+      await ev(p.s, `document.querySelector('[data-day="17.11.2026"] [data-daygrp="par"] [data-grphdr]').click()`); await sleep(800);
+      const lbl = await ev(p.s, `[...document.querySelectorAll('[data-day="17.11.2026"] [data-daygrp="par"] [data-orglbl]')].map((e) => e.textContent.trim())`);
+      chk(Array.isArray(lbl) && /^Госдума/.test(lbl[0] || ''), `в «Парламенте» нет подписи «Госдума»: ${JSON.stringify(lbl)}`);
+      const nol = await ev(p.s, `[...document.querySelectorAll('[data-day="17.11.2026"] [data-dayorg]')].filter((e) => !e.querySelector('[data-orglbl]')).map((e) => e.getAttribute('data-dayorg'))`);
+      chk(Array.isArray(nol) && !nol.length, `органы без подписи: ${JSON.stringify(nol)}`);
+      await ev(p.s, `document.querySelector('[data-day="17.11.2026"] [data-daygrp="par"] [data-grphdr]').click()`); await sleep(800);
       const s0 = await st(); chk(/^0+$/.test(s0), `день открылся с уже развернутой группой (разворачивать не должно): ${s0}`);
       await ev(p.s, `document.querySelectorAll('[data-day="17.11.2026"] [data-grphdr]')[0].click()`); await sleep(700);
       const s1 = await st(); chk(/^10+$/.test(s1), `после нажатия на первую группу: ${s1}`);
@@ -59,7 +68,11 @@ try {
       const gone = await ev(p.s, `!document.querySelector('[data-day="17.11.2026"] [data-daygrp="par"] [data-grpbody]')`); chk(gone, 'прежняя группа не убрана сразу');
       const hy = await ev(p.s, `Math.round(document.querySelector('[data-day="17.11.2026"] [data-daygrp="pg"]').getBoundingClientRect().top)`); chk(hy >= 0 && hy < 260, `заголовок открытой группы ушел с экрана: top=${hy}`);
       const mk = await ev(p.s, `new Set([...document.querySelectorAll('[data-mk]')].map((i) => i.getAttribute('data-mk'))).size`); chk(mk >= 2, `отметки сетки по группам: ${mk}`);
-      rep.push(tag(`17.11: «${line}», открыта группа ${s1} → ${s2}, отметок-групп в сетке ${mk}`)); await p.close(); }
+      // 19.11.2026: на каждой плитке документа органа — название органа (data-orgname)
+      await ev(p.s, `document.querySelectorAll('[data-day="17.11.2026"] [data-grphdr]').forEach((h) => { if (h.getAttribute('aria-expanded') !== 'true') h.click(); })`); await sleep(1200);
+      const tiles = await ev(p.s, `(() => { const a = [...document.querySelectorAll('[data-orgitem]')]; return [a.length, a.filter((e) => !e.querySelector('[data-orgname]')).length]; })()`);
+      chk(tiles && tiles[1] === 0, `плитки документов без органа: ${JSON.stringify(tiles)}`);
+      rep.push(tag(`17.11: «${line}», подписи ${JSON.stringify(lbl)}, плиток органов ${tiles && tiles[0]}, открыта группа ${s1} → ${s2}, отметок-групп в сетке ${mk}`)); await p.close(); }
   }
 } finally { try { ws.close(); } catch {} ch.kill('SIGKILL'); SITE.close(); setTimeout(() => fs.rmSync(prof, { recursive: true, force: true }), 500); }
 rep.forEach((x) => console.log('  ' + x));
