@@ -26,6 +26,8 @@ git add -u extracts/ 2>/dev/null || true
 # 15.11.2026: и новые выжимки пояснительных записок — по ним ИИ пишет «Суть» и «Кого коснётся» (AGENTS.md, раздел 2);
 # раньше в git попадали только уже известные файлы, и записки новых законопроектов оставались лишь в Actions
 git add extracts/bills/*.json 2>/dev/null || true
+# 19.11.2026: официальные тексты документов органов (pipeline/organ_texts.py) — по ним пишется «Суть» карточек органов
+git add extracts/organs/*.json 2>/dev/null || true
 
 if git diff --cached --quiet; then
   echo "нет изменений для коммита"

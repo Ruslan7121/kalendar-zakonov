@@ -45,6 +45,8 @@ jobs:
       - name: Зависимости
         run: |
           npm install --no-audit --no-fund
+          # 19.11.2026: тексты новых документов органов (сканы PDF publication.pravo.gov.ru) — pdftotext и tesseract rus
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils tesseract-ocr tesseract-ocr-rus >/dev/null || echo 'tesseract не установлен — тексты сканов будут отмечены fail'
           mkdir -p "$GD_DUMA/lists" "$GD_DUMA/bills" "$GD_DUMA/days"
       - name: Кэш конвейера (списки RU-прокси)
         uses: actions/cache@v5
@@ -66,6 +68,8 @@ jobs:
           [[ "$IN_FROM" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{4}$ ]] && { FROM="$IN_FROM"; XARGS+=(--pages 60); }
           [[ "$IN_ONLY" =~ ^(pres|gov)(,(pres|gov))?$ ]] && XARGS+=(--only "$IN_ONLY")
           cd pipeline && python3 organs.py --from "$FROM" --to "$TO" "${XARGS[@]}" --embed 2>&1 | tee ../organs.log
+          # 19.11.2026: официальные тексты новых документов → extracts/organs/ (по ним ИИ пишет «Суть»; без текста — пометка в out/TODO.md)
+          timeout 12m python3 organ_texts.py --from "$FROM" 2>&1 | tail -n 30 | tee -a ../organs.log || echo 'organ_texts: не завершен, продолжим в следующий запуск'
           cd .. && python3 pipeline/strip_code_only.py && node pipeline/split_data.mjs
       - name: Проверка схемы данных
         run: node pipeline/validate_data.mjs

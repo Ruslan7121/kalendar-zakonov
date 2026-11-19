@@ -1,0 +1,77 @@
+# 19.11.2026: официальные тексты документов органов (pipeline/organ_texts.py) → extracts/organs/*.json.
+# По ним пишется «Суть» (3–4 абзаца) и «Кого коснется» карточек органов (AGENTS.md, раздел 2; перенос — pipeline/orgx_merge.py).
+# PDF с publication.pravo.gov.ru — сканы: распознавание tesseract (rus). Сайт не меняет: коммит только extracts/organs/.
+# Запуск: Actions → organ_texts → Run workflow; «from»/«to» — окно дат документов (ДД.ММ.ГГГГ). Обычный сбор 4 раза в день
+# делает workflow organs (тот же скрипт за 7 дней).
+name: organ_texts
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'С какой даты документов (ДД.ММ.ГГГГ)'
+        required: false
+        default: '01.10.2026'
+      to:
+        description: 'По какую дату (ДД.ММ.ГГГГ), пусто — сегодня'
+        required: false
+        default: ''
+      retry:
+        description: 'Повторить неудачные (yes/no)'
+        required: false
+        default: 'no'
+permissions:
+  contents: write
+concurrency:
+  group: organ-texts
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      TZ: Europe/Moscow
+      GD_DUMA: ${{ github.workspace }}/../duma
+      ORGANS_PROXY: '1'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Зависимости (pdftotext, tesseract rus)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils tesseract-ocr tesseract-ocr-rus >/dev/null
+          mkdir -p "$GD_DUMA/lists"
+      - name: Кэш конвейера (списки RU-прокси)
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/../duma
+          key: duma-texts-${{ github.run_id }}
+          restore-keys: duma-
+      - name: Автор коммитов
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Тексты (pipeline/organ_texts.py)
+        env:
+          IN_FROM: ${{ github.event.inputs.from }}
+          IN_TO: ${{ github.event.inputs.to }}
+          IN_RETRY: ${{ github.event.inputs.retry }}
+        run: |
+          A=(--from 01.10.2026)
+          [[ "$IN_FROM" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{4}$ ]] && A=(--from "$IN_FROM")
+          [[ "$IN_TO" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{4}$ ]] && A+=(--to "$IN_TO")
+          [ "$IN_RETRY" = yes ] && A+=(--retry)
+          cd pipeline && python3 organ_texts.py "${A[@]}" 2>&1 | tee ../texts.log
+      - name: Коммит текстов (extracts/organs) в main
+        run: |
+          git add extracts/organs/*.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "новых текстов нет"; exit 0; fi
+          git commit -m "Тексты документов органов (автоматически)"
+          for try in 1 2 3 4 5; do git pull --rebase --autostash origin main && git push origin HEAD:main && break || sleep 7; done
+      - name: Сводка
+        if: always()
+        run: |
+          { echo '### Тексты документов органов'; echo '```'; tail -n 60 texts.log 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
