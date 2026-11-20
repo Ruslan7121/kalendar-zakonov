@@ -1,10 +1,10 @@
 {
-"upd": "20.11.2026 14:45",
+"upd": "20.11.2026 15:07",
 "status": {
 "gd": "ok n=12",
 "gov": "ok n=20",
 "sf": "ok n=20",
-"cbr": "ok n=11",
+"cbr": "blocked:нет соединения (curl 28)",
 "minfin": "ok n=18",
 "mintrud": "ok n=12",
 "minjust": "ok n=20",
@@ -178,6 +178,13 @@
 "d": "20.11.2026",
 "t": "Михаил Мурашко направил приветствие участникам Всероссийского слета студенческих отрядов",
 "u": "https://minzdrav.gov.ru/news/2026/11/20/33443-mihail-murashko-napravil-privetstvie-uchastnikam-vserossiyskogo-sleta-studencheskih-otryadov",
+"tm": ""
+},
+{
+"o": "minjust",
+"d": "20.11.2026",
+"t": "В Минюсте России состоялся ежегодный семинар по актуальным вопросам ведомственного нормотворчества",
+"u": "https://minjust.gov.ru/ru/events/51479/",
 "tm": ""
 },
 {
