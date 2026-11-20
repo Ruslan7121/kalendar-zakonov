@@ -1,5 +1,5 @@
 {
-"upd": "20.11.2026 10:51",
+"upd": "20.11.2026 11:12",
 "status": {
 "gd": "ok n=12",
 "gov": "ok n=20",
@@ -12,6 +12,20 @@
 "economy": "blocked:нет соединения (curl 28)"
 },
 "items": [
+{
+"o": "gov",
+"d": "20.11.2026",
+"tm": "11:00",
+"t": "Татьяна Голикова: Открыта регистрация на Всероссийский кадровый форум",
+"u": "http://government.ru/news/60512/"
+},
+{
+"o": "minfin",
+"d": "20.11.2026",
+"tm": "11:00",
+"t": "Капитализация ДОМ.РФ выросла более чем на 20% через год после IPO",
+"u": "https://minfin.gov.ru/ru/press-center/?id_4=40770-kapitalizatsiya_dom.rf_vyrosla_bolee_chem_na_20_cherez_god_posle_ipo"
+},
 {
 "o": "sf",
 "d": "20.11.2026",
