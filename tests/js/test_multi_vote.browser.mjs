@@ -53,8 +53,10 @@ const READ = (k) => `(() => { const w = document.querySelector('[data-gdwin] [da
 const check = (tag, r, c, v, mobile, fails) => {
   if (!r) { fails.push(`${tag}: карточка не открылась`); return; }
   if (r.panel !== v.id) fails.push(`${tag}: показано голосование ${r.panel}, а не ${v.id}`);
-  if (r.sel.length !== 1 || r.sel[0] !== v.id) fails.push(`${tag}: в переключателе выбрано ${JSON.stringify(r.sel)}`);
-  if (r.tabs.join() !== c.vs.map((z) => z.id).join()) fails.push(`${tag}: в переключателе ${JSON.stringify(r.tabs)}, ждали все ${c.vs.length} голосования дня`);
+  const swIds = c.vs.filter((z) => !/таб\./.test(z.reading)).map((z) => z.id); const shown = swIds.length >= 2 ? swIds : []; // 20.11.2026: голосования по таблицам поправок в переключателе не показываются
+  const wantSel = shown.includes(v.id) ? [v.id] : [];
+  if (r.sel.join() !== wantSel.join()) fails.push(`${tag}: в переключателе выбрано ${JSON.stringify(r.sel)}, ждали ${JSON.stringify(wantSel)}`);
+  if (r.tabs.join() !== shown.join()) fails.push(`${tag}: в переключателе ${JSON.stringify(r.tabs)}, ждали ${JSON.stringify(shown)}`);
   const cp = chip(v); if (cp && r.ty !== cp) fails.push(`${tag}: значок чтения «${r.ty}», ждали «${cp}» (${v.reading})`);
   if (r.res !== (v.ok ? 'ok' : 'no')) fails.push(`${tag}: итог «${r.res}», ждали ${v.ok ? 'принят' : 'отклонен'}`);
   if (!r.head.startsWith(String(v.total[0] || 0) + c.bn)) fails.push(`${tag}: кольцо «за» не ${v.total[0]}: «${r.head.slice(0, 30)}»`);
@@ -80,7 +82,12 @@ try {
         check(`${W.w}px ?d=${c.d}&v=${v.id} (${c.bn})`, await until(s, k, v.id), c, v, W.mobile, fails); opens++;
       }
       // переключатель: из последнего открытого — нажатием на первое голосование дня
-      const v0 = c.vs[0]; await ev(s, `document.querySelector('[data-gdwin] [data-ivk="${k}"] [data-vsw] [data-vid="${v0.id}"]')?.click()`);
+      // 20.11.2026 (владелец): в переключателе только чтения, голосований по таблицам поправок там нет
+      const sw = c.vs.filter((v) => !/таб\./.test(v.reading));
+      const ids = await ev(s, `[...document.querySelectorAll('[data-gdwin] [data-ivk="${k}"] [data-vsw] [data-vid]')].map(b => b.dataset.vid)`);
+      if (sw.length < 2) { if ((ids || []).length) fails.push(`${W.w}px ${c.d} ${c.bn}: переключатель не должен показываться, а в нем ${ids.length} кнопок`); continue; }
+      if (JSON.stringify(ids) !== JSON.stringify(sw.map((v) => v.id))) fails.push(`${W.w}px ${c.d} ${c.bn}: в переключателе ${ids}, ждали ${sw.map((v) => v.id)}`);
+      const v0 = sw[0]; await ev(s, `document.querySelector('[data-gdwin] [data-ivk="${k}"] [data-vsw] [data-vid="${v0.id}"]')?.click()`);
       check(`${W.w}px ${c.d} ${c.bn}: нажатие на ${v0.id}`, await until(s, k, v0.id, 5000), c, v0, W.mobile, fails); clicks++;
     }
     await cmd('Target.closeTarget', { targetId });

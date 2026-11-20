@@ -3465,7 +3465,23 @@ function Budget({ b, m }: { b: string; m: boolean }) {
   const y = bd.y; const w = bd.w;
   const inc = y ? y.rows[0][1].map(nn) : []; const exp = y ? y.rows[1][1].map(nn) : []; const mx = Math.max(...inc, ...exp, 1);
   const dc = (d: string) => d.startsWith('+') ? INK[1] : INK[0];
+  /* 20.11.2026: «Главное в цифрах» — три плитки на 2027 год: сумма, изменение к 2026 и к прежнему плану (цвет: хорошо / плохо для бюджета) */
+  const kt = y ? y.rows.slice(0, 3).map(([n, v]) => { const a = nn(v[1]), c = nn(v[2]); const d = (c / a - 1) * 100; const wp = w ? (w.rows.find((r) => r[0] === n) || [])[3] : undefined; const bad = n === 'Доходы' ? d < 0 : d > 0; const wbad = (x: string) => (n === 'Доходы' ? x.startsWith('−') : x.startsWith('+')); return { n, tr: (c / 1000).toFixed(1).replace('.', ','), d: `${d >= 0 ? '+' : '−'}${Math.abs(d).toFixed(1).replace('.', ',')} %`, bad, wp: wp ? wp[0] : '', wbad: wp ? wbad(wp[0]) : false }; }) : [];
+  const defl: Record<string, string> = { 'Доходы': 'сколько получит', 'Расходы': 'сколько потратит', 'Дефицит': 'расходы минус доходы' };
   return <div data-budget="1">
+    {kt.length > 0 && <div data-budget-k="1" style={bx}>
+      <div style={hh}>Главное: 2027 год</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>{kt.map((k) => <div key={k.n} style={{ ...nvTile(), cursor: 'default', padding: m ? '10px 8px' : '12px 12px', textAlign: 'center' }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: t.text.primary }}>{k.n}</div>
+        <div style={{ fontSize: 11, color: t.text.tertiary, marginBottom: 4 }}>{defl[k.n]}</div>
+        <div style={{ fontSize: m ? 21 : 24, fontWeight: 700, lineHeight: 1.1, color: t.text.primary }}>{k.tr}</div>
+        <div style={{ fontSize: 11, color: t.text.tertiary, marginBottom: 6 }}>трлн ₽</div>
+        <div style={{ fontSize: 12, color: t.text.tertiary }}>к 2026 году</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: k.bad ? INK[1] : INK[0] }}>{k.d}</div>
+        {k.wp && <><div style={{ fontSize: 12, color: t.text.tertiary, marginTop: 4 }}>к плану</div><div style={{ fontSize: 14, fontWeight: 700, color: k.wbad ? INK[1] : INK[0] }}>{k.wp}</div></>}
+      </div>)}</div>
+      <div style={{ marginTop: 8, fontSize: 12, color: t.text.tertiary }}>Красное — хуже для бюджета (меньше доходов, больше расходов и дефицита), зеленое — лучше. «К плану» — к прежнему плану на 2027 год (закон № 426-ФЗ).</div>
+    </div>}
     {y && <div data-budget-y="1" style={bx}>
       <div style={hh}>Бюджет по годам, млрд ₽</div>
       <div style={{ ...yc, fontSize: 10.5, color: t.text.tertiary, lineHeight: 1.2, paddingBottom: 4, borderBottom: `1px solid ${t.border.subtle}` }}>{y.cols.map((c, i) => <span key={i}>{c.split(' ')[0]}{c.includes(' ') && <><br />{c.split(' ')[1]}</>}</span>)}</div>
@@ -4174,7 +4190,7 @@ function dayBillLines(bn: string, d: string): string[][] { return (DATA[d] || ''
 function billVote(bn: string, pref?: string): [string, string] | null { if (!billNo(bn)) return null; const f = (d: string) => { const ls = dayBillLines(bn, d); if (!ls.length) return null; const pin = VSEL[d + '|' + bn] || (PIN && DLD === d ? PIN : ''); const l = (pin && ls.find((z) => z[0] === pin)) || [...ls].reverse().find((z) => !/таб\./.test(z[3] || '')) || ls[ls.length - 1]; return [d, l[0]] as [string, string]; }; if (pref) return f(pref); for (const d of [...DAYS].reverse()) { const r = f(d); if (r) return r; } return null; }
 const voteLbl = (r: string): string => { const m = /таб\.\s*(\d+)\s*(\S+)?/.exec(r || ''); if (m) return `Поправки, табл. ${m[1]}${m[2] ? ` (${m[2]})` : ''}`; const n = normRead(r || ''); return RD[n] || n || 'голосование'; };
 function VoteSw({ bn, d, m }: { bn: string; d: string; m?: boolean }) {
-  const t = useGrokTheme(); useVsel(); const vs = parse(DATA[d] || '').filter((z) => z.doc === bn); if (vs.length < 2) return null; const cur = billVote(bn, d); const sel = cur ? cur[1] : '';
+  const t = useGrokTheme(); useVsel(); const vs = parse(DATA[d] || '').filter((z) => z.doc === bn && !/таб\./.test(z.reading || '')); /* 20.11.2026 (владелец): в переключателе только чтения (1-е, 2-е, 3-е), без голосований по таблицам поправок */ if (vs.length < 2) return null; const cur = billVote(bn, d); const sel = cur ? cur[1] : '';
   return <div data-vsw={d + '|' + bn} onClick={(e: any) => e.stopPropagation()} style={{ padding: m ? '8px 14px 10px' : '10px 18px 12px' }}><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.text.tertiary, marginBottom: 6 }}>Голосования за день: {vs.length}</div>
     <div role="tablist" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{vs.map((z) => { const on = z.id === sel; return <button key={z.id} type="button" role="tab" aria-selected={on} data-vid={z.id} onClick={(e: any) => { e.stopPropagation(); setVsel(d, bn, z.id); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 30, padding: '0 10px', borderRadius: 9999, border: `1px solid ${on ? t.text.accent : t.border.default}`, background: on ? t.fill.accentSubtle : t.bg.base, color: on ? t.text.accent : t.text.secondary, fontFamily: t.font.family, fontSize: 13, fontWeight: on ? 600 : 500, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' } as any}><span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: 9999, flexShrink: 0, background: z.ok ? INK[0] : INK[1] }} />{voteLbl(z.reading)}{VT[z.id] ? <span style={{ color: t.text.tertiary, fontWeight: 400 }}>{VT[z.id].slice(0, 5)}</span> : null}</button>; })}</div></div>;
 }
