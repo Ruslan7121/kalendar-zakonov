@@ -1,10 +1,10 @@
 {
-"upd": "20.11.2026 15:07",
+"upd": "20.11.2026 15:28",
 "status": {
 "gd": "ok n=12",
 "gov": "ok n=20",
 "sf": "ok n=20",
-"cbr": "blocked:нет соединения (curl 28)",
+"cbr": "ok n=11",
 "minfin": "ok n=18",
 "mintrud": "ok n=12",
 "minjust": "ok n=20",
