@@ -3465,7 +3465,23 @@ function Budget({ b, m }: { b: string; m: boolean }) {
   const y = bd.y; const w = bd.w;
   const inc = y ? y.rows[0][1].map(nn) : []; const exp = y ? y.rows[1][1].map(nn) : []; const mx = Math.max(...inc, ...exp, 1);
   const dc = (d: string) => d.startsWith('+') ? INK[1] : INK[0];
+  /* 20.11.2026: «Главное в цифрах» — три плитки на 2027 год: сумма, изменение к 2026 и к прежнему плану (цвет: хорошо / плохо для бюджета) */
+  const kt = y ? y.rows.slice(0, 3).map(([n, v]) => { const a = nn(v[1]), c = nn(v[2]); const d = (c / a - 1) * 100; const wp = w ? (w.rows.find((r) => r[0] === n) || [])[3] : undefined; const bad = n === 'Доходы' ? d < 0 : d > 0; const wbad = (x: string) => (n === 'Доходы' ? x.startsWith('−') : x.startsWith('+')); return { n, tr: (c / 1000).toFixed(1).replace('.', ','), d: `${d >= 0 ? '+' : '−'}${Math.abs(d).toFixed(1).replace('.', ',')} %`, bad, wp: wp ? wp[0] : '', wbad: wp ? wbad(wp[0]) : false }; }) : [];
+  const defl: Record<string, string> = { 'Доходы': 'сколько получит', 'Расходы': 'сколько потратит', 'Дефицит': 'расходы минус доходы' };
   return <div data-budget="1">
+    {kt.length > 0 && <div data-budget-k="1" style={bx}>
+      <div style={hh}>Главное: 2027 год</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>{kt.map((k) => <div key={k.n} style={{ ...nvTile(), cursor: 'default', padding: m ? '10px 8px' : '12px 12px', textAlign: 'center' }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: t.text.primary }}>{k.n}</div>
+        <div style={{ fontSize: 11, color: t.text.tertiary, marginBottom: 4 }}>{defl[k.n]}</div>
+        <div style={{ fontSize: m ? 21 : 24, fontWeight: 700, lineHeight: 1.1, color: t.text.primary }}>{k.tr}</div>
+        <div style={{ fontSize: 11, color: t.text.tertiary, marginBottom: 6 }}>трлн ₽</div>
+        <div style={{ fontSize: 12, color: t.text.tertiary }}>к 2026 году</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: k.bad ? INK[1] : INK[0] }}>{k.d}</div>
+        {k.wp && <><div style={{ fontSize: 12, color: t.text.tertiary, marginTop: 4 }}>к плану</div><div style={{ fontSize: 14, fontWeight: 700, color: k.wbad ? INK[1] : INK[0] }}>{k.wp}</div></>}
+      </div>)}</div>
+      <div style={{ marginTop: 8, fontSize: 12, color: t.text.tertiary }}>Красное — хуже для бюджета (меньше доходов, больше расходов и дефицита), зеленое — лучше. «К плану» — к прежнему плану на 2027 год (закон № 426-ФЗ).</div>
+    </div>}
     {y && <div data-budget-y="1" style={bx}>
       <div style={hh}>Бюджет по годам, млрд ₽</div>
       <div style={{ ...yc, fontSize: 10.5, color: t.text.tertiary, lineHeight: 1.2, paddingBottom: 4, borderBottom: `1px solid ${t.border.subtle}` }}>{y.cols.map((c, i) => <span key={i}>{c.split(' ')[0]}{c.includes(' ') && <><br />{c.split(' ')[1]}</>}</span>)}</div>
