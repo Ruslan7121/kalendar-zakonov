@@ -1,0 +1,61 @@
+# 20.11.2026: таблицы поправок ко второму чтению (sozd) → extracts/amend/<номер>.json. Вручную: Actions → amend → Run workflow.
+# Данные сайта не меняет: коммит только extracts/amend. Нужен, чтобы в карточке голосований писать конкретику по поправкам.
+name: amend
+on:
+  workflow_dispatch:
+    inputs:
+      bill:
+        description: 'Номер законопроекта (например 615-9)'
+        required: true
+        default: '615-9'
+permissions:
+  contents: write
+concurrency:
+  group: daily-run
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      TZ: Europe/Moscow
+      GD_DUMA: ${{ github.workspace }}/../duma
+      ORGANS_PROXY: '1'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Зависимости
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils antiword catdoc >/dev/null
+          mkdir -p "$GD_DUMA/lists" "$GD_DUMA/bills" "$GD_DUMA/days"
+      - name: Кэш конвейера (списки прокси)
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/../duma
+          key: duma-${{ github.run_id }}
+          restore-keys: duma-
+      - name: Автор коммитов
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Таблицы поправок
+        env:
+          BILL: ${{ github.event.inputs.bill }}
+        run: |
+          [[ "$BILL" =~ ^[0-9]+-[0-9]+$ ]] || { echo "неверный номер: $BILL"; exit 1; }
+          cd pipeline && python3 amend_tables.py "$BILL" 2>&1 | tee ../amend.log
+      - name: Коммит extracts/amend в main
+        run: |
+          git add extracts/amend/*.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "нового нет"; exit 0; fi
+          git commit -m "Таблицы поправок ${{ github.event.inputs.bill }} (автоматически)"
+          for try in 1 2 3; do git pull --rebase --autostash origin main && git push origin HEAD:main && break || sleep 5; done
+      - name: Сводка
+        if: always()
+        run: |
+          { echo '### Таблицы поправок'; echo '```'; tail -n 40 amend.log 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
