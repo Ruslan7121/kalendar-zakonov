@@ -1,8 +1,8 @@
 {
- "run": "20.11.2026 03:38 МСК",
+ "run": "20.11.2026 03:55 МСК",
  "window": [
-  "13.11.2026",
-  "20.11.2026"
+  "16.11.2026",
+  "19.11.2026"
  ],
  "ahead_to": "23.11.2026",
  "sources": {
@@ -13,13 +13,13 @@
   },
   "gov_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=government",
-   "status": "error:HTTP 500",
-   "n": 0
+   "status": "ok",
+   "n": 100
   },
   "economy_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=59ad7c35-7d14-424e-b305-f964615734bd",
-   "status": "error:HTTP 500",
-   "n": 0
+   "status": "ok",
+   "n": 100
   },
   "promtorg_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=852b803d-4d5b-4ed1-aaca-03284c0bc35e",
@@ -33,23 +33,23 @@
   },
   "mintrans_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=d87efe50-9a6f-4ad5-aa06-452d4cd2e772",
-   "status": "ok",
-   "n": 100
-  },
-  "digital_pravo": {
-   "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=1ac1ee36-2621-4c4f-917f-9bffc35d4671",
    "status": "error:HTTP 500",
    "n": 0
   },
-  "mvd_pravo": {
-   "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=ff850c93-e869-42ec-9547-a63dad38c204",
+  "digital_pravo": {
+   "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=1ac1ee36-2621-4c4f-917f-9bffc35d4671",
    "status": "ok",
    "n": 100
   },
+  "mvd_pravo": {
+   "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=ff850c93-e869-42ec-9547-a63dad38c204",
+   "status": "error:HTTP 500",
+   "n": 0
+  },
   "mnr_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=d67a404e-260a-4a5b-b340-d34558da8bd6",
-   "status": "ok",
-   "n": 100
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "minstroy_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=efa6da4b-4c1a-4fa8-8caf-860c17b205fd",
@@ -63,12 +63,12 @@
   },
   "minjust_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=f69ec43f-3fa5-4611-a286-52acdcc77334",
-   "status": "ok",
-   "n": 100
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "foiv_daily": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&periodType=daily",
-   "status": "ok",
+   "status": "error:HTTP 500",
    "n": 0
   },
   "cbr_news": {
@@ -83,8 +83,8 @@
   },
   "mintrud_docs": {
    "url": "https://mintrud.gov.ru/document/rss",
-   "status": "blocked:нет соединения (curl 6)",
-   "n": 0
+   "status": "ok",
+   "n": 64
   },
   "mintrud_news": {
    "url": "https://mintrud.gov.ru/news/news/list",
@@ -103,8 +103,8 @@
   },
   "minfin_pravo": {
    "url": "http://publication.pravo.gov.ru/documents/foiv283/monthly",
-   "status": "error:HTTP 500",
-   "n": 0
+   "status": "ok",
+   "n": 12
   },
   "sf_meetings": {
    "url": "http://council.gov.ru/activity/meetings/",
