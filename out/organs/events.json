@@ -1,5 +1,23 @@
 [
  {
+  "id": "pres:http://publication.pravo.gov.ru/document/0001202611200001#20.11.2026",
+  "o": "pres",
+  "d": "20.11.2026",
+  "ty": "решение",
+  "k": "Указ",
+  "t": "Указ № 855 от 20.11.2026: О присуждении Государственной премии Российской Федерации за выдающиеся достижения в области гуманитарной деятельности 2026 года",
+  "u": "http://publication.pravo.gov.ru/document/0001202611200001"
+ },
+ {
+  "id": "mintrud:https://mintrud.gov.ru/employment/416#20.11.2026",
+  "o": "mintrud",
+  "d": "20.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Открыта регистрация на Всероссийский кадровый форум",
+  "u": "https://mintrud.gov.ru/employment/416"
+ },
+ {
   "id": "mintrud:https://mintrud.gov.ru/social/invalid-defence/471#20.11.2026",
   "o": "mintrud",
   "d": "20.11.2026",
@@ -7,6 +25,15 @@
   "k": "Новость",
   "t": "Замминистра Дмитрий Лигомина принял участие в VIII Съезде Всероссийского общества инвалидов",
   "u": "https://mintrud.gov.ru/social/invalid-defence/471"
+ },
+ {
+  "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40770-kapitalizatsiya_dom.rf_vyrosla_bolee_chem_na_20_cherez_god_posle_ipo#20.11.2026",
+  "o": "minfin",
+  "d": "20.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Капитализация ДОМ.РФ выросла более чем на 20% через год после IPO",
+  "u": "https://minfin.gov.ru/ru/press-center/?id_4=40770-kapitalizatsiya_dom.rf_vyrosla_bolee_chem_na_20_cherez_god_posle_ipo"
  },
  {
   "id": "mvd:http://publication.pravo.gov.ru/document/0001202611190013#19.11.2026",
