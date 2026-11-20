@@ -30,13 +30,21 @@ for d in c['days']:
     na=[[a['doc'],a['short'],a.get('reading'),a['url'],a['title']] for a in d['agenda']]
     o=O.get(d['date'])
     if o:
-        oa=o['a']; od={(x[0],x[4]) for x in oa}
-        a=oa+[x for x in na if (x[0],x[4]) not in od]
+        # 20.11.2026: пункт с номером документа уже есть в дне — не добавлять второй раз, даже если название в повестке
+        # duma.gov.ru записано иначе (19.11: семь законопроектов внесены вручную с полными названиями sozd, а повестка
+        # дала их же с другим написанием — получилось по два пункта на законопроект, тест test_calendar_visible падал)
+        oa=o['a']; od={(x[0],x[4]) for x in oa}; odoc={x[0] for x in oa if x[0]}
+        a=list(oa)
+        for x in na:
+            if (x[0],x[4]) in od or (x[0] and x[0] in odoc): continue
+            a.append(x); od.add((x[0],x[4]))
+            if x[0]: odoc.add(x[0])
         st=d['status']
         if o['s']=='held' or (o['s']=='confirmed' and st=='expected'): st=o['s']   # не понижать статус
         ps[d['date']]={'d':d['date'],'s':st,'t':d.get('time') or o.get('t'),'src':d['source'] if len(a)==len(na) or not oa else o['src'],'a':a}
         if a==oa: ps[d['date']]['src']=o['src']; ps[d['date']]['t']=o.get('t')
     else:
+        seen=set(); na=[x for x in na if not (x[0] and (x[0] in seen or seen.add(x[0])))]  # один пункт на документ
         ps[d['date']]={'d':d['date'],'s':d['status'],'t':d.get('time'),'src':d['source'],'a':na}
 for k,o in O.items():
     if k not in ps: ps[k]=o
