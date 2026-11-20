@@ -1,5 +1,5 @@
 {
- "run": "20.11.2026 04:36 МСК",
+ "run": "20.11.2026 05:11 МСК",
  "window": [
   "16.11.2026",
   "19.11.2026"
@@ -8,8 +8,8 @@
  "sources": {
   "pres_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=president",
-   "status": "ok",
-   "n": 83
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "gov_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=government",
@@ -23,28 +23,28 @@
   },
   "promtorg_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=852b803d-4d5b-4ed1-aaca-03284c0bc35e",
-   "status": "ok",
-   "n": 100
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "minzdrav_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=a2b99d08-29c7-4a3f-901a-d1a7174428f8",
-   "status": "error:HTTP 500",
-   "n": 0
+   "status": "ok",
+   "n": 100
   },
   "mintrans_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=d87efe50-9a6f-4ad5-aa06-452d4cd2e772",
-   "status": "ok",
-   "n": 100
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "digital_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=1ac1ee36-2621-4c4f-917f-9bffc35d4671",
-   "status": "ok",
-   "n": 100
+   "status": "error:HTTP 500",
+   "n": 0
   },
   "mvd_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=ff850c93-e869-42ec-9547-a63dad38c204",
-   "status": "error:HTTP 500",
-   "n": 0
+   "status": "ok",
+   "n": 100
   },
   "mnr_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=d67a404e-260a-4a5b-b340-d34558da8bd6",
