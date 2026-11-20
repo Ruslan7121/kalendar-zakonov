@@ -1,5 +1,5 @@
 {
- "run": "20.11.2026 13:22 МСК",
+ "run": "20.11.2026 14:27 МСК",
  "window": [
   "13.11.2026",
   "20.11.2026"
@@ -74,7 +74,7 @@
   "cbr_news": {
    "url": "https://www.cbr.ru/rss/RssNews",
    "status": "ok",
-   "n": 12
+   "n": 14
   },
   "cbr_events": {
    "url": "https://www.cbr.ru/rss/eventrss",
@@ -127,5 +127,5 @@
   }
  },
  "new": 3,
- "total": 999
+ "total": 1002
 }
