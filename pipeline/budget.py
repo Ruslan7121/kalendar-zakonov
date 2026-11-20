@@ -62,5 +62,5 @@ if n == '615-9':
     BUD[n]['y'] = {'cols': YC, 'rows': [[a, v, p] for a, v, p in YV]}
     BUD[n]['w'] = {'cols': ['2027', '2028', '2029'], 'rows': [[k, w, s2, [pct(a, b) for a, b in zip(w, s2)]] for k, (w, s2) in WAS.items()]}
 src = C.read_canvas(); old = C.get_block(src, 'BUDGET'); old[n] = {**old.get(n, {}), **BUD[n]}
-decl = 'const BUDGET: Record<string, { src: [string, string][]; t: { title: string; cols: string[]; rows: string[][]; note?: string }[]; y?: { cols: string[]; rows: [string, string[], string[] | null][] }; w?: { cols: string[]; rows: [string, string[], string[], string[]][] } }>'
+decl = 'const BUDGET: Record<string, { src: [string, string][]; t: { title: string; cols: string[]; rows: string[][]; note?: string }[]; y?: { cols: string[]; rows: [string, string[], string[] | null][] }; w?: { cols: string[]; rows: [string, string[], string[], string[]][] }; g?: { h: string; tiles?: { n: string; v: string; u: string; s?: string }[]; tbl?: { cols: string[]; rows: [string, string[]][] }; rows?: [string, string, number | null][]; note?: string }[] }>'
 C.write_canvas(C.set_block(src, 'BUDGET', decl, old)); print(n, 'разделов:', len(sec), 'характеристик:', len(t1['rows']))
