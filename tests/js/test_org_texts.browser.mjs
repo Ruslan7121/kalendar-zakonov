@@ -39,7 +39,7 @@ try {
       await cmd('Page.navigate', { url: BASE + url }, s);
       if (!(await until(s, `!!document.querySelector('main') && !document.querySelector('[data-gd-load]')`))) { rep.push(tag(`${url}: пустая страница, перезагрузка`)); await cmd('Page.reload', { ignoreCache: true }, s); await until(s, `!!document.querySelector('main') && !document.querySelector('[data-gd-load]')`); }
       return { s, close: () => cmd('Target.closeTarget', { targetId }) }; };
-    const p = await open('/?tab=c');
+    const p = await open('/?tab=c&view=days');
 
     // 05.11 — день до границы: приказ № 131н без «Кого коснётся» виден; в карточке есть «Суть», пустого блока who нет
     const d05 = await until(p.s, `!!document.querySelector('[data-day="05.11.2026"] [data-dayhdr]')`);

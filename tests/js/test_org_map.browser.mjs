@@ -1,0 +1,89 @@
+// 21.11.2026: «Работа госорганов» — карта органов (решение владельца), 390 и 1366 px: плитки без новостей, период День/Неделя/Месяц, календарь месяца,
+// лента органа с короткими названиями без «Кого коснётся», окно документа, переключатель «По дням». Без Chrome — SKIP.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawn, execFileSync } from 'node:child_process';
+import { siteServer } from './site_server.mjs';
+
+const WIDTHS = [{ w: 390, h: 844, mobile: true, dpr: 3 }, { w: 1366, h: 900, mobile: false, dpr: 1 }];
+const which = (c) => { try { return execFileSync('sh', ['-c', `command -v ${c}`]).toString().trim(); } catch { return ''; } };
+const CHROME = process.env.CHROME || ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser'].map(which).find(Boolean);
+if (!CHROME) { if (process.env.GD_REQUIRE_BROWSER === '1') throw new Error('Chrome не найден'); console.log('SKIP test_org_map.browser: нет Chrome'); process.exit(0); }
+
+const SITE = await siteServer(); const BASE = SITE.BASE;
+const prof = fs.mkdtempSync(path.join(os.tmpdir(), 'gd-chrome-'));
+const ch = spawn(CHROME, ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--no-first-run', '--no-default-browser-check',
+  `--user-data-dir=${prof}`, '--remote-debugging-port=0', 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
+const wsUrl = await new Promise((ok, no) => { let b = ''; const t = setTimeout(() => no(new Error('Chrome не запустился: ' + b)), 60000);
+  ch.stderr.on('data', (x) => { b += x; const m = b.match(/DevTools listening on (ws:\/\/\S+)/); if (m) { clearTimeout(t); ok(m[1]); } }); });
+const ws = new WebSocket(wsUrl); await new Promise((ok, no) => { ws.onopen = ok; ws.onerror = no; });
+let seq = 0; const wait = new Map();
+ws.onmessage = (e) => { const m = JSON.parse(e.data); if (m.id && wait.has(m.id)) { const [ok, no] = wait.get(m.id); wait.delete(m.id); m.error ? no(new Error(JSON.stringify(m.error))) : ok(m.result); } };
+const cmd = (method, params = {}, sessionId) => new Promise((ok, no) => { const id = ++seq; wait.set(id, [ok, no]); ws.send(JSON.stringify({ id, method, params, sessionId })); });
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const ev = async (s, x) => (await cmd('Runtime.evaluate', { expression: x, returnByValue: true }, s)).result.value;
+const until = async (s, x, ms = 20000) => { const t0 = Date.now(); let v; while (Date.now() - t0 < ms) { v = await ev(s, x); if (v) return v; await sleep(250); } return v; };
+
+const FOUND = `(() => { const m = document.body.innerText.match(/Найдено: (\\d+)/); return m ? +m[1] : null; })()`;
+const CQ = `(document.querySelector('input[data-cq]') || {}).value`;
+const TYPE = (v) => `(() => { const i = document.querySelector('input[data-cq]'); if (!i) return false; const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; set.call(i, ${JSON.stringify(v)}); i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`;
+const OPENF = `(() => { const b = [...document.querySelectorAll('button')].find((x) => /^☰?Фильтры/.test((x.textContent || '').trim())); if (!b) return false; b.click(); return true; })()`;
+const ZC = (k, v) => `(() => { const b = document.querySelector('[data-zk="${k}"][data-zv="${v}"]'); return b ? b.getAttribute('data-zc') : 'нет кнопки'; })()`;
+const LOC = `decodeURIComponent(location.search.replace(/\\+/g, ' '))`;
+const fails = []; const rep = [];
+try {
+  for (const W of WIDTHS) {
+    const tag = (x) => `${W.w}px ${x}`; const chk = (c, m) => { if (!c) fails.push(tag(m)); };
+    const open = async (url) => { const { targetId } = await cmd('Target.createTarget', { url: 'about:blank' }); const { sessionId: s } = await cmd('Target.attachToTarget', { targetId, flatten: true });
+      await cmd('Page.enable', {}, s); await cmd('Runtime.enable', {}, s); await cmd('Network.enable', {}, s); await cmd('Network.setCacheDisabled', { cacheDisabled: true }, s);
+      await cmd('Emulation.setDeviceMetricsOverride', { width: W.w, height: W.h, deviceScaleFactor: W.dpr, mobile: W.mobile }, s);
+      if (W.mobile) await cmd('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, s);
+      await cmd('Page.navigate', { url: BASE + url }, s);
+      return { s, close: () => cmd('Target.closeTarget', { targetId }) }; };
+    const click = (p, sel) => ev(p.s, `(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return false; e.click(); return true; })()`);
+    const tiles = (p) => ev(p.s, `[...document.querySelectorAll('[data-omtile]')].map((e) => ({ o: e.dataset.omtile, n: +(e.innerText.match(/(\\d+)\\s*$/m) || [0, 0])[1], t: e.innerText.replace(/\\n/g, ' ') }))`);
+    { const p = await open('/?tab=c'); // по умолчанию — карта органов
+      chk(await until(p.s, `!!document.querySelector('[data-cpane="map"] [data-omtile]')`), 'нет карты органов с плитками по умолчанию');
+      const tl = await tiles(p) || []; chk(tl.length >= 2, `плиток ${tl.length}`);
+      chk(!tl.some((x) => /новост/i.test(x.t)), 'в плитках есть «новости»');
+      const days = await ev(p.s, `[...document.querySelectorAll('[data-omday]')].map((e) => e.innerText.replace(/\\s+/g, ' ').trim())`) || [];
+      chk(days.length === 7 && days.every((x) => /^[А-Яа-я]{2} \d{1,2}$/.test(x)), `полоса дней без цифр документов: ${JSON.stringify(days)}`);
+      const dayN = tl.reduce((a, x) => a + x.n, 0);
+      // неделя и месяц: документов не меньше, чем за день; подпись периода и стрелки
+      await click(p, '[data-ommode="week"]'); await sleep(400); const wk = (await tiles(p) || []).reduce((a, x) => a + x.n, 0); chk(wk >= dayN, `за неделю ${wk} меньше, чем за день ${dayN}`);
+      const wl = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(/\d+[–-]\d+ [а-я]+|\d+ [а-я]{3} – /.test(wl || ''), `подпись недели: ${wl}`);
+      await click(p, '[data-ommode="month"]'); await sleep(400); const mn = (await tiles(p) || []).reduce((a, x) => a + x.n, 0); chk(mn >= wk, `за месяц ${mn} меньше, чем за неделю ${wk}`);
+      const ml = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(/^[А-Я][а-я]+ \d{4}/.test(ml || ''), `подпись месяца: ${ml}`);
+      await click(p, '[data-omprev]'); await sleep(300); const ml2 = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(ml2 !== ml, 'стрелка «назад» не меняет месяц');
+      await click(p, '[data-omnext]'); await sleep(300);
+      // календарь месяца открывается по подписи, день выбирается нажатием
+      await click(p, '[data-ommode="day"]'); await sleep(300); await click(p, '[data-omlabel]'); await sleep(300);
+      chk(await ev(p.s, `!!document.querySelector('[data-ommonth] [data-omcell]')`), 'календарь месяца не открылся');
+      await ev(p.s, `(() => { const c = [...document.querySelectorAll('[data-omcell]')].find((e) => e.querySelector('i')); if (c) c.click(); })()`); await sleep(300);
+      chk(await ev(p.s, `!document.querySelector('[data-ommonth]')`), 'календарь не закрылся после выбора дня');
+      // лента органа: названия короткие, без «Кого коснётся», окно документа
+      const first = await ev(p.s, `(document.querySelector('[data-omtile]') || {}).dataset && document.querySelector('[data-omtile]').dataset.omtile`); chk(!!first, 'нет первой плитки');
+      await click(p, '[data-omtile]'); await sleep(500);
+      chk(await ev(p.s, `!!document.querySelector('[data-orgmap="feed"]')`), 'лента органа не открылась');
+      const cards = await ev(p.s, `[...document.querySelectorAll('[data-omdoc]')].map((e) => ({ t: (e.querySelector('[data-omtitle]') || {}).innerText || '', all: e.innerText }))`) || [];
+      chk(cards.length > 0, 'в ленте нет карточек');
+      chk(cards.every((c) => c.t.length >= 8 && c.t.length <= 100), `названия не 8–100 знаков: ${JSON.stringify(cards.filter((c) => c.t.length < 8 || c.t.length > 100).map((c) => c.t.length))}`);
+      chk(cards.every((c) => !/Кого коснётся/i.test(c.all)), 'в превью есть «Кого коснётся»');
+      chk(cards.every((c) => !/Новость/.test(c.all)), 'в ленте есть новости');
+      await click(p, '[data-omdoc]'); await sleep(700);
+      const win = await ev(p.s, `(document.querySelector('[data-orgdocwin]') || {}).innerText || ''`); chk(/суть/i.test(win) && /полное название/i.test(win), 'в окне документа нет «Сути» или полного названия');
+      chk(await ev(p.s, `document.documentElement.scrollWidth <= innerWidth + 1`), 'горизонтальная прокрутка');
+      await click(p, '[data-gdclose]'); await sleep(500); chk(await ev(p.s, `!document.querySelector('[data-orgdocwin]')`), 'окно документа не закрылось');
+      await click(p, '[data-omback]'); await sleep(300); chk(await ev(p.s, `!!document.querySelector('[data-orgmap="map"]')`), 'кнопка «назад» не вернула карту');
+      // «По дням» — прежний календарь
+      await click(p, '[data-cview="days"]'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"] [data-day]')`, 8000), '«По дням» не показал календарь');
+      await p.close(); }
+    { const p = await open('/?tab=c&view=days'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"] [data-day]')`), '?view=days не открыл «По дням»'); await p.close(); }
+    { const p = await open('/?tab=c&d=22.10.2026&v=136156'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"]')`), 'ссылка ?d=&v= не открыла «По дням»'); await p.close(); }
+    rep.push(tag('карта органов, период, лента, окно документа'));
+  }
+} finally { try { ws.close(); } catch {} ch.kill('SIGKILL'); SITE.close(); setTimeout(() => fs.rmSync(prof, { recursive: true, force: true }), 500); }
+assert.deepEqual(fails, [], 'карта органов:\n  ' + fails.join('\n  '));
+console.log('OK test_org_map.browser: ' + rep.join('; '));

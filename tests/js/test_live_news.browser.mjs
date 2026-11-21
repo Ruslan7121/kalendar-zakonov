@@ -67,12 +67,12 @@ try {
   chk(r.items.filter((x) => x.includes('пришедшая после открытия')).length === 1, 'новость показана дважды');
   /* календарь (решение владельца 16.11.2026): новостей в календаре нет — только заседания, приказы, указания;
      при фильтре органа его события по всем дням сразу раскрыты, без нажатия на день */
-  await cmd('Page.navigate', { url: `${BASE}/?tab=c` }, s);
+  await cmd('Page.navigate', { url: `${BASE}/?tab=c&view=days` }, s);
   const t1 = Date.now(); while (!(await ev(`!!document.querySelector('[data-calgrid]')`)) && Date.now() - t1 < 20000) await sleep(300); await sleep(1500);
   const cn = await ev(`({ txt: document.body.innerText.includes('оперативная новость Правительства'), mk: document.querySelectorAll('[data-mk=news],[data-daynews],[data-newsitem]').length })`);
   rep.push(`календарь: новостей ${cn.mk}, текст новости ${cn.txt}`);
   chk(!cn.txt && cn.mk === 0, 'в календаре показаны новости — они должны быть только во вкладке «Новости»');
-  await cmd('Page.navigate', { url: `${BASE}/?tab=c&org=minfin` }, s);
+  await cmd('Page.navigate', { url: `${BASE}/?tab=c&view=days&org=minfin` }, s);
   const t2 = Date.now(); while (!(await ev(`!!document.querySelector('[data-orgfeed] [data-day]')`)) && Date.now() - t2 < 20000) await sleep(300);
   const of = await ev(`(() => { const ds = [...document.querySelectorAll('[data-orgfeed] [data-day]')]; return { n: ds.length, open: ds.filter((d) => d.getAttribute('data-dayopen') === '1').length, orgs: [...new Set([...document.querySelectorAll('[data-orgfeed] [data-dayorg]')].map((e) => e.getAttribute('data-dayorg')))], news: document.querySelectorAll('[data-orgfeed] [data-newsitem]').length }; })()`);
   rep.push(`календарь, фильтр «Минфин»: ${JSON.stringify(of)}`);
