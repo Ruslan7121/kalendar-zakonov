@@ -4955,7 +4955,7 @@ function CalendarApp() {
   /* 15.11.2026: при запуске без параметров открывается «Вступают в силу» (решение владельца); ?tab=c — календарь */
   const [mode, setMode] = useState<'d' | 'c' | 'l' | 'i'>(QS && QS.get('tab') === 'l' ? 'l' : QS && QS.get('tab') === 'i' ? 'i' : QS && QS.get('tab') === 'c' ? 'c' : DLK ? 'i' : QS && (QS.get('tab') === 'd' || (QS.get('v') && QS.get('d') && DAYS.includes(QS.get('d')!))) ? 'd' : (QS && ['q', 'w', 't', 'c', 'org', 'd'].some((k) => QS.has(k))) ? 'c' : 'l');
   /* 21.11.2026: «Работа госорганов» — карта органов (по умолчанию) или «По дням»; ссылки ?d=, ?v=, ?view=days открывают «По дням» */
-  const [cview, setCview] = useState<'map' | 'days'>(() => (QS && (QS.get('view') === 'days' || QS.get('d') || QS.get('v')) || DLK ? 'days' : 'map'));
+  const [cview, setCview] = useState<'map' | 'days'>(() => (QS && (QS.get('view') === 'days' || QS.get('d') || QS.get('v') || QS.get('w') || QS.get('t') || QS.get('c')) || DLK ? 'days' : 'map'));
   const [lmk, setLmk] = useState(LMK0); const [lq, setLq] = useState('');
   const [cmk, setCmk] = useState(() => calCk(DLK ? new Date(+DLD!.slice(6), +DLD!.slice(3, 5) - 1, +DLD!.slice(0, 2)) : new Date()));
   useEffect(() => { const h = () => { if (CSNAP) setMode('c'); }; window.addEventListener('popstate', h); return () => window.removeEventListener('popstate', h); }, []);
