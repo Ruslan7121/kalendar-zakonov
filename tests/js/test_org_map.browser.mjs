@@ -113,6 +113,13 @@ try {
       await click(p, '[data-cofnone], [data-calorg] button:nth-of-type(2)'); await sleep(150);
       const org = await ev(p.s, `(() => { const l = [...document.querySelectorAll('label[data-cof]')].find((x) => x.getAttribute('data-cof') !== 'gov' && x.getAttribute('data-cof') !== 'sf'); return l ? l.getAttribute('data-cof') : ''; })()`);
       await click(p, `label[data-cof="${org}"]`); await sleep(200);
+      chk(await ev(p.s, `!!document.querySelector('[data-omperiod]') && /Выбрано:/.test(document.querySelector('[data-ompsel]').innerText)`), 'в «Фильтрах» нет блока «Период» с подписью «Выбрано:»');
+      { const cnt = async () => Number(((await ev(p.s, `document.querySelector('[data-zapply]').innerText`)).match(/\d+/) || [0])[0]);
+        await click(p, '[data-ompmode="day"]'); await sleep(300); const nd = await cnt();
+        await click(p, '[data-ompmode="month"]'); await until(p.s, `/\d/.test(document.querySelector('[data-zapply]').innerText)`, 6000); const nm = await cnt();
+        await click(p, '[data-ompmode="year"]'); await until(p.s, `/\d/.test(document.querySelector('[data-zapply]').innerText)`, 8000); const ny = await cnt();
+        chk(nm >= nd && ny >= nm, `период в фильтрах не расширяет число карточек: день ${nd}, месяц ${nm}, год ${ny}`);
+        await click(p, '[data-ompmode="month"]'); await sleep(300); }
       const cta = await ev(p.s, `document.querySelector('[data-zapply]').innerText`);
       chk(/^Показать \d+ карточ/.test(cta), 'кнопка фильтра не показывает число карточек: ' + cta);
       await click(p, '[data-zapply]'); await sleep(700);
