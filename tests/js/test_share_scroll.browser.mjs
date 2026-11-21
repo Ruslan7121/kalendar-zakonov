@@ -65,7 +65,7 @@ try {
     await cmd('Page.enable', {}, s); await cmd('Runtime.enable', {}, s);
     await cmd('Emulation.setDeviceMetricsOverride', { width: W.w, height: W.h, deviceScaleFactor: W.dpr, mobile: W.mobile }, s);
     if (W.mobile) await cmd('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, s);
-    await cmd('Page.addScriptToEvaluateOnNewDocument', { source: "try{localStorage.removeItem('kz_state_v1')}catch(e){}" }, s); await cmd('Page.navigate', { url: `${BASE}/?d=${d}&v=${v}` }, s);
+    await cmd('Page.navigate', { url: `${BASE}/?d=${d}&v=${v}` }, s);
     let r; const t0 = Date.now();
     await sleep(3600); // alignDeep повторяет выравнивание до 3 с
     for (;;) { r = (await cmd('Runtime.evaluate', { expression: MEASURE(d + b), returnByValue: true }, s)).result.value; if (!r.err || Date.now() - t0 > 15000) break; await sleep(300); }

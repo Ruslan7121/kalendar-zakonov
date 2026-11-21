@@ -78,7 +78,7 @@ try {
     for (const c of CASES) {
       const k = c.d + c.bn;
       for (const v of c.vs) { // открытие по каждому v=
-        await cmd('Page.addScriptToEvaluateOnNewDocument', { source: "try{localStorage.removeItem('kz_state_v1')}catch(e){}" }, s); await cmd('Page.navigate', { url: `${BASE}/?d=${c.d}&v=${v.id}` }, s); await sleep(400);
+        await cmd('Page.navigate', { url: `${BASE}/?d=${c.d}&v=${v.id}` }, s); await sleep(400);
         check(`${W.w}px ?d=${c.d}&v=${v.id} (${c.bn})`, await until(s, k, v.id), c, v, W.mobile, fails); opens++;
       }
       // переключатель: из последнего открытого — нажатием на первое голосование дня
