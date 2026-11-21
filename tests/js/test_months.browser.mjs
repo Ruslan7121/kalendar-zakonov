@@ -41,7 +41,7 @@ try {
       await cmd('Page.enable', {}, s); await cmd('Runtime.enable', {}, s); await cmd('Network.enable', {}, s); await cmd('Network.setCacheDisabled', { cacheDisabled: true }, s);
       await cmd('Emulation.setDeviceMetricsOverride', { width: W.w, height: W.h, deviceScaleFactor: W.dpr, mobile: W.mobile }, s);
       if (W.mobile) await cmd('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, s);
-      SITE.log.length = 0; await cmd('Page.navigate', { url: BASE + url }, s); return { s, close: () => cmd('Target.closeTarget', { targetId }) }; };
+      SITE.log.length = 0; await cmd('Page.addScriptToEvaluateOnNewDocument', { source: "try{localStorage.removeItem('kz_state_v1')}catch(e){}" }, s); await cmd('Page.navigate', { url: BASE + url }, s); return { s, close: () => cmd('Target.closeTarget', { targetId }) }; };
     const tag = (x) => `${W.w}px ${x}`;
     // 1) главная
     { const p = await open('/'); const ok = await until(p.s, `!!document.querySelector('main') && document.body.innerText.includes('Календарь законов') && !document.querySelector('[data-gd-load]')`);

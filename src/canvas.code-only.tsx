@@ -4203,7 +4203,8 @@ function Itogi({ m, peek }: { m: boolean; peek?: boolean }) {
   /* 16.11.2026: на телефоне фильтры «Итогов» — кнопка «Фильтры» рядом с периодом и окно снизу (как в «Календаре»), вариант Б владельца */
   const [fo, setFo] = useState(false); const [fxp, setFxp] = useState<Record<number, boolean>>({}); const slot = useHSlot(m && !peek);
   useEffect(() => { if (fo) setPOpen(false); }, [fo]); useEffect(() => { if (!fo) return; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setFo(false); }; document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [fo]);
-  const [pOpen, setPOpen] = useState(false); /* 17.11.2026: списки дней, месяцев и лет свернуты, пока не нажать на период; повторное нажатие сворачивает */ const [per, setPer] = useState<'d' | 'w' | 'm' | 'y'>('d' /* 17.11.2026: при открытии «Пленарных заседаний» — последний день с голосованиями, а не неделя */); const [pmk, setPmk] = useState<string[]>([]); const [pyr, setPyr] = useState<number[]>([]); const [pdy, setPdy] = useState<string[] | null>(DLK ? [DLD!] : null); const [pwo, setPwo] = useState(0) /* 21.11.2026: смещение недели в неделях (0 — последняя неделя с голосованиями) */; const [iq, setIq] = useState(''); const [g, setG] = useState(0); const [zs, setZs] = useState<string[][]>([[], [], []]); const [all, setAll] = useState(false); const [rf, setRf] = useState<'all' | 'ok' | 'no' | 'nr'>('all');
+  const [pOpen, setPOpen] = useState(false); /* 17.11.2026: списки дней, месяцев и лет свернуты, пока не нажать на период; повторное нажатие сворачивает */ const [per, setPer] = useState<'d' | 'w' | 'm' | 'y'>((!DLK && PST.ip && ['d', 'w', 'm', 'y'].includes(PST.ip) ? PST.ip : 'd') as any /* 17.11.2026: при открытии «Пленарных заседаний» — последний день с голосованиями, а не неделя */); const [pmk, setPmk] = useState<string[]>([]); const [pyr, setPyr] = useState<number[]>([]); const [pdy, setPdy] = useState<string[] | null>(DLK ? [DLD!] : null); const [pwo, setPwo] = useState(0) /* 21.11.2026: смещение недели в неделях (0 — последняя неделя с голосованиями) */; const [iq, setIq] = useState(''); const [g, setG] = useState(0); const [zs, setZs] = useState<string[][]>(() => ZG.map(([, , vs], i) => (PST.iz && Array.isArray(PST.iz[i]) ? PST.iz[i].filter((v, j, a) => vs.includes(v) && a.indexOf(v) === j) : [])));
+  useEffect(() => { PST.ip = per; PST.iz = zs; pstSave(); }, [per, zs]); /* 21.11.2026: режим периода и метки «Пленарных заседаний» запоминаются */ const [all, setAll] = useState(false); const [rf, setRf] = useState<'all' | 'ok' | 'no' | 'nr'>('all');
   /* 15.11.2026: несколько меток — внутри группы «или», между группами «и» (как «Фильтры»); ничего не выбрано — все законопроекты периода */
   const nSel = zs[0].length + zs[1].length + zs[2].length; const tog = (i: number, v: string) => { setZs(zs.map((a, j) => (j !== i ? a : a.includes(v) ? a.filter((z) => z !== v) : [...a, v]))); setAll(false); setRf('all'); };
   const last = DAYS[DAYS.length - 1];
@@ -4587,6 +4588,27 @@ const setCOF = (n: string[]) => { COF = COK.filter((k) => n.includes(k)); COL.fo
 if (URLF && QS && QS.has('org')) { const o = (QS.get('org') || '').split(','); COF = o.includes('none') ? [] : COK.filter((k) => o.includes(k)); }
 const cof = (k: string) => COF.includes(k);
 const togCOF = (k: string) => setCOF(COF.includes(k) ? COF.filter((x) => x !== k) : [...COF, k]);
+/* 21.11.2026: память выбора. Вкладка, режим периода, органы и метки сохраняются между открытиями: в localStorage (мгновенно, до первой отрисовки)
+   и в Telegram.CloudStorage (хранится у пользователя в Telegram и доступно на всех его устройствах). Ссылка с условиями (?org=, ?w=, ?t=, ?c=, ?tab=, ?d=&v=)
+   главнее сохранённого; «Сбросить» очищает выбор и память. Конкретные дни, месяцы и годы не запоминаются: они устаревают. */
+const PSK = 'kz_state_v1';
+const PST: { t: number; tab?: string; ip?: string; iz?: string[][] } = { t: 0 };
+const pstParse = (s0: any): any => { try { const o = typeof s0 === 'string' ? JSON.parse(s0) : s0; return o && typeof o === 'object' ? o : null; } catch (e) { return null; } };
+const pstApply = (o: any, boot: boolean) => {
+  const urlOrg = !!QS && QS.has('org'); const urlZ = !!QS && ['w', 't', 'c'].some((k) => QS.has(k)); const share = !!QS && !!QS.get('d') && !!QS.get('v');
+  if (share) return;
+  if (!urlOrg && Array.isArray(o.cof)) { const n = COK.filter((k) => o.cof.includes(k)); if (boot) COF = n; else setCOF(n); }
+  if (!urlZ && o.zs && typeof o.zs === 'object') { const n: Record<string, string[]> = { w: [], t: [], c: [] }; ZG.forEach(([k, , vs]) => { n[k] = Array.isArray(o.zs[k]) ? o.zs[k].filter((v: any, i: number, a: any[]) => vs.includes(v) && a.indexOf(v) === i) : []; }); if (boot) ZS = n; else setZS(n); }
+  if (['day', 'week', 'month', 'year'].includes(o.om)) { if (boot) OMS.mode = o.om; else setOMS({ mode: o.om }); }
+};
+let pstTm: any = 0; let pstOn = false; /* запись начинается только после первого действия человека: фильтры из ссылки и начальное состояние в память не попадают */
+function pstSave() { if (!pstOn) return; clearTimeout(pstTm); pstTm = setTimeout(() => { try { PST.t = Date.now(); const o = { t: PST.t, tab: PST.tab, ip: PST.ip, iz: PST.iz, om: OMS.mode, cof: COF.length === COK.length || !COF.length ? null : COF.slice(), zs: ZS }; const j = JSON.stringify(o); try { localStorage.setItem(PSK, j); } catch (e) {} if (TG && TG.CloudStorage) { try { TG.CloudStorage.setItem(PSK, j, () => {}); } catch (e) {} } } catch (e) {} }, 300); }
+(() => {
+  try { const o = pstParse(localStorage.getItem(PSK)); if (o) { PST.t = +o.t || 0; PST.tab = o.tab; PST.ip = o.ip; PST.iz = o.iz; pstApply(o, true); } } catch (e) {}
+  try { if (TG && TG.CloudStorage) TG.CloudStorage.getItem(PSK, (er: any, v: any) => { const o = !er && v ? pstParse(v) : null; if (o && (+o.t || 0) > PST.t) { PST.t = +o.t; PST.tab = o.tab; PST.ip = o.ip; PST.iz = o.iz; pstApply(o, false); try { localStorage.setItem(PSK, JSON.stringify(o)); } catch (e) {} } }); } catch (e) {}
+  COL.add(pstSave); ZL.add(pstSave); OML.add(pstSave);
+  try { if (typeof window !== 'undefined') ['click', 'keydown', 'pointerdown', 'touchstart'].forEach((ev) => window.addEventListener(ev, () => { pstOn = true; }, { capture: true, once: true } as any)); } catch (e) {}
+})();
 function CalOrgFilter({ m }: { m: boolean }) {
   const t = useGrokTheme(); const sel = useCOF(); const [o, setO] = useState(false); const ref = useRef<HTMLDivElement>(null);
   useEffect(() => { if (!o) return; const f = (e: any) => { if (ref.current && !ref.current.contains(e.target)) setO(false); }; const k = (e: any) => { if (e.key === 'Escape') setO(false); }; document.addEventListener('mousedown', f); document.addEventListener('touchstart', f); document.addEventListener('keydown', k); return () => { document.removeEventListener('mousedown', f); document.removeEventListener('touchstart', f); document.removeEventListener('keydown', k); }; }, [o]);
@@ -5014,11 +5036,12 @@ function CalendarApp() {
   const m = w <= 700;
   const Z = 1; GZ = Z;
   /* 15.11.2026: при запуске без параметров открывается «Вступают в силу» (решение владельца); ?tab=c — календарь */
-  const [mode, setMode] = useState<'d' | 'c' | 'l' | 'i'>(QS && QS.get('tab') === 'l' ? 'l' : QS && QS.get('tab') === 'i' ? 'i' : QS && QS.get('tab') === 'c' ? 'c' : DLK ? 'i' : QS && (QS.get('tab') === 'd' || (QS.get('v') && QS.get('d') && DAYS.includes(QS.get('d')!))) ? 'd' : (QS && ['q', 'w', 't', 'c', 'org', 'd'].some((k) => QS.has(k))) ? 'c' : 'l');
+  const [mode, setMode] = useState<'d' | 'c' | 'l' | 'i'>(QS && QS.get('tab') === 'l' ? 'l' : QS && QS.get('tab') === 'i' ? 'i' : QS && QS.get('tab') === 'c' ? 'c' : DLK ? 'i' : QS && (QS.get('tab') === 'd' || (QS.get('v') && QS.get('d') && DAYS.includes(QS.get('d')!))) ? 'd' : (QS && ['q', 'w', 't', 'c', 'org', 'd'].some((k) => QS.has(k))) ? 'c' : (!(QS && QS.has('v')) && PST.tab && ['l', 'c', 'i', 'd'].includes(PST.tab) ? (PST.tab as any) : 'l'));
   /* 21.11.2026: «Работа госорганов» — карта органов (по умолчанию) или «По дням»; ссылки ?d=, ?v=, ?view=days открывают «По дням» */
   const [cview, setCview] = useState<'map' | 'days'>(() => (QS && (QS.get('view') === 'days' || QS.get('d') || QS.get('v') || QS.get('w') || QS.get('t') || QS.get('c')) || DLK ? 'days' : 'map'));
   const [lmk, setLmk] = useState(LMK0); const [lq, setLq] = useState('');
   const [cmk, setCmk] = useState(() => calCk(DLK ? new Date(+DLD!.slice(6), +DLD!.slice(3, 5) - 1, +DLD!.slice(0, 2)) : new Date()));
+  useEffect(() => { PST.tab = mode; pstSave(); }, [mode]); /* 21.11.2026: вкладка запоминается */
   useEffect(() => { const h = () => { if (CSNAP) setMode('c'); }; window.addEventListener('popstate', h); return () => window.removeEventListener('popstate', h); }, []);
   const [view, setView] = useState<'v' | 's'>(PIN && QS && QS.get('d') === day ? 'v' : COUNT[day] ? 'v' : 's');
   const [topH, setTopH] = useState(0);
