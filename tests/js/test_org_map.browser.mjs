@@ -56,10 +56,10 @@ try {
       const wl = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(/\d+[–-]\d+ [а-я]+|\d+ [а-я]{3} – /.test(wl || ''), `подпись недели: ${wl}`);
       await click(p, '[data-ommode="month"]'); await sleep(400); const mn = (await tiles(p) || []).reduce((a, x) => a + x.n, 0); chk(mn >= wk, `за месяц ${mn} меньше, чем за неделю ${wk}`);
       const ml = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(/^[А-Я][а-я]+ \d{4}/.test(ml || ''), `подпись месяца: ${ml}`);
-      chk(await ev(p.s, `!document.querySelector('[data-omprev],[data-omnext]')`), 'в карте остались стрелки ‹ ›');
+      { const l0 = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); await click(p, '[data-omprev]'); await sleep(300); const l1 = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(l1 !== l0, 'стрелка ‹ не листает период'); await click(p, '[data-omnext]'); await sleep(300); chk((await ev(p.s, `document.querySelector('[data-omlabel]').innerText`)) === l0, 'стрелка › не вернула период'); chk(await ev(p.s, `(() => { const b = document.querySelector('[data-omprev]'); const c = getComputedStyle(b); return c.borderTopWidth === '0px' && b.offsetWidth === 34; })()`), 'стрелки не такие, как в календаре месяца (без рамки, 34 px)'); }
       chk(await ev(p.s, `!document.querySelector('[data-calfab]') || getComputedStyle(document.querySelector('[data-calfab]')).visibility === 'hidden'`), 'в карте видна плавающая кнопка «Календарь»');
       chk(await ev(p.s, `!/Нажмите на плитку/.test(document.body.innerText)`), 'в карте есть подсказка «Нажмите на плитку»');
-      chk(await ev(p.s, `![...document.querySelectorAll('[data-omtile]')].some((e) => e.innerText.split('\\n').some((l) => /\\d/.test(l) && !/^\\d+$/.test(l.trim())))`), 'в подписи плитки есть число');
+      chk(await ev(p.s, `![...document.querySelectorAll('[data-omtile]')].some((e) => e.innerText.split('\\n').length > 3)`), 'число и слово в плитке не в одну строку');
       // календарь месяца открывается по подписи, день выбирается нажатием
       await click(p, '[data-ommode="day"]'); await sleep(300); await click(p, '[data-omlabel]'); await sleep(300);
       chk(await ev(p.s, `!!document.querySelector('[data-ommonth] [data-omcell]')`), 'календарь месяца не открылся');

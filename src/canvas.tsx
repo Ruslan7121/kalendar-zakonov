@@ -3913,7 +3913,7 @@ function omLegal(t0: string): string {
 function omTitle(x: any): string {
   if (x.ti) return x.ti;
   let s = orgSut(x)[0] || ''; if (s) { const m = /[.!?](\s+)(?=[«"A-ZА-ЯЁ])/.exec(s); if (m) s = s.slice(0, m.index + 1); s = s.replace(/[.]$/, ''); }
-  if (!s) return omLegal(String(x.st || x.t || ''));
+  if (!s) return omLegal(String(x.tf || x.st || x.t || ''));
   s = omCut(s, 90); return s.charAt(0).toUpperCase() + s.slice(1);
 }
 const omDocs = (): any[] => ORG.filter((x: any) => orgPub(x) && orgIsDoc(x) && x.ty !== 'заседание');
@@ -3928,7 +3928,7 @@ function OrgDocWin({ x, m, onClose }: { x: any; m?: boolean; onClose: () => void
     <div style={{ padding: m ? '4px 12px 14px' : '4px 18px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
       {sutP.length > 0 && <div style={blk}><div style={h}>Суть</div>{sutP.map((q, i) => <p key={i} style={{ ...p15, marginTop: i ? 10 : 0 }}>{q}</p>)}</div>}
       {!!who && <div style={blk}><div style={h}>Кого коснётся</div><p style={p15}>{who}</p></div>}
-      <div style={blk}><div style={h}>Полное название</div><p style={{ ...p15, fontSize: 14, color: t.text.secondary }}>{x.t}</p></div>
+      <div style={blk}><div style={h}>Полное название</div><p style={{ ...p15, fontSize: 14, color: t.text.secondary }}>{x.tf || x.t}</p></div>
       {!!x.u && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}><a className="gd-lnk" href={x.u} style={NVLK(t)}>Официальный текст: {host} ↗</a></div>}
     </div></div></NvModal>;
 }
@@ -3949,12 +3949,15 @@ function OrgMap({ m, openDays }: { m: boolean; openDays: () => void }) {
   const os = Object.keys(by).sort((a, b) => by[b].length - by[a].length || (ORGN[a] || a).localeCompare(ORGN[b] || b));
   const ink = t.text.primary; const sec = t.text.secondary; const ter = t.text.tertiary; const ac = t.text.accent;
   const btn = (on: boolean) => ({ border: 'none', background: on ? (DK ? '#1C1C1E' : '#FFFFFF') : 'transparent', color: on ? ac : sec, font: 'inherit', fontSize: 14, fontWeight: 600, height: 30, borderRadius: 9, cursor: 'pointer', flex: 1, boxShadow: on ? '0 1px 3px rgba(0,0,0,.3)' : 'none' }) as any;
+  const nbS = { width: 34, height: 34, padding: 0, border: 'none', borderRadius: 9, background: 'transparent', color: t.text.secondary, fontSize: 20, lineHeight: 1, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' } as any; /* как стрелки месяца в «Вступают в силу» */
   const rb2 = { width: 36, height: 36, borderRadius: 18, border: `1px solid ${t.border.default}`, background: t.bg.subtle, color: ac, fontSize: 20, lineHeight: 1, cursor: 'pointer', flex: 'none' } as any;
   const openOrg = (o: string) => { setOrg(o); setKind('Все'); setMon(false); window.scrollTo(0, 0); };
   const hdrBlock = <div data-orgmaphead="1">
     <div role="group" aria-label="Период" style={{ display: 'flex', background: t.bg.subtle, border: `1px solid ${t.border.default}`, borderRadius: 12, padding: 3 }}>{([['day', 'День'], ['week', 'Неделя'], ['month', 'Месяц']] as const).map(([k, l]) => <button key={k} type="button" data-ommode={k} aria-pressed={mode === k} onClick={() => { setMode(k); setMon(false); }} style={btn(mode === k)}>{l}</button>)}</div>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-      <button type="button" data-omlabel="1" aria-expanded={mon} onClick={() => { setMon(!mon); setMv(c0); }} style={{ flex: 1, height: 36, borderRadius: 12, border: `1px solid ${t.border.default}`, background: 'transparent', color: ink, font: 'inherit', fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>{label} <span aria-hidden style={{ fontSize: 12, color: ter }}>▾</span></button>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '8px 0 2px' }}>
+      <button type="button" data-omprev="1" aria-label="Назад" onClick={() => step(-1)} style={nbS}>‹</button>
+      <button type="button" data-omlabel="1" aria-expanded={mon} onClick={() => { setMon(!mon); setMv(c0); }} style={{ flex: 1, height: 34, border: 'none', background: 'transparent', color: ink, font: 'inherit', fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap', cursor: 'pointer' }}>{label} <span aria-hidden style={{ fontSize: 11, color: ter }}>▾</span></button>
+      <button type="button" data-omnext="1" aria-label="Вперёд" onClick={() => step(1)} style={nbS}>›</button>
     </div>
     {mode === 'day' && <div data-omweek="1" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginTop: 8 }}>{OMWD.map((w, i) => { const d = OMA(OMMON(c0), i); const f = OMF(d); const on = f === OMF(c0); return <button key={f} type="button" data-omday={f} aria-pressed={on} onClick={() => setCur(d)} style={{ border: `1.5px solid ${on ? ac : 'transparent'}`, background: on ? (DK ? 'rgba(64,156,255,.14)' : 'rgba(10,100,214,.1)') : 'transparent', color: on ? ac : ink, font: 'inherit', borderRadius: 12, padding: '4px 0', cursor: 'pointer', opacity: has.has(f) || on ? 1 : 0.4 }}><span style={{ display: 'block', fontSize: 11, color: on ? ac : ter }}>{w}</span><b style={{ fontSize: 16, display: 'block', lineHeight: 1.2 }}>{d.getDate()}</b></button>; })}</div>}
     {mon && <div data-ommonth="1" style={{ marginTop: 8, background: t.bg.base, borderRadius: 16, padding: '10px 10px 12px', boxShadow: `0 10px 26px rgba(0,0,0,${DK ? 0.55 : 0.15}), inset 0 0 0 1px ${t.border.default}` }}>
@@ -3984,9 +3987,9 @@ function OrgMap({ m, openDays }: { m: boolean; openDays: () => void }) {
     </div>;
   }
   const cols = m ? 2 : 3;
-  const tiles = os.map((o, i) => { const l = by[o]; const ks: Record<string, number> = {}; l.forEach((x: any) => { const k = omKind(x); ks[k] = (ks[k] || 0) + 1; }); const kd = Object.keys(ks).map((k) => ks[k] === 1 ? k.toLowerCase() : (OMKN[k] || k.toLowerCase())).join(' · '); /* без чисел: «приказ» при одном документе, «приказы» при нескольких */ const c = orgCol(o, DK);
-    return i === 0 ? <button key={o} type="button" data-omtile={o} onClick={() => openOrg(o)} style={{ ...nvTile(c), gridColumn: `span ${cols}`, display: 'flex', alignItems: 'center', gap: 12, padding: '12px', textAlign: 'left', font: 'inherit', color: ink }}><OrgMark o={o} c={c} /><span style={{ flex: 1, minWidth: 0 }}><span style={{ display: 'block', fontSize: 16, fontWeight: 700 }}>{ORGN[o] || o}</span><span style={{ display: 'block', fontSize: 12.5, color: ter, lineHeight: 1.3 }}>{kd}</span></span><span style={{ fontSize: 34, fontWeight: 700, lineHeight: 1 }}>{l.length}</span></button>
-      : <button key={o} type="button" data-omtile={o} onClick={() => openOrg(o)} style={{ ...nvTile(c), display: 'flex', flexDirection: 'column', minHeight: 132, padding: '12px', textAlign: 'left', font: 'inherit', color: ink }}><OrgMark o={o} c={c} /><span style={{ fontSize: 15, fontWeight: 700, marginTop: 8, lineHeight: 1.2 }}>{ORGN[o] || o}</span><span style={{ fontSize: 30, fontWeight: 700, lineHeight: 1, marginTop: 'auto', paddingTop: 6 }}>{l.length}</span><span style={{ fontSize: 12, color: ter, marginTop: 3, lineHeight: 1.3 }}>{kd}</span></button>; });
+  const tiles = os.map((o, i) => { const l = by[o]; const ks: Record<string, number> = {}; l.forEach((x: any) => { const k = omKind(x); ks[k] = (ks[k] || 0) + 1; }); const kk = Object.keys(ks); const kd = kk.length === 1 ? omKP(kk[0], ks[kk[0]]).replace(/^\d+ /, '') : kk.map((k) => OMKN[k] || k.toLowerCase()).join(' · '); /* число крупно, рядом слово мелко: «2 указания»; при нескольких видах — их названия */ const c = orgCol(o, DK);
+    return i === 0 ? <button key={o} type="button" data-omtile={o} onClick={() => openOrg(o)} style={{ ...nvTile(c), gridColumn: `span ${cols}`, display: 'flex', alignItems: 'center', gap: 12, padding: '12px', textAlign: 'left', font: 'inherit', color: ink }}><OrgMark o={o} c={c} /><span style={{ flex: 1, minWidth: 0 }}><span style={{ display: 'block', fontSize: 16, fontWeight: 700 }}>{ORGN[o] || o}</span><span style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}><span style={{ fontSize: 30, fontWeight: 700, lineHeight: 1 }}>{l.length}</span><span style={{ fontSize: 13, color: ter, lineHeight: 1.3 }}>{kd}</span></span></span></button>
+      : <button key={o} type="button" data-omtile={o} onClick={() => openOrg(o)} style={{ ...nvTile(c), display: 'flex', flexDirection: 'column', minHeight: 132, padding: '12px', textAlign: 'left', font: 'inherit', color: ink }}><OrgMark o={o} c={c} /><span style={{ fontSize: 15, fontWeight: 700, marginTop: 8, lineHeight: 1.2 }}>{ORGN[o] || o}</span><span style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 'auto', paddingTop: 6, flexWrap: 'wrap' }}><span style={{ fontSize: 30, fontWeight: 700, lineHeight: 1 }}>{l.length}</span><span style={{ fontSize: 13, color: ter, lineHeight: 1.3 }}>{kd}</span></span></button>; });
   const gdC = orgCol('gd', DK);
   return <div data-orgmap="map" style={{ paddingBottom: 90 }} {...swH}>
     {hdrBlock}
