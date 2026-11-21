@@ -48,8 +48,7 @@ try {
       chk(await until(p.s, `!!document.querySelector('[data-cpane="map"] [data-omtile]')`), 'нет карты органов с плитками по умолчанию');
       const tl = await tiles(p) || []; chk(tl.length >= 2, `плиток ${tl.length}`);
       chk(!tl.some((x) => /новост/i.test(x.t)), 'в плитках есть «новости»');
-      const days = await ev(p.s, `[...document.querySelectorAll('[data-omday]')].map((e) => e.innerText.replace(/\\s+/g, ' ').trim())`) || [];
-      chk(days.length === 7 && days.every((x) => /^[А-Яа-я]{2} \d{1,2}$/.test(x)), `полоса дней без цифр документов: ${JSON.stringify(days)}`);
+      chk(await ev(p.s, `!document.querySelector('[data-omday], [data-omweek]')`), 'на карте осталась полоса дней недели');
       const dayN = tl.reduce((a, x) => a + x.n, 0);
       // неделя и месяц: документов не меньше, чем за день; подпись периода и стрелки
       await click(p, '[data-ommode="week"]'); await sleep(400); const wk = (await tiles(p) || []).reduce((a, x) => a + x.n, 0); chk(wk >= dayN, `за неделю ${wk} меньше, чем за день ${dayN}`);
@@ -155,6 +154,27 @@ try {
       chk(await ev(p.s, `!document.querySelector('[data-imtoday]')`), 'кнопка «Сегодня» не вернула на последний день голосований');
       await click(p, '[data-imlabel]'); await sleep(300);
       chk(await ev(p.s, `!!document.querySelector('[data-immonth] [data-imcell]') && !!document.querySelector('[data-phhint]')`), 'на «Пленарных заседаниях» подпись периода не открыла календарь');
+      await p.close(); }
+    /* пустые состояния с подсказкой и «назад» от левого края окна */
+    { const p = await open('/?tab=c'); chk(await until(p.s, `!!document.querySelector('[data-omtile]')`, 8000), 'нет плиток для проверки пустого состояния');
+      await click(p, '[data-omnext]'); await sleep(500);
+      chk(await ev(p.s, `!!document.querySelector('[data-empty="map"]') && /документов нет/.test(document.querySelector('[data-empty="map"]').innerText)`), 'в день без документов нет пустого состояния');
+      chk(await ev(p.s, `/Открыть \\d+ [а-я]+/.test((document.querySelector('[data-empty="map"] [data-emptybtn]') || {}).innerText || '')`), 'в пустом состоянии нет кнопки «Открыть <день>»');
+      await click(p, '[data-empty="map"] [data-emptybtn]'); await sleep(500);
+      chk(await ev(p.s, `!document.querySelector('[data-empty="map"]') && document.querySelectorAll('[data-omtile]').length > 0`), 'кнопка пустого состояния не открыла день с документами');
+      await p.close(); }
+    { const p = await open('/?tab=i'); chk(await until(p.s, `!!document.querySelector('[data-immode]')`, 10000), 'нет «Пленарных заседаний» для проверки пустого состояния');
+      await click(p, '[data-immode="week"]'); await sleep(300);
+      for (let i = 0; i < 14; i++) { await click(p, '[data-imprev]'); await sleep(60); }
+      await sleep(400);
+      chk(await ev(p.s, `!!document.querySelector('[data-empty="plen"]')`), 'в период без голосований нет пустого состояния');
+      await click(p, '[data-empty="plen"] [data-emptybtn]'); await sleep(500);
+      chk(await ev(p.s, `!document.querySelector('[data-empty="plen"]')`), 'кнопка «К последнему дню» не вернула к данным');
+      if (W.mobile) { // свайп от левого края окна вправо закрывает карточку
+        await click(p, '[data-itile]'); await until(p.s, `!!document.querySelector('[data-gdwin]')`, 6000); await sleep(500);
+        await ev(p.s, `(() => { const w = document.querySelector('[data-gdwin]'); const r = w.getBoundingClientRect(); const mk = (x, y) => new Touch({ identifier: 7, target: w, clientX: x, clientY: y }); const x0 = r.left + 8, y0 = r.top + 200; w.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true, touches: [mk(x0, y0)], changedTouches: [mk(x0, y0)] })); w.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, cancelable: true, touches: [mk(x0 + 60, y0 + 4)], changedTouches: [mk(x0 + 60, y0 + 4)] })); w.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, cancelable: true, touches: [mk(x0 + 130, y0 + 6)], changedTouches: [mk(x0 + 130, y0 + 6)] })); w.dispatchEvent(new TouchEvent('touchend', { bubbles: true, cancelable: true, touches: [], changedTouches: [mk(x0 + 130, y0 + 6)] })); })()`);
+        await sleep(600);
+        chk(await ev(p.s, `!document.querySelector('[data-gdwin]')`), 'свайп от левого края не закрыл окно карточки'); }
       await p.close(); }
     { const p = await open('/?tab=c&d=22.10.2026&v=136156'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"]')`), 'ссылка ?d=&v= не открыла «По дням»'); await p.close(); }
     rep.push(tag('карта органов, период, лента, окно документа'));
