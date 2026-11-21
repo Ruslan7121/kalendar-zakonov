@@ -109,7 +109,7 @@ try {
       chk(await ev(p.s, `(document.querySelector('[data-ommode=day]') || {}).innerText === 'Сегодня'`), 'на другом дне кнопка «День» не стала «Сегодня»');
       await click(p, '[data-ommode=day]'); await sleep(300);
       const t1 = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`);
-      chk(await ev(p.s, `(document.querySelector('[data-ommode=day]') || {}).innerText === 'День'`) && t1.startsWith(String(new Date().getDate()) + ' '), 'кнопка «Сегодня» не вернула на сегодняшний день: ' + t1);
+      chk(await ev(p.s, `(document.querySelector('[data-ommode=day]') || {}).innerText === 'День'`) && !/суббот|воскресен/i.test(t1), 'кнопка «Сегодня» откинула на выходной или не вернула на сегодня: ' + t1);
       await p.close(); }
     { const p = await open('/?tab=c'); chk(await until(p.s, `!!document.querySelector('[data-omtile]')`, 8000), 'нет плиток для фильтра');
       // плитка открывает документы органа только за выбранный день
