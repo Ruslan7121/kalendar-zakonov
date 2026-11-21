@@ -160,6 +160,17 @@ try {
       await click(p, '[data-imdone]'); await sleep(300);
       chk(await ev(p.s, `!document.querySelector('[data-immonth]')`), 'на «Пленарных заседаниях» кнопка не свернула календарь');
       await p.close(); }
+    /* несколько недель: нажатие на день добавляет его неделю, итоги суммируются (обе страницы) */
+    for (const [url, ns, ready] of [['/?tab=c', 'om', '[data-omtile]'], ['/?tab=i', 'im', '[data-itile]']]) {
+      const p = await open(url); chk(await until(p.s, `!!document.querySelector('${ready}')`, 10000), `нет данных для проверки недель (${ns})`);
+      await click(p, `[data-${ns}mode="week"]`); await sleep(400); await click(p, `[data-${ns}label]`); await sleep(300);
+      const one = await ev(p.s, `document.querySelector('[data-${ns}label]').innerText`);
+      await ev(p.s, `(() => { const c = [...document.querySelectorAll('[data-${ns}cell]')].filter((e) => e.getAttribute('aria-pressed') === 'false'); if (c[0]) c[0].click(); })()`); await sleep(250);
+      await ev(p.s, `(() => { const c = [...document.querySelectorAll('[data-${ns}cell]')].filter((e) => e.getAttribute('aria-pressed') === 'false'); if (c[7]) c[7].click(); })()`); await sleep(350);
+      const many = await ev(p.s, `document.querySelector('[data-${ns}label]').innerText`);
+      chk(/недел/.test(many) && many !== one, `выбор нескольких недель не суммируется (${ns}): «${one}» → «${many}»`);
+      chk(await ev(p.s, `document.querySelectorAll('[data-${ns}cell][aria-pressed="true"]').length >= 14`), `в календаре не подсвечены несколько недель (${ns})`);
+      await click(p, `[data-${ns}done]`); await sleep(250); await p.close(); }
     /* пустые состояния с подсказкой и «назад» от левого края окна */
     { const p = await open('/?tab=c'); chk(await until(p.s, `!!document.querySelector('[data-omtile]')`, 8000), 'нет плиток для проверки пустого состояния');
       await click(p, '[data-omnext]'); await sleep(500);
