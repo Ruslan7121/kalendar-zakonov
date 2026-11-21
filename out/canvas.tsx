@@ -4150,7 +4150,7 @@ function LawsSw({ m, mk, setMk, ks, cnt }: { m: boolean; mk: string; setMk: (k: 
 const lwTop = () => { const bs = Array.from(document.querySelectorAll('[data-lcnt]')).map((e) => e.getBoundingClientRect().bottom).filter((b) => b > 0); return bs.length ? Math.min(...bs) : svTop() * GZ; };
 const MPR = ['январе', 'феврале', 'марте', 'апреле', 'мае', 'июне', 'июле', 'августе', 'сентябре', 'октябре', 'ноябре', 'декабре'];
 const plz = (n: number, a: string, b: string, c: string) => { const d = n % 100, e = n % 10; return d >= 11 && d <= 14 ? c : e === 1 ? a : e >= 2 && e <= 4 ? b : c; };
-function Laws({ m, mk, setMk, lq = '', setLq = () => {} }: { m: boolean; mk: string; setMk?: (k: string) => void; lq?: string; setLq?: (s: string) => void }) {
+function Laws({ m, mk, setMk, lq = '', setLq = () => {}, peek }: { m: boolean; mk: string; setMk?: (k: string) => void; lq?: string; setLq?: (s: string) => void; peek?: boolean }) {
   const t = useGrokTheme(); useZS(); useMY(); const myA = MY.on; const zn = zN(); /* 15.11.2026: поиск и «Фильтры» — в верхней строке, как в календаре (App хранит строку поиска) */
   const now = new Date();
   const [op, setOp0] = useState<string | null>(LAWQ && LAWQ.mk === mk ? `${mk}#${LAWQ.i}` : QS && QS.get('lo') ? `${mk}#${QS.get('lo')}` : null);
@@ -4176,7 +4176,7 @@ function Laws({ m, mk, setMk, lq = '', setLq = () => {} }: { m: boolean; mk: str
   const li = LKEYS.indexOf(mk); const lpv = li > 0 ? LKEYS[li - 1] : null; const lnx = li >= 0 && li < LKEYS.length - 1 ? LKEYS[li + 1] : null; const lcur = LKEYS.includes(LCUR) ? LCUR : null;
   const lnb = (dis: boolean) => ({ width: 34, height: 34, padding: 0, border: 'none', borderRadius: 9, background: 'transparent', color: t.text.secondary, fontSize: 20, lineHeight: 1, cursor: dis ? 'default' : 'pointer', opacity: dis ? 0.3 : 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' } as any);
   return <div style={{ marginTop: 0, ['--gd-lt' as any]: m ? '0px' : 'var(--gd-top, 0px)' }}>
-    <MyBar m={m} />
+    <MyFab m={m} peek={peek} />
     {/* 15.11.2026: на телефоне поиск и «Фильтры» законов — в закрепленной верхней строке (CalendarApp, data-msearch) */}
     {(qn || zn > 0 || myA) && <div data-lfound="1" style={{ fontSize: 13.5, color: t.text.secondary, margin: m ? '0 2px 10px' : '14px 2px 10px' }}>{items.length ? `Найдено: ${items.length} · по всем месяцам` : 'Ничего не найдено'}</div>}
     {setMk && !qn && !zn && !myA && <div data-lmonth="1" style={{ display: 'flex', alignItems: 'center', gap: 4, margin: m ? '2px 0 10px' : '14px 0 10px' }}><button aria-label="Предыдущий месяц" disabled={!lpv} onClick={() => lpv && setMk(lpv)} style={lnb(!lpv)}>‹</button><span style={{ flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 700, color: t.text.primary, whiteSpace: 'nowrap' }}>{lmname(mk)}</span><button aria-label="Следующий месяц" disabled={!lnx} onClick={() => lnx && setMk(lnx)} style={lnb(!lnx)}>›</button>{lcur && mk !== lcur && <button onClick={() => setMk(lcur)} style={{ height: 28, padding: '0 12px', borderRadius: 14, border: `1px solid ${t.text.accent}`, background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Текущий месяц</button>}</div>}
@@ -4346,7 +4346,7 @@ function Itogi({ m, peek }: { m: boolean; peek?: boolean }) {
     return <div data-itogi="1" style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
       {/* 15.11.2026: раскладка не прыгает при выборе фильтров — строки постоянной высоты: период (месяцы и годы в той же строке) и «Сбросить» на месте; ниже всегда строка «Выбрано» */}
       <div data-itop="1" style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}><div style={{ width: 380, flex: 'none' }}>{phHead}</div><div style={{ flex: 1, minWidth: 0, paddingTop: 10 }}>{perInfo}</div><span style={{ flex: 'none', visibility: resetB ? 'visible' : 'hidden', paddingTop: 8 }}>{resetB || <button type="button" tabIndex={-1} aria-hidden style={{ minHeight: 32, padding: '0 10px', border: 'none', background: 'transparent', fontSize: 14 }}>Сбросить</button>}</span></div>
-      <MyBar m={m} />
+      <MyFab m={m} peek={peek} />
       <div data-iselrow="1" style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 34, overflow: 'hidden', flexWrap: 'nowrap' }}>{nSel ? <><span style={{ fontSize: 12.5, color: t.text.tertiary, flex: 'none' }}>Выбрано:</span><div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', minWidth: 0 } as any}>{zs.flatMap((a, i) => a.map((v) => <ZChip key={i + v} t={t} on l={v} x onClick={() => tog(i, v)} />))}</div></> : <span style={{ fontSize: 13, color: t.text.tertiary }}>Метки не выбраны — показаны все законопроекты периода. Выберите метки в столбиках справа.</span>}</div>
       {L.length ? <><div style={{ display: 'grid', gridTemplateColumns: '440px minmax(0, 1fr)', gap: 20, alignItems: 'stretch' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}><div style={{ minWidth: 0 }}><div title={tg} style={{ fontSize: 20, fontWeight: 700, color: t.text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3 }}>{tg}</div><div style={{ fontSize: 12.5, color: t.text.tertiary, height: 17, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nSel > 1 ? (zs.filter((a) => a.length).length > 1 ? 'законопроекты, у которых есть метки из каждой выбранной группы' : 'законопроекты хотя бы с одной из выбранных меток') : `${pp[4]} · законопроектов: ${sel.length}`}</div></div>{frFix}{totFix}</div>
@@ -4358,7 +4358,7 @@ function Itogi({ m, peek }: { m: boolean; peek?: boolean }) {
   return <div data-itogi="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 0 }}>
     {peek ? null : slot ? createPortal(<div data-iprow="1" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><div style={{ flex: '1 1 0', minWidth: 0 }}><MSBox v={iq} set={setIq} k="iq" /></div><MFBtn k="ifopen" n={nSel} open={fo} onClick={() => setFo(true)} /></div>, slot) : null}
     {phHead}
-    <MyBar m={m} />
+    <MyFab m={m} peek={peek} />
     {(nSel > 0 || resetB) && <div data-isel="1" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>{zs.flatMap((a, i) => a.map((v) => <ZChip key={i + v} t={t} on l={v} x onClick={() => tog(i, v)} />))}{resetB}</div>}
     <div style={{ fontSize: 13, color: t.text.tertiary, margin: '0 2px' }}>{pp[4]} · законопроектов: {sel.length}{nrL.length ? ` · не рассматривались: ${nrL.length}` : ''}{!ld0 ? ' · данные догружаются…' : ''}</div>
     {fo && createPortal(<><div className="gd-fade" onClick={() => setFo(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(8,12,18,.5)', zIndex: 60 }} />
@@ -4724,14 +4724,28 @@ function MySheet({ m, onClose }: { m: boolean; onClose: () => void }) {
     <button type="button" data-mydone="1" onClick={onClose} style={{ width: '100%', minHeight: 46, border: 'none', borderRadius: 12, background: t.text.accent, color: dk ? '#04101F' : '#FFFFFF', font: 'inherit', fontSize: 16, fontWeight: 600, cursor: 'pointer' }}>Готово</button>
   </div></NvModal>;
 }
-function MyBar({ m }: { m: boolean }) {
-  const t = useGrokTheme(); const my = useMY(); const [op, setOp] = useState(false);
-  return <div data-mybar="1" style={{ ...nvBlk(), padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 10, margin: m ? '0 0 10px' : '0 0 12px', maxWidth: m ? undefined : 560, boxSizing: 'border-box' }}>
-    <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, lineHeight: 1.3 }}><b style={{ display: 'block', fontSize: 14, color: t.text.primary }}>★ Моё</b><span style={{ color: t.text.tertiary, fontSize: 12.5 }}>{my.tags.length ? [myW().join(', '), myT().join(', ')].filter(Boolean).join(' + ') : 'Выберите, что вам важно'}</span></span>
-    <button type="button" data-myedit="1" onClick={() => setOp(true)} style={{ height: 32, padding: '0 10px', border: `1px solid ${t.border.default}`, borderRadius: 10, background: t.bg.base, color: t.text.accent, font: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{my.tags.length ? 'Изменить' : 'Выбрать'}</button>
-    <button type="button" data-myon="1" role="switch" aria-checked={my.on} aria-label="Только моё" onClick={() => { if (!my.tags.length) { setOp(true); return; } setMY({ on: !my.on }); }} style={{ flex: 'none', width: 46, height: 28, borderRadius: 14, border: 'none', background: my.on ? t.text.accent : t.border.default, position: 'relative', cursor: 'pointer' }}><span style={{ position: 'absolute', top: 3, left: my.on ? 21 : 3, width: 22, height: 22, borderRadius: 11, background: '#fff', transition: 'left .18s' }} /></button>
-    {op && <MySheet m={m} onClose={() => setOp(false)} />}
-  </div>;
+/* 21.11.2026 (вариант A макета): «Мои интересы» — круглая звёздочка справа внизу на страницах «Вступают в силу» и «Пленарные заседания». Нажатие: маленькое окно
+   с переключателем «Только моё» и кнопкой «Изменить метки» (без меток сразу открывается выбор). Счётчик — число выбранных меток. */
+function MyFab({ m, peek }: { m: boolean; peek?: boolean }) {
+  const t = useGrokTheme(); const my = useMY(); const dk = t.kind === 'dark'; const [pop, setPop] = useState(false); const [sh, setSh] = useState(false); const [bt, setBt] = useState(m ? 96 : 24);
+  useLayoutEffect(() => { const f = () => { if (!m) { setBt(24); return; } const n = document.querySelector('[data-mnav]') as HTMLElement | null; if (n) { const r = n.getBoundingClientRect(); setBt(Math.max(24, Math.round(window.innerHeight - r.top + 12))); } }; f(); window.addEventListener('resize', f); return () => window.removeEventListener('resize', f); }, [m]);
+  useEffect(() => { if (!pop) return; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setPop(false); }; document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [pop]);
+  if (peek || typeof document === 'undefined') return null;
+  const act = my.on && my.tags.length > 0; const sum = my.tags.length ? [myW().join(', '), myT().join(', ')].filter(Boolean).join(' + ') : 'Метки не выбраны';
+  return createPortal(<>
+    {pop && <div aria-hidden onClick={() => setPop(false)} style={{ position: 'fixed', inset: 0, zIndex: 48 }} />}
+    {pop && <div data-mypop="1" role="dialog" aria-label="Мои интересы" style={{ position: 'fixed', right: 16, bottom: bt + 66, zIndex: 51, width: 'min(268px, calc(100vw - 32px))', boxSizing: 'border-box', background: t.bg.base, borderRadius: 18, padding: '12px 14px', fontFamily: t.font.family, color: t.text.primary, boxShadow: dk ? `inset 0 0 9px 0 ${nvMix(t.text.accent, 45)}, inset 0 0 0 1.5px ${nvMix(t.text.accent, 60)}, 0 16px 40px rgba(0,0,0,.45)` : `inset 0 0 5px 0 ${nvMix(t.text.accent, 38)}, inset 0 0 0 1.5px ${nvMix(t.text.accent, 55)}, 0 16px 40px rgba(20,30,50,.18)` }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}><b style={{ flex: 1, fontSize: 15.5 }}>★ Мои интересы</b><button type="button" aria-label="Закрыть" onClick={() => setPop(false)} style={{ border: 'none', background: 'transparent', color: t.text.secondary, fontSize: 20, width: 30, height: 30, cursor: 'pointer' }}>×</button></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}><span style={{ flex: 1, minWidth: 0, fontSize: 14.5, lineHeight: 1.3 }}>Только моё<span data-mysum="1" style={{ display: 'block', fontSize: 12.5, color: t.text.tertiary }}>{sum}</span></span>
+        <button type="button" data-myon="1" role="switch" aria-checked={my.on} aria-label="Только моё" onClick={() => setMY({ on: !my.on })} style={{ flex: 'none', width: 46, height: 28, borderRadius: 14, border: 'none', background: my.on ? t.text.accent : t.border.default, position: 'relative', cursor: 'pointer' }}><span style={{ position: 'absolute', top: 3, left: my.on ? 21 : 3, width: 22, height: 22, borderRadius: 11, background: '#fff', transition: 'left .18s' }} /></button></div>
+      <button type="button" data-myedit="1" onClick={() => { setPop(false); setSh(true); }} style={{ width: '100%', minHeight: 44, marginTop: 6, border: `1.5px solid ${t.text.accent}`, borderRadius: 12, background: 'transparent', color: t.text.accent, font: 'inherit', fontSize: 15, fontWeight: 650, cursor: 'pointer' }}>Изменить метки</button>
+    </div>}
+    <button type="button" data-myfab="1" aria-label="Мои интересы" aria-expanded={pop} onClick={() => { if (!my.tags.length) { setSh(true); return; } setPop(!pop); }} style={{ position: 'fixed', right: 16, bottom: bt, zIndex: 50, width: 54, height: 54, borderRadius: 27, border: act ? `1px solid ${t.text.accent}` : `1px solid ${t.border.default}`, background: act ? t.fill.accentSubtle : t.bg.base, color: act ? t.text.accent : t.text.secondary, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, boxShadow: act ? (dk ? `inset 0 0 9px 0 ${nvMix(t.text.accent, 45)}, 0 10px 22px rgba(0,0,0,.45)` : `inset 0 0 5px 0 ${nvMix(t.text.accent, 38)}, 0 10px 22px rgba(20,30,50,.15)`) : (dk ? '0 10px 22px rgba(0,0,0,.45), 0 2px 4px rgba(0,0,0,.45)' : '0 10px 22px rgba(20,30,50,.12), 0 2px 4px rgba(20,30,50,.09)') }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill={act ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8L12 3.5z" /></svg>
+      {my.tags.length > 0 && <span data-mycount="1" style={{ position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, background: t.text.accent, color: dk ? '#04101F' : '#FFFFFF', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{my.tags.length}</span>}
+    </button>
+    {sh && <MySheet m={m} onClose={() => setSh(false)} />}
+  </>, document.body);
 }
 function CalOrgFilter({ m }: { m: boolean }) {
   const t = useGrokTheme(); const sel = useCOF(); const [o, setO] = useState(false); const ref = useRef<HTMLDivElement>(null);
@@ -5331,7 +5345,7 @@ function CalendarApp() {
   /* 15.11.2026: листание вкладок на телефоне как страниц: шапка (вкладки, поиск, «Фильтры») неподвижна; под пальцем едет текущая
      страница, рядом сразу видна соседняя (paneFor), без затухания. Отпустили дальше порога или быстрым жестом — страницы доезжают,
      иначе возвращаются. Пока жест горизонтальный, вертикальная прокрутка не идет. Нажатие на вкладку — то же листание. */
-  const paneFor = (k: string, pk = false) => (k === 'l' ? <Laws m={m} mk={lmk} setMk={setLmk} lq={lq} setLq={setLq} /> : k === 'i' ? <Itogi m={m} peek={pk} /> : k === 'c' ? <CPane m={m} cq={cq} v={cview} setV={setCview} days={<Calendar cq={cq} m={m} day={day} openVote={openHit} cm={cmk} setCm={setCmk} openDay={(d) => { setMode('d'); go(d, true); window.scrollTo(0, 0); }} />} /> : <>{false && <>
+  const paneFor = (k: string, pk = false) => (k === 'l' ? <Laws m={m} mk={lmk} setMk={setLmk} lq={lq} setLq={setLq} peek={pk} /> : k === 'i' ? <Itogi m={m} peek={pk} /> : k === 'c' ? <CPane m={m} cq={cq} v={cview} setV={setCview} days={<Calendar cq={cq} m={m} day={day} openVote={openHit} cm={cmk} setCm={setCmk} openDay={(d) => { setMode('d'); go(d, true); window.scrollTo(0, 0); }} />} /> : <>{false && <>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 16px', alignItems: 'stretch', marginBottom: !m && !votes.length ? 12 : 0 }}>
         {true ? false && <div style={{ flex: '1 1 100%', fontSize: 14, color: t.text.secondary, padding: '0 2px', fontVariantNumeric: 'tabular-nums' }}>{votes.length ? <><b style={{ color: t.text.primary }}>{votes.length}</b> {plv(votes.length).replace(/^\d+ /, '')} · <b style={{ color: INK[0] }}>{nAcc}</b> принято · <b style={{ color: votes.length - nAcc ? INK[1] : t.text.primary }}>{votes.length - nAcc}</b> отклонено</> : 'Пленарного заседания не было'}</div> :
         <div style={{ ...card(t), padding: m ? '12px 14px' : '14px 18px', color: t.text.primary, lineHeight: 1.45, flex: m ? '1 1 100%' : '0 1 auto' }}>
