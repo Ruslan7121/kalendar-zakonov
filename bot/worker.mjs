@@ -46,32 +46,34 @@ export function statsText(s, now = Date.now()) {
 }
 
 // ---- Уведомления (21.11.2026) ----
-// POST /sub  — мини-приложение присылает {initData, tags, prefs}: подписка по меткам «Для кого» и «Тема». Хранится chat_id (только у подписавшихся), метки и настройки.
+// POST /sub  — мини-приложение присылает {initData, w, t, prefs}: подписка по меткам «Для кого» (w) и «Тема» (t); метки двух групп работают вместе. Хранится chat_id (только у подписавшихся), метки и настройки.
 // cron (каждые 15 минут) — берёт feed/events.json сайта и пишет подписчикам: принят закон по меткам, закон вступает в силу завтра, новые документы органов.
 export const quietNow = (now) => { const h = new Date(now + 3 * 3600 * 1000).getUTCHours(); return h >= 22 || h < 8; };
 const KINDS = ['law', 'soon', 'docs'];
 // какие события отправить подписчику: включённый вид, пересечение меток, не раньше подписки, ещё не отправлено, не в тихие часы; не больше 5 за раз
 export function pickEvents(events, sub, now, sent = new Set()) {
-  if (!sub.tags.length || (sub.prefs.quiet && quietNow(now))) return [];
-  return events.filter((e) => KINDS.includes(e.k) && sub.prefs[e.k] && e.ts <= now && e.ts >= sub.since && !sent.has(e.id) && (e.tg || []).some((g) => sub.tags.includes(g))).sort((a, b) => a.ts - b.ts).slice(0, 5);
+  if ((!sub.w.length && !sub.t.length) || (sub.prefs.quiet && quietNow(now))) return [];
+  // как в приложении: внутри группы достаточно любой метки, между группами «Для кого» и «Тема» нужны обе
+  const ok = (e) => (!sub.w.length || (e.tw || []).some((g) => sub.w.includes(g))) && (!sub.t.length || (e.tt || []).some((g) => sub.t.includes(g)));
+  return events.filter((e) => KINDS.includes(e.k) && sub.prefs[e.k] && e.ts <= now && e.ts >= sub.since && !sent.has(e.id) && ok(e)).sort((a, b) => a.ts - b.ts).slice(0, 5);
 }
 const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 export function eventText(e, sub) {
   const head = { law: '📜 Принят закон', soon: '⏰ Завтра вступает в силу', docs: '🗂 Новый документ' }[e.k];
-  const mine = (e.tg || []).filter((g) => sub.tags.includes(g));
+  const mine = [...(e.tw || []), ...(e.tt || [])].filter((g) => sub.w.includes(g) || sub.t.includes(g));
   return `${head}\n\n<b>${esc(String(e.t).slice(0, 200))}</b>${e.x ? `\n${esc(String(e.x).slice(0, 220))}` : ''}${mine.length ? `\n\n★ ${esc(mine.join(', '))}` : ''}`;
 }
 const cleanTags = (a) => (Array.isArray(a) ? [...new Set(a.filter((x) => typeof x === 'string' && x.length > 0 && x.length <= 60))].slice(0, 60) : []);
 export async function saveSub(db, id, body, now = Math.floor(Date.now() / 1000)) {
-  const tags = cleanTags(body.tags); const p = body.prefs || {}; const prefs = { law: !!p.law, soon: !!p.soon, docs: !!p.docs, quiet: p.quiet !== false };
-  if (!tags.length || !(prefs.law || prefs.soon || prefs.docs)) { await db.prepare('DELETE FROM subs WHERE chat_id = ?').bind(id).run(); await db.prepare('DELETE FROM sent WHERE chat_id = ?').bind(id).run(); return false; }
-  await db.prepare('INSERT INTO subs(chat_id, tags, prefs, since, updated) VALUES(?, ?, ?, ?, ?) ON CONFLICT(chat_id) DO UPDATE SET tags = excluded.tags, prefs = excluded.prefs, updated = excluded.updated').bind(id, JSON.stringify(tags), JSON.stringify(prefs), now, now).run();
+  const w = cleanTags(body.w); const t = cleanTags(body.t); const p = body.prefs || {}; const prefs = { law: !!p.law, soon: !!p.soon, docs: !!p.docs, quiet: p.quiet !== false };
+  if ((!w.length && !t.length) || !(prefs.law || prefs.soon || prefs.docs)) { await db.prepare('DELETE FROM subs WHERE chat_id = ?').bind(id).run(); await db.prepare('DELETE FROM sent WHERE chat_id = ?').bind(id).run(); return false; }
+  await db.prepare('INSERT INTO subs(chat_id, tags, prefs, since, updated) VALUES(?, ?, ?, ?, ?) ON CONFLICT(chat_id) DO UPDATE SET tags = excluded.tags, prefs = excluded.prefs, updated = excluded.updated').bind(id, JSON.stringify({ w, t }), JSON.stringify(prefs), now, now).run();
   return true;
 }
 export async function notify(env, events, now = Date.now(), send) {
   const subs = (await env.DB.prepare('SELECT chat_id, tags, prefs, since FROM subs LIMIT 2000').all()).results || []; let n = 0;
   for (const s of subs) {
-    const sub = { tags: JSON.parse(s.tags), prefs: JSON.parse(s.prefs), since: s.since * 1000 };
+    const tg0 = JSON.parse(s.tags); const sub = { w: tg0.w || [], t: tg0.t || [], prefs: JSON.parse(s.prefs), since: s.since * 1000 };
     const sent = new Set(((await env.DB.prepare('SELECT ev FROM sent WHERE chat_id = ?').bind(s.chat_id).all()).results || []).map((r) => r.ev));
     for (const e of pickEvents(events, sub, now, sent)) {
       const btn = e.u && e.u.startsWith(SITE) ? { text: 'Открыть в календаре', web_app: { url: e.u } } : { text: 'Открыть', url: e.u };
