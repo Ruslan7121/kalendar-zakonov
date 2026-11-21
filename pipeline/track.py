@@ -5,7 +5,7 @@
 Отклонённый этап: дата = дата голосования (sozd «отклонить» или день из DATA).
 Запуск: python3 track.py [номер ...]  (без аргументов — все законопроекты из DATA).
 """
-import sys, os, re, json
+import sys, os, re, json, datetime
 sys.path.insert(0, os.path.dirname(__file__)); import common as C
 import sozd_cache as S
 MON = {m: i + 1 for i, m in enumerate('января февраля марта апреля мая июня июля августа сентября октября ноября декабря'.split())}
@@ -199,7 +199,8 @@ def add_law(src, n, tr, title):
     arr = L['months'].setdefault(mk, [])
     if any(tr['law'] in x.get('law', '') for x in arr):
         return src
-    arr.append({'d': d, 'law': law, 'title': title, 'sut': '', 'auto': 1, 'bill': n})
+    # added — когда закон появился в ленте «Вступают в силу»: по нему бот присылает «Новый закон» (feed/events.json)
+    arr.append({'d': d, 'law': law, 'title': title, 'sut': '', 'auto': 1, 'bill': n, 'added': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')})
     arr.sort(key=lambda x: x['d'][:2])
     C.log('laws_auto.log', f'{n}: {law}, вступает {d}')
     return src[:i] + json.dumps(L, ensure_ascii=False) + src[j:]

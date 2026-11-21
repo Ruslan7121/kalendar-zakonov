@@ -247,13 +247,15 @@ for (const [k, tg] of Object.entries(TAGS)) {
   put(`feed/${k}-all.xml`, rss(`Календарь законов: ${tg.name} — все голосования`, `Все голосования Госдумы по законопроектам с меткой «${tg.name}» (${tg.grp}), включая отклоненные, законы, вступающие в силу, и документы органов.`, `${SITE}?${tg.q}=${encodeURIComponent(tg.name)}`, `${SITE}feed/${k}-all.xml`, [...items(tg.bills, 400).map(voteItem), ...lw, ...og].sort((a, b) => b.ts - a.ts).slice(0, 80)));
 }
 // 21.11.2026: события для уведомлений бота (bot/worker.mjs) — feed/events.json: результаты рассмотрения законопроектов (каждое чтение: итог, голоса, суть) за 7 дней
-// и законы «завтра вступает в силу», с метками «Для кого» и «Тема». У события: id (guid), k (vote / soon), ts (мс), t, x, u (ссылка), tg (имена меток),
+// законы «новый закон в ленте» (по полю added у закона) и «завтра вступает в силу», с метками «Для кого» и «Тема». У события: id (guid), k (vote / new / soon), ts (мс), t, x, u (ссылка), tg (имена меток),
 // tw (метки «Для кого»), tt («Тема»); у vote ещё r (чтение), ok (принят), z ([за, против, воздержались]). Бот сверяет с метками подписчика.
 { const EVM = new Map(); const NOW = Date.now();
   const addEv = (ev, name, q) => { const e = EVM.get(ev.id) || EVM.set(ev.id, { ...ev, tg: [], tw: [], tt: [] }).get(ev.id); const gk = q === 'w' ? 'tw' : 'tt'; if (!e.tg.includes(name)) e.tg.push(name); if (!e[gk].includes(name)) e[gk].push(name); };
   for (const tg of Object.values(TAGS)) { if (tg.q !== 'w' && tg.q !== 't') continue;
     for (const it of items(tg.bills, 600)) { if (!/^\d-е чтение$/.test(it.v.read || '')) continue; const x = voteItem(it); const ts = Date.parse(x.p); if (!(ts >= NOW - 7 * 864e5)) continue;
       addEv({ id: x.g, k: 'vote', ts, t: it.b.title, x: String((it.b.sut || [])[0] || '').slice(0, 280), r: it.v.read, ok: !!it.v.ok, z: [it.v.za, it.v.pr, it.v.vz], u: `${SITE}?d=${it.v.day}&v=${it.v.id}` }, tg.name, tg.q); }
+    for (const x of tg.laws || []) { const ad = Date.parse(x.added || ''); if (ad >= NOW - 7 * 864e5 && +pd(x.d) >= NOW - 864e5)
+      addEv({ id: `kalendar-zakonov:new:${lawId(x)}`, k: 'new', ts: ad, t: x.title, x: String(x.sut || '').slice(0, 280), due: hd(x.d), u: `${SITE}law/${lawId(x)}/` }, tg.name, tg.q); }
     for (const x of tg.laws || []) { const ts = +pd(x.d) - 864e5; if (!(ts >= NOW - 2 * 864e5 && ts <= NOW + 10 * 864e5)) continue;
       addEv({ id: `kalendar-zakonov:soon:${lawId(x)}`, k: 'soon', ts, t: x.title, x: x.sut || '', u: `${SITE}law/${lawId(x)}/` }, tg.name, tg.q); } }
   put('feed/events.json', JSON.stringify({ u: new Date().toISOString(), ev: [...EVM.values()].sort((a, b) => b.ts - a.ts).slice(0, 300) })); }
