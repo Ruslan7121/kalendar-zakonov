@@ -246,6 +246,18 @@ for (const [k, tg] of Object.entries(TAGS)) {
   put(`feed/${k}.xml`, rss(`Календарь законов: ${tg.name}`, `Принятые законопроекты, законы, вступающие в силу, и документы органов с меткой «${tg.name}» (${tg.grp}).`, `${SITE}?${tg.q}=${encodeURIComponent(tg.name)}`, `${SITE}feed/${k}.xml`, [...ok, ...lw, ...og].sort((a, b) => b.ts - a.ts).slice(0, 60)));
   put(`feed/${k}-all.xml`, rss(`Календарь законов: ${tg.name} — все голосования`, `Все голосования Госдумы по законопроектам с меткой «${tg.name}» (${tg.grp}), включая отклоненные, законы, вступающие в силу, и документы органов.`, `${SITE}?${tg.q}=${encodeURIComponent(tg.name)}`, `${SITE}feed/${k}-all.xml`, [...items(tg.bills, 400).map(voteItem), ...lw, ...og].sort((a, b) => b.ts - a.ts).slice(0, 80)));
 }
+// 21.11.2026: события для уведомлений бота (bot/worker.mjs) — feed/events.json: свежие принятые законы, законы «завтра вступает в силу» и документы органов
+// с метками «Для кого» и «Тема». У события: id (guid), k (law / soon / docs), ts (мс), t, x, u (ссылка), tg (имена меток). Бот сверяет с метками подписчика.
+{ const EVM = new Map(); const NOW = Date.now();
+  const addEv = (ev, name) => { const e = EVM.get(ev.id) || EVM.set(ev.id, { ...ev, tg: [] }).get(ev.id); if (!e.tg.includes(name)) e.tg.push(name); };
+  for (const tg of Object.values(TAGS)) { if (tg.q !== 'w' && tg.q !== 't') continue;
+    for (const it of items(tg.bills, 400).filter(({ v }) => v.ok)) { const x = voteItem(it); const ts = Date.parse(x.p); if (!(ts >= NOW - 7 * 864e5)) continue;
+      addEv({ id: x.g, k: 'law', ts, t: it.b.title, x: (it.b.sut || [])[0] || '', u: `${SITE}?d=${it.v.day}&v=${it.v.id}` }, tg.name); }
+    for (const x of tg.laws || []) { const ts = +pd(x.d) - 864e5; if (!(ts >= NOW - 2 * 864e5 && ts <= NOW + 10 * 864e5)) continue;
+      addEv({ id: `kalendar-zakonov:soon:${lawId(x)}`, k: 'soon', ts, t: x.title, x: x.sut || '', u: `${SITE}law/${lawId(x)}/` }, tg.name); }
+    for (const x of tg.org || []) { const o = orgItem(x); if (!(o.ts >= NOW - 3 * 864e5)) continue;
+      addEv({ id: o.g, k: 'docs', ts: o.ts, t: o.t, x: String(x.sut || x.x || '').slice(0, 240), u: x.u }, tg.name); } }
+  put('feed/events.json', JSON.stringify({ u: new Date().toISOString(), ev: [...EVM.values()].sort((a, b) => b.ts - a.ts).slice(0, 300) })); }
 const PST = { held: 'состоялось', confirmed: 'назначено', expected: 'ожидается по распорядку' };
 const plEv = CALP.filter((p) => p && p.d).map((p) => ({ uid: `gd-${ymd(p.d)}`, d: p.d, s: `Пленарное заседание Госдумы${p.s && p.s !== 'held' ? ` (${PST[p.s] || p.s})` : ''}`, x: [(p.a || []).length ? `Законопроектов в повестке: ${p.a.length}` : '', p.src ? `Источник: ${p.src}` : ''].filter(Boolean).join('\n'), u: `${SITE}?d=${p.d}` }));
 // 15.11.2026: только сегодняшние и будущие заседания (прошедшие не нужны в календаре), от поздних к ранним; файл пересобирается при каждой публикации

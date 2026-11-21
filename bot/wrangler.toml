@@ -8,3 +8,7 @@ workers_dev = true
 binding = "DB"
 database_name = "kalendar-stats"
 database_id = "__D1_ID__"
+
+# 21.11.2026: уведомления подписчикам — раз в 15 минут
+[triggers]
+crons = ["*/15 * * * *"]
