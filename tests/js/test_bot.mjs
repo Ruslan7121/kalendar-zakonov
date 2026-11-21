@@ -57,30 +57,35 @@ assert.equal(W.quietNow(Date.UTC(2026, 10, 20, 19, 30)), true, '22:30 МСК —
 assert.equal(W.quietNow(Date.UTC(2026, 10, 20, 4, 59)), true, '07:59 МСК — тихие часы');
 assert.equal(W.quietNow(T0), false, '12:00 МСК — не тихие часы');
 const EV = [
-  { id: 'v:1', k: 'law', ts: T0 - 3600e3, t: 'Страховые пенсии', x: 'Индексация', u: 'https://ruslan7121.github.io/kalendar-zakonov/?d=19.11.2026&v=1', tg: ['Пенсионеры', 'Бюджет'] },
-  { id: 'v:2', k: 'law', ts: T0 - 3600e3, t: 'Курьеры', x: '', u: 'https://ruslan7121.github.io/kalendar-zakonov/?d=19.11.2026&v=2', tg: ['Работники'] },
-  { id: 's:1', k: 'soon', ts: T0 - 1800e3, t: 'Приставы', x: 'Кредитная история', u: 'https://ruslan7121.github.io/kalendar-zakonov/law/a/', tg: ['Все граждане', 'Пенсионеры'] },
-  { id: 'd:1', k: 'docs', ts: T0 - 600e3, t: 'Минфин: приказ', x: '', u: 'https://publication.pravo.gov.ru/x', tg: ['Налоги'] },
-  { id: 'f:1', k: 'law', ts: T0 + 3600e3, t: 'Будущее', x: '', u: '', tg: ['Пенсионеры'] },
-  { id: 'o:1', k: 'law', ts: T0 - 9 * 86400e3, t: 'Старое', x: '', u: '', tg: ['Пенсионеры'] }];
-const sub = { tags: ['Пенсионеры'], prefs: { law: true, soon: true, docs: false, quiet: true }, since: T0 - 86400e3 };
+  { id: 'v:1', k: 'law', ts: T0 - 3600e3, t: 'Страховые пенсии', x: 'Индексация', u: 'https://ruslan7121.github.io/kalendar-zakonov/?d=19.11.2026&v=1', tg: ['Пенсионеры', 'Бюджет'], tw: ['Пенсионеры'], tt: ['Бюджет'] },
+  { id: 'v:2', k: 'law', ts: T0 - 3600e3, t: 'Курьеры', x: '', u: 'https://ruslan7121.github.io/kalendar-zakonov/?d=19.11.2026&v=2', tg: ['Работники'], tw: ['Работники'], tt: [] },
+  { id: 's:1', k: 'soon', ts: T0 - 1800e3, t: 'Приставы', x: 'Кредитная история', u: 'https://ruslan7121.github.io/kalendar-zakonov/law/a/', tg: ['Все граждане', 'Пенсионеры'], tw: ['Все граждане', 'Пенсионеры'], tt: [] },
+  { id: 'd:1', k: 'docs', ts: T0 - 600e3, t: 'Минфин: приказ', x: '', u: 'https://publication.pravo.gov.ru/x', tg: ['Все граждане', 'Налоги'], tw: ['Все граждане'], tt: ['Налоги'] },
+  { id: 'f:1', k: 'law', ts: T0 + 3600e3, t: 'Будущее', x: '', u: '', tg: ['Пенсионеры'], tw: ['Пенсионеры'], tt: [] },
+  { id: 'o:1', k: 'law', ts: T0 - 9 * 86400e3, t: 'Старое', x: '', u: '', tg: ['Пенсионеры'], tw: ['Пенсионеры'], tt: [] }];
+const sub = { w: ['Пенсионеры'], t: [], prefs: { law: true, soon: true, docs: false, quiet: true }, since: T0 - 86400e3 };
 let pk = W.pickEvents(EV, sub, T0).map((e) => e.id); assert.deepEqual(pk, ['v:1', 's:1'], 'пересечение меток, вид, время, подписка: ' + pk);
 assert.deepEqual(W.pickEvents(EV, { ...sub, prefs: { ...sub.prefs, law: false } }, T0).map((e) => e.id), ['s:1'], 'выключенный вид отправлен');
 assert.deepEqual(W.pickEvents(EV, sub, T0, new Set(['v:1'])).map((e) => e.id), ['s:1'], 'уже отправленное отправлено снова');
 assert.deepEqual(W.pickEvents(EV, sub, Date.UTC(2026, 10, 20, 20, 0)), [], 'в тихие часы отправлено');
 assert.equal(W.pickEvents(EV, { ...sub, prefs: { ...sub.prefs, quiet: false } }, Date.UTC(2026, 10, 20, 20, 0)).length >= 1, true, 'без тихих часов не отправлено');
-assert.deepEqual(W.pickEvents(EV, { ...sub, tags: [] }, T0), [], 'без меток отправлено');
+assert.deepEqual(W.pickEvents(EV, { ...sub, w: [] }, T0), [], 'без меток отправлено');
+// «Для кого» и «Тема» работают вместе: семья + выплаты — не выплаты военным и не налоги для семей
+const E2 = [{ id: 'a', k: 'law', ts: T0 - 1000, t: 'A', x: '', u: '', tg: [], tw: ['Семьи с детьми'], tt: ['Выплаты'] }, { id: 'b', k: 'law', ts: T0 - 1000, t: 'B', x: '', u: '', tg: [], tw: ['Военнослужащие'], tt: ['Выплаты'] }, { id: 'c', k: 'law', ts: T0 - 1000, t: 'C', x: '', u: '', tg: [], tw: ['Семьи с детьми'], tt: ['Налоги'] }];
+assert.deepEqual(W.pickEvents(E2, { ...sub, w: ['Семьи с детьми'], t: ['Выплаты'] }, T0).map((e) => e.id), ['a'], 'метки двух групп должны работать вместе');
+assert.deepEqual(W.pickEvents(E2, { ...sub, w: [], t: ['Выплаты'] }, T0).map((e) => e.id), ['a', 'b'], 'одна группа: подходит любое «Для кого»');
+assert.deepEqual(W.pickEvents(E2, { ...sub, w: ['Семьи с детьми'], t: ['Выплаты', 'Налоги'] }, T0).map((e) => e.id), ['a', 'c'], 'внутри группы достаточно любой метки');
 assert.match(W.eventText(EV[0], sub), /Принят закон\n\n<b>Страховые пенсии<\/b>\nИндексация\n\n★ Пенсионеры/, W.eventText(EV[0], sub));
 assert.ok(!/<script/.test(W.eventText({ ...EV[0], t: '<script>x</script>' }, sub)), 'html не экранирован');
 // /sub: подписка только с подписанной initData; отключение удаляет запись
 const subReq = async (body) => W.default.fetch(new Request('https://bot.example/sub', { method: 'POST', body: JSON.stringify(body) }), env);
-assert.equal((await subReq({ initData: 'user=%7B%22id%22%3A1%7D&hash=bad', tags: ['Пенсионеры'], prefs: { law: true } })).status, 403, 'подписка с поддельной initData принята');
-assert.equal((await subReq({ initData: await init(501), tags: ['Пенсионеры', 'Налоги'], prefs: { law: true, soon: true, docs: false, quiet: true } })).status, 200);
-let row = sq.prepare('SELECT * FROM subs WHERE chat_id = 501').get(); assert.deepEqual(JSON.parse(row.tags), ['Пенсионеры', 'Налоги']); assert.equal(JSON.parse(row.prefs).docs, false);
-const since0 = row.since; await subReq({ initData: await init(501), tags: ['Налоги'], prefs: { law: true, soon: false, docs: true, quiet: false } });
-row = sq.prepare('SELECT * FROM subs WHERE chat_id = 501').get(); assert.deepEqual(JSON.parse(row.tags), ['Налоги']); assert.equal(row.since, since0, 'повторная настройка сдвинула «с какого момента»');
+assert.equal((await subReq({ initData: 'user=%7B%22id%22%3A1%7D&hash=bad', w: ['Пенсионеры'], prefs: { law: true } })).status, 403, 'подписка с поддельной initData принята');
+assert.equal((await subReq({ initData: await init(501), w: ['Пенсионеры'], t: ['Налоги'], prefs: { law: true, soon: true, docs: false, quiet: true } })).status, 200);
+let row = sq.prepare('SELECT * FROM subs WHERE chat_id = 501').get(); assert.deepEqual(JSON.parse(row.tags), { w: ['Пенсионеры'], t: ['Налоги'] }); assert.equal(JSON.parse(row.prefs).docs, false);
+const since0 = row.since; await subReq({ initData: await init(501), t: ['Налоги'], prefs: { law: true, soon: false, docs: true, quiet: false } });
+row = sq.prepare('SELECT * FROM subs WHERE chat_id = 501').get(); assert.deepEqual(JSON.parse(row.tags), { w: [], t: ['Налоги'] }); assert.equal(row.since, since0, 'повторная настройка сдвинула «с какого момента»');
 // рассылка: сообщение уходит один раз, повтор того же события не отправляется
-await subReq({ initData: await init(502), tags: ['Пенсионеры'], prefs: { law: true, soon: true, docs: false, quiet: false } });
+await subReq({ initData: await init(502), w: ['Пенсионеры'], prefs: { law: true, soon: true, docs: false, quiet: false } });
 sq.exec(`UPDATE subs SET since = ${Math.floor(T0 / 1000) - 86400}`);
 const out = []; const send = async (b) => { out.push(b); return { ok: true }; };
 assert.equal(await W.notify(env, EV, T0, send), 3, 'рассылка: ждали 3 сообщения (v:1 и s:1 для 502, d:1 для 501)');
