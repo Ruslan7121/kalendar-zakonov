@@ -103,6 +103,14 @@ try {
       await sleep(500); await click(p, '[data-omback]'); await sleep(60);
       chk(await ev(p.s, `/omBack/.test(getComputedStyle(document.querySelector('[data-orgmap="map"]')).animationName)`), 'у возврата на карту нет анимации');
       await p.close(); }
+    { const p = await open('/?tab=c'); chk(await until(p.s, `!!document.querySelector('[data-omtile]')`, 8000), 'нет плиток для кнопки «Сегодня»');
+      // на другом дне вместо «День» — «Сегодня»; нажатие возвращает на сегодня
+      await click(p, '[data-omprev]'); await sleep(300);
+      chk(await ev(p.s, `(document.querySelector('[data-ommode=day]') || {}).innerText === 'Сегодня'`), 'на другом дне кнопка «День» не стала «Сегодня»');
+      await click(p, '[data-ommode=day]'); await sleep(300);
+      const t1 = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`);
+      chk(await ev(p.s, `(document.querySelector('[data-ommode=day]') || {}).innerText === 'День'`) && t1.startsWith(String(new Date().getDate()) + ' '), 'кнопка «Сегодня» не вернула на сегодняшний день: ' + t1);
+      await p.close(); }
     { const p = await open('/?tab=c'); chk(await until(p.s, `!!document.querySelector('[data-omtile]')`, 8000), 'нет плиток для фильтра');
       // плитка открывает документы органа только за выбранный день
       const dayTxt = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`);
