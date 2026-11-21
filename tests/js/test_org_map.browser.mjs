@@ -171,7 +171,9 @@ try {
       chk(names.length === 4 && /Вступают/.test(names[0]) && /Пленарные/.test(names[1]) && /Работа/.test(names[2]) && /Новости/.test(names[3]), `порядок вкладок: ${JSON.stringify(names)}`);
       if (W.mobile) { await ev(p.s, `window.scrollTo(0, 600)`); await sleep(700);
         const r = await ev(p.s, `(() => { const u = document.querySelector('[aria-label="Наверх"]'); const f = document.querySelector('[data-myfab]'); if (!u || !f) return null; const a = u.getBoundingClientRect(), b = f.getBoundingClientRect(); return { ub: a.bottom, ft: b.top, vis: getComputedStyle(u).visibility }; })()`);
-        chk(r && r.vis === 'visible' && r.ub <= r.ft + 1, `кнопка «Наверх» не выше звёздочки: ${JSON.stringify(r)}`); }
+        chk(r && r.vis === 'visible' && r.ub <= r.ft + 1, `кнопка «Наверх» не выше звёздочки: ${JSON.stringify(r)}`)
+        const q = await ev(p.s, `(() => { const n = document.querySelector('[data-mnav]'); const f = document.querySelector('[data-myfab]'); if (!n || !f) return null; return { nt: n.getBoundingClientRect().top, fb: f.getBoundingClientRect().bottom }; })()`);
+        chk(q && q.fb <= q.nt + 1, `звёздочка «Мои интересы» заходит на панель вкладок: ${JSON.stringify(q)}`); }
       await p.close(); }
     /* несколько недель: нажатие на день добавляет его неделю, итоги суммируются (обе страницы) */
     for (const [url, ns, ready] of [['/?tab=c', 'om', '[data-omtile]'], ['/?tab=i', 'im', '[data-itile]']]) {
