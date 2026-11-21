@@ -73,6 +73,7 @@ try {
       chk(cards.length > 0, 'в ленте нет карточек');
       chk(cards.every((c) => c.t.length >= 8 && c.t.length <= 100), `названия не 8–100 знаков: ${JSON.stringify(cards.filter((c) => c.t.length < 8 || c.t.length > 100).map((c) => c.t.length))}`);
       chk(cards.every((c) => !/Кого коснётся/i.test(c.all)), 'в превью есть «Кого коснётся»');
+      chk(cards.every((c) => !/…$|\.\.\.$/.test(c.t) && (c.t.match(/«/g) || []).length === (c.t.match(/»/g) || []).length && (c.t.match(/\(/g) || []).length === (c.t.match(/\)/g) || []).length), `название обрезано с многоточием или незакрытой кавычкой: ${JSON.stringify(cards.filter((c) => /…$|\.\.\.$/.test(c.t) || (c.t.match(/«/g) || []).length !== (c.t.match(/»/g) || []).length).map((c) => c.t).slice(0, 3))}`);
       chk(cards.every((c) => !/Новость/.test(c.all)), 'в ленте есть новости');
       await click(p, '[data-omdoc]'); await sleep(700);
       const win = await ev(p.s, `(document.querySelector('[data-orgdocwin]') || {}).innerText || ''`); chk(/суть/i.test(win) && /полное название/i.test(win), 'в окне документа нет «Сути» или полного названия');

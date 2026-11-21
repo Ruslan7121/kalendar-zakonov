@@ -3888,12 +3888,33 @@ const OMKP: Record<string, [string, string, string]> = { 'Постановлен
 const omKind = (x: any): string => String(x.kind || x.k || x.ty || 'Документ');
 const omKP = (k: string, n: number) => OMKP[k] ? OMPL(n, OMKP[k]) : `${n} ${k.toLowerCase()}`;
 /* короткое название: ORGX.ti; иначе первое предложение «Сути», сжатое до смысловой границы; иначе официальное название без «Приказ № … от …:» */
+const OMNOM: Record<string, string> = { 'Порядка': 'Порядок', 'Правил': 'Правила', 'Положения': 'Положение', 'Методики': 'Методика', 'Перечня': 'Перечень', 'Требований': 'Требования', 'Стандарта': 'Стандарт', 'Инструкции': 'Инструкция', 'Формы': 'Форма', 'Норм': 'Нормы', 'Нормативов': 'Нормативы', 'Регламента': 'Регламент', 'Административного регламента': 'Административный регламент', 'Классификатора': 'Классификатор' };
+/* обрезка по смысловой границе без многоточия: перед запятой, «на», «для», «по», «при», «в том числе», тире, скобкой; висячие «№ / от / и / в …» в конце убираются */
+function omCut(t: string, MAX = 84): string {
+  t = t.trim(); if (t.length <= MAX) return t;
+  const w = t.slice(0, MAX + 1); const bs = [', ', ' — ', ': ', ' (', ' на ', ' для ', ' по ', ' при ', ' в том числе', ' и ', ' в ', ' от ', ' о ', ' об ']; let k = 0; for (const b of bs) k = Math.max(k, w.lastIndexOf(b));
+  if (k < 30) k = Math.max(w.lastIndexOf(' '), 30);
+  t = t.slice(0, k); for (let n = 0; n < 4; n++) { const t2 = t.replace(/[,;:\s—-]+$/, '').replace(/\s+(№|от|г\.|года|и|в|на|по|для|при|о|об|с|со|к|за|из)$/i, ''); if (t2 === t) break; t = t2; }
+  if ((t.match(/«/g) || []).length > (t.match(/»/g) || []).length) t = t.slice(0, t.lastIndexOf('«')).replace(/[,;:\s—-]+$/, '').replace(/\s+(№|от|г\.|года|и|в|на|по|для|при|о|об|с|со|к|за|из)$/i, ''); /* незакрытая кавычка — отрезать вместе с ней */
+  if ((t.match(/\(/g) || []).length > (t.match(/\)/g) || []).length) t = t.slice(0, t.lastIndexOf('(')).replace(/[,;:\s—-]+$/, '');
+  return t;
+}
+/* официальное название без «Приказ № …:» в короткий вид: «Об утверждении Порядка …» → «Порядок …», «О внесении изменений в …» → «Изменения в …»; обрезка — по смысловой границе, без многоточия */
+function omLegal(t0: string): string {
+  let t = String(t0 || ''); const i = t.indexOf(':'); if (i > 0 && i < 70 && /№/.test(t.slice(0, i))) t = t.slice(i + 1).trim();
+  const trunc = /[…]$|\.\.\.$/.test(t); t = t.replace(/(…|\.\.\.)$/, '').trim();
+  let m = /^Об утверждении (Административного регламента|[А-ЯЁ][а-яё]+) (.+)$/.exec(t); if (m && OMNOM[m[1]]) t = `${OMNOM[m[1]]} ${m[2]}`;
+  else if ((m = /^О внесении изменени(?:й|я|е) в (.+)$/.exec(t))) t = `Изменения в ${m[1]}`;
+  else if ((m = /^О признании утратившим(?:и)? силу (.+)$/.exec(t))) t = `Признание утратившими силу ${m[1]}`;
+  if (trunc && t.length <= 84) { const q = Math.max(t.lastIndexOf(', '), t.lastIndexOf(' на '), t.lastIndexOf(' для '), t.lastIndexOf(' в '), t.lastIndexOf(' по '), t.lastIndexOf(' при ')); if (q >= 28) t = t.slice(0, q); else t = t.slice(0, t.lastIndexOf(' ')); }
+  t = omCut(t);
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
 function omTitle(x: any): string {
   if (x.ti) return x.ti;
-  let s = orgSut(x)[0] || ''; if (s) { const m = /[.!?](\s+)(?=[«"A-ZА-ЯЁ])/.exec(s); if (m) s = s.slice(0, m.index + 1); s = s.replace(/^(Правительство|Минтруд|Минздрав|Минюст|Минфин|МВД|Минприроды|Минпромторг|Минтранс|Минстрой|Минцифры|Банк России|Президент)\s+/, ''); }
-  if (!s) { const t0 = String(x.st || x.t || ''); const i = t0.indexOf(':'); s = i > 0 && i < 60 ? t0.slice(i + 1).trim() : t0; }
-  s = s.replace(/[.]$/, ''); if (s.length > 92) { const cut = s.split(/ \(| — |: |, в том числе|, которы/)[0]; if (cut.length >= 28 && cut.length <= 92) s = cut; else { const j = s.lastIndexOf(' ', 90); s = s.slice(0, j > 40 ? j : 90) + '…'; } }
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  let s = orgSut(x)[0] || ''; if (s) { const m = /[.!?](\s+)(?=[«"A-ZА-ЯЁ])/.exec(s); if (m) s = s.slice(0, m.index + 1); s = s.replace(/[.]$/, ''); }
+  if (!s) return omLegal(String(x.st || x.t || ''));
+  s = omCut(s, 90); return s.charAt(0).toUpperCase() + s.slice(1);
 }
 const omDocs = (): any[] => ORG.filter((x: any) => orgPub(x) && orgIsDoc(x) && x.ty !== 'заседание');
 function OrgDocWin({ x, m, onClose }: { x: any; m?: boolean; onClose: () => void }) {
