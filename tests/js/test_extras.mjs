@@ -11,6 +11,9 @@ import { ROOT, loadCanvas } from './load_canvas.mjs';
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'gd-extras-'));
 try {
   execFileSync('node', [path.join(ROOT, 'web', 'extras.mjs'), out], { stdio: 'pipe' });
+  // 21.11.2026: события для уведомлений бота
+  { const j = JSON.parse(fs.readFileSync(path.join(out, 'feed', 'events.json'), 'utf8')); assert.ok(Array.isArray(j.ev) && j.ev.length > 0, 'feed/events.json пуст');
+    for (const e of j.ev) { assert.ok(e.id && ['law', 'soon', 'docs'].includes(e.k) && Number.isFinite(e.ts) && e.t && Array.isArray(e.tg) && e.tg.length, `событие без обязательных полей: ${JSON.stringify(e).slice(0, 120)}`); assert.ok(!e.u || /^https?:\/\//.test(e.u), `ссылка события не http(s): ${e.u}`); } }
   const idx = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'index.json'), 'utf8'));
   const bills = new Map(); // номер → id голосований
   for (const mk of idx.months) {

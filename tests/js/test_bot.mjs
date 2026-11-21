@@ -9,7 +9,7 @@ import { ROOT } from './load_canvas.mjs';
 const W = await import(path.join(ROOT, 'bot', 'worker.mjs'));
 const sq = new DatabaseSync(':memory:'); sq.exec(fs.readFileSync(path.join(ROOT, 'bot', 'schema.sql'), 'utf8'));
 const conv = (a) => a.map((x) => (typeof x === 'boolean' ? +x : x));
-const DB = { prepare: (q) => { const st = sq.prepare(q.replace(/\?(\d)/g, '?$1')); const mk = (args) => ({ first: async () => st.get(...conv(args)) || null, run: async () => st.run(...conv(args)) }); return { bind: (...a) => mk(a), ...mk([]) }; } };
+const DB = { prepare: (q) => { const st = sq.prepare(q.replace(/\?(\d)/g, '?$1')); const mk = (args) => ({ first: async () => st.get(...conv(args)) || null, run: async () => st.run(...conv(args)), all: async () => ({ results: st.all(...conv(args)) }) }); return { bind: (...a) => mk(a), ...mk([]) }; } };
 const TOKEN = '123456:TEST-token'; const OWNER = '777';
 const env = { DB, BOT_TOKEN: TOKEN, OWNER_ID: OWNER };
 const sent = []; globalThis.fetch = async (u, o) => { sent.push({ u: String(u), b: JSON.parse(o.body) }); return { json: async () => ({ ok: true }) }; };
@@ -51,4 +51,44 @@ sent.length = 0; const r = await W.default.fetch(new Request(`https://bot.exampl
 const own = sent.find((x) => x.b.scope); assert.equal(own.b.scope.chat_id, 777); assert.ok(own.b.commands.some((c) => c.command === 'stats'));
 assert.ok(!sent.find((x) => /setMyCommands/.test(x.u) && !x.b.scope).b.commands.some((c) => c.command === 'stats'), '/stats видна всем');
 assert.equal((await W.default.fetch(new Request('https://bot.example/setup?key=x'), env)).status, 404, '/setup без ключа');
-console.log('OK test_bot: подпись initData, учет по хэшу, счетчики, /stats только владельцу, /start, /setup');
+// ---- уведомления (21.11.2026) ----
+const T0 = Date.UTC(2026, 10, 20, 9, 0, 0); // 20.11.2026 12:00 МСК — день, не тихие часы
+assert.equal(W.quietNow(Date.UTC(2026, 10, 20, 19, 30)), true, '22:30 МСК — тихие часы');
+assert.equal(W.quietNow(Date.UTC(2026, 10, 20, 4, 59)), true, '07:59 МСК — тихие часы');
+assert.equal(W.quietNow(T0), false, '12:00 МСК — не тихие часы');
+const EV = [
+  { id: 'v:1', k: 'law', ts: T0 - 3600e3, t: 'Страховые пенсии', x: 'Индексация', u: 'https://ruslan7121.github.io/kalendar-zakonov/?d=19.11.2026&v=1', tg: ['Пенсионеры', 'Бюджет'] },
+  { id: 'v:2', k: 'law', ts: T0 - 3600e3, t: 'Курьеры', x: '', u: 'https://ruslan7121.github.io/kalendar-zakonov/?d=19.11.2026&v=2', tg: ['Работники'] },
+  { id: 's:1', k: 'soon', ts: T0 - 1800e3, t: 'Приставы', x: 'Кредитная история', u: 'https://ruslan7121.github.io/kalendar-zakonov/law/a/', tg: ['Все граждане', 'Пенсионеры'] },
+  { id: 'd:1', k: 'docs', ts: T0 - 600e3, t: 'Минфин: приказ', x: '', u: 'https://publication.pravo.gov.ru/x', tg: ['Налоги'] },
+  { id: 'f:1', k: 'law', ts: T0 + 3600e3, t: 'Будущее', x: '', u: '', tg: ['Пенсионеры'] },
+  { id: 'o:1', k: 'law', ts: T0 - 9 * 86400e3, t: 'Старое', x: '', u: '', tg: ['Пенсионеры'] }];
+const sub = { tags: ['Пенсионеры'], prefs: { law: true, soon: true, docs: false, quiet: true }, since: T0 - 86400e3 };
+let pk = W.pickEvents(EV, sub, T0).map((e) => e.id); assert.deepEqual(pk, ['v:1', 's:1'], 'пересечение меток, вид, время, подписка: ' + pk);
+assert.deepEqual(W.pickEvents(EV, { ...sub, prefs: { ...sub.prefs, law: false } }, T0).map((e) => e.id), ['s:1'], 'выключенный вид отправлен');
+assert.deepEqual(W.pickEvents(EV, sub, T0, new Set(['v:1'])).map((e) => e.id), ['s:1'], 'уже отправленное отправлено снова');
+assert.deepEqual(W.pickEvents(EV, sub, Date.UTC(2026, 10, 20, 20, 0)), [], 'в тихие часы отправлено');
+assert.equal(W.pickEvents(EV, { ...sub, prefs: { ...sub.prefs, quiet: false } }, Date.UTC(2026, 10, 20, 20, 0)).length >= 1, true, 'без тихих часов не отправлено');
+assert.deepEqual(W.pickEvents(EV, { ...sub, tags: [] }, T0), [], 'без меток отправлено');
+assert.match(W.eventText(EV[0], sub), /Принят закон\n\n<b>Страховые пенсии<\/b>\nИндексация\n\n★ Пенсионеры/, W.eventText(EV[0], sub));
+assert.ok(!/<script/.test(W.eventText({ ...EV[0], t: '<script>x</script>' }, sub)), 'html не экранирован');
+// /sub: подписка только с подписанной initData; отключение удаляет запись
+const subReq = async (body) => W.default.fetch(new Request('https://bot.example/sub', { method: 'POST', body: JSON.stringify(body) }), env);
+assert.equal((await subReq({ initData: 'user=%7B%22id%22%3A1%7D&hash=bad', tags: ['Пенсионеры'], prefs: { law: true } })).status, 403, 'подписка с поддельной initData принята');
+assert.equal((await subReq({ initData: await init(501), tags: ['Пенсионеры', 'Налоги'], prefs: { law: true, soon: true, docs: false, quiet: true } })).status, 200);
+let row = sq.prepare('SELECT * FROM subs WHERE chat_id = 501').get(); assert.deepEqual(JSON.parse(row.tags), ['Пенсионеры', 'Налоги']); assert.equal(JSON.parse(row.prefs).docs, false);
+const since0 = row.since; await subReq({ initData: await init(501), tags: ['Налоги'], prefs: { law: true, soon: false, docs: true, quiet: false } });
+row = sq.prepare('SELECT * FROM subs WHERE chat_id = 501').get(); assert.deepEqual(JSON.parse(row.tags), ['Налоги']); assert.equal(row.since, since0, 'повторная настройка сдвинула «с какого момента»');
+// рассылка: сообщение уходит один раз, повтор того же события не отправляется
+await subReq({ initData: await init(502), tags: ['Пенсионеры'], prefs: { law: true, soon: true, docs: false, quiet: false } });
+sq.exec(`UPDATE subs SET since = ${Math.floor(T0 / 1000) - 86400}`);
+const out = []; const send = async (b) => { out.push(b); return { ok: true }; };
+assert.equal(await W.notify(env, EV, T0, send), 3, 'рассылка: ждали 3 сообщения (v:1 и s:1 для 502, d:1 для 501)');
+const to502 = out.filter((b) => b.chat_id === 502); assert.equal(to502.length, 2); assert.ok(to502.some((b) => /Принят закон/.test(b.text)) && to502.some((b) => /Завтра вступает/.test(b.text)), 'не те сообщения у 502');
+assert.equal(out.filter((b) => b.chat_id === 501).length, 1);
+assert.equal(to502[0].reply_markup.inline_keyboard[0][0].web_app.url.startsWith('https://ruslan7121.github.io/'), true, 'кнопка закона не открывает мини-приложение');
+out.length = 0; assert.equal(await W.notify(env, EV, T0, send), 0, 'повторная рассылка отправила уже отправленное');
+// бот заблокирован — подписка удаляется
+sq.exec('DELETE FROM sent'); const blocked = async () => ({ ok: false, error_code: 403 }); await W.notify(env, EV, T0, blocked);
+assert.equal(sq.prepare('SELECT COUNT(*) AS n FROM subs').get().n, 0, 'подписки заблокировавших бота не удалены');
+console.log('OK test_bot: подпись initData, учет по хэшу, счетчики, /stats только владельцу, /start, /setup, подписки и рассылка уведомлений');

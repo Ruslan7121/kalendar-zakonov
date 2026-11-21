@@ -176,6 +176,29 @@ try {
         await sleep(600);
         chk(await ev(p.s, `!document.querySelector('[data-gdwin]')`), 'свайп от левого края не закрыл окно карточки'); }
       await p.close(); }
+    /* «Мои интересы»: явный выбор меток, «Только моё», звёздочка «Для вас», запоминание */
+    { let p = await open('/?tab=i'); chk(await until(p.s, `!!document.querySelector('[data-itile]') && !!document.querySelector('[data-mybar]')`, 10000), 'на «Пленарных заседаниях» нет строки «Моё»');
+      await ev(p.s, `localStorage.removeItem('kz_my_v1')`);
+      await click(p, '[data-myedit]'); await until(p.s, `!!document.querySelector('[data-mysheet]')`, 6000); await sleep(400);
+      chk(await ev(p.s, `/Откройте приложение в боте/.test(document.querySelector('[data-mynotif]').innerText)`), 'вне Telegram нет подсказки про уведомления');
+      const tag = await ev(p.s, `(() => { const b = [...document.querySelectorAll('[data-mysheet] button[aria-pressed]')][0]; if (!b) return ''; b.click(); return b.textContent.trim(); })()`); await sleep(200);
+      chk(!!tag, 'в окне «Мои интересы» нет меток');
+      await click(p, '[data-mydone]'); await sleep(500);
+      const n0 = await ev(p.s, `document.querySelectorAll('[data-itile]').length`);
+      await click(p, '[data-myon]'); await sleep(500);
+      const n1 = await ev(p.s, `document.querySelectorAll('[data-itile]').length`);
+      chk(n1 <= n0, `«Только моё» не сузило список: ${n0} → ${n1}`);
+      chk(await ev(p.s, `[...document.querySelectorAll('[data-itile]')].every((e) => !!e.querySelector('[data-mystar]'))`), 'не на всех оставшихся плитках звёздочка «Для вас»');
+      chk(await ev(p.s, `(JSON.parse(localStorage.getItem('kz_my_v1') || '{}').tags || []).length === 1 && JSON.parse(localStorage.getItem('kz_my_v1')).on === true`), 'интересы не записались в память');
+      await p.close();
+      p = await open('/?tab=i', true); await until(p.s, `!!document.querySelector('[data-mybar]')`, 10000); await sleep(600);
+      chk(await ev(p.s, `document.querySelector('[data-myon]').getAttribute('aria-checked') === 'true' && document.querySelector('[data-mybar]').innerText.includes(${JSON.stringify(tag)})`), 'после повторного открытия интересы не запомнились');
+      await ev(p.s, `localStorage.removeItem('kz_my_v1')`); await p.close();
+      p = await open('/?tab=l', true); chk(await until(p.s, `!!document.querySelector('[data-mybar]')`, 10000), 'во вкладке «Вступают в силу» нет строки «Моё»');
+      await ev(p.s, `localStorage.setItem('kz_my_v1', JSON.stringify({ t: 1, on: true, tags: [${JSON.stringify(tag)}], n: {} }))`); await p.close();
+      p = await open('/?tab=l', true); await until(p.s, `!!document.querySelector('[data-mybar]')`, 10000); await sleep(800);
+      chk(await ev(p.s, `!!document.querySelector('[data-lfound]') || !!document.querySelector('[data-empty="laws"]')`), 'в «Вступают в силу» «Только моё» не включил подбор по меткам');
+      await ev(p.s, `localStorage.removeItem('kz_my_v1')`); await p.close(); }
     { const p = await open('/?tab=c&d=22.10.2026&v=136156'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"]')`), 'ссылка ?d=&v= не открыла «По дням»'); await p.close(); }
     rep.push(tag('карта органов, период, лента, окно документа'));
   }
