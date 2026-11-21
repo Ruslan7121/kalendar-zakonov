@@ -56,16 +56,17 @@ try {
       const wl = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(/\d+[–-]\d+ [а-я]+|\d+ [а-я]{3} – /.test(wl || ''), `подпись недели: ${wl}`);
       await click(p, '[data-ommode="month"]'); await sleep(400); const mn = (await tiles(p) || []).reduce((a, x) => a + x.n, 0); chk(mn >= wk, `за месяц ${mn} меньше, чем за неделю ${wk}`);
       const ml = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(/^[А-Я][а-я]+ \d{4}/.test(ml || ''), `подпись месяца: ${ml}`);
-      { const l0 = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); await click(p, '[data-omprev]'); await sleep(300); const l1 = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(l1 !== l0, 'стрелка ‹ не листает период'); await click(p, '[data-omnext]'); await sleep(300); chk((await ev(p.s, `document.querySelector('[data-omlabel]').innerText`)) === l0, 'стрелка › не вернула период'); chk(await ev(p.s, `(() => { const b = document.querySelector('[data-omprev]'); const c = getComputedStyle(b); return c.borderTopWidth === '0px' && b.offsetWidth === 34; })()`), 'стрелки не такие, как в календаре месяца (без рамки, 34 px)'); }
+      { const l0 = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); await click(p, '[data-omprev]'); await sleep(300); const l1 = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(l1 !== l0, 'стрелка ‹ не листает период'); await click(p, '[data-omnext]'); await sleep(300); chk((await ev(p.s, `document.querySelector('[data-omlabel]').innerText`)) === l0, 'стрелка › не вернула период'); chk(await ev(p.s, `(() => { const b = document.querySelector('[data-omprev]'); const c = getComputedStyle(b); return c.borderTopWidth === '0px' && b.offsetWidth === 36; })()`), 'стрелки не такие, как в календаре месяца (без рамки, 36 px)'); }
       chk(await ev(p.s, `!document.querySelector('[data-calfab]') || getComputedStyle(document.querySelector('[data-calfab]')).visibility === 'hidden'`), 'в карте видна плавающая кнопка «Календарь»');
       chk(await ev(p.s, `!/Нажмите на плитку/.test(document.body.innerText)`), 'в карте есть подсказка «Нажмите на плитку»');
       chk(await ev(p.s, `![...document.querySelectorAll('[data-omtile]')].some((e) => e.innerText.split('\\n').length > 3)`), 'число и слово в плитке не в одну строку');
       // календарь месяца открывается по подписи, день выбирается нажатием
       await click(p, '[data-ommode="day"]'); await sleep(300); await click(p, '[data-omlabel]'); await sleep(300);
       chk(await ev(p.s, `!!document.querySelector('[data-ommonth] [data-omcell]')`), 'календарь месяца не открылся');
-      chk(await ev(p.s, `!!document.querySelector('[data-ommonthhint]') && /Показать \\(\\d+\\)|Закрыть/.test((document.querySelector('[data-omshow]') || {}).innerText || '')`), 'в календаре нет пояснения и кнопки «Показать»');
-      await ev(p.s, `(() => { const c = [...document.querySelectorAll('[data-omcell]')].find((e) => e.querySelector('i')); if (c) c.click(); })()`); await sleep(300);
-      chk(await ev(p.s, `!document.querySelector('[data-ommonth]')`), 'календарь не закрылся после выбора дня');
+      chk(await ev(p.s, `!!document.querySelector('[data-phhint]') && /Можно выбрать несколько дней/.test(document.querySelector('[data-phhint]').innerText)`), 'в календаре нет пояснения про выбор нескольких дней');
+      { const c0 = await ev(p.s, `[...document.querySelectorAll('[data-omcell][aria-pressed="true"]')].length`);
+        await ev(p.s, `(() => { const c = [...document.querySelectorAll('[data-omcell]')].find((e) => e.getAttribute('aria-pressed') === 'false' && e.querySelector('i')); if (c) c.click(); })()`); await sleep(300);
+        chk(await ev(p.s, `!!document.querySelector('[data-ommonth]')`) && await ev(p.s, `document.querySelectorAll('[data-omcell][aria-pressed="true"]').length`) > c0, 'в календаре нельзя отметить несколько дней'); }
       // лента органа: названия короткие, без «Кого коснётся», окно документа
       const first = await ev(p.s, `(document.querySelector('[data-omtile]') || {}).dataset && document.querySelector('[data-omtile]').dataset.omtile`); chk(!!first, 'нет первой плитки');
       await click(p, '[data-omtile]'); await sleep(500);
@@ -106,10 +107,10 @@ try {
     { const p = await open('/?tab=c'); chk(await until(p.s, `!!document.querySelector('[data-omtile]')`, 8000), 'нет плиток для кнопки «Сегодня»');
       // на другом дне вместо «День» — «Сегодня»; нажатие возвращает на сегодня
       await click(p, '[data-omprev]'); await sleep(300);
-      chk(await ev(p.s, `(document.querySelector('[data-ommode=day]') || {}).innerText === 'Сегодня'`), 'на другом дне кнопка «День» не стала «Сегодня»');
-      await click(p, '[data-ommode=day]'); await sleep(300);
+      chk(await ev(p.s, `!!document.querySelector('[data-omtoday]')`), 'на другом дне нет кнопки «Сегодня»');
+      await click(p, '[data-omtoday]'); await sleep(300);
       const t1 = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`);
-      chk(await ev(p.s, `(document.querySelector('[data-ommode=day]') || {}).innerText === 'День'`) && !/суббот|воскресен/i.test(t1), 'кнопка «Сегодня» откинула на выходной или не вернула на сегодня: ' + t1);
+      chk(await ev(p.s, `!document.querySelector('[data-omtoday]')`) && !/суббот|воскресен/i.test(t1), 'кнопка «Сегодня» откинула на выходной или не вернула на сегодня: ' + t1);
       await p.close(); }
     { const p = await open('/?tab=c'); chk(await until(p.s, `!!document.querySelector('[data-omtile]')`, 8000), 'нет плиток для фильтра');
       // плитка открывает документы органа только за выбранный день
@@ -121,21 +122,20 @@ try {
       await click(p, '[data-cofnone], [data-calorg] button:nth-of-type(2)'); await sleep(150);
       const org = await ev(p.s, `(() => { const l = [...document.querySelectorAll('label[data-cof]')].find((x) => x.getAttribute('data-cof') !== 'gov' && x.getAttribute('data-cof') !== 'sf'); return l ? l.getAttribute('data-cof') : ''; })()`);
       await click(p, `label[data-cof="${org}"]`); await sleep(200);
-      chk(await ev(p.s, `!!document.querySelector('[data-omperiod]') && /Выбрано:/.test(document.querySelector('[data-ompsel]').innerText)`), 'в «Фильтрах» нет блока «Период» с подписью «Выбрано:»');
-      { const cnt = async () => Number(((await ev(p.s, `document.querySelector('[data-zapply]').innerText`)).match(/\d+/) || [0])[0]);
-        await click(p, '[data-ompmode="day"]'); await sleep(300); const nd = await cnt();
-        await click(p, '[data-ompmode="month"]'); await until(p.s, `/\d/.test(document.querySelector('[data-zapply]').innerText)`, 6000); const nm = await cnt();
-        await click(p, '[data-ompmode="year"]'); await until(p.s, `/\d/.test(document.querySelector('[data-zapply]').innerText)`, 8000); const ny = await cnt();
-        chk(nm >= nd && ny >= nm, `период в фильтрах не расширяет число карточек: день ${nd}, месяц ${nm}, год ${ny}`);
+      chk(await ev(p.s, `!document.querySelector('[data-omperiod]') && !document.querySelector('[data-ompmode]')`), 'период остался в «Фильтрах»: он должен быть на странице');
+      await click(p, '[data-zclose]'); await sleep(300);
+      { const cnt = async () => { await click(p, '[data-zbar-open]'); await until(p.s, `/\\d/.test((document.querySelector('[data-zapply]') || {}).innerText || '')`, 8000); const n = Number(((await ev(p.s, `document.querySelector('[data-zapply]').innerText`)).match(/\d+/) || [0])[0]); await click(p, '[data-zclose]'); await sleep(250); return n; };
+        await click(p, '[data-ommode="day"]'); await sleep(300); const nd = await cnt();
+        await click(p, '[data-ommode="month"]'); await sleep(300); const nm = await cnt();
+        await click(p, '[data-ommode="year"]'); await sleep(500); const ny = await cnt();
+        chk(nm >= nd && ny >= nm, `период на странице не влияет на число карточек в «Фильтрах»: день ${nd}, месяц ${nm}, год ${ny}`);
         // как в «Итогах»: месяц раскрывается списком, в нём отмечают несколько месяцев
-        await click(p, '[data-ompmode="month"]'); await sleep(200);
-        if (!(await ev(p.s, `!!document.querySelector('[data-ompick]')`))) await click(p, '[data-ompmode="month"]');
-        await sleep(300);
-        chk(await ev(p.s, `document.querySelectorAll('[data-ompitem]').length >= 2 && document.querySelector('[data-ompick]').getAttribute('aria-multiselectable') === 'true'`), 'месяц не раскрылся списком с множественным выбором');
-        const n1 = await cnt();
-        await ev(p.s, `(() => { const o = [...document.querySelectorAll('[data-ompitem]')].find((b) => b.getAttribute('aria-pressed') === 'false'); if (o) o.click(); })()`); await sleep(400);
-        chk((await cnt()) >= n1, 'второй месяц не добавился к выбору');
-        chk(await ev(p.s, `[...document.querySelectorAll('[data-ompitem]')].filter((b) => b.getAttribute('aria-pressed') === 'true').length >= 2`), 'отметка нескольких месяцев не работает');
+        await click(p, '[data-ommode="month"]'); await sleep(300); await click(p, '[data-omlabel]'); await sleep(300);
+        chk(await ev(p.s, `document.querySelectorAll('[data-omitem]').length >= 2 && !!document.querySelector('[data-omlist] [role=listbox][aria-multiselectable="true"]')`), 'месяц не раскрылся списком с множественным выбором');
+        await ev(p.s, `(() => { const o = [...document.querySelectorAll('[data-omitem]')].find((b) => b.getAttribute('aria-pressed') === 'false'); if (o) o.click(); })()`); await sleep(400);
+        chk(await ev(p.s, `[...document.querySelectorAll('[data-omitem]')].filter((b) => b.getAttribute('aria-pressed') === 'true').length >= 2`), 'отметка нескольких месяцев не работает');
+        await click(p, '[data-omlabel]'); await sleep(200);
+        await click(p, '[data-zbar-open]'); await sleep(400);
       }
       const cta = await ev(p.s, `document.querySelector('[data-zapply]').innerText`);
       chk(/^Показать \d+ карточ/.test(cta), 'кнопка фильтра не показывает число карточек: ' + cta);
@@ -146,6 +146,15 @@ try {
       { const want = Number((cta.match(/\d+/) || [0])[0]); const got = await ev(p.s, `document.querySelectorAll('[data-omdoc]').length`); chk(got === want, `число карточек в ленте (${got}) не равно числу на кнопке (${want})`); }
       await click(p, '[data-omback]'); await sleep(500);
       chk(await ev(p.s, `!!document.querySelector('[data-orgmap="map"]') && !!document.querySelector('[data-omtile]')`), 'назад из ленты фильтра не вернул карту со всеми органами');
+      await p.close(); }
+    { const p = await open('/?tab=i'); chk(await until(p.s, `!!document.querySelector('[data-immode]')`, 10000), 'на «Пленарных заседаниях» нет единого выбора периода');
+      chk(await ev(p.s, `['day', 'week', 'month', 'year'].every((k) => !!document.querySelector('[data-immode="' + k + '"]'))`), 'на «Пленарных заседаниях» нет кнопок День / Неделя / Месяц / Год');
+      await click(p, '[data-imprev]'); await sleep(400);
+      chk(await ev(p.s, `!!document.querySelector('[data-imtoday]')`), 'на «Пленарных заседаниях» на другом дне нет кнопки «Сегодня»');
+      await click(p, '[data-imtoday]'); await sleep(400);
+      chk(await ev(p.s, `!document.querySelector('[data-imtoday]')`), 'кнопка «Сегодня» не вернула на последний день голосований');
+      await click(p, '[data-imlabel]'); await sleep(300);
+      chk(await ev(p.s, `!!document.querySelector('[data-immonth] [data-imcell]') && !!document.querySelector('[data-phhint]')`), 'на «Пленарных заседаниях» подпись периода не открыла календарь');
       await p.close(); }
     { const p = await open('/?tab=c&d=22.10.2026&v=136156'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"]')`), 'ссылка ?d=&v= не открыла «По дням»'); await p.close(); }
     rep.push(tag('карта органов, период, лента, окно документа'));
