@@ -1,10 +1,10 @@
 {
- "run": "21.11.2026 22:16 МСК",
+ "run": "22.11.2026 01:10 МСК",
  "window": [
-  "14.11.2026",
-  "21.11.2026"
+  "15.11.2026",
+  "22.11.2026"
  ],
- "ahead_to": "24.11.2026",
+ "ahead_to": "25.11.2026",
  "sources": {
   "pres_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=president",
