@@ -160,6 +160,14 @@ try {
       await click(p, '[data-imdone]'); await sleep(300);
       chk(await ev(p.s, `!document.querySelector('[data-immonth]')`), 'на «Пленарных заседаниях» кнопка не свернула календарь');
       await p.close(); }
+    /* порядок вкладок: «Пленарные заседания» перед «Работой госорганов»; «Наверх» над звёздочкой интересов */
+    { const p = await open('/?tab=l'); chk(await until(p.s, `!!document.querySelector('[data-myfab]')`, 10000), 'нет звёздочки на «Вступают в силу»');
+      const names = await ev(p.s, `[...document.querySelectorAll('[role=tablist] [role=tab]')].map((b) => b.textContent.replace(/\\s+/g, ' ').trim()).slice(0, 4)`) || [];
+      chk(names.length === 4 && /Вступают/.test(names[0]) && /Пленарные/.test(names[1]) && /Работа/.test(names[2]) && /Новости/.test(names[3]), `порядок вкладок: ${JSON.stringify(names)}`);
+      if (W.mobile) { await ev(p.s, `window.scrollTo(0, 600)`); await sleep(700);
+        const r = await ev(p.s, `(() => { const u = document.querySelector('[aria-label="Наверх"]'); const f = document.querySelector('[data-myfab]'); if (!u || !f) return null; const a = u.getBoundingClientRect(), b = f.getBoundingClientRect(); return { ub: a.bottom, ft: b.top, vis: getComputedStyle(u).visibility }; })()`);
+        chk(r && r.vis === 'visible' && r.ub <= r.ft + 1, `кнопка «Наверх» не выше звёздочки: ${JSON.stringify(r)}`); }
+      await p.close(); }
     /* несколько недель: нажатие на день добавляет его неделю, итоги суммируются (обе страницы) */
     for (const [url, ns, ready] of [['/?tab=c', 'om', '[data-omtile]'], ['/?tab=i', 'im', '[data-itile]']]) {
       const p = await open(url); chk(await until(p.s, `!!document.querySelector('${ready}')`, 10000), `нет данных для проверки недель (${ns})`);
