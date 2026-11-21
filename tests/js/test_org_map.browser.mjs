@@ -63,6 +63,7 @@ try {
       // календарь месяца открывается по подписи, день выбирается нажатием
       await click(p, '[data-ommode="day"]'); await sleep(300); await click(p, '[data-omlabel]'); await sleep(300);
       chk(await ev(p.s, `!!document.querySelector('[data-ommonth] [data-omcell]')`), 'календарь месяца не открылся');
+      chk(await ev(p.s, `!!document.querySelector('[data-ommonthhint]') && /Показать \\(\\d+\\)|Закрыть/.test((document.querySelector('[data-omshow]') || {}).innerText || '')`), 'в календаре нет пояснения и кнопки «Показать»');
       await ev(p.s, `(() => { const c = [...document.querySelectorAll('[data-omcell]')].find((e) => e.querySelector('i')); if (c) c.click(); })()`); await sleep(300);
       chk(await ev(p.s, `!document.querySelector('[data-ommonth]')`), 'календарь не закрылся после выбора дня');
       // лента органа: названия короткие, без «Кого коснётся», окно документа
@@ -79,12 +80,15 @@ try {
       const win = await ev(p.s, `(document.querySelector('[data-orgdocwin]') || {}).innerText || ''`); chk(/суть/i.test(win) && /полное название/i.test(win), 'в окне документа нет «Сути» или полного названия');
       chk(await ev(p.s, `document.documentElement.scrollWidth <= innerWidth + 1`), 'горизонтальная прокрутка');
       await click(p, '[data-gdclose]'); await sleep(500); chk(await ev(p.s, `!document.querySelector('[data-orgdocwin]')`), 'окно документа не закрылось');
+      chk(await ev(p.s, `getComputedStyle(document.querySelector('[data-ombar]')).position === 'sticky'`), 'строка с кнопкой «назад» не закреплена');
+      chk(await ev(p.s, `(() => { const b = document.querySelector('[data-omback]'); return getComputedStyle(b).borderTopWidth === '0px'; })()`), 'кнопка «назад» с рамкой (старый вид)');
+      await ev(p.s, `window.scrollTo(0, 400)`); await sleep(200); chk(await ev(p.s, `document.querySelector('[data-omback]').getBoundingClientRect().top < 140`), 'кнопка «назад» уехала при прокрутке ленты'); await ev(p.s, `window.scrollTo(0, 0)`);
       await click(p, '[data-omback]'); await sleep(300); chk(await ev(p.s, `!!document.querySelector('[data-orgmap="map"]')`), 'кнопка «назад» не вернула карту');
       // «По дням» — прежний календарь
-      await click(p, '[data-omduma]'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"] [data-day]')`, 8000), 'плитка «Госдума» не открыла календарь по дням');
-      await click(p, '[data-cview="map"]'); chk(await until(p.s, `!!document.querySelector('[data-cpane="map"] [data-omtile]')`, 8000), 'кнопка «Карта органов» не вернула карту');
+      chk(await ev(p.s, `!document.querySelector('[data-omduma]')`), 'на карте осталась плитка «Госдума и заседания»');
       await p.close(); }
-    { const p = await open('/?tab=c&view=days'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"] [data-day]')`), '?view=days не открыл «По дням»'); await p.close(); }
+    { const p = await open('/?tab=c&view=days'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"] [data-day]')`), '?view=days не открыл «По дням»');
+      await click(p, '[data-cview="map"]'); chk(await until(p.s, `!!document.querySelector('[data-cpane="map"] [data-omtile]')`, 8000), 'кнопка «Карта органов» не вернула карту'); await p.close(); }
     { const p = await open('/?tab=c&d=22.10.2026&v=136156'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"]')`), 'ссылка ?d=&v= не открыла «По дням»'); await p.close(); }
     rep.push(tag('карта органов, период, лента, окно документа'));
   }
