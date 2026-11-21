@@ -38,7 +38,7 @@ try {
   await cmd('Page.enable', {}, s); await cmd('Runtime.enable', {}, s);
   await cmd('Emulation.setDeviceMetricsOverride', { width: 1366, height: 700, deviceScaleFactor: 1, mobile: false }, s);
   const ev = async (x) => (await cmd('Runtime.evaluate', { expression: x, returnByValue: true }, s)).result.value;
-  const open = async (q) => { await cmd('Page.addScriptToEvaluateOnNewDocument', { source: "try{localStorage.removeItem('kz_state_v1')}catch(e){}" }, s); await cmd('Page.navigate', { url: `${BASE}/${q}` }, s); const t0 = Date.now(); while (!(await ev('!!document.querySelector("[data-gdtop]")')) && Date.now() - t0 < 20000) await sleep(300); await sleep(1200); };
+  const open = async (q) => { await cmd('Page.navigate', { url: `${BASE}/${q}` }, s); const t0 = Date.now(); while (!(await ev('!!document.querySelector("[data-gdtop]")')) && Date.now() - t0 < 20000) await sleep(300); await sleep(1200); };
   const W = {};
   for (const tab of ['l', 'c', 'i', 'd']) { await open(`?tab=${tab}`); W[tab] = await ev(ST); rep.push(`${tab}: ${JSON.stringify(W[tab])}`); }
   const cws = new Set(Object.values(W).map((x) => x.cw)), rs = new Set(Object.values(W).map((x) => x.right));
