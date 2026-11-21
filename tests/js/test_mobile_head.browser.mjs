@@ -93,13 +93,18 @@ try {
   chk(plTap === plDirect, `строка «ещё собирается» зависит от того, как открыт календарь: с главной «${plTap}», по ссылке «${plDirect}» (не пересчитана после загрузки месяца)`);
   /* Итоги: два месяца суммируются */
   await open('i', '[data-iq]');
+  /* 21.11.2026: период — на странице (единый PeriodHead), в «Фильтрах» его нет */
   chk(await ev(CLICK('[data-ifopen]')), 'Итоги: нет кнопки «Фильтры»'); await sleep(400);
-  chk(await ev(`(() => { const t = [...document.querySelectorAll('[data-iperiod] [role=tab]')].find((b) => /Месяц/.test(b.textContent)); if (!t) return false; t.click(); return true; })()`), 'Итоги: в фильтрах нет периода «Месяц»'); await sleep(300);
-  const cnt = `(() => { const m = (document.querySelector('[data-itogi]').innerText.match(/законопроектов: (\\d+)/) || [])[1]; return m == null ? -1 : +m; })()`;
-  const n1 = await ev(cnt); const nm = await ev(`document.querySelectorAll('[data-iper] button').length`);
-  if (nm > 1) { await ev(`document.querySelectorAll('[data-iper] button')[1].click()`); await sleep(400); const n2 = await ev(cnt); const on = await ev(`document.querySelectorAll('[data-iper] button[aria-pressed=true]').length`);
-    rep.push(`Итоги: один месяц ${n1}, два месяца ${n2}`); chk(on === 2 && n2 > n1, `Итоги: месяцы не суммируются (${n1} → ${n2}, выбрано ${on})`); }
+  chk(await ev(`!document.querySelector('[data-iperiod]')`), 'Итоги: период остался в «Фильтрах»');
   await ev(`[...document.querySelectorAll('.gd-sheet button')].find((b) => /Показать/.test(b.textContent)).click()`); await sleep(300);
+  chk(await ev(`(() => { const t = document.querySelector('[data-imweek], [data-imlabel]'); return !!t; })()`), 'Итоги: на странице нет выбора периода');
+  chk(await ev(`(() => { const t = document.querySelector('[data-immode="month"]'); if (!t) return false; t.click(); return true; })()`), 'Итоги: нет периода «Месяц»'); await sleep(300);
+  await ev(`document.querySelector('[data-imlabel]').click()`); await sleep(300);
+  const cnt = `(() => { const m = (document.querySelector('[data-itogi]').innerText.match(/законопроектов: (\\d+)/) || [])[1]; return m == null ? -1 : +m; })()`;
+  const n1 = await ev(cnt); const nm = await ev(`document.querySelectorAll('[data-imitem]').length`);
+  if (nm > 1) { await ev(`[...document.querySelectorAll('[data-imitem]')].find((b) => b.getAttribute('aria-pressed') === 'false').click()`); await sleep(400); const n2 = await ev(cnt); const on = await ev(`document.querySelectorAll('[data-imitem][aria-pressed=true]').length`);
+    rep.push(`Итоги: один месяц ${n1}, два месяца ${n2}`); chk(on === 2 && n2 > n1, `Итоги: месяцы не суммируются (${n1} → ${n2}, выбрано ${on})`); }
+  await ev(`document.querySelector('[data-imlabel]').click()`); await sleep(200);
   const nAll = await ev(cnt); await ev(TYPE('[data-iq]', 'бюджет')); await sleep(400); const nQ = await ev(cnt);
   rep.push(`Итоги: поиск «бюджет» ${nAll} → ${nQ}`); chk(nQ >= 0 && nQ < nAll, `Итоги: поиск не сужает список (${nAll} → ${nQ})`);
   /* клавиатура: поле в фокусе, палец ведет по списку — фокус снимается */
