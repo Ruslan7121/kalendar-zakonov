@@ -47,7 +47,7 @@ export function statsText(s, now = Date.now()) {
 
 // ---- Уведомления (21.11.2026) ----
 // POST /sub  — мини-приложение присылает {initData, w, t, prefs}: подписка по меткам «Для кого» (w) и «Тема» (t); метки двух групп работают вместе. Хранится chat_id (только у подписавшихся), метки и настройки.
-// cron (каждые 15 минут) — берёт feed/events.json сайта и пишет подписчикам: результат рассмотрения законопроекта (чтение, итог, суть), закон вступает в силу завтра. Тихие часы настраиваются.
+// cron (каждые 15 минут) — берёт feed/events.json сайта и пишет подписчикам: результат рассмотрения законопроекта (чтение, итог, суть), новый закон в «Вступают в силу», закон вступает в силу завтра. Тихие часы настраиваются.
 const HM = /^(\d\d):(\d\d)$/;
 const mins = (v, d) => { const m = HM.exec(v || ''); return m && +m[1] < 24 && +m[2] < 60 ? +m[1] * 60 + +m[2] : d; };
 // тихие часы: с qs до qe по времени пользователя (tz — смещение от UTC в минутах; по умолчанию Москва); qs = qe — тихих часов нет
@@ -55,7 +55,7 @@ export const quietNow = (now, p = {}) => {
   const tz = Number.isFinite(p.tz) ? Math.max(-720, Math.min(840, p.tz)) : 180; const m = ((Math.floor(now / 60000) + tz) % 1440 + 1440) % 1440;
   const a = mins(p.qs, 22 * 60), b = mins(p.qe, 8 * 60); if (a === b) return false; return a < b ? m >= a && m < b : m >= a || m < b;
 };
-const KINDS = ['vote', 'soon'];
+const KINDS = ['vote', 'new', 'soon'];
 // какие события отправить подписчику: включённый вид, пересечение меток, не раньше подписки, ещё не отправлено, не в тихие часы; не больше 5 за раз
 export function pickEvents(events, sub, now, sent = new Set()) {
   if ((!sub.w.length && !sub.t.length) || (sub.prefs.quiet && quietNow(now, sub.prefs))) return [];
@@ -68,12 +68,13 @@ export function eventText(e, sub) {
   const mine = [...(e.tw || []), ...(e.tt || [])].filter((g) => sub.w.includes(g) || sub.t.includes(g)); const tail = mine.length ? `\n\n★ ${esc(mine.join(', '))}` : '';
   if (e.k === 'vote') { const z = Array.isArray(e.z) ? `\nЗа ${+e.z[0] || 0}, против ${+e.z[1] || 0}, воздержались ${+e.z[2] || 0}` : '';
     return `🗳 Рассмотрение законопроекта\n\n<b>${esc(String(e.t).slice(0, 200))}</b>\n${esc(e.r || 'Чтение')}: ${e.ok ? '✅ принят' : '❌ отклонён'}${z}${e.x ? `\n\n${esc(String(e.x).slice(0, 280))}` : ''}${tail}`; }
+  if (e.k === 'new') return `🆕 Новый закон в «Вступают в силу»\n\n<b>${esc(String(e.t).slice(0, 200))}</b>${e.due ? `\nВступает в силу: ${esc(e.due)}` : ''}${e.x ? `\n\n${esc(String(e.x).slice(0, 280))}` : ''}${tail}`;
   return `⏰ Завтра вступает в силу\n\n<b>${esc(String(e.t).slice(0, 200))}</b>${e.x ? `\n${esc(String(e.x).slice(0, 220))}` : ''}${tail}`;
 }
 const cleanTags = (a) => (Array.isArray(a) ? [...new Set(a.filter((x) => typeof x === 'string' && x.length > 0 && x.length <= 60))].slice(0, 60) : []);
 export async function saveSub(db, id, body, now = Math.floor(Date.now() / 1000)) {
-  const w = cleanTags(body.w); const t = cleanTags(body.t); const p = body.prefs || {}; const prefs = { vote: !!p.vote, soon: !!p.soon, quiet: p.quiet !== false, qs: mins(p.qs, -1) >= 0 ? p.qs : '22:00', qe: mins(p.qe, -1) >= 0 ? p.qe : '08:00', tz: Number.isFinite(p.tz) ? Math.max(-720, Math.min(840, Math.round(p.tz))) : 180 };
-  if ((!w.length && !t.length) || !(prefs.vote || prefs.soon)) { await db.prepare('DELETE FROM subs WHERE chat_id = ?').bind(id).run(); await db.prepare('DELETE FROM sent WHERE chat_id = ?').bind(id).run(); return false; }
+  const w = cleanTags(body.w); const t = cleanTags(body.t); const p = body.prefs || {}; const prefs = { vote: !!p.vote, new: !!p.new, soon: !!p.soon, quiet: p.quiet !== false, qs: mins(p.qs, -1) >= 0 ? p.qs : '22:00', qe: mins(p.qe, -1) >= 0 ? p.qe : '08:00', tz: Number.isFinite(p.tz) ? Math.max(-720, Math.min(840, Math.round(p.tz))) : 180 };
+  if ((!w.length && !t.length) || !(prefs.vote || prefs.new || prefs.soon)) { await db.prepare('DELETE FROM subs WHERE chat_id = ?').bind(id).run(); await db.prepare('DELETE FROM sent WHERE chat_id = ?').bind(id).run(); return false; }
   await db.prepare('INSERT INTO subs(chat_id, tags, prefs, since, updated) VALUES(?, ?, ?, ?, ?) ON CONFLICT(chat_id) DO UPDATE SET tags = excluded.tags, prefs = excluded.prefs, updated = excluded.updated').bind(id, JSON.stringify({ w, t }), JSON.stringify(prefs), now, now).run();
   return true;
 }
@@ -83,7 +84,7 @@ export async function notify(env, events, now = Date.now(), send) {
     const tg0 = JSON.parse(s.tags); const sub = { w: tg0.w || [], t: tg0.t || [], prefs: JSON.parse(s.prefs), since: s.since * 1000 };
     const sent = new Set(((await env.DB.prepare('SELECT ev FROM sent WHERE chat_id = ?').bind(s.chat_id).all()).results || []).map((r) => r.ev));
     for (const e of pickEvents(events, sub, now, sent)) {
-      const btn = e.u && e.u.startsWith(SITE) ? { text: e.k === 'vote' ? 'Открыть карточку' : 'Открыть в календаре', web_app: { url: e.u } } : { text: 'Открыть', url: e.u };
+      const btn = e.u && e.u.startsWith(SITE) ? { text: e.k === 'vote' ? 'Открыть карточку' : e.k === 'new' ? 'Открыть закон' : 'Открыть в календаре', web_app: { url: e.u } } : { text: 'Открыть', url: e.u };
       const r = await send({ chat_id: s.chat_id, text: eventText(e, sub), parse_mode: 'HTML', disable_web_page_preview: true, reply_markup: { inline_keyboard: e.u ? [[btn]] : [] } });
       if (r && r.ok) { await env.DB.prepare('INSERT OR IGNORE INTO sent(chat_id, ev, ts) VALUES(?, ?, ?)').bind(s.chat_id, e.id, Math.floor(now / 1000)).run(); n++; }
       else if (r && (r.error_code === 403 || r.error_code === 400)) { await env.DB.prepare('DELETE FROM subs WHERE chat_id = ?').bind(s.chat_id).run(); break; } // бот заблокирован или чат недоступен
