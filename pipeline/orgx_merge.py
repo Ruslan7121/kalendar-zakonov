@@ -3,7 +3,7 @@
 
   python3 pipeline/orgx_merge.py FILE.json [FILE2.json …]
 
-FILE.json: {"<id события ORG: орган:ссылка#ДД.ММ.ГГГГ>": {"sut": ["абзац 1", "абзац 2", …] | "текст", "who": "…", …}, …}
+FILE.json: {"<id события ORG: орган:ссылка#ДД.ММ.ГГГГ>": {"sut": ["абзац 1", "абзац 2", …] | "текст", "who": "…", "ti": "короткое название 5–10 слов", …}, …}
 (id — как в out/organs/events.json; путь к официальному тексту — extracts/organs/<ключ>.json, поле id).
 Поля сливаются по одному в out/organs/enrich.json (источник блока ORGX при organs.py --embed) и в блок ORGX src/canvas.tsx.
 «Суть» хранится строкой, абзацы — через пустую строку; служебные строки о регистрации и опубликовании не принимаются.
@@ -22,7 +22,7 @@ def norm(v):
         ps = [re.sub(r'\s+', ' ', p).strip().replace('ё', 'е').replace('Ё', 'Е') for p in ps if str(p).strip()]
         if not ps or SERVICE.match(ps[0]): raise SystemExit(f'orgx_merge: «Суть» пустая или служебная строка: {ps[:1]}')
         v['sut'] = '\n\n'.join(ps)
-    for k in ('who', 'st', 'full', 'no', 'nb'):
+    for k in ('who', 'st', 'full', 'no', 'nb', 'ti'):
         if k in v: v[k] = re.sub(r'\s+', ' ', str(v[k])).strip().replace('ё', 'е').replace('Ё', 'Е')
     return v
 

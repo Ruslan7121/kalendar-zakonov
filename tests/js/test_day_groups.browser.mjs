@@ -46,7 +46,7 @@ try {
       // если страница всё же пустая (данные не пришли) — одна перезагрузка, с отметкой в отчёте
       if (!(await until(s, `!!document.querySelector('main') && !document.querySelector('[data-gd-load]')`))) { rep.push(tag(`${url}: пустая страница, перезагрузка`)); await cmd('Page.reload', { ignoreCache: true }, s); await until(s, `!!document.querySelector('main') && !document.querySelector('[data-gd-load]')`); }
       return { s, close: () => cmd('Target.closeTarget', { targetId }) }; };
-    { const p = await open('/?tab=c');
+    { const p = await open('/?tab=c&view=days');
       const hdr = await until(p.s, `!!document.querySelector('[data-day="17.11.2026"] [data-dayhdr]')`); chk(hdr, 'нет дня 17.11.2026'); 
       const line = await ev(p.s, `(document.querySelector('[data-day="17.11.2026"] [data-dayorgs]') || {}).textContent`); chk(/^Парламент · Власть · Экономика/.test(line || '') && !/\d/.test(line || ''), `строка дня: «${line}»`);
       await ev(p.s, `document.querySelector('[data-day="17.11.2026"] [data-dayhdr]').click()`); await sleep(700);

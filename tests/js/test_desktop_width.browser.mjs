@@ -46,7 +46,7 @@ try {
   chk(new Set(Object.values(W).map((x) => x.tabs)).size === 1, `кнопки вкладок сдвигаются при переключении: ${Object.entries(W).map(([k, x]) => k + ': ' + x.tabs).join('; ')}`);
   const sb = W.c.iw - W.c.cw; rep.push(`полоса прокрутки: ${sb}px`);
   /* карточка по ссылке: фон не сдвигается */
-  await open('?tab=c'); const before = await ev(ST);
+  await open('?tab=c&view=days'); const before = await ev(ST);
   await open('?d=11.11.2026&v=136361'); /* та же карточка, что в test_share_scroll */ const t1 = Date.now(); while (!(await ev('!!document.querySelector("[data-gdwin]")')) && Date.now() - t1 < 10000) await sleep(300);
   const st = await ev(ST);
   rep.push(`окно: ${JSON.stringify(st)} (до: ${JSON.stringify(before)})`);

@@ -28,7 +28,7 @@ ids = {e['id'] for e in ev}
 assert len(ids) == len(ev), 'дубли id в events.json'
 assert set(enr) <= ids, f'в enrich.json записи без события: {sorted(set(enr) - ids)}'
 assert not re.search(r'неквал(?!иф)', json.dumps(enr, ensure_ascii=False))
-FIELDS = {'st', 'kind', 'stt', 'no', 'full', 'sut', 'who', 'dl', 'nb', 'ps', 'ty', 'k'}
+FIELDS = {'st', 'kind', 'stt', 'no', 'full', 'sut', 'who', 'dl', 'nb', 'ps', 'ty', 'k', 'ti'}
 for k, v in enr.items():
     assert set(v) <= FIELDS, f'{k}: неизвестные поля {set(v) - FIELDS}'
     assert v.get('ty', 'новость') in set(O.TYPES) | {'новость'}, f'{k}: тип {v.get("ty")}'
