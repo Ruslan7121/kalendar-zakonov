@@ -50,7 +50,7 @@ try {
     await cmd('Page.enable', {}, s); await cmd('Runtime.enable', {}, s);
     await cmd('Emulation.setDeviceMetricsOverride', { width: W.w, height: W.h, deviceScaleFactor: W.dpr, mobile: W.mobile }, s);
     if (W.mobile) await cmd('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, s);
-    await cmd('Page.navigate', { url: `${BASE}/?tab=c&view=days` }, s); // 15.11.2026: по умолчанию открывается «Вступают в силу» — календарь явно
+    await cmd('Page.addScriptToEvaluateOnNewDocument', { source: "try{localStorage.removeItem('kz_state_v1')}catch(e){}" }, s); await cmd('Page.navigate', { url: `${BASE}/?tab=c&view=days` }, s); // 15.11.2026: по умолчанию открывается «Вступают в силу» — календарь явно
     const ev = async (x) => (await cmd('Runtime.evaluate', { expression: x, returnByValue: true }, s)).result.value;
     const t0 = Date.now(); while (!(await ev('!!document.querySelector("[data-zbar-open]")')) && Date.now() - t0 < 15000) await sleep(300);
     const tag = `${W.w}px`; const chk = (c, msg) => { if (!c) fails.push(`${tag}: ${msg}`); };

@@ -36,10 +36,11 @@ const fails = []; const rep = [];
 try {
   for (const W of WIDTHS) {
     const tag = (x) => `${W.w}px ${x}`; const chk = (c, m) => { if (!c) fails.push(tag(m)); };
-    const open = async (url) => { const { targetId } = await cmd('Target.createTarget', { url: 'about:blank' }); const { sessionId: s } = await cmd('Target.attachToTarget', { targetId, flatten: true });
+    const open = async (url, keep) => { const { targetId } = await cmd('Target.createTarget', { url: 'about:blank' }); const { sessionId: s } = await cmd('Target.attachToTarget', { targetId, flatten: true });
       await cmd('Page.enable', {}, s); await cmd('Runtime.enable', {}, s); await cmd('Network.enable', {}, s); await cmd('Network.setCacheDisabled', { cacheDisabled: true }, s);
       await cmd('Emulation.setDeviceMetricsOverride', { width: W.w, height: W.h, deviceScaleFactor: W.dpr, mobile: W.mobile }, s);
       if (W.mobile) await cmd('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, s);
+      if (!keep) await cmd('Page.addScriptToEvaluateOnNewDocument', { source: "try{localStorage.removeItem('kz_state_v1')}catch(e){}" }, s);
       await cmd('Page.navigate', { url: BASE + url }, s);
       return { s, close: () => cmd('Target.closeTarget', { targetId }) }; };
     const click = (p, sel) => ev(p.s, `(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return false; e.click(); return true; })()`);
@@ -95,7 +96,7 @@ try {
       await p.close(); }
     { const p = await open('/?tab=c&view=days'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"] [data-day]')`), '?view=days не открыл «По дням»');
       await click(p, '[data-cview="map"]'); chk(await until(p.s, `!!document.querySelector('[data-cpane="map"] [data-omtile]')`, 8000), 'кнопка «Карта органов» не вернула карту'); await p.close(); }
-    { const p = await open('/?tab=c&org=none'); await sleep(1500);
+    { const p = await open('/?tab=c&org=none', true); await sleep(1500);
       chk(await ev(p.s, `document.querySelectorAll('[data-omtile]').length === 0`), 'фильтр «Убрать все» не скрыл плитки карты');
       await p.close(); }
     { const p = await open('/?tab=c'); chk(await until(p.s, `!!document.querySelector('[data-omtile]')`, 8000), 'нет плиток');
@@ -166,20 +167,20 @@ try {
       await click(p, '[data-ommode="week"]'); await sleep(900);
       chk(await ev(p.s, `!!localStorage.getItem('kz_state_v1')`), 'выбор не записался в память');
       await p.close();
-      p = await open('/?tab=c'); chk(await until(p.s, `!!document.querySelector('[data-omtile], [data-orgmap]')`, 8000), 'после повторного открытия нет карты');
+      p = await open('/?tab=c', true); chk(await until(p.s, `!!document.querySelector('[data-omtile], [data-orgmap]')`, 8000), 'после повторного открытия нет карты');
       await sleep(600);
       const tl = await ev(p.s, `[...document.querySelectorAll('[data-omtile]')].map((e) => e.dataset.omtile)`) || [];
       chk(tl.length <= 1 && (tl.length === 0 || tl[0] === org), `фильтр органов не запомнился: плитки ${JSON.stringify(tl)}, ждали только ${org}`);
       chk(await ev(p.s, `document.querySelector('[data-ommode="week"]').getAttribute('aria-selected') === 'true'`), 'режим периода «Неделя» не запомнился');
       await p.close();
-      p = await open('/?tab=c&org=none'); await sleep(1500);
+      p = await open('/?tab=c&org=none', true); await sleep(1500);
       chk(await ev(p.s, `document.querySelectorAll('[data-omtile]').length === 0`), 'ссылка ?org=none не главнее сохранённого выбора');
       await ev(p.s, `localStorage.removeItem('kz_state_v1')`); await p.close();
       // вкладка: без параметра открывается последняя
-      p = await open('/?tab=c'); await until(p.s, `!!document.querySelector('[data-omtile]')`, 10000);
+      p = await open('/?tab=c', true); await until(p.s, `!!document.querySelector('[data-omtile]')`, 10000);
       await ev(p.s, `[...document.querySelectorAll('[data-mnav] [role=tab], [role=tablist] [role=tab]')].find((b) => /Пленарные/.test(b.textContent)).click()`);
       await until(p.s, `!!document.querySelector('[data-immode]')`, 10000); await sleep(900); await p.close();
-      p = await open('/'); chk(await until(p.s, `!!document.querySelector('[data-immode]')`, 10000), 'последняя вкладка («Пленарные заседания») не запомнилась');
+      p = await open('/', true); chk(await until(p.s, `!!document.querySelector('[data-immode]')`, 10000), 'последняя вкладка («Пленарные заседания») не запомнилась');
       await ev(p.s, `localStorage.removeItem('kz_state_v1')`); await p.close(); }
     rep.push(tag('карта органов, период, лента, окно документа'));
   }

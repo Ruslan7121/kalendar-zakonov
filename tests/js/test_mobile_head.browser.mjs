@@ -50,7 +50,7 @@ try {
   await cmd('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true }, s);
   await cmd('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, s);
   const ev = async (x) => (await cmd('Runtime.evaluate', { expression: x, returnByValue: true }, s)).result.value;
-  const open = async (tab, sel) => { await cmd('Page.navigate', { url: `${BASE}/?tab=${tab}&view=days` }, s); const t0 = Date.now(); while (!(await ev(`!!document.querySelector(${JSON.stringify(sel)})`)) && Date.now() - t0 < 20000) await sleep(300); await sleep(600); };
+  const open = async (tab, sel) => { await cmd('Page.addScriptToEvaluateOnNewDocument', { source: "try{localStorage.removeItem('kz_state_v1')}catch(e){}" }, s); await cmd('Page.navigate', { url: `${BASE}/?tab=${tab}&view=days` }, s); const t0 = Date.now(); while (!(await ev(`!!document.querySelector(${JSON.stringify(sel)})`)) && Date.now() - t0 < 20000) await sleep(300); await sleep(600); };
   /* кадры с самого начала загрузки: шапка, список и строка поиска не прыгают и не мигают */
   await cmd('Page.addScriptToEvaluateOnNewDocument', { source: `window.__fr = []; (function f() { const b = document.querySelector('[data-gdbar]'), w = document.querySelector('[data-swipe]'), sl = document.querySelector('[data-hslot]'), h1 = document.querySelector('main>h1');
     if (b && w) window.__fr.push([Math.round(b.getBoundingClientRect().top), Math.round(w.getBoundingClientRect().top), sl ? sl.childElementCount : -1, h1 ? h1.getBoundingClientRect().height : 0]); requestAnimationFrame(f); })();` }, s);
