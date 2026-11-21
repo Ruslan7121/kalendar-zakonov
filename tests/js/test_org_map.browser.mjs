@@ -119,7 +119,16 @@ try {
         await click(p, '[data-ompmode="month"]'); await until(p.s, `/\d/.test(document.querySelector('[data-zapply]').innerText)`, 6000); const nm = await cnt();
         await click(p, '[data-ompmode="year"]'); await until(p.s, `/\d/.test(document.querySelector('[data-zapply]').innerText)`, 8000); const ny = await cnt();
         chk(nm >= nd && ny >= nm, `период в фильтрах не расширяет число карточек: день ${nd}, месяц ${nm}, год ${ny}`);
-        await click(p, '[data-ompmode="month"]'); await sleep(300); }
+        // как в «Итогах»: месяц раскрывается списком, в нём отмечают несколько месяцев
+        await click(p, '[data-ompmode="month"]'); await sleep(200);
+        if (!(await ev(p.s, `!!document.querySelector('[data-ompick]')`))) await click(p, '[data-ompmode="month"]');
+        await sleep(300);
+        chk(await ev(p.s, `document.querySelectorAll('[data-ompitem]').length >= 2 && document.querySelector('[data-ompick]').getAttribute('aria-multiselectable') === 'true'`), 'месяц не раскрылся списком с множественным выбором');
+        const n1 = await cnt();
+        await ev(p.s, `(() => { const o = [...document.querySelectorAll('[data-ompitem]')].find((b) => b.getAttribute('aria-pressed') === 'false'); if (o) o.click(); })()`); await sleep(400);
+        chk((await cnt()) >= n1, 'второй месяц не добавился к выбору');
+        chk(await ev(p.s, `[...document.querySelectorAll('[data-ompitem]')].filter((b) => b.getAttribute('aria-pressed') === 'true').length >= 2`), 'отметка нескольких месяцев не работает');
+      }
       const cta = await ev(p.s, `document.querySelector('[data-zapply]').innerText`);
       chk(/^Показать \d+ карточ/.test(cta), 'кнопка фильтра не показывает число карточек: ' + cta);
       await click(p, '[data-zapply]'); await sleep(700);
