@@ -103,6 +103,26 @@ try {
       await sleep(500); await click(p, '[data-omback]'); await sleep(60);
       chk(await ev(p.s, `/omBack/.test(getComputedStyle(document.querySelector('[data-orgmap="map"]')).animationName)`), 'у возврата на карту нет анимации');
       await p.close(); }
+    { const p = await open('/?tab=c'); chk(await until(p.s, `!!document.querySelector('[data-omtile]')`, 8000), 'нет плиток для фильтра');
+      // плитка открывает документы органа только за выбранный день
+      const dayTxt = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`);
+      await click(p, '[data-zbar-open]'); await sleep(400);
+      chk(await ev(p.s, `(() => { const g = document.querySelector('[data-zgroups]'); return !g || getComputedStyle(g).display === 'none'; })()`), 'на карте в «Фильтрах» остались метки «Для кого / Тема / Что меняется»');
+      chk(await ev(p.s, `!!document.querySelector('[data-calorg]')`), 'в «Фильтрах» нет блока органов');
+      chk(await ev(p.s, `!document.querySelector('[data-cof="gd"]')`), 'в фильтре органов есть Госдума');
+      await click(p, '[data-cofnone], [data-calorg] button:nth-of-type(2)'); await sleep(150);
+      const org = await ev(p.s, `(() => { const l = [...document.querySelectorAll('label[data-cof]')].find((x) => x.getAttribute('data-cof') !== 'gov' && x.getAttribute('data-cof') !== 'sf'); return l ? l.getAttribute('data-cof') : ''; })()`);
+      await click(p, `label[data-cof="${org}"]`); await sleep(200);
+      const cta = await ev(p.s, `document.querySelector('[data-zapply]').innerText`);
+      chk(/^Показать \d+ карточ/.test(cta), 'кнопка фильтра не показывает число карточек: ' + cta);
+      await click(p, '[data-zapply]'); await sleep(700);
+      chk(await ev(p.s, `!!document.querySelector('[data-orgmap="feed"]')`), 'после «Показать N карточек» нет ленты');
+      chk(await ev(p.s, `!document.querySelector('[data-ommode]') && !document.querySelector('[data-ommonth]')`), 'в ленте фильтра остались День/Неделя/Месяц или календарь');
+      chk(await ev(p.s, `document.querySelectorAll('[data-omdayhdr]').length >= 1 && /\\d+ [а-яё]+/i.test(document.querySelector('[data-omdayhdr]').textContent)`), 'в ленте нет дат над карточками');
+      { const want = Number((cta.match(/\d+/) || [0])[0]); const got = await ev(p.s, `document.querySelectorAll('[data-omdoc]').length`); chk(got === want, `число карточек в ленте (${got}) не равно числу на кнопке (${want})`); }
+      await click(p, '[data-omback]'); await sleep(500);
+      chk(await ev(p.s, `!!document.querySelector('[data-orgmap="map"]') && !!document.querySelector('[data-omtile]')`), 'назад из ленты фильтра не вернул карту со всеми органами');
+      await p.close(); }
     { const p = await open('/?tab=c&d=22.10.2026&v=136156'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"]')`), 'ссылка ?d=&v= не открыла «По дням»'); await p.close(); }
     rep.push(tag('карта органов, период, лента, окно документа'));
   }
