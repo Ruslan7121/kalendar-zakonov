@@ -94,6 +94,15 @@ try {
       await p.close(); }
     { const p = await open('/?tab=c&view=days'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"] [data-day]')`), '?view=days не открыл «По дням»');
       await click(p, '[data-cview="map"]'); chk(await until(p.s, `!!document.querySelector('[data-cpane="map"] [data-omtile]')`, 8000), 'кнопка «Карта органов» не вернула карту'); await p.close(); }
+    { const p = await open('/?tab=c&org=none'); await sleep(1500);
+      chk(await ev(p.s, `document.querySelectorAll('[data-omtile]').length === 0`), 'фильтр «Убрать все» не скрыл плитки карты');
+      await p.close(); }
+    { const p = await open('/?tab=c'); chk(await until(p.s, `!!document.querySelector('[data-omtile]')`, 8000), 'нет плиток');
+      await click(p, '[data-omtile]'); await sleep(60);
+      chk(await ev(p.s, `/omIn/.test(getComputedStyle(document.querySelector('[data-orgmap="feed"]')).animationName)`), 'у перехода в ленту нет анимации');
+      await sleep(500); await click(p, '[data-omback]'); await sleep(60);
+      chk(await ev(p.s, `/omBack/.test(getComputedStyle(document.querySelector('[data-orgmap="map"]')).animationName)`), 'у возврата на карту нет анимации');
+      await p.close(); }
     { const p = await open('/?tab=c&d=22.10.2026&v=136156'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"]')`), 'ссылка ?d=&v= не открыла «По дням»'); await p.close(); }
     rep.push(tag('карта органов, период, лента, окно документа'));
   }
