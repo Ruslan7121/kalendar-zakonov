@@ -3883,6 +3883,7 @@ const OMWD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const OMMN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 const OMMI = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 const OMPL = (n: number, a: [string, string, string]) => { const m = n % 100, k = n % 10; return `${n} ${m > 10 && m < 20 ? a[2] : k === 1 ? a[0] : k > 1 && k < 5 ? a[1] : a[2]}`; };
+const OMKN: Record<string, string> = { 'Постановление': 'постановления', 'Распоряжение': 'распоряжения', 'Приказ': 'приказы', 'Указ': 'указы', 'Указание': 'указания', 'Информационное письмо': 'информационные письма', 'Ответы на запросы': 'ответы на запросы' };
 const OMKP: Record<string, [string, string, string]> = { 'Постановление': ['постановление', 'постановления', 'постановлений'], 'Распоряжение': ['распоряжение', 'распоряжения', 'распоряжений'], 'Приказ': ['приказ', 'приказа', 'приказов'], 'Указ': ['указ', 'указа', 'указов'], 'Указание': ['указание', 'указания', 'указаний'], 'Информационное письмо': ['информационное письмо', 'информационных письма', 'информационных писем'] };
 const omKind = (x: any): string => String(x.kind || x.k || x.ty || 'Документ');
 const omKP = (k: string, n: number) => OMKP[k] ? OMPL(n, OMKP[k]) : `${n} ${k.toLowerCase()}`;
@@ -3910,7 +3911,7 @@ function OrgDocWin({ x, m, onClose }: { x: any; m?: boolean; onClose: () => void
       {!!x.u && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}><a className="gd-lnk" href={x.u} style={NVLK(t)}>Официальный текст: {host} ↗</a></div>}
     </div></div></NvModal>;
 }
-function OrgMap({ m }: { m: boolean }) {
+function OrgMap({ m, openDays }: { m: boolean; openDays: () => void }) {
   const t = useGrokTheme(); useGDV();
   const [mode, setMode] = useState<'day' | 'week' | 'month'>('day');
   const [cur, setCur] = useState<Date | null>(null); const [org, setOrg] = useState<string | null>(null); const [kind, setKind] = useState('Все'); const [mon, setMon] = useState(false); const [mv, setMv] = useState<Date>(new Date()); const [doc, setDoc] = useState<any>(null);
@@ -3932,9 +3933,7 @@ function OrgMap({ m }: { m: boolean }) {
   const hdrBlock = <div data-orgmaphead="1">
     <div role="group" aria-label="Период" style={{ display: 'flex', background: t.bg.subtle, border: `1px solid ${t.border.default}`, borderRadius: 12, padding: 3 }}>{([['day', 'День'], ['week', 'Неделя'], ['month', 'Месяц']] as const).map(([k, l]) => <button key={k} type="button" data-ommode={k} aria-pressed={mode === k} onClick={() => { setMode(k); setMon(false); }} style={btn(mode === k)}>{l}</button>)}</div>
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-      <button type="button" data-omprev="1" aria-label="Назад" onClick={() => step(-1)} style={rb2}>‹</button>
       <button type="button" data-omlabel="1" aria-expanded={mon} onClick={() => { setMon(!mon); setMv(c0); }} style={{ flex: 1, height: 36, borderRadius: 12, border: `1px solid ${t.border.default}`, background: 'transparent', color: ink, font: 'inherit', fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>{label} <span aria-hidden style={{ fontSize: 12, color: ter }}>▾</span></button>
-      <button type="button" data-omnext="1" aria-label="Вперёд" onClick={() => step(1)} style={rb2}>›</button>
     </div>
     {mode === 'day' && <div data-omweek="1" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginTop: 8 }}>{OMWD.map((w, i) => { const d = OMA(OMMON(c0), i); const f = OMF(d); const on = f === OMF(c0); return <button key={f} type="button" data-omday={f} aria-pressed={on} onClick={() => setCur(d)} style={{ border: `1.5px solid ${on ? ac : 'transparent'}`, background: on ? (DK ? 'rgba(64,156,255,.14)' : 'rgba(10,100,214,.1)') : 'transparent', color: on ? ac : ink, font: 'inherit', borderRadius: 12, padding: '4px 0', cursor: 'pointer', opacity: has.has(f) || on ? 1 : 0.4 }}><span style={{ display: 'block', fontSize: 11, color: on ? ac : ter }}>{w}</span><b style={{ fontSize: 16, display: 'block', lineHeight: 1.2 }}>{d.getDate()}</b></button>; })}</div>}
     {mon && <div data-ommonth="1" style={{ marginTop: 8, background: t.bg.base, borderRadius: 16, padding: '10px 10px 12px', boxShadow: `0 10px 26px rgba(0,0,0,${DK ? 0.55 : 0.15}), inset 0 0 0 1px ${t.border.default}` }}>
@@ -3945,9 +3944,10 @@ function OrgMap({ m }: { m: boolean }) {
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}><button type="button" onClick={() => { setCur(last ? OMD(last) : today); setMon(false); }} style={{ ...nvBlk(), flex: 1, height: 34, border: 'none', color: ac, font: 'inherit', fontWeight: 600, cursor: 'pointer' }}>Последний день</button><button type="button" onClick={() => setMon(false)} style={{ ...nvBlk(), flex: 1, height: 34, border: 'none', color: ac, font: 'inherit', fontWeight: 600, cursor: 'pointer' }}>Закрыть</button></div></>; })()}
     </div>}
   </div>;
-  /* плавающая кнопка «Календарь» открывает календарь месяца и в карте органов */
-  const mvRef = useRef(c0); mvRef.current = c0; useEffect(() => { const f = () => { setOrg(null); setMon((v) => !v); setMv(mvRef.current); window.scrollTo(0, 0); }; window.addEventListener('gd-calfab', f); return () => window.removeEventListener('gd-calfab', f); }, []);
   const wait = wt ? <GdWait st={wt} t={t} /> : null;
+  /* свайп по карте листает период: влево — следующий, вправо — предыдущий */
+  const sw = useRef<{ x: number; y: number } | null>(null);
+  const swH = { onTouchStart: (e: any) => { const q = e.touches && e.touches[0]; sw.current = q ? { x: q.clientX, y: q.clientY } : null; }, onTouchEnd: (e: any) => { const a = sw.current; sw.current = null; const q = e.changedTouches && e.changedTouches[0]; if (!a || !q || mon) return; const dx = q.clientX - a.x, dy = q.clientY - a.y; if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) step(dx < 0 ? 1 : -1); } };
   /* лента одного органа */
   if (org) {
     const L = inR.filter((x: any) => x.o === org); const ks = [...new Set(L.map(omKind))]; const oc = orgCol(org, DK);
@@ -3963,25 +3963,22 @@ function OrgMap({ m }: { m: boolean }) {
     </div>;
   }
   const cols = m ? 2 : 3;
-  const tiles = os.map((o, i) => { const l = by[o]; const ks: Record<string, number> = {}; l.forEach((x: any) => { const k = omKind(x); ks[k] = (ks[k] || 0) + 1; }); const kd = Object.entries(ks).map(([k, n]) => omKP(k, n)).join(' · '); const c = orgCol(o, DK);
+  const tiles = os.map((o, i) => { const l = by[o]; const ks: Record<string, number> = {}; l.forEach((x: any) => { const k = omKind(x); ks[k] = (ks[k] || 0) + 1; }); const kd = Object.keys(ks).map((k) => ks[k] === 1 ? k.toLowerCase() : (OMKN[k] || k.toLowerCase())).join(' · '); /* без чисел: «приказ» при одном документе, «приказы» при нескольких */ const c = orgCol(o, DK);
     return i === 0 ? <button key={o} type="button" data-omtile={o} onClick={() => openOrg(o)} style={{ ...nvTile(c), gridColumn: `span ${cols}`, display: 'flex', alignItems: 'center', gap: 12, padding: '12px', textAlign: 'left', font: 'inherit', color: ink }}><OrgMark o={o} c={c} /><span style={{ flex: 1, minWidth: 0 }}><span style={{ display: 'block', fontSize: 16, fontWeight: 700 }}>{ORGN[o] || o}</span><span style={{ display: 'block', fontSize: 12.5, color: ter, lineHeight: 1.3 }}>{kd}</span></span><span style={{ fontSize: 34, fontWeight: 700, lineHeight: 1 }}>{l.length}</span></button>
       : <button key={o} type="button" data-omtile={o} onClick={() => openOrg(o)} style={{ ...nvTile(c), display: 'flex', flexDirection: 'column', minHeight: 132, padding: '12px', textAlign: 'left', font: 'inherit', color: ink }}><OrgMark o={o} c={c} /><span style={{ fontSize: 15, fontWeight: 700, marginTop: 8, lineHeight: 1.2 }}>{ORGN[o] || o}</span><span style={{ fontSize: 30, fontWeight: 700, lineHeight: 1, marginTop: 'auto', paddingTop: 6 }}>{l.length}</span><span style={{ fontSize: 12, color: ter, marginTop: 3, lineHeight: 1.3 }}>{kd}</span></button>; });
-  return <div data-orgmap="map" style={{ paddingBottom: 90 }}>
+  const gdC = orgCol('gd', DK);
+  return <div data-orgmap="map" style={{ paddingBottom: 90 }} {...swH}>
     {hdrBlock}
     {wait || <><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', margin: '12px 2px 8px', color: ter, fontSize: 13 }}><span><b style={{ color: ink, fontSize: 15 }}>{OMPL(inR.length, ['документ', 'документа', 'документов'])}</b> · {OMPL(os.length, ['орган', 'органа', 'органов'])}</span><span>{inR.length && mode !== 'day' ? (mode === 'week' ? 'за неделю' : 'за месяц') : ''}</span></div>
       <div data-omgrid="1" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 10 }}>{tiles}{!os.length && <div style={{ gridColumn: `span ${cols}`, padding: '30px 10px', textAlign: 'center', color: ter }}>За этот период документов нет</div>}</div>
-      <p style={{ margin: '14px 2px 0', fontSize: 13, color: ter, lineHeight: 1.45 }}>Нажмите на плитку, чтобы открыть ленту органа. Новости — во вкладке «Новости», заседания и голосования Госдумы — в режиме «По дням».</p></>}
+      <button type="button" data-omduma="1" onClick={openDays} style={{ ...nvTile(gdC), display: 'flex', alignItems: 'center', gap: 12, width: '100%', marginTop: 10, padding: '12px', textAlign: 'left', font: 'inherit', color: ink }}><OrgMark o="gd" c={gdC} /><span style={{ flex: 1, minWidth: 0 }}><span style={{ display: 'block', fontSize: 16, fontWeight: 700 }}>Госдума и заседания</span><span style={{ display: 'block', fontSize: 12.5, color: ter, lineHeight: 1.3 }}>Голосования, повестка, Совет Федерации — по дням</span></span><span aria-hidden style={{ fontSize: 22, color: ter }}>›</span></button></>}
   </div>;
 }
 /* вкладка «Работа госорганов»: переключатель «Карта органов» / «По дням». Ссылки на карточки (?d=, ?v=), поиск и ?view=days открывают «По дням». */
-function CPane({ m, cq, days }: { m: boolean; cq: string; days: any }) {
-  const t = useGrokTheme(); const q0 = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const [v, setV] = useState<'map' | 'days'>(() => (q0 && (q0.get('view') === 'days' || q0.get('d') || q0.get('v')) || DLK ? 'days' : 'map'));
-  const qq = (cq || '').trim(); const vv = qq ? 'days' : v;
-  const sw = (k: 'map' | 'days', l: string) => <button key={k} type="button" data-cview={k} aria-pressed={vv === k} onClick={() => setV(k)} style={{ flex: 1, height: 32, border: 'none', borderRadius: 10, background: vv === k ? (DK ? '#1C1C1E' : '#FFFFFF') : 'transparent', color: vv === k ? t.text.accent : t.text.secondary, font: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: vv === k ? '0 1px 3px rgba(0,0,0,.3)' : 'none' }}>{l}</button>;
+function CPane({ m, cq, days, v, setV }: { m: boolean; cq: string; days: any; v: 'map' | 'days'; setV: (x: 'map' | 'days') => void }) {
+  const t = useGrokTheme(); const qq = (cq || '').trim(); const vv = qq ? 'days' : v;
   return <div data-cpane={vv} style={vv === 'map' ? { maxWidth: 860, margin: '0 auto' } : undefined}>
-    <div role="group" aria-label="Вид раздела" style={{ display: 'flex', background: t.bg.subtle, border: `1px solid ${t.border.default}`, borderRadius: 12, padding: 3, margin: '4px 0 10px' }}>{sw('map', 'Карта органов')}{sw('days', 'По дням')}</div>
-    {vv === 'map' ? <OrgMap m={m} /> : days}
+    {vv === 'map' ? <OrgMap m={m} openDays={() => setV('days')} /> : <>{!qq && <button type="button" data-cview="map" onClick={() => setV('map')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px 0 8px', margin: '2px 0 8px', borderRadius: 17, border: `1px solid ${t.border.default}`, background: t.bg.subtle, color: t.text.accent, font: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}><span aria-hidden style={{ fontSize: 20, lineHeight: 1 }}>‹</span>Карта органов</button>}{days}</>}
   </div>;
 }
 function OrgFeed({ m }: { m?: boolean }) {
@@ -4920,6 +4917,8 @@ function CalendarApp() {
   const Z = 1; GZ = Z;
   /* 15.11.2026: при запуске без параметров открывается «Вступают в силу» (решение владельца); ?tab=c — календарь */
   const [mode, setMode] = useState<'d' | 'c' | 'l' | 'i'>(QS && QS.get('tab') === 'l' ? 'l' : QS && QS.get('tab') === 'i' ? 'i' : QS && QS.get('tab') === 'c' ? 'c' : DLK ? 'i' : QS && (QS.get('tab') === 'd' || (QS.get('v') && QS.get('d') && DAYS.includes(QS.get('d')!))) ? 'd' : (QS && ['q', 'w', 't', 'c', 'org', 'd'].some((k) => QS.has(k))) ? 'c' : 'l');
+  /* 21.11.2026: «Работа госорганов» — карта органов (по умолчанию) или «По дням»; ссылки ?d=, ?v=, ?view=days открывают «По дням» */
+  const [cview, setCview] = useState<'map' | 'days'>(() => (QS && (QS.get('view') === 'days' || QS.get('d') || QS.get('v')) || DLK ? 'days' : 'map'));
   const [lmk, setLmk] = useState(LMK0); const [lq, setLq] = useState('');
   const [cmk, setCmk] = useState(() => calCk(DLK ? new Date(+DLD!.slice(6), +DLD!.slice(3, 5) - 1, +DLD!.slice(0, 2)) : new Date()));
   useEffect(() => { const h = () => { if (CSNAP) setMode('c'); }; window.addEventListener('popstate', h); return () => window.removeEventListener('popstate', h); }, []);
@@ -5088,7 +5087,7 @@ function CalendarApp() {
   /* 15.11.2026: листание вкладок на телефоне как страниц: шапка (вкладки, поиск, «Фильтры») неподвижна; под пальцем едет текущая
      страница, рядом сразу видна соседняя (paneFor), без затухания. Отпустили дальше порога или быстрым жестом — страницы доезжают,
      иначе возвращаются. Пока жест горизонтальный, вертикальная прокрутка не идет. Нажатие на вкладку — то же листание. */
-  const paneFor = (k: string, pk = false) => (k === 'l' ? <Laws m={m} mk={lmk} setMk={setLmk} lq={lq} setLq={setLq} /> : k === 'i' ? <Itogi m={m} peek={pk} /> : k === 'c' ? <CPane m={m} cq={cq} days={<Calendar cq={cq} m={m} day={day} openVote={openHit} cm={cmk} setCm={setCmk} openDay={(d) => { setMode('d'); go(d, true); window.scrollTo(0, 0); }} />} /> : <>{false && <>
+  const paneFor = (k: string, pk = false) => (k === 'l' ? <Laws m={m} mk={lmk} setMk={setLmk} lq={lq} setLq={setLq} /> : k === 'i' ? <Itogi m={m} peek={pk} /> : k === 'c' ? <CPane m={m} cq={cq} v={cview} setV={setCview} days={<Calendar cq={cq} m={m} day={day} openVote={openHit} cm={cmk} setCm={setCmk} openDay={(d) => { setMode('d'); go(d, true); window.scrollTo(0, 0); }} />} /> : <>{false && <>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 16px', alignItems: 'stretch', marginBottom: !m && !votes.length ? 12 : 0 }}>
         {true ? false && <div style={{ flex: '1 1 100%', fontSize: 14, color: t.text.secondary, padding: '0 2px', fontVariantNumeric: 'tabular-nums' }}>{votes.length ? <><b style={{ color: t.text.primary }}>{votes.length}</b> {plv(votes.length).replace(/^\d+ /, '')} · <b style={{ color: INK[0] }}>{nAcc}</b> принято · <b style={{ color: votes.length - nAcc ? INK[1] : t.text.primary }}>{votes.length - nAcc}</b> отклонено</> : 'Пленарного заседания не было'}</div> :
         <div style={{ ...card(t), padding: m ? '12px 14px' : '14px 18px', color: t.text.primary, lineHeight: 1.45, flex: m ? '1 1 100%' : '0 1 auto' }}>
@@ -5250,7 +5249,7 @@ function CalendarApp() {
       <p data-subs="1" style={{ fontSize: 14, color: t.text.secondary, lineHeight: 1.5, marginTop: -6, visibility: m && peek ? 'hidden' : undefined }}><a href={`${SITE}/bill/`} style={{ color: t.text.accent }}>Все законопроекты</a> · <a href={`${SITE}/feed/`} style={{ color: t.text.accent }}>Подписки: RSS и календарь .ics</a></p>
       {m && <div data-mnavsp="1" style={{ height: 'calc(42px + max(env(safe-area-inset-bottom, 0px), var(--tg-safe-area-inset-bottom, 0px)))' }} />}
       </div>
-      {m && <ToTop t={t} cal={mode === 'c'} />}{m && <CalFab t={t} on={mode === 'c' && !peek} />}
+      {m && <ToTop t={t} cal={mode === 'c' && (cview === 'days' || !!(cq || '').trim())} />}{m && <CalFab t={t} on={mode === 'c' && !peek && (cview === 'days' || !!(cq || '').trim())} />}
     </Page>
   );
 }

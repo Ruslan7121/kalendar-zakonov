@@ -56,8 +56,10 @@ try {
       const wl = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(/\d+[–-]\d+ [а-я]+|\d+ [а-я]{3} – /.test(wl || ''), `подпись недели: ${wl}`);
       await click(p, '[data-ommode="month"]'); await sleep(400); const mn = (await tiles(p) || []).reduce((a, x) => a + x.n, 0); chk(mn >= wk, `за месяц ${mn} меньше, чем за неделю ${wk}`);
       const ml = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(/^[А-Я][а-я]+ \d{4}/.test(ml || ''), `подпись месяца: ${ml}`);
-      await click(p, '[data-omprev]'); await sleep(300); const ml2 = await ev(p.s, `document.querySelector('[data-omlabel]').innerText`); chk(ml2 !== ml, 'стрелка «назад» не меняет месяц');
-      await click(p, '[data-omnext]'); await sleep(300);
+      chk(await ev(p.s, `!document.querySelector('[data-omprev],[data-omnext]')`), 'в карте остались стрелки ‹ ›');
+      chk(await ev(p.s, `!document.querySelector('[data-calfab]') || getComputedStyle(document.querySelector('[data-calfab]')).visibility === 'hidden'`), 'в карте видна плавающая кнопка «Календарь»');
+      chk(await ev(p.s, `!/Нажмите на плитку/.test(document.body.innerText)`), 'в карте есть подсказка «Нажмите на плитку»');
+      chk(await ev(p.s, `![...document.querySelectorAll('[data-omtile]')].some((e) => e.innerText.split('\\n').some((l) => /\\d/.test(l) && !/^\\d+$/.test(l.trim())))`), 'в подписи плитки есть число');
       // календарь месяца открывается по подписи, день выбирается нажатием
       await click(p, '[data-ommode="day"]'); await sleep(300); await click(p, '[data-omlabel]'); await sleep(300);
       chk(await ev(p.s, `!!document.querySelector('[data-ommonth] [data-omcell]')`), 'календарь месяца не открылся');
@@ -78,7 +80,8 @@ try {
       await click(p, '[data-gdclose]'); await sleep(500); chk(await ev(p.s, `!document.querySelector('[data-orgdocwin]')`), 'окно документа не закрылось');
       await click(p, '[data-omback]'); await sleep(300); chk(await ev(p.s, `!!document.querySelector('[data-orgmap="map"]')`), 'кнопка «назад» не вернула карту');
       // «По дням» — прежний календарь
-      await click(p, '[data-cview="days"]'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"] [data-day]')`, 8000), '«По дням» не показал календарь');
+      await click(p, '[data-omduma]'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"] [data-day]')`, 8000), 'плитка «Госдума» не открыла календарь по дням');
+      await click(p, '[data-cview="map"]'); chk(await until(p.s, `!!document.querySelector('[data-cpane="map"] [data-omtile]')`, 8000), 'кнопка «Карта органов» не вернула карту');
       await p.close(); }
     { const p = await open('/?tab=c&view=days'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"] [data-day]')`), '?view=days не открыл «По дням»'); await p.close(); }
     { const p = await open('/?tab=c&d=22.10.2026&v=136156'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"]')`), 'ссылка ?d=&v= не открыла «По дням»'); await p.close(); }

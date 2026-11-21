@@ -72,7 +72,7 @@ try {
   /* 16.11.2026 (решение владельца): разделы — внизу экрана, «Календарь» называется «Работа министерств», сетка — в окне у кнопки; над списком — строка месяца */
   const nav = await ev(`(() => { const n = document.querySelector('[data-mnav]'); if (!n) return null; const r = n.getBoundingClientRect(); return { fixed: getComputedStyle(n).position, gap: Math.round(window.innerHeight - r.bottom), tabs: n.querySelectorAll('[role=tab]').length, ic: n.querySelectorAll('[role=tab] svg').length }; })()`);
   rep.push(`панель разделов: ${JSON.stringify(nav)}`); chk(nav && nav.fixed === 'fixed' && nav.gap === 0 && nav.tabs === 4 && nav.ic === 4, `панель разделов не внизу экрана или без значков: ${JSON.stringify(nav)}`);
-  await ev(`[...document.querySelectorAll('[data-mnav] [role=tab]')].find((b) => /Работа/.test(b.textContent)).click()`); await sleep(1500); await ev(`(document.querySelector('[data-cview="days"]') || { click() {} }).click()`); await sleep(1500); /* 21.11.2026: по умолчанию — карта органов, сетка месяца — в режиме «По дням» */
+  await ev(`[...document.querySelectorAll('[data-mnav] [role=tab]')].find((b) => /Работа/.test(b.textContent)).click()`); await sleep(1500); await ev(`(document.querySelector('[data-omduma]') || { click() {} }).click()`); await sleep(1500); /* 21.11.2026: по умолчанию — карта органов, сетка месяца — в режиме «По дням» */
   const cg = await ev('window.__cg'); const cgs = [...new Set(cg)]; rep.push(`строка месяца при переходе: ${cgs}`);
   chk(cg.length > 0 && cgs.length === 1, `календарь подпрыгивает при нажатии «Календарь»: ${cgs}`);
   /* окно календаря: закрыто — скрыто, кнопка открывает его над панелью, в нем целый месяц */
