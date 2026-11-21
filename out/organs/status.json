@@ -1,8 +1,8 @@
 {
- "run": "21.11.2026 04:42 МСК",
+ "run": "21.11.2026 05:02 МСК",
  "window": [
-  "14.11.2026",
-  "21.11.2026"
+  "17.11.2026",
+  "20.11.2026"
  ],
  "ahead_to": "24.11.2026",
  "sources": {
@@ -93,7 +93,7 @@
   },
   "minfin_news": {
    "url": "https://minfin.gov.ru/ru/press-center/",
-   "status": "blocked:HTTP 503, страница ограничения доступа",
+   "status": "blocked:HTTP 403, страница ограничения доступа",
    "n": 0
   },
   "minjust_events": {
@@ -113,7 +113,7 @@
   },
   "minfin_projects": {
    "url": "https://minfin.gov.ru/ru/document/npa_projects/",
-   "status": "blocked:HTTP 503, страница ограничения доступа"
+   "status": "blocked:HTTP 403, страница ограничения доступа"
   },
   "mintrud_profstandards": {
    "url": "https://regulation.gov.ru/",
