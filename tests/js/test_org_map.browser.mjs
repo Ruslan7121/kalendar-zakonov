@@ -81,6 +81,11 @@ try {
       chk(await ev(p.s, `document.documentElement.scrollWidth <= innerWidth + 1`), 'горизонтальная прокрутка');
       await click(p, '[data-gdclose]'); await sleep(500); chk(await ev(p.s, `!document.querySelector('[data-orgdocwin]')`), 'окно документа не закрылось');
       chk(await ev(p.s, `getComputedStyle(document.querySelector('[data-ombar]')).position === 'sticky'`), 'строка с кнопкой «назад» не закреплена');
+      chk(await ev(p.s, `!!document.querySelector('[data-orgmap="feed"][data-noswipe]')`), 'лента органа не защищена от листания вкладок (data-noswipe): свайп назад не сработает');
+      // слайд слева направо по ленте возвращает на карту
+      await ev(p.s, `(() => { const el = document.querySelector('[data-omdoc]'); const mk = (x, y) => new Touch({ identifier: 1, target: el, clientX: x, clientY: y }); el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [mk(60, 300)], changedTouches: [mk(60, 300)] })); el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [mk(280, 306)] })); })()`); await sleep(400);
+      chk(await ev(p.s, `!!document.querySelector('[data-orgmap="map"]')`), 'слайд слева направо не вернул на карту');
+      await click(p, '[data-omtile]'); await sleep(400);
       chk(await ev(p.s, `(() => { const b = document.querySelector('[data-omback]'); return getComputedStyle(b).borderTopWidth === '0px'; })()`), 'кнопка «назад» с рамкой (старый вид)');
       await ev(p.s, `window.scrollTo(0, 400)`); await sleep(200); chk(await ev(p.s, `document.querySelector('[data-omback]').getBoundingClientRect().top < 140`), 'кнопка «назад» уехала при прокрутке ленты'); await ev(p.s, `window.scrollTo(0, 0)`);
       await click(p, '[data-omback]'); await sleep(300); chk(await ev(p.s, `!!document.querySelector('[data-orgmap="map"]')`), 'кнопка «назад» не вернула карту');
