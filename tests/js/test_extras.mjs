@@ -13,7 +13,7 @@ try {
   execFileSync('node', [path.join(ROOT, 'web', 'extras.mjs'), out], { stdio: 'pipe' });
   // 21.11.2026: события для уведомлений бота
   { const j = JSON.parse(fs.readFileSync(path.join(out, 'feed', 'events.json'), 'utf8')); assert.ok(Array.isArray(j.ev) && j.ev.length > 0, 'feed/events.json пуст');
-    for (const e of j.ev) { assert.ok(e.id && ['law', 'soon', 'docs'].includes(e.k) && Number.isFinite(e.ts) && typeof e.t === 'string' && e.t && Array.isArray(e.tg) && e.tg.length && Array.isArray(e.tw) && Array.isArray(e.tt), `событие без обязательных полей: ${JSON.stringify(e).slice(0, 120)}`); assert.ok(!e.u || /^https?:\/\//.test(e.u), `ссылка события не http(s): ${e.u}`); } }
+    for (const e of j.ev) { assert.ok(e.id && ['vote', 'soon'].includes(e.k) && Number.isFinite(e.ts) && typeof e.t === 'string' && e.t && Array.isArray(e.tg) && e.tg.length && Array.isArray(e.tw) && Array.isArray(e.tt), `событие без обязательных полей: ${JSON.stringify(e).slice(0, 120)}`); if (e.k === 'vote') assert.ok(/^\d-е чтение$/.test(e.r) && typeof e.ok === 'boolean' && Array.isArray(e.z) && e.z.length === 3, `у результата рассмотрения нет чтения, итога или голосов: ${JSON.stringify(e).slice(0, 160)}`); assert.ok(!e.u || /^https?:\/\//.test(e.u), `ссылка события не http(s): ${e.u}`); } }
   const idx = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'index.json'), 'utf8'));
   const bills = new Map(); // номер → id голосований
   for (const mk of idx.months) {
