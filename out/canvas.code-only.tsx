@@ -23,7 +23,8 @@ const TG_APP = 'https://t.me/kalendar_zakonov_bot/app';
 /* 15.11.2026: статистика пользователей для команды /stats бота (bot/worker.mjs, Cloudflare). При открытии в Telegram приложение
    один раз отправляет подписанные Telegram данные запуска (initData); сервер проверяет подпись и хранит только хэш id.
    Пустой адрес — ничего не отправляется (сервер еще не развернут: Actions → bot). */
-const STATS_URL = '';
+const STATS_URL = ''; /* 22.11.2026: настройки уведомлений в окне «Мои интересы» скрыты, пока служба уведомлений (bot/worker.mjs) не развернута; включить: NOTIF_UI = true */
+const NOTIF_UI = false;
 /* 18.11.2026 (решение владельца): сообщение при «Поделиться» из Telegram — две строки «Открыть в браузере: …» и «Открыть в Telegram: …».
    Ссылка на сайт стоит первой: Telegram строит карточку-превью (название, этап и дата, «Что предлагалось изменить») по первой ссылке сообщения, а ее данные берутся из og-тегов страницы v/<id>/. */
 const tgShare = (web: string, tg: string) => { try { TG.openTelegramLink(`https://t.me/share/url?url=&text=${encodeURIComponent(`Открыть в браузере: ${web}\nОткрыть в Telegram: ${tg}`)}`); } catch (e) { try { TG.openLink(web); } catch (e2) {} } };
@@ -4670,11 +4671,11 @@ function MySheet({ m, onClose }: { m: boolean; onClose: () => void }) {
   return <NvModal onClose={onClose} c={t.text.accent} m={m} k="my"><div data-mysheet="1" style={{ padding: m ? '4px 14px 16px' : '16px 18px 18px' }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 40px 10px 2px' }}><b style={{ fontSize: 19, color: t.text.primary }}>★ Мои интересы</b><span style={{ flex: 1 }} /><button type="button" data-myreset="1" onClick={() => setMY({ tags: [], on: false })} style={{ border: 'none', background: 'transparent', color: t.text.accent, font: 'inherit', fontSize: 14, cursor: 'pointer' }}>Сбросить</button></div>
     {grp('w', 'Для кого')}{grp('t', 'Тема')}
-    <div style={{ ...nvBlk(), padding: '10px 12px', marginBottom: 10 }} data-mynotif="1"><div style={{ fontSize: 13, fontWeight: 600, color: t.text.secondary, marginBottom: 4 }}>Уведомления в Telegram</div>
+    {NOTIF_UI && <div style={{ ...nvBlk(), padding: '10px 12px', marginBottom: 10 }} data-mynotif="1"><div style={{ fontSize: 13, fontWeight: 600, color: t.text.secondary, marginBottom: 4 }}>Уведомления в Telegram</div>
       {!TG ? <div style={{ fontSize: 14, lineHeight: 1.45, color: t.text.secondary, padding: '4px 0 6px' }}>Сообщения приходят в Telegram. Откройте приложение в боте и включите их здесь.<div style={{ marginTop: 8 }}><a href={TG_APP} target="_blank" rel="noopener" style={{ color: t.text.accent, fontWeight: 600 }}>Открыть в Telegram ↗</a></div></div>
       : <>{sw('vote', 'Результат рассмотрения законопроекта', 'В каком чтении рассматривали, о чём он и итог: карточка законопроекта приходит в бот')}{sw('new', 'Новый закон в «Вступают в силу»', 'Когда закон с вашими метками добавлен в ленту: дата вступления в силу и суть')}{sw('soon', 'Закон вступает в силу завтра')}{sw('quiet', 'Тихие часы', 'В это время сообщения не приходят')}{my.n.quiet && <div data-myqrow="1" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '2px 0 8px', fontSize: 14, color: t.text.secondary }}>с {tin('qs')} до {tin('qe')}<span style={{ fontSize: 12.5, color: t.text.tertiary }}>по вашему времени</span></div>}
         <div data-mystatus="1" style={{ fontSize: 12.5, color: t.text.tertiary, paddingTop: 6, lineHeight: 1.4 }}>{!STATS_URL ? 'Служба уведомлений ещё не подключена: настройки сохранены и заработают после подключения.' : !my.tags.length ? 'Отметьте хотя бы одну метку выше.' : MYST === 'err' ? 'Не удалось сохранить настройки. Попробуйте позже.' : MYST === 'ok' ? 'Настройки сохранены. Сообщения приходят по выбранным меткам.' : 'Сообщения приходят по выбранным меткам.'}</div></>}
-    </div>
+    </div>}
     <div style={{ fontSize: 12.5, color: t.text.tertiary, margin: '0 2px 12px', lineHeight: 1.45 }}>«Для кого» и «Тема» работают вместе: внутри группы достаточно любой метки, между группами нужны обе. Выбор хранится в приложении и в вашем Telegram; обычные «Фильтры» он не меняет.</div>
     <button type="button" data-mydone="1" onClick={onClose} style={{ width: '100%', minHeight: 46, border: 'none', borderRadius: 12, background: t.text.accent, color: dk ? '#04101F' : '#FFFFFF', font: 'inherit', fontSize: 16, fontWeight: 600, cursor: 'pointer' }}>Готово</button>
   </div></NvModal>;
