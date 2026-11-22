@@ -40,11 +40,13 @@ def cmd_map(_):
 
 
 def cmd_find(a):
-    pat = a[0]; f = os.path.join(ROOT, a[1]) if len(a) > 1 and not a[1].isdigit() else CANVAS; n = int(a[-1]) if a[-1].isdigit() and len(a) > 1 else 20
-    r = subprocess.run(['rg', '-n', '-o', '--no-heading', '-e', '.{0,70}(?:' + pat + ').{0,70}', f], capture_output=True, text=True)
-    ls = r.stdout.splitlines()
-    for x in ls[:n]: print(x[:260])
-    if len(ls) > n: print(f'… еще {len(ls) - n} совпадений')
+    pat = re.compile(a[0]); f = os.path.join(ROOT, a[1]) if len(a) > 1 and not a[1].isdigit() else CANVAS; n = int(a[-1]) if a[-1].isdigit() and len(a) > 1 else 20
+    k = 0
+    for i, ln in enumerate(open(f, encoding='utf-8'), 1):
+        for m in pat.finditer(ln):
+            k += 1
+            if k <= n: print(f'{i}: ' + ln[max(0, m.start() - 70):m.end() + 70].replace('\n', ' ')[:260])
+    if k > n: print(f'… еще {k - n} совпадений')
 
 
 def cmd_bill(a):
