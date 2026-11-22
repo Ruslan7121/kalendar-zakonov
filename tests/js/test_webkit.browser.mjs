@@ -47,8 +47,9 @@ try {
   const open = async (url) => {
     const p = await ctx.newPage();
     const errs = [];
+    let listening = false; // ошибки считаются только после повторной загрузки: при перезагрузке страница, которую закрывают, может выдавать лишнее
     p.on('pageerror', (e) => {
-      if (!/access control checks/.test(e.message)) errs.push(e.message);
+      if (listening && !/access control checks/.test(e.message)) errs.push(e.message);
     });
     /* локальный сервер отвечает 404 на live.json и отсутствующие месяцы — WebKit пишет это как «access control checks» */ p.__errs =
       errs;
@@ -60,6 +61,7 @@ try {
       } catch (e) {}
     });
     await p.reload({ waitUntil: 'load' });
+    listening = true;
     return p;
   };
   const tab = (p, name) =>

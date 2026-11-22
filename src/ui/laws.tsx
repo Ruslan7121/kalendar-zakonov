@@ -18,7 +18,7 @@ export const lawId = (x: any) => {
   return h.toString(16).padStart(8, '0');
 };
 /* 14.11.2026: ссылки закона — только официальные; если в данных их нет, вместо главной страницы портала — поиск закона по номеру
-   на kremlin.ru (тот же поиск, по которому pipeline/laws_src.py находит прямую ссылку kremlin.ru/acts/bank/<id> при ежедневном сборе) */
+   на kremlin.ru (тот же поиск, по которому pipeline/collect/laws_src.py находит прямую ссылку kremlin.ru/acts/bank/<id> при ежедневном сборе) */
 export const lawSearch = (x: any) => {
   const n = /№\s*(\d+-ФЗ)/.exec(x.law || '');
   return n ? 'http://kremlin.ru/acts/bank/search?query=' + encodeURIComponent('№ ' + n[1]) : '';

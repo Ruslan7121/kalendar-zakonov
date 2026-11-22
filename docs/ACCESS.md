@@ -1,5 +1,5 @@
 # Доступ к сайтам (проверено 22.10.2026)
-> **Актуально с 12.11.2026:** канон данных — `src/canvas.tsx` в git-клоне, публикация — только GitHub Pages; страницу Cursor не трогать, Netlify не использовать. Пути `/workspace/out/canvas.tsx`, `/workspace/duma/bp_merge.py`, `make_code_only.py`, `make_edits.py`, `embed_calendar.py` и упоминания EditCanvas в заметках ниже — история; актуальные скрипты и пути — в [PIPELINE.md](PIPELINE.md). `fetch.sh` лежит в `pipeline/`, списки прокси — в `$GD_DUMA/lists/` (по умолчанию `/workspace/duma/lists/`).
+> **Актуально с 12.11.2026:** канон данных — `src/canvas.tsx` в git-клоне, публикация — только GitHub Pages; страницу Cursor не трогать, Netlify не использовать. Пути `/workspace/out/canvas.tsx`, `/workspace/duma/bp_merge.py`, `make_code_only.py`, `make_edits.py`, `embed_calendar.py` и упоминания EditCanvas в заметках ниже — история; актуальные скрипты и пути — в [PIPELINE.md](PIPELINE.md). `collect/fetch.sh` лежит в `pipeline/`, списки прокси — в `$GD_DUMA/lists/` (по умолчанию `/workspace/duma/lists/`).
 
 Скрипт: `./fetch.sh URL [OUTFILE]` (общий лимит времени FETCH_DEADLINE, по умолчанию 180 с).
 Списки прокси по доменам лежат в `lists/<домен>.txt`. Сработавший прокси переносится в начало списка.
@@ -25,7 +25,7 @@
 ## Заметки 23.10.2026 (сводка за 22.10)
 - vote.duma.gov.ru и duma.gov.ru: использовать http:// (https:// через прокси падал). Список за день: http://vote.duma.gov.ru/?from=DD.MM.YYYY&to=DD.MM.YYYY&sort=date_asc&page=N (21 на страницу).
 - government.ru: фильтр даты только в формате ?dt.since=DD.MM.YYYY&dt.till=DD.MM.YYYY (YYYY-MM-DD → 404), http://. body.py для government.ru даёт ленту — использовать txt.py и вырезать между «ПОРТАЛ ПРАВИТЕЛЬСТВА РОССИИ» и «Правительство Российской Федерации\nhttp». Повестка заседания: http://government.ru/meetings/<id>/.
-- kremlin.ru/acts/news/<id> через fetch.sh работает; body.py годится.
+- kremlin.ru/acts/news/<id> через collect/fetch.sh работает; body.py годится.
 - publication.pravo.gov.ru: http://publication.pravo.gov.ru/documents/block/president?date=DD.MM.YYYY — работает; PDF: /file/pdf?eoNumber=<номер> — скан (pdftotext пусто, tesseract нет) → pdftoppm -png и смотреть картинку.
 - sozd: внесённые за день — https://sozd.duma.gov.ru/oz?b[ClassOfTheObjectLawmakingId]=1&b[Year]=DD.MM.YYYY+-+DD.MM.YYYY&date_period_from_Year=…&date_period_to_Year=…&b[submit]= (параметр b[DateOfIntroduction*] не существует → «Записей не найдено»). Полнота выдачи не проверена.
 - TASS RSS (tass.ru/rss/v2.xml) — только последние ~100 новостей, прошлый день не покрывает.
@@ -36,7 +36,7 @@
 - /workspace/out/canvas.tsx теперь хранится БЕЗ обёртки ReadCanvas (чистый TSX); перед правкой проверять, не начинается ли файл с «<cursor_untrusted…».
 - Дни без голосований: DATA['DD.MM.YYYY'] = '' + запись в NV {nv:1, d:[[метка,текст,url]], g:[[метка,текст,url]]}; в g ссылка полная, подпись ссылки — домен (site(gurl(g))).
 - duma.gov.ru/news/: даты новостей — атрибуты datetime="YYYY-MM-DD HH:MM" в порядке ссылок /news/<id>/; на главной ленте не все id (64325, 64326 были пропущены) — проверять соседние id.
-- Параллельный запуск fetch.sh на один домен иногда даёт «cat: lists/<d>.txt.t: No such file» (гонка при переносе прокси в начало списка) — безвредно, но лучше ≤8 параллельных.
+- Параллельный запуск collect/fetch.sh на один домен иногда даёт «cat: lists/<d>.txt.t: No such file» (гонка при переносе прокси в начало списка) — безвредно, но лучше ≤8 параллельных.
 - interfax.ru/news/YYYY/MM/DD — отдаёт только первую страницу ленты; pnp.ru/news/ — анонсы повестки следующего пленарного дня (публикуются в 00:00).
 - government.ru/docs/?dt.since=26.10.2026&dt.till=26.10.2026 — «Материалы не найдены» (документов за день не было).
 - publication.pravo.gov.ru/documents/block/president?date=… — выдаёт ленту последних документов, а не только за дату; за 26.10 новых актов Президента нет (последние — от 23.10).
@@ -46,9 +46,9 @@
 - duma.gov.ru/news/: лента 30.10 — комитеты и пресс-конференция по итогам форума БРИКС (id 64382–64393); соседние id 64394+ — 404/заглушка.
 - government.ru/docs/?dt.since=30.10.2026&dt.till=30.10.2026 — «Материалы не найдены»; акты дня — на publication.pravo.gov.ru/documents/block/government?date=30.10.2026 (постановления 1424–1430, ряд распоряжений; у части распоряжений название в перечне пустое).
 - government.ru/meetings/: заседаний 30.10 нет (последнее №36 — 29.10); новость 60318 — решения заседания 29.10, опубликованы 30.10.
-- sozd.duma.gov.ru (внесённые за день): fetch.sh не ответил за 200 с — перечень не собран.
-- komitet-agro.duma.gov.ru: fetch.sh не прошёл (нет в lists) — новость 64383 взята с duma.gov.ru/news/64383/.
-- calendar_update.py --days-back 5: ~15 мин (много sozd bill/*); итог 20 пленарных дней, 180 пунктов повесток, 20 заседаний Правительства.
+- sozd.duma.gov.ru (внесённые за день): collect/fetch.sh не ответил за 200 с — перечень не собран.
+- komitet-agro.duma.gov.ru: collect/fetch.sh не прошёл (нет в lists) — новость 64383 взята с duma.gov.ru/news/64383/.
+- collect/calendar_update.py --days-back 5: ~15 мин (много sozd bill/*); итог 20 пленарных дней, 180 пунктов повесток, 20 заседаний Правительства.
 
 ## Поля «Суть / Кого коснется / Было-Стало» (t298, 31.10.2026)
 - В out/days/YYYY-MM-DD.json: `bp` — {номер законопроекта: {`sut`: [абзацы], `who`: строка, `bs`: [[было, стало], …]}}; `proc` — {id голосования: [суть, кого коснется]} для процедурных голосований.
@@ -58,11 +58,11 @@
 
 ## Заметки 03.11.2026 (сводка за 02.11)
 - Добавлены 31.10, 01.11, 02.11 как дни без голосований (NV + DATA + FULL). 31.10 и 01.11 содержательные (акты Правительства 1436, 1443, 1444, 3124-р, ОПЕК+). 02.11 — региональная неделя 02–08.11, пленарного нет.
-- fetch.sh: страница прокси UserGate и nxdomain проходила проверку размера; строка 21 теперь их отбрасывает (бэкап fetch.sh.bak-20261103).
+- collect/fetch.sh: страница прокси UserGate и nxdomain проходила проверку размера; строка 21 теперь их отбрасывает (бэкап collect/fetch.sh.bak-20261103).
 - sozd: в URL нужны %5B/%5D вместо [ ], иначе curl трактует их как glob и падает за 2 с.
 - Лента publication.pravo.gov.ru/documents/block/government?date= охватывает несколько дней, поэтому акты разносятся по дате публикации.
 - Новости duma.gov.ru: id 64394–64403 (64402 и 64404+ — заглушки, 64405 не скачался). Новости government.ru: 60333/34/36/49/50/52/54–56 пустые.
-- calendar_update.py gov_meetings(): дата берется только ДО ссылки (последнее совпадение в 600 символах), относительное «назад/сегодня» = сегодня. Раньше заседание №37 (03.11) записалось как 29.10.
-- calendar_update.py дает худшие short, чем старые. Встраивать CAL через cal_merge.py (объединение, старые short сохраняются, проверка, что ничего не потеряно). embed_calendar.py устарел. После cal_merge строку CAL лучше собрать заново: изменить u и дописать новые g в исходную строку, иначе пересериализация меняет разделители и раздувает правки.
+- collect/calendar_update.py gov_meetings(): дата берется только ДО ссылки (последнее совпадение в 600 символах), относительное «назад/сегодня» = сегодня. Раньше заседание №37 (03.11) записалось как 29.10.
+- collect/calendar_update.py дает худшие short, чем старые. Встраивать CAL через merge/cal_merge.py (объединение, старые short сохраняются, проверка, что ничего не потеряно). embed_calendar.py устарел. После cal_merge строку CAL лучше собрать заново: изменить u и дописать новые g в исходную строку, иначе пересериализация меняет разделители и раздувает правки.
 - canvas.code-only.tsx: make_code_only.py (правила в code_only_rules.json: 10 однострочных констант данных → заглушки).
 - Правки для EditCanvas: make_edits.py OLD NEW PREFIX (минимальные hunk, уникальность, побайтовая проверка цепочки, разбиение >120 КБ).
