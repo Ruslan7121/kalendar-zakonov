@@ -36,7 +36,7 @@ const shown = docs.filter((x) => T.orgPub(x));
 const hidden = docs.filter((x) => !T.orgPub(x));
 assert.ok(docs.length > 0, 'в data/ нет документов ORG');
 const p131 = docs.find((x) => x.d === '05.11.2026' && /131н/.test(x.t || ''));
-assert.ok(p131 && orgSut(p131).length && !orgWho(p131), 'ожидался приказ № 131н за 05.11 без «Кого коснётся»');
+assert.ok(p131 && orgSut(p131).length, 'ожидался приказ № 131н за 05.11 с «Сутью» (22.11.2026: «Кого коснётся» дописано, поэтому его наличие не проверяется)');
 assert.equal(T.orgPub(p131), true, 'приказ № 131н за 05.11 должен быть виден как плитка');
 for (const x of hidden) {
   assert.ok(T.orgHideFrom(x.d) || T.orgNoText(x), `скрыт документ до границы без nt: ${x.d} ${x.t}`);
