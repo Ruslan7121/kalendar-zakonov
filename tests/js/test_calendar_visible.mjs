@@ -50,15 +50,17 @@ assert.equal(vx, octHidden.length, 'p.vx за октябрь не совпада
 
 // 3) Регрессия на синтетике: день без CAL.p и законопроект вне повестки дня с повесткой должны появиться;
 //    если объединение сломать (убрать IIFE), проверка обязана упасть.
+// синтетический canvas лежит в другой папке: относительные пути к src/ui/* заменяются абсолютными (22.11.2026)
+const fixImp = (s) => s.replace(/from '\.\/ui\//g, "from '" + path.join(ROOT, 'src', 'ui') + '/');
 const inject = (s) => s.replace('const isResDoc =', "DATA['31.12.2026'] = `900001|999901-9|Тестовый законопроект вне календаря|1-е|1|300/0/0/150|\\n900002|Пост. 999-9|Тестовое постановление|—|1|300/0/0/150|`;\n"
   + "DATA['01.10.2026'] = (DATA['01.10.2026'] || '') + `\\n900003|999902-9|Тестовый законопроект вне повестки|1-е|1|300/0/0/150|`;\nconst isResDoc =");
 const fx = path.join(fs.mkdtempSync(path.join(path.dirname(new URL(import.meta.url).pathname), '.tmp-')), 'canvas.tsx');
 try {
-  fs.writeFileSync(fx, inject(src));
+  fs.writeFileSync(fx, inject(fixImp(src)).replace(/from '\.\/ui\//g, "from '" + path.join(ROOT, 'src', 'ui') + '/'));  // синтетический canvas лежит в другой папке
   const S = await loadCanvas(['CAL', 'DATA'], fx); check(S, 'синтетика');
   const p31 = S.CAL.p.find((p) => p.d === '31.12.2026'); assert.ok(p31 && p31.a.some((x) => x[0] === '999901-9') && p31.r.some((g) => g.n === '999-9'));
   assert.equal(S.CAL.p[S.CAL.p.length - 1].d, '31.12.2026', 'CAL.p не отсортирован по дате после объединения');
-  fs.writeFileSync(fx, inject(src).replace(/\n\(\(\) => \{ const byD: Record<string, any> = Object\.fromEntries\(CAL\.p\.map/, '\n(() => { return; const byD: Record<string, any> = Object.fromEntries(CAL.p.map'));
+  fs.writeFileSync(fx, inject(fixImp(src)).replace(/\n\(\(\) => \{ const byD: Record<string, any> = Object\.fromEntries\(CAL\.p\.map/, '\n(() => { return; const byD: Record<string, any> = Object.fromEntries(CAL.p.map'));
   const B = await loadCanvas(['CAL', 'DATA'], fx);
   assert.throws(() => check(B, 'без объединения'), /не видны в календаре/, 'инвариант не ловит отключённое объединение');
 } finally { fs.rmSync(path.dirname(fx), { recursive: true, force: true }); }
