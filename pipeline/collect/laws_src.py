@@ -9,8 +9,14 @@ law («Федеральный закон от 28.11.2025 № 425-ФЗ …»), и
 не меняем, пишем в out/logs/laws_src.log; на сайте остаётся ссылка на поиск закона на kremlin.ru.
 Запуск: python3 laws_src.py [--dry]
 """
+
 import sys, os, re, json
-sys.path[:0] = [os.path.dirname(os.path.abspath(__file__)), os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib')]; import common as C
+
+sys.path[:0] = [
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'),
+]
+import common as C
 
 MON = 'января февраля марта апреля мая июня июля августа сентября октября ноября декабря'.split()
 OFF = re.compile(r'(\.gov\.ru|^kremlin\.ru|^government\.ru|^cbr\.ru)$')
@@ -26,25 +32,33 @@ def is_off(u):
 
 def law_key(law):
     """«Федеральный закон от 28.11.2025 № 425-ФЗ (…)» → ('425-ФЗ', '28.11.2025'); нет номера или даты — None."""
-    n = re.search(r'№\s*(\d+-ФЗ)', law or ''); d = re.search(r'от\s+(\d\d\.\d\d\.\d{4})', law or '')
+    n = re.search(r'№\s*(\d+-ФЗ)', law or '')
+    d = re.search(r'от\s+(\d\d\.\d\d\.\d{4})', law or '')
     return (n.group(1), d.group(1)) if n and d else None
 
 
 def law_keys(law):
     """Все пары (номер, дата) из реквизитов: «Федеральные законы от 09.04.2026 № 92-ФЗ и от 26.06.2026 № 205-ФЗ» → две пары."""
-    out = [(m.group(2), m.group(1)) for m in re.finditer(r'от\s+(\d\d\.\d\d\.\d{4})\s*(?:г\.)?\s*№\s*(\d+-ФЗ)', law or '')]
+    out = [
+        (m.group(2), m.group(1)) for m in re.finditer(r'от\s+(\d\d\.\d\d\.\d{4})\s*(?:г\.)?\s*№\s*(\d+-ФЗ)', law or '')
+    ]
     k = law_key(law)
-    if k and k not in out: out.insert(0, k)
+    if k and k not in out:
+        out.insert(0, k)
     return out
 
 
 def verify(url, keys):
     """14.11.2026: проверка уже стоящей ссылки kremlin.ru/acts/bank: заголовок страницы должен содержать номер и дату закона.
     Возвращает ('ok' | 'wrong' | 'nofetch', заголовок страницы)."""
-    h = os.path.join(DBG, 'check_' + re.sub(r'\W+', '_', url)[-40:] + '.html'); os.makedirs(DBG, exist_ok=True)
-    if not C.fetch(url, h, 60): return 'nofetch', ''
-    page = open(h, errors='ignore').read(); hs = [z for z in heads(page) if z.strip()]
-    if not hs or not re.search(r'закон', ' '.join(hs), re.I): return 'nofetch', (hs or [''])[0][:160]  # не страница акта (заглушка, ошибка) — ссылку не трогаем
+    h = os.path.join(DBG, 'check_' + re.sub(r'\W+', '_', url)[-40:] + '.html')
+    os.makedirs(DBG, exist_ok=True)
+    if not C.fetch(url, h, 60):
+        return 'nofetch', ''
+    page = open(h, errors='ignore').read()
+    hs = [z for z in heads(page) if z.strip()]
+    if not hs or not re.search(r'закон', ' '.join(hs), re.I):
+        return 'nofetch', (hs or [''])[0][:160]  # не страница акта (заглушка, ошибка) — ссылку не трогаем
     hd = hs[0][:160]
     return ('ok' if any(page_ok(page, n, d) for n, d in keys) else 'wrong'), hd
 
@@ -59,7 +73,8 @@ def candidates(html):
     """Ссылки на акты из страницы поиска kremlin.ru (в порядке появления, без повторов)."""
     out = []
     for m in re.finditer(r'href="(/acts/bank/\d+)"', html):
-        if m.group(1) not in out: out.append(m.group(1))
+        if m.group(1) not in out:
+            out.append(m.group(1))
     return out
 
 
@@ -86,12 +101,16 @@ def page_ok(html, num, d):
 def ranked(html, num, d):
     """Ссылки на акты из страницы поиска: сначала те, у которых в тексте ссылки или после неё
     стоят номер и дата закона (текст от ссылки до следующей), затем остальные — в порядке появления."""
-    good, rest = [], []; ms = list(re.finditer(r'href="(/acts/bank/\d+)"', html))
+    good, rest = [], []
+    ms = list(re.finditer(r'href="(/acts/bank/\d+)"', html))
     for i, m in enumerate(ms):
         p = m.group(1)
-        if p in good or p in rest: continue
-        end = ms[i + 1].start() if i + 1 < len(ms) else len(html)  # текст от этой ссылки до следующей — её строка в выдаче
-        near = C.text(html[m.start():min(end, m.end() + 600)])
+        if p in good or p in rest:
+            continue
+        end = (
+            ms[i + 1].start() if i + 1 < len(ms) else len(html)
+        )  # текст от этой ссылки до следующей — её строка в выдаче
+        near = C.text(html[m.start() : min(end, m.end() + 600)])
         (good if matches(near, num, d) else rest).append(p)
     return good + [p for p in rest if p not in good]
 
@@ -103,11 +122,18 @@ PRAVO = 'http://publication.pravo.gov.ru/api/Documents?PageSize=10&Index=1&Numbe
 def pravo_pick(js, num, d):
     """15.11.2026: ответ API publication.pravo.gov.ru (официальное опубликование) → ссылка на документ: федеральный закон
     с тем же номером и датой подписания (documentDate), адрес http://publication.pravo.gov.ru/document/<eoNumber>."""
-    try: items = json.loads(js).get('items') or []
-    except Exception: return None
+    try:
+        items = json.loads(js).get('items') or []
+    except Exception:
+        return None
     iso = '-'.join(reversed(d.split('.')))
     for it in items:
-        if it.get('number') == num and (it.get('documentDate') or '').startswith(iso) and (it.get('complexName') or '').startswith('Федеральный закон') and it.get('eoNumber'):
+        if (
+            it.get('number') == num
+            and (it.get('documentDate') or '').startswith(iso)
+            and (it.get('complexName') or '').startswith('Федеральный закон')
+            and it.get('eoNumber')
+        ):
             return 'http://publication.pravo.gov.ru/document/' + it['eoNumber']
     return None
 
@@ -115,67 +141,104 @@ def pravo_pick(js, num, d):
 def find_pravo(num, d):
     """Закон по номеру на publication.pravo.gov.ru (прямой запрос, как organs.py: через RU-прокси API не отвечает)."""
     import urllib.parse, organs as O
+
     st, body = O.get(PRAVO + urllib.parse.quote(num), 40)
-    if st != 'ok': return None, f'publication.pravo.gov.ru: {st}'
+    if st != 'ok':
+        return None, f'publication.pravo.gov.ru: {st}'
     u = pravo_pick(body, num, d)
     return (u, '') if u else (None, 'на publication.pravo.gov.ru нет закона с этим номером и датой')
 
 
 def find(num, d):
     """Поиск закона на kremlin.ru: запрос с номером и датой, затем только с номером; проверка — заголовок страницы акта."""
-    os.makedirs(DBG, exist_ok=True); seen = set(); ok_search = False
+    os.makedirs(DBG, exist_ok=True)
+    seen = set()
+    ok_search = False
     for k, q in enumerate([f'№ {num} от {d}', f'{d} № {num}', f'№ {num}']):
         h = os.path.join(DBG, f'search_{num}_{k}.html')
-        if not C.fetch('http://kremlin.ru/acts/bank/search?query=' + q.replace(' ', '+'), h, 60): continue
+        if not C.fetch('http://kremlin.ru/acts/bank/search?query=' + q.replace(' ', '+'), h, 60):
+            continue
         ok_search = True
         for path in ranked(open(h, errors='ignore').read(), num, d)[:10]:
-            if path in seen: continue
-            seen.add(path); h2 = os.path.join(DBG, f'act_{path.rsplit("/", 1)[1]}.html')
-            if not C.fetch('http://kremlin.ru' + path, h2, 60): continue
+            if path in seen:
+                continue
+            seen.add(path)
+            h2 = os.path.join(DBG, f'act_{path.rsplit("/", 1)[1]}.html')
+            if not C.fetch('http://kremlin.ru' + path, h2, 60):
+                continue
             if page_ok(open(h2, errors='ignore').read(), num, d):
                 return 'http://kremlin.ru' + path, ''
-    return None, ('поиск kremlin.ru недоступен' if not ok_search else f'в поиске kremlin.ru нет страницы с этим номером и датой (проверено {len(seen)})')
+    return None, (
+        'поиск kremlin.ru недоступен'
+        if not ok_search
+        else f'в поиске kremlin.ru нет страницы с этим номером и датой (проверено {len(seen)})'
+    )
 
 
 def main(dry=False):
     src = C.read_canvas()
-    i = src.index('const LAWS: any = ') + len('const LAWS: any = '); j = src.index(';\n', i); L = json.loads(src[i:j])
-    fi = src.find('const LAWS_FIX: any = '); F = None
-    if fi >= 0: fi += len('const LAWS_FIX: any = '); fj = src.index(';\n', fi); F = json.loads(src[fi:fj])
+    i = src.index('const LAWS: any = ') + len('const LAWS: any = ')
+    j = src.index(';\n', i)
+    L = json.loads(src[i:j])
+    fi = src.find('const LAWS_FIX: any = ')
+    F = None
+    if fi >= 0:
+        fi += len('const LAWS_FIX: any = ')
+        fj = src.index(';\n', fi)
+        F = json.loads(src[fi:fj])
     found = removed = 0
     for mk, arr in L['months'].items():
         for k, x in enumerate(arr):
             fx = (F or {}).get(mk, {}).get(str(k), {})
             cur = fx.get('src', x.get('src', []))
-            law = fx.get('law', x.get('law', '')); keys = law_keys(law)
+            law = fx.get('law', x.get('law', ''))
+            keys = law_keys(law)
             # 14.11.2026: проверка уже стоящих ссылок на kremlin.ru — неверные (заголовок акта не тот) удаляем
             for l in [l for l in cur if re.search(r'kremlin\.ru/acts/bank/\d+', l.get('u') or '')]:
                 st, hd = verify(l['u'], keys) if keys else ('nofetch', '')
-                C.log('laws_src.log', f"{x['d']} {law[:70]}: ссылка {l['u']} — {'верна' if st == 'ok' else 'НЕ ТОТ ЗАКОН' if st == 'wrong' else 'не открылась, оставлена'}; заголовок: {hd}")
+                C.log(
+                    'laws_src.log',
+                    f'{x["d"]} {law[:70]}: ссылка {l["u"]} — {"верна" if st == "ok" else "НЕ ТОТ ЗАКОН" if st == "wrong" else "не открылась, оставлена"}; заголовок: {hd}',
+                )
                 if st == 'wrong':
                     x['src'] = [z for z in x.get('src', []) if z.get('u') != l['u']]
-                    if 'src' in fx: fx['src'] = [z for z in fx['src'] if z.get('u') != l['u']]
+                    if 'src' in fx:
+                        fx['src'] = [z for z in fx['src'] if z.get('u') != l['u']]
                     removed += 1
             cur = fx.get('src', x.get('src', []))
             # 15.11.2026: пропускаем только законы с прямой ссылкой на текст акта (не на новость duma.gov.ru или cbr.ru)
-            if any(re.search(r'kremlin\.ru/acts/bank/\d+|publication\.pravo\.gov\.ru/document/\d+', l.get('u') or '') for l in cur): continue
+            if any(
+                re.search(r'kremlin\.ru/acts/bank/\d+|publication\.pravo\.gov\.ru/document/\d+', l.get('u') or '')
+                for l in cur
+            ):
+                continue
             key = law_key(law)
-            if not key: C.log('laws_src.log', f"{x['d']} {x.get('title')}: в реквизитах нет номера или даты"); continue
+            if not key:
+                C.log('laws_src.log', f'{x["d"]} {x.get("title")}: в реквизитах нет номера или даты')
+                continue
             url, why = find(*key)
             if not url:  # 15.11.2026: не нашлось на kremlin.ru — официальный портал опубликования
                 u2, why2 = find_pravo(*key)
-                if u2: url = u2
-                else: why = f'{why}; {why2}'
-            if not url: C.log('laws_src.log', f"{x['d']} № {key[0]} от {key[1]}: {why}"); continue
+                if u2:
+                    url = u2
+                else:
+                    why = f'{why}; {why2}'
+            if not url:
+                C.log('laws_src.log', f'{x["d"]} № {key[0]} от {key[1]}: {why}')
+                continue
             link = {'t': 'kremlin.ru' if 'kremlin.ru' in url else 'publication.pravo.gov.ru', 'u': url}
             x['src'] = [link] + list(x.get('src', []))
-            if 'src' in fx: fx['src'] = [link] + list(fx['src'])
-            found += 1; C.log('laws_src.log', f"{x['d']} № {key[0]} от {key[1]}: {url}")
+            if 'src' in fx:
+                fx['src'] = [link] + list(fx['src'])
+            found += 1
+            C.log('laws_src.log', f'{x["d"]} № {key[0]} от {key[1]}: {url}')
     print(f'laws_src: найдено прямых ссылок {found}, удалено неверных {removed}')
-    if not (found or removed) or dry: return
+    if not (found or removed) or dry:
+        return
     out = src[:i] + json.dumps(L, ensure_ascii=False) + src[j:]
     if F is not None:
-        a = out.index('const LAWS_FIX: any = ') + len('const LAWS_FIX: any = '); b = out.index(';\n', a)
+        a = out.index('const LAWS_FIX: any = ') + len('const LAWS_FIX: any = ')
+        b = out.index(';\n', a)
         out = out[:a] + json.dumps(F, ensure_ascii=False) + out[b:]
     C.write_canvas(out)
 

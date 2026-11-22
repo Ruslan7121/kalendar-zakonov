@@ -5,8 +5,13 @@
 extracts/bills/<номер>.json (поле title). Название берётся только целиком: с многоточием, пустое или «Законопроект № …»
 не записывается. Уже записанные названия не меняются. Ничего не скачивает — только читает кэш.
 Запуск: python3 bill_titles.py [ДД.ММ.ГГГГ ...]  (без аргументов — все дни DATA)."""
+
 import sys, os, re, json
-sys.path[:0] = [os.path.dirname(os.path.abspath(__file__)), os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib')]
+
+sys.path[:0] = [
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'),
+]
 import common as C
 import sozd_cache as S
 from bills import sozd_title
@@ -37,18 +42,22 @@ def title_of(n):
 def main(days):
     src = C.read_canvas()
     if '/* INIC:start */' not in src:
-        print('bill_titles: в canvas нет блока INIC — пропуск'); return 0
+        print('bill_titles: в canvas нет блока INIC — пропуск')
+        return 0
     ns = []
     for d, v, n, q, r in C.votes(src):
         if re.fullmatch(r'\d+-\d+', n) and (not days or d in days) and n not in ns:
             ns.append(n)
-    IN = C.get_block(src, 'INIC'); add = 0; miss = []
+    IN = C.get_block(src, 'INIC')
+    add = 0
+    miss = []
     for n in ns:
         if (IN.get(n) or {}).get('t'):
             continue
         t = title_of(n)
         if t:
-            IN[n] = {**IN.get(n, {}), 't': t}; add += 1
+            IN[n] = {**IN.get(n, {}), 't': t}
+            add += 1
         else:
             miss.append(n)
     if add:

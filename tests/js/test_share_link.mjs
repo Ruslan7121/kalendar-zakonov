@@ -12,37 +12,69 @@ const T = await loadCanvas(['shareLink', 'cardLink', 'SITE', 'DATA']);
 assert.equal(T.SITE, 'https://ruslan7121.github.io/kalendar-zakonov');
 
 let n = 0;
-for (const d of Object.keys(T.DATA)) for (const l of (T.DATA[d] || '').split('\n')) {
-  const id = l.split('|')[0]; if (!/^\d+$/.test(id)) continue;
-  const u = T.shareLink(d, id); const m = u.match(RX);
-  assert.ok(m, `shareLink(${d}, ${id}) = ${u}`);
-  assert.equal(`${m[1]}.${m[2]}.${m[3]}`, d); assert.equal(m[4], id);
-  const q = new URL(u); assert.deepEqual([...q.searchParams.keys()], ['d', 'v']); assert.equal(q.hash, '');
-  // 15.11.2026: «Поделиться» — страница с превью v/<id>/ (голосование по законопроекту) или прямой shareLink (процедурное)
-  const c = T.cardLink(d, id); const f = l.split('|');
-  if (f.length >= 6 && /^\d+-\d+$/.test(f[1])) assert.equal(c, `https://ruslan7121.github.io/kalendar-zakonov/v/${id}/?p=2`); else assert.equal(c, u);
-  n++;
-}
+for (const d of Object.keys(T.DATA))
+  for (const l of (T.DATA[d] || '').split('\n')) {
+    const id = l.split('|')[0];
+    if (!/^\d+$/.test(id)) continue;
+    const u = T.shareLink(d, id);
+    const m = u.match(RX);
+    assert.ok(m, `shareLink(${d}, ${id}) = ${u}`);
+    assert.equal(`${m[1]}.${m[2]}.${m[3]}`, d);
+    assert.equal(m[4], id);
+    const q = new URL(u);
+    assert.deepEqual([...q.searchParams.keys()], ['d', 'v']);
+    assert.equal(q.hash, '');
+    // 15.11.2026: «Поделиться» — страница с превью v/<id>/ (голосование по законопроекту) или прямой shareLink (процедурное)
+    const c = T.cardLink(d, id);
+    const f = l.split('|');
+    if (f.length >= 6 && /^\d+-\d+$/.test(f[1]))
+      assert.equal(c, `https://ruslan7121.github.io/kalendar-zakonov/v/${id}/?p=2`);
+    else assert.equal(c, u);
+    n++;
+  }
 assert.ok(n > 300, `мало голосований для проверки ссылок: ${n}`);
-assert.equal(T.shareLink('11.11.2026', '136361'), 'https://ruslan7121.github.io/kalendar-zakonov/?d=11.11.2026&v=136361');
+assert.equal(
+  T.shareLink('11.11.2026', '136361'),
+  'https://ruslan7121.github.io/kalendar-zakonov/?d=11.11.2026&v=136361',
+);
 
 // Все места, где сайт строит ссылку «Поделиться», идут через shareLink, и других адресов сайта в коде нет.
-const uiFiles = fs.existsSync(path.join(ROOT, 'src/ui')) ? fs.readdirSync(path.join(ROOT, 'src/ui')).sort().map((f) => 'src/ui/' + f) : [];  // 22.11.2026: код интерфейса частично вынесен в src/ui/
+const uiFiles = fs.existsSync(path.join(ROOT, 'src/ui'))
+  ? fs
+      .readdirSync(path.join(ROOT, 'src/ui'))
+      .sort()
+      .map((f) => 'src/ui/' + f)
+  : []; // 22.11.2026: код интерфейса частично вынесен в src/ui/
 const files = ['src/canvas.tsx', ...uiFiles, 'web/main.tsx', 'web/grok-canvas.tsx', 'web/index.html'];
 if (fs.existsSync(path.join(ROOT, 'web/dist/app.js'))) files.push('web/dist/app.js');
 for (const f of files) {
   const s = fs.readFileSync(path.join(ROOT, f), 'utf8');
-  const bad = s.match(BAD); assert.equal(bad, null, `${f}: найден запрещённый адрес «${bad && bad[0]}» (Cursor/Netlify)`);
-  for (const m of s.matchAll(/https?:\/\/[^\s'"`)<>]*github\.io[^\s'"`)<>]*/g)) assert.match(m[0], /^https:\/\/ruslan7121\.github\.io\/kalendar-zakonov(\/[A-Za-z0-9._\/-]*)?$/, `${f}: чужой адрес github.io ${m[0]}`);
+  const bad = s.match(BAD);
+  assert.equal(bad, null, `${f}: найден запрещённый адрес «${bad && bad[0]}» (Cursor/Netlify)`);
+  for (const m of s.matchAll(/https?:\/\/[^\s'"`)<>]*github\.io[^\s'"`)<>]*/g))
+    assert.match(
+      m[0],
+      /^https:\/\/ruslan7121\.github\.io\/kalendar-zakonov(\/[A-Za-z0-9._\/-]*)?$/,
+      `${f}: чужой адрес github.io ${m[0]}`,
+    );
 }
 const src = ['src/canvas.tsx', ...uiFiles].map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
 assert.equal((src.match(/[?&]d=\$\{/g) || []).length, 1, 'ссылка ?d=…&v=… должна собираться только в shareLink');
 assert.ok(/const u = cardLink\(day, id\)/.test(src), 'кнопка «Поделиться» не использует cardLink (страница с превью)');
 // 15.11.2026 (решение владельца): под картинками карточки нет «Скопировать ссылку на голосование» и сырого адреса — ссылку дает «Поделиться»:
 // на компьютере первой в столбике кнопок карточки ([data-cardbtns]), на телефоне внизу карточки ([data-share-bottom]).
-assert.ok(!/Скопировать ссылку на голосование/.test(src.replace(/\/\*[\s\S]*?\*\//g, '')), 'под картинками не должно быть кнопки «Скопировать ссылку на голосование»');
-assert.ok(/data-cardbtns="1"[^\n]*?><ShareBtn day=\{day\} id=\{v\.id\}/.test(src), '«Поделиться» на компьютере — первая в столбике кнопок карточки');
-assert.ok(/data-share-bottom="1"[^\n]*<ShareBtn day=\{day\} id=\{v\.id\} m \/>/.test(src), '«Поделиться карточкой» на телефоне — внизу карточки');
+assert.ok(
+  !/Скопировать ссылку на голосование/.test(src.replace(/\/\*[\s\S]*?\*\//g, '')),
+  'под картинками не должно быть кнопки «Скопировать ссылку на голосование»',
+);
+assert.ok(
+  /data-cardbtns="1"[^\n]*?><ShareBtn day=\{day\} id=\{v\.id\}/.test(src),
+  '«Поделиться» на компьютере — первая в столбике кнопок карточки',
+);
+assert.ok(
+  /data-share-bottom="1"[^\n]*<ShareBtn day=\{day\} id=\{v\.id\} m \/>/.test(src),
+  '«Поделиться карточкой» на телефоне — внизу карточки',
+);
 // «Поделиться» у закона — без окна alert, с подсказкой над кнопкой, которая не выходит за рамку окна (CopyTip)
 assert.ok(!/alert\(/.test(src.replace(/\/\*[\s\S]*?\*\//g, '')), 'на сайте не должно быть окон alert');
 assert.ok(/function CopyTip/.test(src) && /function LawShare/.test(src), 'нет CopyTip / LawShare');

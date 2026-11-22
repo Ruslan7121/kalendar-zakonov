@@ -1,0 +1,12 @@
+# Настройки инструментов Python (22.11.2026). Проверка: ruff check . && ruff format --check .
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["extracts", "out", "web/dist", "web/gen", "node_modules"]
+
+[tool.ruff.lint]
+# F — ошибки и неиспользуемое (pyflakes), E9 — синтаксис, W6 — устаревшие конструкции, B006/B008 — опасные значения по умолчанию
+select = ["F", "E9", "W6", "B006"]
+
+[tool.ruff.format]
+quote-style = "single"

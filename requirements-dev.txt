@@ -1,0 +1,2 @@
+# Инструменты проверки стиля Python (закреплены намеренно): pip install -r requirements-dev.txt
+ruff==0.17.6

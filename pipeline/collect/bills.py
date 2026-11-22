@@ -11,11 +11,19 @@ note_unreadable/no_note — не чаще раза в SOZD_TTL_HOURS);
 status: ok | note_fail (не скачалась) | note_unreadable (скан) | no_note (нет на sozd) | sozd_fail.
 Запуск: python3 bills.py [DD.MM.YYYY ...]   (без аргументов — все дни из canvas)
          python3 bills.py --one 123456-8 [--force]   (ручная догрузка одного; --force — мимо TTL)"""
+
 import sys, os, re, json, zipfile, subprocess, time, threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
-sys.path[:0] = [os.path.dirname(os.path.abspath(__file__)), os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib')]; import common as C
+
+sys.path[:0] = [
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'),
+]
+import common as C
 import sozd_cache as S
-D = os.path.join(C.EXTR, 'bills'); os.makedirs(D, exist_ok=True)
+
+D = os.path.join(C.EXTR, 'bills')
+os.makedirs(D, exist_ok=True)
 # HTML sozd — единый кэш sozd_cache.DIR ($GD_DUMA/bills/), общий с track.py (пункт 6)
 
 # ускорено: больше воркеров, меньше задержка
@@ -28,13 +36,17 @@ _last = [0.0]
 # версия формата записи: 2 — сохранены все документы карточки и тексты таблицы/ФЭО/заключения (единый сбор для всех карточек)
 REC_V = 2
 # дополнительные документы: поле записи, подпись на sozd, предел текста
-EXTRA = [('table', r'равнительн|соответствия', 'сравнительная таблица'),
-         ('fin', r'Финансово-экономическ', 'финансово-экономическое обоснование'),
-         ('committee', r'Заключение ответственного комитета', 'заключение ответственного комитета')]
+EXTRA = [
+    ('table', r'равнительн|соответствия', 'сравнительная таблица'),
+    ('fin', r'Финансово-экономическ', 'финансово-экономическое обоснование'),
+    ('committee', r'Заключение ответственного комитета', 'заключение ответственного комитета'),
+]
 
-FALLBACK = [('текст законопроекта к первому чтению', r'Текст законопроекта, подготовленного к рассмотрению'),
-            ('текст внесенного законопроекта', r'Текст внесенного законопроекта|Текст законопроекта, внесенного'),
-            ('заключение ответственного комитета', r'Заключение ответственного комитета')]
+FALLBACK = [
+    ('текст законопроекта к первому чтению', r'Текст законопроекта, подготовленного к рассмотрению'),
+    ('текст внесенного законопроекта', r'Текст внесенного законопроекта|Текст законопроекта, внесенного'),
+    ('заключение ответственного комитета', r'Заключение ответственного комитета'),
+]
 
 
 def sozd_title(src):
@@ -49,28 +61,43 @@ def sozd_title(src):
     c = C.text(b.group(1)).strip() if b else ''
     return re.sub(r'\s+', ' ', f'{t} {c}' if c else t).strip()
 
+
 def note_text(path):
     b = open(path, 'rb').read(4)
     if b == b'PK\x03\x04':
         x = zipfile.ZipFile(path).read('word/document.xml').decode('utf8', 'ignore')
-        return '\n'.join(re.sub(r'\s+', ' ', ''.join(re.findall(r'<w:t[^>]*>([^<]*)</w:t>', p))).strip() for p in re.findall(r'<w:p[ >].*?</w:p>', x, re.S))
+        return '\n'.join(
+            re.sub(r'\s+', ' ', ''.join(re.findall(r'<w:t[^>]*>([^<]*)</w:t>', p))).strip()
+            for p in re.findall(r'<w:p[ >].*?</w:p>', x, re.S)
+        )
     if b == b'\xd0\xcf\x11\xe0':  # старый .doc (OLE): antiword, затем catdoc, затем LibreOffice
         for cmd in (['antiword', '-w', '0', path], ['catdoc', '-w', path]):
             try:
                 r = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-                if r.returncode == 0 and r.stdout.strip(): return r.stdout
-            except (OSError, subprocess.SubprocessError): pass
+                if r.returncode == 0 and r.stdout.strip():
+                    return r.stdout
+            except (OSError, subprocess.SubprocessError):
+                pass
         try:
             import tempfile, shutil
+
             with tempfile.TemporaryDirectory() as td:
-                src = os.path.join(td, 'x.doc'); shutil.copy(path, src)
-                subprocess.run(['soffice', '--headless', '--convert-to', 'txt:Text', '--outdir', td, src], capture_output=True, timeout=120)
+                src = os.path.join(td, 'x.doc')
+                shutil.copy(path, src)
+                subprocess.run(
+                    ['soffice', '--headless', '--convert-to', 'txt:Text', '--outdir', td, src],
+                    capture_output=True,
+                    timeout=120,
+                )
                 t = os.path.join(td, 'x.txt')
                 return open(t, encoding='utf8', errors='ignore').read() if os.path.exists(t) else ''
-        except (OSError, subprocess.SubprocessError): return ''
+        except (OSError, subprocess.SubprocessError):
+            return ''
     if b[:4] == b'%PDF':
-        r = subprocess.run(['pdftotext', '-layout', path, '-'], capture_output=True, text=True); return r.stdout
+        r = subprocess.run(['pdftotext', '-layout', path, '-'], capture_output=True, text=True)
+        return r.stdout
     return ''
+
 
 def polite_wait():
     with _lock:
@@ -80,13 +107,15 @@ def polite_wait():
             time.sleep(wait)
         _last[0] = time.time()
 
+
 def fetch_retry(url, out, deadline=90, tries=3):
     for i in range(tries):
         polite_wait()
         if C.fetch(url, out, deadline):
             return True
-        time.sleep(1.2 * (2 ** i))
+        time.sleep(1.2 * (2**i))
     return False
+
 
 def note_ok(rec):
     """Запись завершена: есть непустой текст официальной записки (пробелы не в счёт)."""
@@ -127,13 +156,17 @@ def agenda_items(src, days, have):
     """18.11.2026: законопроекты повестки, по которым голосования не было («не рассматривались»): (день, '0', номер).
     Для них тоже нужен текст (записка или запасные документы), чтобы написать «Суть»."""
     m = re.search(r'const CAL: any = (\{.*\});', src)
-    if not m: return []
-    try: cal = json.loads(m.group(1))
-    except ValueError: return []
+    if not m:
+        return []
+    try:
+        cal = json.loads(m.group(1))
+    except ValueError:
+        return []
     voted = {n for _, _, n, _, _ in C.votes(src)} | set(have)
     res = []
     for p in cal.get('p', []):
-        if days and p.get('d') not in days: continue
+        if days and p.get('d') not in days:
+            continue
         for a in p.get('a') or []:
             n = a[0] if a else ''
             if re.fullmatch(r'\d+-\d+', n or '') and n not in voted and n not in {r[2] for r in res}:
@@ -143,7 +176,9 @@ def agenda_items(src, days, have):
 
 def load_sozd(n, refresh=False):
     """HTML карточки sozd из единого кэша sozd_cache (TTL, маркер неудачи, прошлый хороший HTML при 504)."""
-    src, st = S.get(n, refresh=refresh, deadline=90, fetcher=lambda u, o, d: fetch_retry(u, o, d, 3), log='bills_fail.log')
+    src, st = S.get(
+        n, refresh=refresh, deadline=90, fetcher=lambda u, o, d: fetch_retry(u, o, d, 3), log='bills_fail.log'
+    )
     return src, st
 
 
@@ -164,17 +199,25 @@ def one(n, day, vid, force=False):
             old['tried_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
             json.dump(old, open(out, 'w'), ensure_ascii=False, indent=1)
         return 'fail'
-    rec = {'n': n, 'day': old.get('day') if old.get('day') not in (None, '', 'manual') else day,
-           'vote': old.get('vote') if old.get('vote') not in (None, '', '0') else vid,
-           'title': sozd_title(src), 'note': '', 'note_url': ''}
+    rec = {
+        'n': n,
+        'day': old.get('day') if old.get('day') not in (None, '', 'manual') else day,
+        'vote': old.get('vote') if old.get('vote') not in (None, '', '0') else vid,
+        'title': sozd_title(src),
+        'note': '',
+        'note_url': '',
+    }
     # подпись файла на sozd обёрнута в div-ы с ~500 пробелами — окно 400 символов её не видело (пустые записки)
     dl = [(u, C.text(a)) for u, a in re.findall(r'href="(/download/[^"]+)"[^>]*>(.{0,3000}?)</a>', src, re.S)]
     pz = next((u for u, a in dl if 'ояснительн' in a), None)
     status = 'ok'
     fb_done = False
-    if note_ok(old) and not force:  # текст записки уже есть — не скачиваем заново (повтор только ради дополнительных документов)
+    if (
+        note_ok(old) and not force
+    ):  # текст записки уже есть — не скачиваем заново (повтор только ради дополнительных документов)
         rec['note'], rec['note_url'] = old['note'], old.get('note_url', '')
-        if old.get('note_kind'): rec['note_kind'] = old['note_kind']
+        if old.get('note_kind'):
+            rec['note_kind'] = old['note_kind']
     elif pz:
         f = f'/tmp/pz_{n}.bin'
         rec['note_url'] = 'https://sozd.duma.gov.ru' + pz
@@ -207,19 +250,25 @@ def one(n, day, vid, force=False):
                 break
     # 18.11.2026: единый сбор для всех карточек — все документы карточки (тип, подпись, ссылка) и тексты
     # сравнительной таблицы, ФЭО и заключения комитета (ничего не затирается пустым результатом)
-    rec['docs'] = [{'label': re.sub(r'\s+', ' ', a).strip()[:200], 'url': 'https://sozd.duma.gov.ru' + u} for u, a in dl]
+    rec['docs'] = [
+        {'label': re.sub(r'\s+', ' ', a).strip()[:200], 'url': 'https://sozd.duma.gov.ru' + u} for u, a in dl
+    ]
     for fld, pat, kind in EXTRA:
         u = next((u for u, a in dl if re.search(pat, a, re.I)), None)
         if not u:
-            if old.get(fld): rec[fld] = old[fld]
+            if old.get(fld):
+                rec[fld] = old[fld]
             continue
         f = f'/tmp/x_{fld}_{n}.bin'
         tx = ''
         if fetch_retry('https://sozd.duma.gov.ru' + u, f, 150, 2):
             tx = note_text(f)[:30000].strip()
-        if tx: rec[fld], rec[fld + '_url'] = tx, 'https://sozd.duma.gov.ru' + u
-        elif old.get(fld): rec[fld], rec[fld + '_url'] = old[fld], old.get(fld + '_url', '')
-        else: rec[fld + '_url'] = 'https://sozd.duma.gov.ru' + u  # документ есть, текст не прочитан (скан)
+        if tx:
+            rec[fld], rec[fld + '_url'] = tx, 'https://sozd.duma.gov.ru' + u
+        elif old.get(fld):
+            rec[fld], rec[fld + '_url'] = old[fld], old.get(fld + '_url', '')
+        else:
+            rec[fld + '_url'] = 'https://sozd.duma.gov.ru' + u  # документ есть, текст не прочитан (скан)
     rec['v'] = REC_V
     # не затирать уже полученный официальный текст неудачной/пустой загрузкой
     if note_ok(old) and not note_ok(rec):
@@ -238,15 +287,18 @@ def one(n, day, vid, force=False):
     json.dump(rec, open(out, 'w'), ensure_ascii=False, indent=1)
     return 'ok' if rec['status'] == 'ok' else 'partial'
 
+
 if __name__ == '__main__':
     if len(sys.argv) >= 3 and sys.argv[1] == '--one':
-        n = sys.argv[2]; force = '--force' in sys.argv
+        n = sys.argv[2]
+        force = '--force' in sys.argv
         print(f'Ручная догрузка: {n}' + (' (--force: свежий sozd и записка)' if force else ''))
         r = one(n, 'manual', '0', force=force)
         print(n, r)
         sys.exit(0 if r != 'fail' else 1)
 
-    src = C.read_canvas(); days = sys.argv[1:]
+    src = C.read_canvas()
+    days = sys.argv[1:]
     items = [(d, v, n) for d, v, n, q, r in C.votes(src) if re.fullmatch(r'\d+-\d+', n) and (not days or d in days)]
     items += agenda_items(src, days, {n for _, _, n in items})
     seen = {}

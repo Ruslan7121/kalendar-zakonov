@@ -1,6 +1,11 @@
 """Бюджет 615-9: блоки «по годам» и «Было → Стало» есть в данных и согласованы между собой."""
+
 import os, sys, unittest
-sys.path[:0] = [os.path.join(os.path.join(os.path.dirname(__file__), '..', '..', 'pipeline'), d) for d in ('lib', 'collect', 'merge', 'check')]
+
+sys.path[:0] = [
+    os.path.join(os.path.join(os.path.dirname(__file__), '..', '..', 'pipeline'), d)
+    for d in ('lib', 'collect', 'merge', 'check')
+]
 import common as C
 
 num = lambda x: float(x.replace(' ', '').replace(',', '.'))
@@ -8,7 +13,9 @@ num = lambda x: float(x.replace(' ', '').replace(',', '.'))
 
 class BudgetPlus(unittest.TestCase):
     def test_blocks(self):
-        b = C.get_block(open(os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'canvas.tsx')).read(), 'BUDGET')['615-9']
+        b = C.get_block(
+            open(os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'canvas.tsx')).read(), 'BUDGET'
+        )['615-9']
         y, w = b['y'], b['w']
         self.assertEqual(len(y['cols']), 5)
         rows = {r[0]: r for r in y['rows']}
