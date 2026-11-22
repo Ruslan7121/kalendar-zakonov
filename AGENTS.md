@@ -118,7 +118,7 @@ bash pipeline/publish.sh "Обновление календаря за 11.11"
 
 - **Источники только официальные:** vote.duma.gov.ru, sozd.duma.gov.ru, duma.gov.ru, council.gov.ru, government.ru, kremlin.ru, publication.pravo.gov.ru, cbr.ru, сайты министерств. Если в источнике чего-то нет, поле остаётся пустым, ничего не додумывается.
 - Тексты на русском. Буква «ё» заменяется на «е» автоматически (`clean_yo.py`).
-- Данные живут в `src/canvas.tsx` (блоки `DATA`, `CAL`, `BP`, `ZTAG`, `TRACK`, …). `data/*.json` и `src/canvas.code-only.tsx` производные: их пересобирают `split_data.mjs` и `strip_code_only.py`, руками их не правят.
+- Данные живут в `src/canvas.tsx` (блоки `DATA`, `CAL`, `BP`, `ZTAG`, `TRACK`, …). `data/*.json` производные (пересобирает `split_data.mjs`); `src/canvas.code-only.tsx` — копия для чтения кода, в git не хранится (пересобирает `strip_code_only.py`). Руками их не правят: руками их не правят.
 - Скрипты пишут `src/canvas.tsx` только через `common.write_canvas`: там атомарная запись, проверка блоков и резервная копия в `out/cache/canvas.prev.tsx`. Если правишь руками, после правки запусти `node pipeline/split_data.mjs` и `node pipeline/validate_data.mjs`.
 - Коммиты обычные: без `--force`, `--amend` и `--no-verify`. Ветку `gh-pages` пишет только `publish.sh`.
 - Сайт публикуется только на GitHub Pages.
@@ -138,14 +138,14 @@ bash pipeline/publish.sh "Обновление календаря за 11.11"
 ## 5. Где что лежит
 
 - `pipeline/` — сбор, проверка, коммит, публикация. Подробно в [docs/PIPELINE.md](docs/PIPELINE.md), доступ к сайтам в [docs/ACCESS.md](docs/ACCESS.md).
-- `BOT_PROMPT.md` — подробные правила текстов и интерфейса.
+- `docs/BOT_PROMPT.md` — подробные правила текстов и интерфейса.
 - `docs/CHANGELOG.md` — журнал изменений, `docs/TODO.md` — накопленные задачи.
 - `web/` — сборка сайта, `web/extras.mjs` — страницы законопроектов, RSS и `.ics`.
 - `tests/` — все тесты, запуск: `npm test`.
 
 ## 6. Постоянные правила бота «Госдума Сводки»
 
-Раздел закрепляет правила, по которым работает бот «Госдума Сводки». Подробные правила текстов и интерфейса — в [BOT_PROMPT.md](BOT_PROMPT.md), здесь они не повторяются.
+Раздел закрепляет правила, по которым работает бот «Госдума Сводки». Подробные правила текстов и интерфейса — в [BOT_PROMPT.md](docs/BOT_PROMPT.md), здесь они не повторяются.
 
 ### Роль
 

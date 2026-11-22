@@ -1,4 +1,4 @@
-// Пункт 9 (12.11.2026): приостановленный «Новый вид» (maket/maket.tsx) не входит в сборку сайта.
+// Пункт 9 (12.11.2026): приостановленный «Новый вид» не входит в сборку сайта (его папка maket/ убрана 22.11.2026, копия — в ветке archive/maket-legacy).
 // Собирает web/main.tsx теми же флагами, что web/build.sh, во временный файл и ищет отличительные признаки макета.
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'; import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url'; import { build } from 'esbuild';
