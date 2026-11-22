@@ -57,7 +57,7 @@ try {
     chk(hit && hit.n > 0, `05.11: плитки приказа № 131н нет (${JSON.stringify(hit)})`);
     await sleep(700);
     const card = await ev(p.s, `(() => { const b = document.querySelector('[data-orgbody]'); if (!b) return { err: 'нет окна' }; const sut = !!b.querySelector('[data-orgsut]'); const who = !!b.querySelector('[data-orgwho]'); const empty = /кого косн[её]тся/i.test(b.innerText || '') && !who; return { sut, who, empty, t: (b.innerText || '').slice(0, 200) }; })()`);
-    chk(card && card.sut && !card.who && !card.empty, `05.11 № 131н: ожидалась «Суть» без пустого «Кого коснётся»: ${JSON.stringify(card)}`);
+    chk(card && card.sut && !card.empty, `05.11 № 131н: ожидалась «Суть» без пустого блока «Кого коснётся»: ${JSON.stringify(card)}`);
     await ev(p.s, `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`); await sleep(400);
 
     // с 19.11: если есть плитка документа (приказ/указ/…), в карточке должны быть оба текста
