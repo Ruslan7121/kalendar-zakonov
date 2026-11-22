@@ -187,6 +187,79 @@ try {
     await p.close();
     rep.push('звёздочка над панелью');
   }
+
+  // 7. имитация экранной клавиатуры: окно становится ниже, пока поле в фокусе; панель и «Наверх» скрыты, поле видно; потом все возвращается
+  {
+    const p = await open('/?tab=i');
+    await p.waitForSelector('[data-iq]', { timeout: 15000 });
+    await sleep(600);
+    const full = p.viewportSize();
+    await p.tap('[data-iq]');
+    await p.setViewportSize({ width: full.width, height: Math.round(full.height * 0.55) }); // как будто поднялась клавиатура
+    await sleep(500);
+    chk(
+      await p.evaluate(
+        () =>
+          document.documentElement.hasAttribute('data-kb') &&
+          document.documentElement.style.getPropertyValue('--gd-kb') === '1' &&
+          getComputedStyle(document.querySelector('[data-mnavbar]')).visibility === 'hidden',
+      ),
+      'с клавиатурой: нижняя панель не скрыта или нет data-kb/--gd-kb',
+    );
+    chk(
+      await p.evaluate(() => {
+        const r = document.querySelector('[data-iq]').getBoundingClientRect();
+        return r.top >= 0 && r.bottom <= window.innerHeight;
+      }),
+      'с клавиатурой: поле поиска вышло за видимую область',
+    );
+    await p.setViewportSize(full);
+    await p.evaluate(() => document.activeElement.blur());
+    chk(
+      await until(
+        p,
+        () =>
+          !document.documentElement.hasAttribute('data-kb') &&
+          getComputedStyle(document.querySelector('[data-mnavbar]')).visibility === 'visible',
+        3500,
+      ),
+      'после клавиатуры: панель не вернулась за 3,5 с',
+    );
+    const g = await p.evaluate(() => {
+      const b = document.querySelector('[data-mnavbar]').getBoundingClientRect();
+      const v = window.visualViewport;
+      return [Math.round(b.bottom), Math.round(v.height + v.offsetTop)];
+    });
+    chk(Math.abs(g[0] - g[1]) <= 2, `после клавиатуры панель не у нижнего края (${g[0]} против ${g[1]})`);
+    await p.close();
+    rep.push('имитация клавиатуры: скрытие, поле видно, возврат на место');
+  }
+
+  // 8. стек слоев: Escape закрывает только верхний слой (документ → лента органа → карта)
+  {
+    const p = await open('/?tab=c');
+    await p.waitForSelector('[data-omtile]', { timeout: 15000 });
+    await sleep(500);
+    await p.evaluate(() => document.querySelector('[data-omtile]').click());
+    await p.waitForSelector('[data-orgmap="feed"]', { timeout: 8000 });
+    await p.waitForSelector('[data-omdoc]', { timeout: 8000 });
+    await p.evaluate(() => document.querySelector('[data-omdoc]').click());
+    await p.waitForSelector('[data-gdwin]', { timeout: 8000 });
+    await sleep(400);
+    await p.keyboard.press('Escape');
+    chk(await until(p, () => !document.querySelector('[data-gdwin]'), 2500), 'Escape не закрыл окно документа');
+    chk(
+      await p.evaluate(() => !!document.querySelector('[data-orgmap="feed"]')),
+      'Escape закрыл ленту органа вместе с окном документа',
+    );
+    await p.keyboard.press('Escape');
+    chk(
+      await until(p, () => !document.querySelector('[data-orgmap="feed"]'), 2500),
+      'второй Escape не вернул из ленты органа на карту',
+    );
+    await p.close();
+    rep.push('Escape закрывает слои по одному');
+  }
 } finally {
   await browser.close();
   SITE.close();
