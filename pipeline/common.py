@@ -3,7 +3,7 @@ import os, re, json, subprocess, html, datetime as dt
 # Канон путей (одна точка для всех скриптов конвейера, см. docs/PIPELINE.md):
 #   GD_ROOT — git-клон github.com/Ruslan7121/kalendar-zakonov (по умолчанию — каталог над pipeline/);
 #   CANVAS  — исходник сайта $GD_ROOT/src/canvas.tsx (его собирает web/build.sh → gh-pages);
-#             out/canvas.tsx и *.code-only.tsx — производные копии, их пересобирает strip_code_only.py;
+#             src/canvas.code-only.tsx — копия для чтения кода (в git не идет), ее пересобирает strip_code_only.py;
 #   GD_DUMA — внешний вспомогательный каталог вне клона (списки RU-прокси lists/, кэши sozd bills/, cal_cache/,
 #             calendar_static.json, days/*.json голосований); по умолчанию /workspace/duma.
 # Устаревший /workspace/out/canvas.tsx больше не используется по умолчанию.

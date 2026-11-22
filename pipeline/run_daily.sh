@@ -3,7 +3,7 @@
 # Канон: GD_ROOT = git-клон kalendar-zakonov (по умолчанию каталог над pipeline/), CANVAS = $GD_ROOT/src/canvas.tsx.
 # Вспомогательный каталог вне клона: GD_DUMA (по умолчанию /workspace/duma) — списки RU-прокси и кэши.
 # Бот после прогона: пишет тексты по out/TODO.md, коммитит в main (commit.sh) и публикует сайт
-# на GitHub Pages (ветка gh-pages) — см. BOT_PROMPT.md, docs/PIPELINE.md. Страницу Cursor не трогать, Netlify не использовать.
+# на GitHub Pages (ветка gh-pages) — см. docs/BOT_PROMPT.md, docs/PIPELINE.md. Страницу Cursor не трогать, Netlify не использовать.
 set -u
 cd "$(dirname "$0")"
 export GD_ROOT="${GD_ROOT:-$(cd .. && pwd)}"
@@ -80,7 +80,7 @@ echo "[список задач]"
 python3 todo.py
 # 19.11.2026 (правило 13): тексты дня пишет бот; прогон только сообщает, готовы ли они (код 1 — «тексты не готовы»)
 python3 texts_check.py "$DAY" || true
-echo "[копии: src/canvas.code-only.tsx, out/canvas.tsx, out/canvas.code-only.tsx]"
+echo "[копия для чтения кода: src/canvas.code-only.tsx]"
 python3 strip_code_only.py || echo "strip_code_only: ошибка" >&2
 echo "[данные сайта по месяцам: data/core.json, data/months/*.json, data/index.json]"
 # 12.11.2026 (п. 10): сайт берёт данные не из JS, а из data/*.json — после любых правок canvas их пересобирает split_data.mjs.

@@ -1,9 +1,15 @@
+# Python и Node
 __pycache__/
 *.pyc
-node_modules
+node_modules/
+
+# сборка сайта: web/dist — результат npm run build, web/gen — код сайта без данных и оглавление (пишет pipeline/split_data.mjs)
 web/dist/
-# код сайта без данных и оглавление — пишет pipeline/split_data.mjs при каждой сборке (данные — в data/, они в git)
 web/gen/
+
+# копия канона для чтения кода (пишет pipeline/strip_code_only.py); в git не хранится
+src/canvas.code-only.tsx
+
 # рабочие файлы конвейера (пишутся в клон, в git не идут)
 out/logs/
 out/cache/
@@ -11,7 +17,16 @@ out/laws_src_debug/
 out/TODO.md
 out/calendar.json
 out/votes/
+out/full/
+out/canvas.tsx
+out/canvas.code-only.tsx
 extracts/bills_html/
 
 # временные файлы тестов
 tests/js/.tmp-*/
+
+# редакторы и система
+.DS_Store
+.idea/
+.vscode/
+*.swp
