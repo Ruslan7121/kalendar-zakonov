@@ -186,6 +186,15 @@ try {
       chk(/недел/.test(many) && many !== one, `выбор нескольких недель не суммируется (${ns}): «${one}» → «${many}»`);
       chk(await ev(p.s, `document.querySelectorAll('[data-${ns}cell][aria-pressed="true"]').length >= 14`), `в календаре не подсвечены несколько недель (${ns})`);
       await click(p, `[data-${ns}done]`); await sleep(250); await p.close(); }
+    /* ссылка на карточку (?d=&v=) используется один раз: при возврате в раздел карточка заново не открывается */
+    { const p = await open('/?d=22.10.2026&v=136156'); chk(await until(p.s, `!!document.querySelector('[data-gdwin]')`, 12000), 'ссылка на карточку не открыла карточку');
+      await click(p, '[data-gdclose]'); await sleep(700);
+      const tab = (re) => ev(p.s, `[...document.querySelectorAll('[role=tablist] [role=tab]')].find((b) => ${re}.test(b.textContent)).click()`);
+      await tab('/Новости/'); await sleep(900); await tab('/Пленарные/'); await sleep(1200);
+      chk(await ev(p.s, `!document.querySelector('[data-gdwin]')`), 'после возврата в «Пленарные заседания» снова открылась карточка из ссылки');
+      await tab('/Работа/'); await sleep(900); await tab('/Пленарные/'); await sleep(1000);
+      chk(await ev(p.s, `!document.querySelector('[data-gdwin]')`), 'после переключения вкладок снова открылась карточка из ссылки');
+      await p.close(); }
     /* пустые состояния с подсказкой и «назад» от левого края окна */
     { const p = await open('/?tab=c'); chk(await until(p.s, `!!document.querySelector('[data-omtile]')`, 8000), 'нет плиток для проверки пустого состояния');
       await click(p, '[data-omnext]'); await sleep(500);
