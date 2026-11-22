@@ -44,7 +44,7 @@ try {
     locale: 'ru-RU',
     timezoneId: 'Europe/Moscow',
   });
-  const open = async (url) => {
+  const openOnce = async (url) => {
     const p = await ctx.newPage();
     const errs = [];
     let listening = false; // ошибки считаются только после повторной загрузки: при перезагрузке страница, которую закрывают, может выдавать лишнее
@@ -53,16 +53,32 @@ try {
     });
     /* локальный сервер отвечает 404 на live.json и отсутствующие месяцы — WebKit пишет это как «access control checks» */ p.__errs =
       errs;
-    await p.goto(SITE.BASE + url, { waitUntil: 'load' });
-    await p.evaluate(() => {
-      try {
-        localStorage.removeItem('kz_state_v1');
-        localStorage.removeItem('kz_my_v1');
-      } catch (e) {}
-    });
-    await p.reload({ waitUntil: 'load' });
+    try {
+      await p.goto(SITE.BASE + url, { waitUntil: 'load' });
+      await p.evaluate(() => {
+        try {
+          localStorage.removeItem('kz_state_v1');
+          localStorage.removeItem('kz_my_v1');
+        } catch (e) {}
+      });
+      await p.reload({ waitUntil: 'load' });
+    } catch (e) {
+      await p.close().catch(() => {});
+      throw e;
+    }
     listening = true;
     return p;
+  };
+  // WebKit при нагрузке (весь набор тестов идет параллельно с другими браузерами) иногда сообщает о внутренней ошибке загрузки — пробуем заново
+  const open = async (url) => {
+    for (let k = 1; ; k++) {
+      try {
+        return await openOnce(url);
+      } catch (e) {
+        if (k >= 3 || !/internal error|Target (page|closed)|Timeout/.test(String(e.message))) throw e;
+        await sleep(500);
+      }
+    }
   };
   const tab = (p, name) =>
     p.evaluate((n) => {
@@ -105,9 +121,10 @@ try {
       await p.evaluate(
         () =>
           document.documentElement.hasAttribute('data-kb') &&
-          getComputedStyle(document.querySelector('[data-mnavbar]')).visibility === 'hidden',
+          getComputedStyle(document.querySelector('[data-mnavbar]')).visibility === 'visible' &&
+          document.documentElement.style.getPropertyValue('--gd-kbo') === '0px',
       ),
-      `вкладка ${t}: при наборе нижняя панель не скрыта`,
+      `вкладка ${t}: при наборе (без изменения высоты окна) нижняя панель пропала или сдвинута`,
     );
     await p.evaluate(() => document.activeElement.blur());
     chk(
@@ -118,7 +135,7 @@ try {
           getComputedStyle(document.querySelector('[data-mnavbar]')).visibility === 'visible',
         3000,
       ),
-      `вкладка ${t}: после поиска нижняя панель не вернулась за 3 с`,
+      `вкладка ${t}: после поиска нижняя панель не на месте за 3 с`,
     );
     await p.close();
   }
@@ -195,16 +212,22 @@ try {
     await sleep(600);
     const full = p.viewportSize();
     await p.tap('[data-iq]');
-    await p.setViewportSize({ width: full.width, height: Math.round(full.height * 0.55) }); // как будто поднялась клавиатура
+    const kbH = Math.round(full.height * 0.45);
+    await p.setViewportSize({ width: full.width, height: full.height - kbH }); // как будто поднялась клавиатура
     await sleep(500);
+    const under = () =>
+      p.evaluate(() => {
+        const b = document.querySelector('[data-mnavbar]').getBoundingClientRect();
+        return {
+          top: Math.round(b.top),
+          ih: window.innerHeight,
+          kbo: parseInt(document.documentElement.style.getPropertyValue('--gd-kbo')) || 0,
+        };
+      });
+    let u = await under();
     chk(
-      await p.evaluate(
-        () =>
-          document.documentElement.hasAttribute('data-kb') &&
-          document.documentElement.style.getPropertyValue('--gd-kb') === '1' &&
-          getComputedStyle(document.querySelector('[data-mnavbar]')).visibility === 'hidden',
-      ),
-      'с клавиатурой: нижняя панель не скрыта или нет data-kb/--gd-kb',
+      u.kbo >= kbH - 4 && u.top >= u.ih,
+      `с клавиатурой: панель должна быть под клавиатурой (сдвиг ${u.kbo}, верх ${u.top}, окно ${u.ih})`,
     );
     chk(
       await p.evaluate(() => {
@@ -213,26 +236,24 @@ try {
       }),
       'с клавиатурой: поле поиска вышло за видимую область',
     );
-    await p.setViewportSize(full);
+    // «Готово»: фокус снят, окно еще низкое (клавиатура уезжает) — панель по-прежнему под клавиатурой, а не появляется позже
     await p.evaluate(() => document.activeElement.blur());
-    chk(
-      await until(
-        p,
-        () =>
-          !document.documentElement.hasAttribute('data-kb') &&
-          getComputedStyle(document.querySelector('[data-mnavbar]')).visibility === 'visible',
-        3500,
-      ),
-      'после клавиатуры: панель не вернулась за 3,5 с',
-    );
+    await sleep(150);
+    u = await under();
+    chk(u.top >= u.ih, `клавиатура уходит: панель не под ней (верх ${u.top}, окно ${u.ih})`);
+    // окно вернулось: панель сразу на своем месте (у нижнего края), без задержки
+    await p.setViewportSize(full);
+    await sleep(120);
     const g = await p.evaluate(() => {
       const b = document.querySelector('[data-mnavbar]').getBoundingClientRect();
-      const v = window.visualViewport;
-      return [Math.round(b.bottom), Math.round(v.height + v.offsetTop)];
+      return [Math.round(b.bottom), window.innerHeight, !document.documentElement.hasAttribute('data-kb')];
     });
-    chk(Math.abs(g[0] - g[1]) <= 2, `после клавиатуры панель не у нижнего края (${g[0]} против ${g[1]})`);
+    chk(
+      Math.abs(g[0] - g[1]) <= 2 && g[2],
+      `после клавиатуры панель не сразу у нижнего края (${g[0]} против ${g[1]}, data-kb снят: ${g[2]})`,
+    );
     await p.close();
-    rep.push('имитация клавиатуры: скрытие, поле видно, возврат на место');
+    rep.push('имитация клавиатуры: панель под ней, при закрытии уже на месте');
   }
 
   // 8. стек слоев: Escape закрывает только верхний слой (документ → лента органа → карта)
