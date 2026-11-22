@@ -146,7 +146,16 @@ if [ $DRY -eq 1 ]; then echo "--dry-run: коммит и push не делаю"; 
 
 git commit -q -m "Сборка из $SRCB $SRC_SHORT: ${MSG:-публикация} ($JS)"
 PUB_SHA=$(git rev-parse HEAD)
-git push -q "$REMOTE" "HEAD:refs/heads/$BRANCH"     # без --force: не fast-forward → ошибка
+# без --force. Если параллельно выложились новости (data/live.json) и push не fast-forward, до 3 раз подтягиваем свежую ветку
+# и переносим свой коммит поверх нее (файлы разные, конфликта нет); иначе — ошибка
+for try in 1 2 3; do
+  git push -q "$REMOTE" "HEAD:refs/heads/$BRANCH" && break
+  [ "$try" = 3 ] && die "push в $BRANCH отклонен после 3 попыток"
+  echo "publish.sh: push отклонен (попытка $try), подтягиваю $BRANCH и повторяю" >&2
+  git fetch -q "$REMOTE" "$BRANCH"
+  git rebase -q "$REMOTE/$BRANCH" || { git rebase --abort 2>/dev/null; die "не удалось перенести коммит поверх свежего $BRANCH"; }
+  PUB_SHA=$(git rev-parse HEAD); sleep $((try * 3))
+done
 cd "$ROOT"
 git fetch -q "$REMOTE" "$BRANCH"
 echo "Опубликовано: gh-pages $PUB_SHA, $JS"

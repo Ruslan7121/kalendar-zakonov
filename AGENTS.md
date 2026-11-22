@@ -118,7 +118,7 @@ bash pipeline/publish/publish.sh "Обновление календаря за 1
 
 - **Источники только официальные:** vote.duma.gov.ru, sozd.duma.gov.ru, duma.gov.ru, council.gov.ru, government.ru, kremlin.ru, publication.pravo.gov.ru, cbr.ru, сайты министерств. Если в источнике чего-то нет, поле остаётся пустым, ничего не додумывается.
 - Тексты на русском. Буква «ё» заменяется на «е» автоматически (`merge/clean_yo.py`).
-- Данные живут в `src/canvas.tsx` (блоки `DATA`, `CAL`, `BP`, `ZTAG`, `TRACK`, …). `data/*.json` производные (пересобирает `merge/split_data.mjs`); `src/canvas.code-only.tsx` — копия для чтения кода, в git не хранится (пересобирает `merge/strip_code_only.py`). Руками их не правят: руками их не правят.
+- Данные живут в `src/canvas.tsx` (блоки `DATA`, `CAL`, `BP`, `ZTAG`, `TRACK`, …). `data/*.json` производные (пересобирает `merge/split_data.mjs`); `src/canvas.code-only.tsx` — копия для чтения кода, в git не хранится (пересобирает `merge/strip_code_only.py`). Руками их не правят.
 - Скрипты пишут `src/canvas.tsx` только через `common.write_canvas`: там атомарная запись, проверка блоков и резервная копия в `out/cache/canvas.prev.tsx`. Если правишь руками, после правки запусти `node pipeline/merge/split_data.mjs` и `node pipeline/check/validate_data.mjs`.
 - Коммиты обычные: без `--force`, `--amend` и `--no-verify`. Ветку `gh-pages` пишет только `publish/publish.sh`.
 - Сайт публикуется только на GitHub Pages.
