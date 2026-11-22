@@ -27,6 +27,7 @@ export function useViewport(on: boolean) {
     const tg: any = TG;
     let focused = false;
     let closing = false; // клавиатура закрывается: окно еще не вернулось к полной высоте
+    let softClose = false; // закрыли кнопкой «Готово/Найти» (Enter): кнопки внизу видны сразу, под уходящей клавиатурой; иначе (прокрутка пальцем) ждем, пока окно вернется
     let base = window.innerHeight; // полная высота окна без клавиатуры
     let baseW = window.innerWidth;
     const timers: any[] = [];
@@ -45,12 +46,13 @@ export function useViewport(on: boolean) {
       const offset = active ? Math.max(0, base - h) : 0;
       de.style.setProperty('--gd-vh', Math.round(vv ? vv.height : h) + 'px');
       de.style.setProperty('--gd-kbo', Math.round(offset) + 'px');
+      if (closing && !focused && h >= base - 2 && (!vv || Math.abs(vv.offsetTop) <= 2)) closing = false;
       const kb = focused || closing;
       de.style.setProperty('--gd-kb', kb ? '1' : '0');
       if (kb) de.setAttribute('data-kb', '1');
       else de.removeAttribute('data-kb');
       // data-kbf — поле в фокусе: закрепленные внизу кнопки прозрачны (иначе при подъеме клавиатуры они на кадр оказываются над ней и мигают)
-      if (focused) de.setAttribute('data-kbf', '1');
+      if (focused || (closing && !softClose)) de.setAttribute('data-kbf', '1');
       else de.removeAttribute('data-kbf');
     };
     const recheck = () => {
@@ -65,11 +67,15 @@ export function useViewport(on: boolean) {
         ),
       );
     };
+    const onKeyDown = (e: any) => {
+      if (e.key === 'Enter' && isTextInput(e.target)) softClose = true;
+    };
     const onFocusIn = (e: any) => {
       if (!isTextInput(e.target)) return;
       if (!focused && !closing) base = window.innerHeight;
       focused = true;
       closing = false;
+      softClose = false;
       clearTimers();
       update();
     };
@@ -88,6 +94,7 @@ export function useViewport(on: boolean) {
       vv.addEventListener('scroll', update);
     }
     window.addEventListener('resize', update);
+    document.addEventListener('keydown', onKeyDown, true);
     document.addEventListener('focusin', onFocusIn);
     document.addEventListener('focusout', onFocusOut);
     // события Telegram: окно мини-приложения изменило высоту или безопасные зоны
@@ -107,6 +114,7 @@ export function useViewport(on: boolean) {
         vv.removeEventListener('scroll', update);
       }
       window.removeEventListener('resize', update);
+      document.removeEventListener('keydown', onKeyDown, true);
       document.removeEventListener('focusin', onFocusIn);
       document.removeEventListener('focusout', onFocusOut);
       clearTimers();

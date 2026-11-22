@@ -245,8 +245,8 @@ try {
       }),
       'с клавиатурой: поле поиска вышло за видимую область',
     );
-    // «Готово»: фокус снят, окно еще низкое (клавиатура уезжает) — панель по-прежнему под клавиатурой, а не появляется позже
-    await p.evaluate(() => document.activeElement.blur());
+    // «Готово/Найти»: Enter в поле снимает фокус, окно еще низкое (клавиатура уезжает) — панель по-прежнему под клавиатурой, а не появляется позже
+    await p.keyboard.press('Enter');
     await sleep(150);
     chk(
       await p.evaluate(() => getComputedStyle(document.querySelector('[data-mnavbar]')).opacity === '1'),
@@ -267,6 +267,38 @@ try {
     );
     await p.close();
     rep.push('имитация клавиатуры: панель под ней, при закрытии уже на месте');
+  }
+
+  // 7б. клавиатура закрылась прокруткой (не кнопкой «Готово»): пока окно не вернулось, кнопки внизу прозрачны (иначе на секунду мелькают по центру экрана)
+  {
+    const p = await open('/?tab=i');
+    await p.waitForSelector('[data-iq]', { timeout: 15000 });
+    await sleep(600);
+    const full = p.viewportSize();
+    await p.tap('[data-iq]');
+    await p.setViewportSize({ width: full.width, height: Math.round(full.height * 0.55) });
+    await sleep(400);
+    await p.evaluate(() => document.activeElement.blur()); // как при прокрутке: без Enter
+    let seen = false;
+    for (let k = 0; k < 8; k++) {
+      await sleep(50);
+      if (await p.evaluate(() => getComputedStyle(document.querySelector('[data-mnavbar]')).opacity !== '0'))
+        seen = true;
+    }
+    chk(!seen, 'клавиатура закрыта прокруткой: панель мелькнула, пока окно еще низкое');
+    await p.setViewportSize(full);
+    chk(
+      await until(
+        p,
+        () =>
+          getComputedStyle(document.querySelector('[data-mnavbar]')).opacity === '1' &&
+          !document.documentElement.hasAttribute('data-kbf'),
+        2500,
+      ),
+      'после прокрутки панель не вернулась, когда окно стало прежним',
+    );
+    await p.close();
+    rep.push('закрытие прокруткой: без мелькания, возврат после восстановления окна');
   }
 
   // 8. стек слоев: Escape закрывает только верхний слой (документ → лента органа → карта)
