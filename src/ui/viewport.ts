@@ -25,6 +25,7 @@ export function useViewport(on: boolean) {
     const de = document.documentElement;
     const vv: any = window.visualViewport;
     const tg: any = TG;
+    const inTg = !!tg;
     let focused = false;
     let closing = false; // клавиатура закрывается: окно еще не вернулось к полной высоте
     let softClose = false; // закрыли кнопкой «Готово/Найти» (Enter): кнопки внизу видны сразу, под уходящей клавиатурой; иначе (прокрутка пальцем) ждем, пока окно вернется
@@ -38,8 +39,13 @@ export function useViewport(on: boolean) {
         baseW = window.innerWidth; // поворот экрана: старая высота не годится
         base = h;
       }
-      const active = focused || closing;
-      if (!active) base = h; // клавиатуры нет: следим за высотой (панели Safari, поворот)
+      // В Telegram окно после клавиатуры иногда остается ниже экрана до следующего касания: тогда панель оказалась бы посреди экрана.
+      // Полная высота (base) не снижается, и панель все равно сдвигается к нижнему краю экрана.
+      const stuck = inTg && !focused && h < base - 2;
+      const active = focused || closing || stuck;
+      if (!active)
+        base = h; // клавиатуры нет: следим за высотой (панели Safari, поворот)
+      else if (!focused && h > base) base = h;
       if (closing && !focused && h >= base - 2) closing = false;
       // Пока клавиатура открыта или закрывается, закрепленные внизу элементы остаются на своем месте под ней:
       // окно Telegram стало ниже на высоту клавиатуры, и панель сдвигается вниз ровно на эту разницу.
@@ -61,7 +67,7 @@ export function useViewport(on: boolean) {
         timers.push(
           setTimeout(() => {
             if (focused) return;
-            if (ms === KB_RECHECK_MS[KB_RECHECK_MS.length - 1]) closing = false; // дольше не ждем: считаем текущую высоту нормой
+            if (ms === KB_RECHECK_MS[KB_RECHECK_MS.length - 1]) closing = false; // дольше не ждем (в Telegram высота остается прежней и панель сдвинута, вне Telegram текущая высота считается нормой)
             update();
           }, ms),
         ),
