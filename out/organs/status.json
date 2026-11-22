@@ -1,7 +1,7 @@
 {
- "run": "22.11.2026 10:05 МСК",
+ "run": "22.11.2026 11:33 МСК",
  "window": [
-  "15.11.2026",
+  "27.10.2026",
   "22.11.2026"
  ],
  "ahead_to": "25.11.2026",
@@ -14,7 +14,7 @@
   "gov_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=government",
    "status": "ok",
-   "n": 100
+   "n": 400
   },
   "economy_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=59ad7c35-7d14-424e-b305-f964615734bd",
@@ -126,6 +126,6 @@
    "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
   }
  },
- "new": 0,
- "total": 1034
+ "new": 43,
+ "total": 1077
 }
