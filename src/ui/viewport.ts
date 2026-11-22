@@ -49,6 +49,9 @@ export function useViewport(on: boolean) {
       de.style.setProperty('--gd-kb', kb ? '1' : '0');
       if (kb) de.setAttribute('data-kb', '1');
       else de.removeAttribute('data-kb');
+      // data-kbf — поле в фокусе: закрепленные внизу кнопки прозрачны (иначе при подъеме клавиатуры они на кадр оказываются над ней и мигают)
+      if (focused) de.setAttribute('data-kbf', '1');
+      else de.removeAttribute('data-kbf');
     };
     const recheck = () => {
       clearTimers();
@@ -113,6 +116,7 @@ export function useViewport(on: boolean) {
         /* Telegram недоступен */
       }
       de.removeAttribute('data-kb');
+      de.removeAttribute('data-kbf');
       de.style.removeProperty('--gd-kb');
       de.style.removeProperty('--gd-kbo');
     };

@@ -212,6 +212,15 @@ try {
     await sleep(600);
     const full = p.viewportSize();
     await p.tap('[data-iq]');
+    // в момент фокуса (до подъема клавиатуры) кнопки внизу прозрачны, чтобы не мигать над клавиатурой
+    chk(
+      await p.evaluate(
+        () =>
+          document.documentElement.hasAttribute('data-kbf') &&
+          getComputedStyle(document.querySelector('[data-mnavbar]')).opacity === '0',
+      ),
+      'при фокусе нижняя панель не стала прозрачной (мигание при подъеме клавиатуры)',
+    );
     const kbH = Math.round(full.height * 0.45);
     await p.setViewportSize({ width: full.width, height: full.height - kbH }); // как будто поднялась клавиатура
     await sleep(500);
@@ -239,6 +248,10 @@ try {
     // «Готово»: фокус снят, окно еще низкое (клавиатура уезжает) — панель по-прежнему под клавиатурой, а не появляется позже
     await p.evaluate(() => document.activeElement.blur());
     await sleep(150);
+    chk(
+      await p.evaluate(() => getComputedStyle(document.querySelector('[data-mnavbar]')).opacity === '1'),
+      'после снятия фокуса панель осталась прозрачной (должна быть видна под уходящей клавиатурой)',
+    );
     u = await under();
     chk(u.top >= u.ih, `клавиатура уходит: панель не под ней (верх ${u.top}, окно ${u.ih})`);
     // окно вернулось: панель сразу на своем месте (у нижнего края), без задержки
