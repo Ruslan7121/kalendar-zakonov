@@ -301,6 +301,76 @@ try {
     rep.push('закрытие прокруткой: без мелькания, возврат после восстановления окна');
   }
 
+  // 7в. Telegram: окно после клавиатуры осталось низким (так бывает на iPhone до следующего касания) — кнопки внизу
+  // видны и сдвинуты к нижнему краю экрана, а не висят посреди экрана; когда окно вернулось — на месте без сдвига
+  {
+    const tctx = await browser.newContext({
+      ...pw.devices['iPhone 13'],
+      colorScheme: 'dark',
+      locale: 'ru-RU',
+      timezoneId: 'Europe/Moscow',
+    });
+    await tctx.addInitScript(() => {
+      const noop = () => {};
+      const deep = (o) =>
+        new Proxy(o, {
+          get: (t, k) =>
+            k in t
+              ? t[k]
+              : k === 'then'
+                ? undefined
+                : (...a) => (a.length === 1 && typeof a[0] === 'function' ? undefined : noop),
+        });
+      window.Telegram = {
+        WebApp: deep({
+          platform: 'ios',
+          version: '7.0',
+          initData: '',
+          initDataUnsafe: {},
+          themeParams: {},
+          colorScheme: 'dark',
+          isVersionAtLeast: () => false,
+          BackButton: deep({ show: noop, hide: noop, onClick: noop, offClick: noop }),
+          onEvent: noop,
+          offEvent: noop,
+        }),
+      };
+    });
+    const p = await tctx.newPage();
+    await p.goto(SITE.BASE + '/?tab=i', { waitUntil: 'load' });
+    await p.waitForSelector('[data-iq]', { timeout: 15000 });
+    await sleep(800);
+    const full = p.viewportSize();
+    await p.tap('[data-iq]');
+    const kbH = Math.round(full.height * 0.45);
+    await p.setViewportSize({ width: full.width, height: full.height - kbH });
+    await sleep(400);
+    await p.evaluate(() => document.activeElement.blur()); // закрыли прокруткой
+    await sleep(2300); // окно так и не вернулось
+    const st = await p.evaluate(() => {
+      const b = document.querySelector('[data-mnavbar]').getBoundingClientRect();
+      return {
+        op: getComputedStyle(document.querySelector('[data-mnavbar]')).opacity,
+        top: Math.round(b.top),
+        ih: window.innerHeight,
+        kbo: parseInt(document.documentElement.style.getPropertyValue('--gd-kbo')) || 0,
+      };
+    });
+    chk(st.op === '1', 'Telegram, окно осталось низким: панель должна быть видна');
+    chk(
+      st.kbo >= kbH - 4 && st.top >= st.ih,
+      `Telegram, окно осталось низким: панель не сдвинута к нижнему краю экрана (${JSON.stringify(st)})`,
+    );
+    await p.setViewportSize(full);
+    chk(
+      await until(p, () => parseInt(document.documentElement.style.getPropertyValue('--gd-kbo')) === 0, 2000),
+      'Telegram: когда окно вернулось, сдвиг панели не снялся',
+    );
+    await p.close();
+    await tctx.close();
+    rep.push('Telegram, окно осталось низким: панель у нижнего края экрана');
+  }
+
   // 8. стек слоев: Escape закрывает только верхний слой (документ → лента органа → карта)
   {
     const p = await open('/?tab=c');
