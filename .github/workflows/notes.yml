@@ -1,7 +1,7 @@
 # 17.11.2026: разовая и по требованию догрузка пояснительных записок к старым законопроектам (extracts/bills/*.json).
 # Выжимки записок хранятся в git только с 15.11.2026; по ним пишутся «Суть», «Кого коснётся», метки и пары «Что сейчас / Что предлагалось изменить».
 # Запуск: Actions → notes → Run workflow; поле «from» — с какого дня брать голосования (ДД.ММ.ГГГГ, по умолчанию 01.10.2026).
-# Берёт из canvas все дни с голосованиями по законопроектам начиная с этого дня и запускает pipeline/bills.py (sozd через RU-прокси,
+# Берёт из canvas все дни с голосованиями по законопроектам начиная с этого дня и запускает pipeline/collect/bills.py (sozd через RU-прокси,
 # уже полученные записки не перезапрашиваются). Данные сайта не меняет: коммит только extracts/bills/, сайт не пересобирается.
 name: notes
 on:
@@ -46,12 +46,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Записки (pipeline/bills.py по дням с голосованиями)
+      - name: Записки (pipeline/collect/bills.py по дням с голосованиями)
         env:
           IN_FROM: ${{ github.event.inputs.from }}
         run: |
           FROM="01.10.2026"; [[ "$IN_FROM" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{4}$ ]] && FROM="$IN_FROM"
-          cd pipeline
+          cd pipeline/lib
           DAYS="$(python3 - "$FROM" <<'PY'
           import sys, re, datetime as dt, common as C
           p = lambda s: dt.datetime.strptime(s, '%d.%m.%Y')
@@ -66,7 +66,7 @@ jobs:
           PY
           )"
           echo "дней: $(echo $DAYS | wc -w)"; echo "$DAYS"
-          python3 bills.py $DAYS 2>&1 | tee ../notes.log
+          python3 ../collect/bills.py $DAYS 2>&1 | tee ../../notes.log
       - name: Коммит записок (extracts/bills) в main
         run: |
           git add extracts/bills/*.json 2>/dev/null || true

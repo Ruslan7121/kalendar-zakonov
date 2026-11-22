@@ -1,5 +1,5 @@
-# 19.11.2026: официальные тексты документов органов (pipeline/organ_texts.py) → extracts/organs/*.json.
-# По ним пишется «Суть» (3–4 абзаца) и «Кого коснется» карточек органов (AGENTS.md, раздел 2; перенос — pipeline/orgx_merge.py).
+# 19.11.2026: официальные тексты документов органов (pipeline/collect/organ_texts.py) → extracts/organs/*.json.
+# По ним пишется «Суть» (3–4 абзаца) и «Кого коснется» карточек органов (AGENTS.md, раздел 2; перенос — pipeline/merge/orgx_merge.py).
 # PDF с publication.pravo.gov.ru — сканы: распознавание tesseract (rus). Сайт не меняет: коммит только extracts/organs/.
 # Запуск: Actions → organ_texts → Run workflow; «from»/«to» — окно дат документов (ДД.ММ.ГГГГ). Обычный сбор 4 раза в день
 # делает workflow organs (тот же скрипт за 7 дней).
@@ -54,7 +54,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Тексты (pipeline/organ_texts.py)
+      - name: Тексты (pipeline/collect/organ_texts.py)
         env:
           IN_FROM: ${{ github.event.inputs.from }}
           IN_TO: ${{ github.event.inputs.to }}
@@ -64,7 +64,7 @@ jobs:
           [[ "$IN_FROM" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{4}$ ]] && A=(--from "$IN_FROM")
           [[ "$IN_TO" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{4}$ ]] && A+=(--to "$IN_TO")
           [ "$IN_RETRY" = yes ] && A+=(--retry)
-          cd pipeline && python3 organ_texts.py "${A[@]}" 2>&1 | tee ../texts.log
+          python3 pipeline/collect/organ_texts.py "${A[@]}" 2>&1 | tee texts.log
       - name: Коммит текстов (extracts/organs) в main
         run: |
           # тексты могли параллельно прийти из workflow organs: берем свежий main и добавляем только новые и улучшенные (не fail) файлы

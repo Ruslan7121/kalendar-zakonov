@@ -1,4 +1,4 @@
-// П6 (12.11.2026): pipeline/validate_data.mjs — данные сайта проходят проверку схемы, а испорченные (дубль голосования,
+// П6 (12.11.2026): pipeline/check/validate_data.mjs — данные сайта проходят проверку схемы, а испорченные (дубль голосования,
 // битый итог, неверная дата, сломанный JSON) — нет. Без сети.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -7,7 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT } from './load_canvas.mjs';
 
-const V = path.join(ROOT, 'pipeline', 'validate_data.mjs');
+const V = path.join(ROOT, 'pipeline', 'check', 'validate_data.mjs');
 const run = (dir) => spawnSync('node', [V, dir], { encoding: 'utf8' });
 const ok = run(path.join(ROOT, 'data')); assert.equal(ok.status, 0, 'данные data/ не прошли проверку:\n' + ok.stderr);
 const bad = (name, f) => {

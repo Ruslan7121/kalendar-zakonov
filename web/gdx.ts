@@ -1,4 +1,4 @@
-// 12.11.2026 (пункт 10): загрузчик данных сайта по месяцам (data/*.json, их пишет pipeline/split_data.mjs).
+// 12.11.2026 (пункт 10): загрузчик данных сайта по месяцам (data/*.json, их пишет pipeline/merge/split_data.mjs).
 // До первой отрисовки: core + месяц дня из ссылки ?d= (иначе последний день с голосованиями) + текущий месяц календаря.
 // Остальные месяцы — когда экран их просит (GDX.need из canvas), соседние с открытым — заранее, в фоне.
 // Объекты GDX.S.* — те самые константы DATA, CAL, ORG, … кода сайта: месяц вливается в них на месте, в порядке ключей и
@@ -42,7 +42,7 @@ function prefetch(ms: string[]) {
   const go = () => nb.forEach((k) => { if (!loaded.has(k) && !err[k]) load(k); });
   const ric = (window as any).requestIdleCallback; ric ? ric(go, { timeout: 1500 }) : setTimeout(go, 300);
 }
-// 16.11.2026: оперативные новости — data/live.json (пишет pipeline/news_live.py по расписанию workflow news, публикует publish.sh --live).
+// 16.11.2026: оперативные новости — data/live.json (пишет pipeline/collect/news_live.py по расписанию workflow news, публикует publish.sh --live).
 // Имя постоянное, кэш CDN обходится параметром ?t=. Первый ответ — то, что уже было на момент открытия; всё, что пришло позже,
 // попадает в fresh: экран показывает плашку «N новых» и не вставляет их под палец, пока пользователь не нажмет ее.
 const live: { items: any[]; upd: string; fresh: Set<string>; base: boolean } = { items: [], upd: '', fresh: new Set(), base: false };

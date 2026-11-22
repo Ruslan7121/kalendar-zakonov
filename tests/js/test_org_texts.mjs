@@ -1,5 +1,5 @@
 // Правило 15: плитки документов органов без «Сути» и «Кого коснётся» скрываются только с ORG_HIDE_FROM
-// (src/canvas.tsx / pipeline/common.py). Более ранние дни видны и входят в cnt месяца.
+// (src/canvas.tsx / pipeline/lib/common.py). Более ранние дни видны и входят в cnt месяца.
 // Запуск: node tests/js/test_org_texts.mjs
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

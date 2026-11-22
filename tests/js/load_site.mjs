@@ -1,5 +1,5 @@
 // 12.11.2026 (пункт 10): сайт как в браузере, но в Node — загрузчик web/gdx.ts + web/gen/app.tsx (код без данных)
-// с данными из web/dist/data/*.json (их пишет pipeline/split_data.mjs --dist). fetch подменён чтением файлов,
+// с данными из web/dist/data/*.json (их пишет pipeline/merge/split_data.mjs --dist). fetch подменён чтением файлов,
 // window.location — из параметров (?d=&v=), чтобы проверить, какие месяцы грузятся и что видит код сайта.
 // Запуск сборки данных: buildSite() (= первый шаг web/build.sh в отдельную папку).
 import { build } from 'esbuild';
@@ -10,7 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { ROOT } from './load_canvas.mjs';
 
-export function buildData(dist) { execFileSync('node', [path.join(ROOT, 'pipeline/split_data.mjs'), '--dist', dist], { stdio: ['ignore', 'pipe', 'inherit'] }); return path.join(dist, 'data'); }
+export function buildData(dist) { execFileSync('node', [path.join(ROOT, 'pipeline/merge/split_data.mjs'), '--dist', dist], { stdio: ['ignore', 'pipe', 'inherit'] }); return path.join(dist, 'data'); }
 
 let bundled = null;
 async function bundle(names) {

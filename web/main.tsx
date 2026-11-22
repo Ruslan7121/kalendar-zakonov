@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { boot } from './gdx';
-// 12.11.2026 (пункт 10): данные — в data/*.json (pipeline/split_data.mjs). Код сайта (web/gen/app.tsx = src/canvas.tsx
+// 12.11.2026 (пункт 10): данные — в data/*.json (pipeline/merge/split_data.mjs). Код сайта (web/gen/app.tsx = src/canvas.tsx
 // без встроенных данных) выполняется только после загрузки общего файла и месяца первой отрисовки.
 const root = document.getElementById('root')!;
 /* 15.11.2026: внутри Telegram — дождаться скрипта Telegram (index.html, не дольше 2,5 с), чтобы сайт открылся с темой и кнопками Telegram */

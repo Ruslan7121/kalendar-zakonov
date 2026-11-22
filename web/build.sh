@@ -1,13 +1,13 @@
 #!/bin/bash
 # Сборка сайта (то, что лежит в ветке gh-pages):
-#   1) pipeline/split_data.mjs: src/canvas.tsx → data/*.json (в git), web/gen/app.tsx + web/gen/manifest.json (код без данных),
+#   1) pipeline/merge/split_data.mjs: src/canvas.tsx → data/*.json (в git), web/gen/app.tsx + web/gen/manifest.json (код без данных),
 #      web/dist/data/*.<хеш>.json (данные по месяцам для сайта);
 #   2) esbuild web/main.tsx (загрузчик web/gdx.ts + web/gen/app.tsx) → web/dist/app.js; web/index.html → web/dist/index.html.
 set -e
 cd "$(dirname "$0")/.."
 [ -d node_modules ] || npm install --no-audit --no-fund
 mkdir -p web/dist
-node pipeline/split_data.mjs --dist web/dist
+node pipeline/merge/split_data.mjs --dist web/dist
 npx esbuild web/main.tsx --bundle --minify --charset=utf8 --format=iife --jsx=automatic \
   --alias:grok/canvas=./web/grok-canvas.tsx --define:process.env.NODE_ENV='"production"' \
   --outfile=web/dist/app.js --log-level=warning
@@ -24,7 +24,7 @@ const fs = require("fs"); const M = JSON.parse(fs.readFileSync("web/gen/manifest
 const F = {}; for (const k of ["core", ...M.months]) F[k] = M.file[k]; const last = M.DAYS.length ? M.DAYS[M.DAYS.length - 1].slice(3) : "";
 const js = `(function(){try{var F=${JSON.stringify(F)},q=new URLSearchParams(location.search+"&"+location.hash.replace(/^#/,"")),d=q.get("d"),n=new Date(),m=[],seen={};function p(f){if(!f||seen[f])return;seen[f]=1;var l=document.createElement("link");l.rel="preload";l.as="fetch";l.crossOrigin="anonymous";l.href="data/"+f;document.head.appendChild(l);}p(F.core);var sp=q.get("tgWebAppStartParam")||"",sm=sp.match(/^d(\\d\\d)(\\d\\d)(\\d{4})_v/);if(!d&&sm)d=sm[1]+"."+sm[2]+"."+sm[3];if(!(d||["q","w","t","c","org"].some(function(k){return q.has(k)})||["c","d","i"].indexOf(q.get("tab"))>=0||sp=="itogi"||sp=="news"))return;if(d&&/^\\d\\d\.\\d\\d\.\\d{4}$/.test(d))m.push(d.slice(3));m.push(${JSON.stringify(last)});m.push(("0"+(n.getMonth()+1)).slice(-2)+"."+n.getFullYear());m.forEach(function(k){p(F[k]);});}catch(e){}})();`;
 const f = "web/dist/index.html"; let h = fs.readFileSync(f, "utf8"); h = h.replace("</head>", `<script>${js}</script></head>`); fs.writeFileSync(f, h);'
-# статические файлы (П5): favicon, превью для ссылок, manifest; extras.txt — список для pipeline/publish.sh
+# статические файлы (П5): favicon, превью для ссылок, manifest; extras.txt — список для pipeline/publish/publish.sh
 cp -r web/static/. web/dist/
 # П11, П13: страницы законопроектов bill/, RSS feed/, календари ics/, sitemap.xml — из data/*.json
 node web/extras.mjs web/dist

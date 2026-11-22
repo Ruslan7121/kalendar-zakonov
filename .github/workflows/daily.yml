@@ -1,10 +1,10 @@
 # П8 (12.11.2026): ежедневный прогон конвейера по расписанию — будни в 21:17 по Москве (после пленарных заседаний).
 # Шаги: pipeline/run_daily.sh за сегодняшний день (голосования, календарь, законопроекты, органы, путь закона, аудит)
-# → проверка схемы данных (validate_data.mjs) → тесты → pipeline/commit.sh (коммит и push в main)
-# → pipeline/publish.sh (сайт в gh-pages). Тексты «Суть» / «Кого коснётся» по-прежнему пишет бот отдельным шагом
+# → проверка схемы данных (validate_data.mjs) → тесты → pipeline/publish/commit.sh (коммит и push в main)
+# → pipeline/publish/publish.sh (сайт в gh-pages). Тексты «Суть» / «Кого коснётся» по-прежнему пишет бот отдельным шагом
 # (docs/BOT_PROMPT.md): после автоматического прогона новые голосования видны на сайте сразу, тексты — после бота.
 # Вручную: Actions → daily → Run workflow (можно указать день ДД.ММ.ГГГГ).
-# Доступ к сайтам с ограничением по региону — через pipeline/fetch.sh (списки RU-прокси обновляются сами);
+# Доступ к сайтам с ограничением по региону — через pipeline/collect/fetch.sh (списки RU-прокси обновляются сами);
 # кэш sozd и списки прокси переносятся между запусками через actions/cache. Если источник недоступен,
 # run_daily.sh пишет об этом в логи и не трогает данные — коммит и публикация тогда просто не нужны.
 name: daily
@@ -93,29 +93,29 @@ jobs:
           if grep -q "список голосований за .* не загружен" daily.log; then echo "src_fail=1" >> "$GITHUB_OUTPUT"; fi
       - name: Проверка схемы данных
         id: schema
-        run: node pipeline/validate_data.mjs
+        run: node pipeline/check/validate_data.mjs
       - name: Проверка типов и тесты
         id: tests
-        # 19.11.2026: pipeline/ci_tests.sh — если не готовы только тексты (SHORT, «Суть», метки, тексты органов; код 3),
+        # 19.11.2026: pipeline/check/ci_tests.sh — если не готовы только тексты (SHORT, «Суть», метки, тексты органов; код 3),
         # голосования и данные дня коммитятся и публикуются, тексты бот дописывает отдельным проходом (22:30 МСК).
         # Любой другой упавший тест — без публикации, сырые данные дня уходят в main (шаг ниже), прогон помечается ошибкой.
-        run: bash pipeline/ci_tests.sh || true
-      - name: Коммит в main (pipeline/commit.sh)
+        run: bash pipeline/check/ci_tests.sh || true
+      - name: Коммит в main (pipeline/publish/commit.sh)
         if: steps.tests.outputs.ok == '1'
         run: |
           # 19.11.2026 (правило 13): короткие названия и «Суть» дня пишет бот — без них коммит помечен «тексты не готовы»
           MSG="Ежедневный прогон ${{ steps.run.outputs.day }} (автоматически)"
-          ( cd pipeline && python3 texts_check.py "${{ steps.run.outputs.day }}" ) || MSG="$MSG — тексты не готовы"
-          bash pipeline/commit.sh "$MSG"
-      - name: Публикация (pipeline/publish.sh)
+          python3 pipeline/check/texts_check.py "${{ steps.run.outputs.day }}" || MSG="$MSG — тексты не готовы"
+          bash pipeline/publish/commit.sh "$MSG"
+      - name: Публикация (pipeline/publish/publish.sh)
         if: steps.tests.outputs.ok == '1'
-        run: bash pipeline/publish.sh "Ежедневный прогон ${{ steps.run.outputs.day }}"
+        run: bash pipeline/publish/publish.sh "Ежедневный прогон ${{ steps.run.outputs.day }}"
       # 19.11.2026: проверка схемы или тесты упали — собранное за день не теряется: в main только сырые данные
       # (ответ vote.duma.gov.ru за день → out/raw/days/, выжимки extracts/, out/days/, органы), без canvas и data/; сайт не публикуется.
       - name: Коммит сырых данных дня без публикации (тесты не прошли)
         if: always() && steps.run.outcome == 'success' && steps.tests.outputs.ok != '1'
         run: |
-          bash pipeline/commit_raw.sh "Сырые данные ${{ steps.run.outputs.day }} без публикации (тесты не прошли)" "${{ steps.run.outputs.day }}"
+          bash pipeline/publish/commit_raw.sh "Сырые данные ${{ steps.run.outputs.day }} без публикации (тесты не прошли)" "${{ steps.run.outputs.day }}"
           echo 'Тесты или проверка схемы не прошли: сырые данные дня в main, сайт не опубликован'; exit 1
       - name: Источник голосований не ответил
         if: steps.run.outputs.src_fail == '1'
