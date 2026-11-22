@@ -5063,12 +5063,15 @@ function CalendarApp() {
     const tr = `transform ${ms}ms cubic-bezier(.25,.8,.25,1)`;
     /* 16.11.2026: новая страница фиксируется синхронно (flushSync) до сброса сдвига — старая не мелькает на месте; на время смены у вставших на место
        элементов нет анимации проявления (data-swnew) — страница не моргает */
-    const swap = () => { const c = clipR.current; if (k && c) { c.setAttribute('data-swnew', '1'); setTimeout(() => c.removeAttribute('data-swnew'), 600); } flushSync(() => { if (k) goTab(k); setPeek(null); setHl(null); }); setX(0, dir, 'none'); };
+    const tok = swTok.current; const swap = () => { if (tok !== swTok.current) return; swBusy.current = false; const c = clipR.current; if (k && c) { c.setAttribute('data-swnew', '1'); setTimeout(() => c.removeAttribute('data-swnew'), 600); } flushSync(() => { if (k) goTab(k); setPeek(null); setHl(null); }); setX(0, dir, 'none'); };
     if (RMO()) { swap(); return; }
     if (k) setHl(k); setX(k ? -dir * W : 0, dir, tr);
     setTimeout(swap, ms + 20); };
-  const goTabA = (k: any) => { const a = ORD.indexOf(modeR.current), b = ORD.indexOf(k); if (!m || a < 0 || b < 0 || a === b || RMO()) { goTab(k); return; }
-    const dir = b > a ? 1 : -1; setPeek({ k, dir, top: peekTop() }); requestAnimationFrame(() => requestAnimationFrame(() => { setX(0, dir, 'none'); requestAnimationFrame(() => finish(k, dir, 0)); })); };
+  /* 22.11.2026: быстрые нажатия на вкладки не накладывают страницы: новый переход отменяет прежний, а если прежний ещё идёт — страница меняется сразу */
+  const swTok = useRef(0); const swBusy = useRef(false);
+  const goTabA = (k: any) => { const a = ORD.indexOf(modeR.current), b = ORD.indexOf(k); const tk = ++swTok.current; if (swBusy.current) { swBusy.current = false; flushSync(() => { setPeek(null); setHl(null); goTab(k); }); setX(0, 0, 'none'); return; }
+    if (!m || a < 0 || b < 0 || a === b || RMO()) { goTab(k); return; }
+    const dir = b > a ? 1 : -1; swBusy.current = true; setTimeout(() => { if (tk === swTok.current) swBusy.current = false; }, 700); setPeek({ k, dir, top: peekTop() }); requestAnimationFrame(() => requestAnimationFrame(() => { if (tk !== swTok.current) return; setX(0, dir, 'none'); requestAnimationFrame(() => { if (tk !== swTok.current) return; finish(k, dir, 0); }); })); };
   const goTabR = useRef(goTab); goTabR.current = goTab; const finR = useRef(finish); finR.current = finish; const setXR = useRef(setX); setXR.current = setX; const ptR = useRef(peekTop); ptR.current = peekTop;
   useEffect(() => { if (!m) return; let sx = 0, sy = 0, ok = false, drag = false, lx = 0, lt = 0, vx = 0, dir = 0, nk: string | null = null;
     const hs = (el: any) => { for (let e = el; e && e !== document.body; e = e.parentElement) { const cs = getComputedStyle(e); if (/(auto|scroll)/.test(cs.overflowX) && e.scrollWidth > e.clientWidth + 2) return true; } return false; };
