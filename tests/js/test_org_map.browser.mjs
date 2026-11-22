@@ -245,7 +245,7 @@ try {
       await ev(p.s, `localStorage.removeItem('kz_my_v1')`); await p.close(); }
     /* Поиск (телефон): работает по всему периоду, в «Новостях» не теряет фокус на первой букве, при смене вкладки очищается */
     if (W.mobile) { const typeIn = async (p, sel, text) => { await ev(p.s, `document.querySelector(${JSON.stringify(sel)}).focus()`); await cmd('Input.insertText', { text }, p.s); };
-      const goT = (p, name) => ev(p.s, `(() => { const b = [...document.querySelectorAll('[role=tab]')].reverse().find((e) => e.innerText.replace(/\\s+/g, ' ').trim() === ${JSON.stringify(name)}); if (!b) return false; b.click(); return true; })()`);
+      const goT = (p, name) => ev(p.s, `(() => { const b = [...document.querySelectorAll('[role=tab]')].reverse().find((e) => e.textContent.replace(/\\s+/g, '') === ${JSON.stringify(name)}.replace(/\\s+/g, '')); if (!b) return false; b.click(); return true; })()`);
       const p = await open('/?tab=i'); await until(p.s, `!!document.querySelector('[data-iq]')`, 10000); await sleep(600);
       await typeIn(p, '[data-iq]', 'Республикой Беларусь'); await sleep(1500);
       chk(await until(p.s, `document.body.innerText.includes('Исполнительные документы, Беларусь')`, 8000), 'поиск «Пленарных заседаний» не нашел законопроект другого дня (должен искать по всему периоду)');
@@ -255,6 +255,12 @@ try {
       chk(await ev(p.s, `document.activeElement === document.querySelector('[data-nq]')`), 'в «Новостях» поле поиска потеряло фокус после первой буквы (клавиатура скрывается)');
       chk(await goT(p, 'Пленарные заседания'), 'нет вкладки «Пленарные заседания»'); await until(p.s, `!!document.querySelector('[data-iq]')`, 6000); await sleep(500);
       chk(await ev(p.s, `document.querySelector('[data-iq]').value === ''`), 'поиск «Пленарных заседаний» не сбросился при смене вкладки');
+      /* нижняя панель скрыта, пока набирается текст, и сразу возвращается; строки «законопроектов: N» под датой нет */
+      await ev(p.s, `document.querySelector('[data-iq]').focus()`); await sleep(300);
+      chk(await ev(p.s, `document.documentElement.hasAttribute('data-kb') && getComputedStyle(document.querySelector('[data-mnavbar]')).visibility === 'hidden'`), 'пока набирается поиск, нижняя панель не скрыта');
+      await ev(p.s, `document.activeElement.blur()`); await sleep(500);
+      chk(await ev(p.s, `!document.documentElement.hasAttribute('data-kb') && getComputedStyle(document.querySelector('[data-mnavbar]')).visibility === 'visible'`), 'после поиска нижняя панель не вернулась');
+      chk(await ev(p.s, `!/законопроектов: \\d+/.test(document.body.innerText)`), 'под выбором даты осталась строка «законопроектов: N»');
       await p.close(); }
     { const p = await open('/?tab=c&d=22.10.2026&v=136156'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"]')`), 'ссылка ?d=&v= не открыла «По дням»'); await p.close(); }
     rep.push(tag('карта органов, период, лента, окно документа'));

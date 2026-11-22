@@ -100,7 +100,7 @@ try {
   chk(await ev(`(() => { const t = document.querySelector('[data-imweek], [data-imlabel]'); return !!t; })()`), 'Итоги: на странице нет выбора периода');
   chk(await ev(`(() => { const t = document.querySelector('[data-immode="month"]'); if (!t) return false; t.click(); return true; })()`), 'Итоги: нет периода «Месяц»'); await sleep(300);
   await ev(`document.querySelector('[data-imlabel]').click()`); await sleep(300);
-  const cnt = `(() => { const m = (document.querySelector('[data-itogi]').innerText.match(/законопроектов: (\\d+)/) || [])[1]; return m == null ? -1 : +m; })()`;
+  const cnt = `document.querySelectorAll('[data-itile]').length`; /* 22.11.2026: считаем плитки законопроектов (строки «законопроектов: N» под датой больше нет) */
   const n1 = await ev(cnt); const nm = await ev(`document.querySelectorAll('[data-imitem]').length`);
   if (nm > 1) { await ev(`[...document.querySelectorAll('[data-imitem]')].find((b) => b.getAttribute('aria-pressed') === 'false').click()`); await sleep(400); const n2 = await ev(cnt); const on = await ev(`document.querySelectorAll('[data-imitem][aria-pressed=true]').length`);
     rep.push(`Итоги: один месяц ${n1}, два месяца ${n2}`); chk(on === 2 && n2 > n1, `Итоги: месяцы не суммируются (${n1} → ${n2}, выбрано ${on})`); }
