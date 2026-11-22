@@ -5,7 +5,7 @@
 - **Сайт:** <https://ruslan7121.github.io/kalendar-zakonov/>
 - **Исходный код и описание:** ветка [`main`](https://github.com/Ruslan7121/kalendar-zakonov/tree/main)
 
-Сборка из `main` 133c27d3 (22.11.2026) командой `./pipeline/publish/publish.sh` (ветка main).
+Сборка из `main` d95b508a (22.11.2026) командой `./pipeline/publish/publish.sh` (ветка main).
 Вручную ветку не править.
 
 - `index.html` ссылается на `app.65422b23c5.js` — имя по хешу содержимого, поэтому после выкладки браузер не может взять старый JS из кэша.
