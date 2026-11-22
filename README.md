@@ -93,6 +93,7 @@ npm run check:style
 | [docs/ACCESS.md](docs/ACCESS.md) | доступ к официальным сайтам |
 | [docs/REFACTORING.md](docs/REFACTORING.md) | устройство `src/canvas.tsx` и план отделения данных |
 | [docs/STATUS.md](docs/STATUS.md) | что не заполнено (создаётся скриптом) |
+| [docs/UI_STABILITY.md](docs/UI_STABILITY.md) | как интерфейс не «прыгает»: клавиатура, слои, тесты |
 | [docs/TOKENS.md](docs/TOKENS.md) | экономия токенов ИИ-агента |
 | [docs/BOT.md](docs/BOT.md) | служба уведомлений в Telegram |
 | [docs/CHANGELOG.md](docs/CHANGELOG.md) | журнал изменений |
