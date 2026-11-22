@@ -27,14 +27,15 @@ assert.ok(n > 300, `мало голосований для проверки сс
 assert.equal(T.shareLink('11.11.2026', '136361'), 'https://ruslan7121.github.io/kalendar-zakonov/?d=11.11.2026&v=136361');
 
 // Все места, где сайт строит ссылку «Поделиться», идут через shareLink, и других адресов сайта в коде нет.
-const files = ['src/canvas.tsx', 'web/main.tsx', 'web/grok-canvas.tsx', 'web/index.html'];
+const uiFiles = fs.existsSync(path.join(ROOT, 'src/ui')) ? fs.readdirSync(path.join(ROOT, 'src/ui')).sort().map((f) => 'src/ui/' + f) : [];  // 22.11.2026: код интерфейса частично вынесен в src/ui/
+const files = ['src/canvas.tsx', ...uiFiles, 'web/main.tsx', 'web/grok-canvas.tsx', 'web/index.html'];
 if (fs.existsSync(path.join(ROOT, 'web/dist/app.js'))) files.push('web/dist/app.js');
 for (const f of files) {
   const s = fs.readFileSync(path.join(ROOT, f), 'utf8');
   const bad = s.match(BAD); assert.equal(bad, null, `${f}: найден запрещённый адрес «${bad && bad[0]}» (Cursor/Netlify)`);
   for (const m of s.matchAll(/https?:\/\/[^\s'"`)<>]*github\.io[^\s'"`)<>]*/g)) assert.match(m[0], /^https:\/\/ruslan7121\.github\.io\/kalendar-zakonov(\/[A-Za-z0-9._\/-]*)?$/, `${f}: чужой адрес github.io ${m[0]}`);
 }
-const src = fs.readFileSync(path.join(ROOT, 'src/canvas.tsx'), 'utf8');
+const src = ['src/canvas.tsx', ...uiFiles].map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
 assert.equal((src.match(/[?&]d=\$\{/g) || []).length, 1, 'ссылка ?d=…&v=… должна собираться только в shareLink');
 assert.ok(/const u = cardLink\(day, id\)/.test(src), 'кнопка «Поделиться» не использует cardLink (страница с превью)');
 // 15.11.2026 (решение владельца): под картинками карточки нет «Скопировать ссылку на голосование» и сырого адреса — ссылку дает «Поделиться»:

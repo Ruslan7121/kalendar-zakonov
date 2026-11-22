@@ -83,6 +83,8 @@ function transform(src) {
   ed.sort((x, y) => x[0] - y[0]); for (let k = 1; k < ed.length; k++) if (ed[k][0] < ed[k - 1][1]) throw new Error('split_data: правки пересекаются: ' + JSON.stringify([src.slice(ed[k - 1][0], ed[k - 1][0] + 60), ed[k - 1][1], src.slice(ed[k][0], ed[k][0] + 60), ed[k][0]]));
   let out = ''; let p = 0; for (const [a, e, r] of ed) { out += src.slice(p, a) + r; p = e; } out += src.slice(p);
   if (!/^const GDX: any = /m.test(out)) throw new Error('split_data: в src/canvas.tsx нет const GDX (загрузчик данных)');
+  // модули интерфейса (src/ui/*) подключаются из src/canvas.tsx относительным путем; web/gen/app.tsx лежит в другой папке
+  out = out.replace(/from '\.\/ui\//g, "from '../../src/ui/");
   return '// СГЕНЕРИРОВАНО pipeline/merge/split_data.mjs из src/canvas.tsx — не править вручную (данные: data/*.json).\n' + out;
 }
 
@@ -124,7 +126,10 @@ export async function split(file = CANVAS) {
   // записи о голосованиях/законопроектах: в месяц, где ключ встречается в данных месяца; в core — если он есть в общих данных или коде (или нигде)
   // «общими» считаются только ссылки из кода и из данных, которые показываются без месяца (законы месяца LAWS, CAL.u/w/n);
   // ZTAG, PLAIN, PROC, RES_T, BUDGET — справочники по ключу: их записи показываются только в карточках дней, т. е. вместе с месяцем.
-  const coreText = app + JSON.stringify([core.LAWS, core.CAL]);
+  // код интерфейса вынесен в src/ui/*: ключи (номера законопроектов и голосований), которые в нем упомянуты, считаются «общими» так же, как в app
+  const uiDir = path.join(path.dirname(CANVAS), 'ui');
+  const uiText = fs.existsSync(uiDir) ? fs.readdirSync(uiDir).sort().map((f) => fs.readFileSync(path.join(uiDir, f), 'utf8')).join('\n') : '';
+  const coreText = app + uiText + JSON.stringify([core.LAWS, core.CAL]);
   const mText = Object.fromEntries(MS.map((m) => [m, JSON.stringify(M[m])]));
   for (const n of BILLREC) { core[n] = {}; for (const m of MS) M[m][n] = {};
     for (const [k, v] of Object.entries(T[n])) { const ms = coreText.includes(k) ? [] : MS.filter((m) => mText[m].includes(k)); if (!ms.length) core[n][k] = v; else ms.forEach((m) => { M[m][n][k] = v; }); } }
