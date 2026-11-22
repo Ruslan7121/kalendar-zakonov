@@ -243,6 +243,19 @@ try {
       p = await open('/?tab=l', true); await until(p.s, `!!document.querySelector('[data-myfab]')`, 10000); await sleep(800);
       chk(await ev(p.s, `!!document.querySelector('[data-lfound]') || !!document.querySelector('[data-empty="laws"]')`), 'в «Вступают в силу» «Только моё» не включил подбор по меткам');
       await ev(p.s, `localStorage.removeItem('kz_my_v1')`); await p.close(); }
+    /* Поиск (телефон): работает по всему периоду, в «Новостях» не теряет фокус на первой букве, при смене вкладки очищается */
+    if (W.mobile) { const typeIn = async (p, sel, text) => { await ev(p.s, `document.querySelector(${JSON.stringify(sel)}).focus()`); await cmd('Input.insertText', { text }, p.s); };
+      const goT = (p, name) => ev(p.s, `(() => { const b = [...document.querySelectorAll('[role=tab]')].reverse().find((e) => e.innerText.replace(/\\s+/g, ' ').trim() === ${JSON.stringify(name)}); if (!b) return false; b.click(); return true; })()`);
+      const p = await open('/?tab=i'); await until(p.s, `!!document.querySelector('[data-iq]')`, 10000); await sleep(600);
+      await typeIn(p, '[data-iq]', 'Республикой Беларусь'); await sleep(1500);
+      chk(await until(p.s, `document.body.innerText.includes('Исполнительные документы, Беларусь')`, 8000), 'поиск «Пленарных заседаний» не нашел законопроект другого дня (должен искать по всему периоду)');
+      chk(await goT(p, 'Новости'), 'нет вкладки «Новости»'); await until(p.s, `!!document.querySelector('[data-nq]')`, 6000); await sleep(500);
+      chk(await ev(p.s, `document.querySelector('[data-nq]').value === ''`), 'поиск «Новостей» не пустой после перехода с другой вкладки');
+      await typeIn(p, '[data-nq]', 'б'); await sleep(700);
+      chk(await ev(p.s, `document.activeElement === document.querySelector('[data-nq]')`), 'в «Новостях» поле поиска потеряло фокус после первой буквы (клавиатура скрывается)');
+      chk(await goT(p, 'Пленарные заседания'), 'нет вкладки «Пленарные заседания»'); await until(p.s, `!!document.querySelector('[data-iq]')`, 6000); await sleep(500);
+      chk(await ev(p.s, `document.querySelector('[data-iq]').value === ''`), 'поиск «Пленарных заседаний» не сбросился при смене вкладки');
+      await p.close(); }
     { const p = await open('/?tab=c&d=22.10.2026&v=136156'); chk(await until(p.s, `!!document.querySelector('[data-cpane="days"]')`), 'ссылка ?d=&v= не открыла «По дням»'); await p.close(); }
     rep.push(tag('карта органов, период, лента, окно документа'));
   }

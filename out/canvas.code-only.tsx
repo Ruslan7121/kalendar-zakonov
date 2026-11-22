@@ -3710,12 +3710,13 @@ function NewsFeed({ m, peek, months, more, focus, orgs, only }: { m: boolean; pe
      Дальше самого раннего загруженного дня стрелка «‹» подгружает предыдущий месяц и переходит на его последний день. */
   const [sel, setSel] = useState<string | null>(focus && /^\d\d\.\d\d\.\d{4}$/.test(focus) ? focus : null);
   const [wantOlder, setWantOlder] = useState<string | null>(null);
-  const [src, setSrc] = useState<string>('all'); const [nq, setNq] = useState(''); const [fo, setFo] = useState(false); const [nop, setNop] = useState<NItem | null>(null);
+  const [src, setSrc] = useState<string>('all'); const [nq, setNq] = useState(''); useEffect(() => { const h = () => setNq(''); window.addEventListener('gd-search-reset', h); return () => window.removeEventListener('gd-search-reset', h); }, []); const [fo, setFo] = useState(false); const [nop, setNop] = useState<NItem | null>(null);
   useEffect(() => { if (!fo) return; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setFo(false); }; document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [fo]);
   const col = (o: string) => (o === 'gd' ? t.text.accent : o === 'gov' ? (dk ? '#3CCB9C' : '#009E73') : orgCol(o, dk));
   const name = (o: string) => (NSRC.find((x) => x[0] === o) || [o, ORGN[o] || o])[1];
+  const sAllN = !!nq.trim(); if (sAllN) gdNeed(null); /* 22.11.2026: поиск идет по всем дням, а не только по загруженным месяцам */
   const keys = new Set<string>([...Object.keys(FULL), ...Object.keys(SUM), ...Object.keys(SFN), ...ORGNEWS.map((x: any) => x.d), ...liveAll().filter((x: any) => !liveFresh().has(x.u)).map((x: any) => x.d), ...(orgs ? ORG.map((x: any) => x.d) : [])]);
-  const days = [...keys].filter((d) => /^\d\d\.\d\d\.\d{4}$/.test(d) && (months.includes(d.slice(3)) || liveAll().some((x: any) => x.d === d) || d === only) && (!only || d === only) && dayItems(d).length > 0).sort((a, b) => +pd(b) - +pd(a));
+  const days = [...keys].filter((d) => /^\d\d\.\d\d\.\d{4}$/.test(d) && (months.includes(d.slice(3)) || sAllN || liveAll().some((x: any) => x.d === d) || d === only) && (!only || d === only) && dayItems(d).length > 0).sort((a, b) => +pd(b) - +pd(a));
   useEffect(() => { if (!wantOlder) return; const o = days.find((d) => pd(d) < pd(wantOlder)); if (o) { setSel(o); setWantOlder(null); } else if (!more) setWantOlder(null); });
   const cur = sel && days.includes(sel) ? sel : days[0] || null;
   const ix = cur ? days.indexOf(cur) : -1;
@@ -3747,14 +3748,14 @@ function NewsFeed({ m, peek, months, more, focus, orgs, only }: { m: boolean; pe
   const nNew = [...liveFresh()].length; const ackNew = () => { if (GDX) GDX.ackLive(); setSel(null); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); } };
   const newBar = nNew > 0 && !peek ? <button type="button" data-nnew={nNew} onClick={ackNew} style={{ alignSelf: 'center', display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 36, padding: '0 16px', borderRadius: 9999, border: 'none', background: t.text.accent, color: '#fff', fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(10,100,214,.35)' }}>↑ {nNew} {nNew % 10 === 1 && nNew % 100 !== 11 ? 'новая новость' : nNew % 10 >= 2 && nNew % 10 <= 4 && (nNew % 100 < 10 || nNew % 100 >= 20) ? 'новые новости' : 'новых новостей'}</button> : null;
   const mrow = m && !peek && nslot && !orgs ? createPortal(<div data-nprow="1" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><div style={{ flex: '1 1 0', minWidth: 0 }}><MSBox v={nq} set={setNq} k="nq" /></div><MFBtn k="nfopen" n={fN} open={fo} onClick={() => setFo(true)} /></div>, nslot) : null;
-  if (allM) return <div data-newsfeed="1" data-nall="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 0 }}>{mrow}{newBar}
+  if (allM) return <>{mrow}<div data-newsfeed="1" data-nall="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 0 }}>{newBar}
     {only ? null : <div data-nact="1" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>{orgs ? <span data-norgs="1" style={{ fontSize: 13, color: t.text.tertiary }}>{orgs.length <= 3 ? orgs.map((o) => name(o)).join(', ') : `Органов: ${orgs.length}`} — новости и документы: <b style={{ color: t.text.primary }}>{allN}</b></span> : null}{!orgs && src !== 'all' && <ZChip t={t} on l={name(src)} x onClick={() => setSrc('all')} />}{!orgs && <span style={{ fontSize: 13, color: t.text.tertiary }}>{nq.trim() ? 'Найдено' : 'Новостей'}: <b style={{ color: t.text.primary }}>{allN}</b> за {days.length ? `${days.length} ${days.length % 10 === 1 && days.length % 100 !== 11 ? 'день' : days.length % 10 >= 2 && days.length % 10 <= 4 && (days.length % 100 < 10 || days.length % 100 >= 20) ? 'дня' : 'дней'}` : '—'}</span>}</div>}
     {!allN && !only && (nq.trim() ? <EmptyState k="news" icon="find" title="Ничего не найдено" text={`По запросу «${nq.trim()}» новостей нет. Попробуйте другие слова.`} btn="Очистить поиск" onBtn={() => setNq('')} /> : orgs ? <EmptyState k="news" icon="news" title="Новостей нет" text="У выбранных органов за загруженные дни новостей нет." /> : <EmptyState k="news" icon="news" title="Новостей нет" text="У этого источника за загруженные дни новостей нет. Попробуйте другой источник." btn={src !== 'all' ? 'Показать все источники' : undefined} onBtn={() => setSrc('all')} />)}
     {allS.map(([d, a]) => { const z = pd(d); return <section key={d} data-newsday={d} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{only ? null : <div data-ndayh="1" style={{ position: 'sticky', top: 'var(--gd-top, 0px)', zIndex: 5, background: DK ? '#000000' : t.bg.base, padding: '4px 2px', fontSize: 15, fontWeight: 700, color: t.text.primary }}>{z.getDate()} {MON[z.getMonth()]}<span style={{ fontSize: 12.5, fontWeight: 400, color: t.text.tertiary, marginLeft: 6 }}>{WDL[z.getDay()]}</span></div>}{a.map(tile)}</section>; })}
-    {more && !only && <button type="button" data-nmore="1" onClick={more} style={{ minHeight: 42, borderRadius: 12, border: `1px solid ${t.text.accent}`, background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Показать более ранние дни</button>}
+    {more && !only && !sAllN && <button type="button" data-nmore="1" onClick={more} style={{ minHeight: 42, borderRadius: 12, border: `1px solid ${t.text.accent}`, background: 'transparent', color: t.text.accent, fontFamily: t.font.family, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Показать более ранние дни</button>}
     {fo && nSheet()}
     {nop && newsCard(nop)}
-  </div>;
+  </div></>;
   /* 18.11.2026: нажатие на заголовок новости открывает карточку с текстом с официального сайта (поле b — абзацы; пока для новостей Правительства) */
   function newsCard(x: NItem) { const c = col(x.o); const dd = x.d ? pd(x.d) : null;
     return <NvModal onClose={() => setNop(null)} c={c} m={m} k="news"><div data-ncard="1" style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: m ? '10px 16px 18px' : '14px 20px 20px' }}>
@@ -3771,9 +3772,9 @@ function NewsFeed({ m, peek, months, more, focus, orgs, only }: { m: boolean; pe
           <ZChip t={t} on={src === 'all'} pressed={src === 'all'} l="Все" n={atot} onClick={() => setSrc('all')} />{NSRC.filter(([k]) => acnt[k] || src === k).map(([k, l]) => <ZChip key={k} t={t} zk="nsrc" on={src === k} pressed={src === k} l={l} n={acnt[k] || 0} onClick={() => setSrc(k)} />)}</div></div></div>
         <div style={{ padding: 12, flexShrink: 0, borderTop: `1px solid ${t.border.subtle}` }}><button type="button" onClick={() => setFo(false)} style={{ width: '100%', minHeight: 46, border: 'none', borderRadius: 12, background: t.text.accent, color: '#fff', fontFamily: t.font.family, fontSize: 16, fontWeight: 600, cursor: 'pointer' }}>{src === 'all' && !nq.trim() ? 'Готово' : (() => { const q = src === 'all' ? atot : acnt[src] || 0, a = q % 10, b2 = q % 100; return `Показать ${q} ${a === 1 && b2 !== 11 ? 'новость' : a >= 2 && a <= 4 && (b2 < 12 || b2 > 14) ? 'новости' : 'новостей'}`; })()}</button></div>
       </div></>, document.body); }
-  return <div data-newsfeed="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 0 }}>
+  return <>{mrow}<div data-newsfeed="1" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 0 }}>
     <div data-nchips="1" style={{ position: 'sticky', top: 'var(--gd-top, 0px)', zIndex: 6, background: DK ? '#000000' : t.bg.base, margin: m ? '0 -14px' : 0, padding: m ? '2px 14px 8px' : '6px 0 8px' }}>
-      {mrow}{<div data-nday="1" style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: m ? 0 : 6 }}>
+      {<div data-nday="1" style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: m ? 0 : 6 }}>
         <button aria-label="Предыдущий день" disabled={!older && !more} onClick={goOlder} style={nb(!older && !more)}>‹</button>
         <span style={{ flex: 1, textAlign: 'center', whiteSpace: 'nowrap' }}><span style={{ fontSize: 15, fontWeight: 700, color: t.text.primary }}>{dd ? `${dd.getDate()} ${MON[dd.getMonth()]}` : 'Новости'}</span>{dd && <span style={{ fontSize: 12.5, color: t.text.tertiary, marginLeft: 6 }}>{WDL[dd.getDay()]}</span>}</span>
         <button aria-label="Следующий день" disabled={!newer} onClick={() => newer && setSel(newer)} style={nb(!newer)}>›</button>
@@ -3792,7 +3793,7 @@ function NewsFeed({ m, peek, months, more, focus, orgs, only }: { m: boolean; pe
     </section>}
     {fo && nSheet()}
     {nop && newsCard(nop)}
-  </div>;
+  </div></>;
 }
 
 function Summary({ day, votes, m }: { day: string; votes: Vote[]; m?: boolean }) {
@@ -4244,7 +4245,7 @@ function Itogi({ m, peek }: { m: boolean; peek?: boolean }) {
   /* 16.11.2026: на телефоне фильтры «Итогов» — кнопка «Фильтры» рядом с периодом и окно снизу (как в «Календаре»), вариант Б владельца */
   const [fo, setFo] = useState(false); const [fxp, setFxp] = useState<Record<number, boolean>>({}); const slot = useHSlot(m && !peek);
   useEffect(() => { if (fo) setPOpen(false); }, [fo]); useEffect(() => { if (!fo) return; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setFo(false); }; document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [fo]);
-  const [pOpen, setPOpen] = useState(false); /* 17.11.2026: списки дней, месяцев и лет свернуты, пока не нажать на период; повторное нажатие сворачивает */ const [per, setPer] = useState<'d' | 'w' | 'm' | 'y'>('d' /* 17.11.2026: при открытии «Пленарных заседаний» — последний день с голосованиями, а не неделя */); const [pmk, setPmk] = useState<string[]>([]); const [pyr, setPyr] = useState<number[]>([]); const [pdy, setPdy] = useState<string[] | null>(dlk() ? [dld()!] : null); const [pws, setPws] = useState<number[]>([0]) /* 21.11.2026: смещение недели в неделях (0 — последняя неделя с голосованиями) */; const [iq, setIq] = useState(''); const [g, setG] = useState(0); const [zs, setZs] = useState<string[][]>([[], [], []]); const [all, setAll] = useState(false); const [rf, setRf] = useState<'all' | 'ok' | 'no' | 'nr'>('all');
+  const [pOpen, setPOpen] = useState(false); /* 17.11.2026: списки дней, месяцев и лет свернуты, пока не нажать на период; повторное нажатие сворачивает */ const [per, setPer] = useState<'d' | 'w' | 'm' | 'y'>('d' /* 17.11.2026: при открытии «Пленарных заседаний» — последний день с голосованиями, а не неделя */); const [pmk, setPmk] = useState<string[]>([]); const [pyr, setPyr] = useState<number[]>([]); const [pdy, setPdy] = useState<string[] | null>(dlk() ? [dld()!] : null); const [pws, setPws] = useState<number[]>([0]) /* 21.11.2026: смещение недели в неделях (0 — последняя неделя с голосованиями) */; const [iq, setIq] = useState(''); useEffect(() => { const h = () => setIq(''); window.addEventListener('gd-search-reset', h); return () => window.removeEventListener('gd-search-reset', h); }, []); /* 22.11.2026: при переходе на другую вкладку поиск сбрасывается */ const [g, setG] = useState(0); const [zs, setZs] = useState<string[][]>([[], [], []]); const [all, setAll] = useState(false); const [rf, setRf] = useState<'all' | 'ok' | 'no' | 'nr'>('all');
   /* 15.11.2026: несколько меток — внутри группы «или», между группами «и» (как «Фильтры»); ничего не выбрано — все законопроекты периода */
   const nSel = zs[0].length + zs[1].length + zs[2].length; const tog = (i: number, v: string) => { setZs(zs.map((a, j) => (j !== i ? a : a.includes(v) ? a.filter((z) => z !== v) : [...a, v]))); setAll(false); setRf('all'); };
   const last = DAYS[DAYS.length - 1];
@@ -4268,8 +4269,10 @@ function Itogi({ m, peek }: { m: boolean; peek?: boolean }) {
   const P: [string, string, Date, Date, string][] = [['d', 'День', dd0, dd1, dLab], ['w', 'Неделя', mon, sun, `${wOff.length > 1 ? `${OMPL(wOff.length, ['неделя', 'недели', 'недель'])}: ` : ''}${wOff.length > 1 && !wOff.every((o, i) => i === 0 || o - wOff[i - 1] === 1) ? '' : `${mon.getDate()} ${MON[mon.getMonth()]} — ${sun.getDate()} ${MON[sun.getMonth()]}`}`],
     ['m', 'Месяц', new Date(+m0.slice(3), +m0.slice(0, 2) - 1, 1), new Date(+m1.slice(3), +m1.slice(0, 2), 0), mLab], ['y', 'Год', new Date(yA[0], 0, 1), new Date(yA[yA.length - 1], 11, 31), yA.length > 1 ? `${yA.join(', ')} годы` : `${yA[0]} год`]];
   const pp = P.find((x) => x[0] === per)!;
+  /* 22.11.2026: поиск ищет по всему периоду (по всем загруженным дням), а не только по выбранному */
+  const sAll = !!iq.trim(); if (sAll) gdNeed(null);
   const byNo: Record<string, any> = {};
-  for (const p of CAL.p) { const dd = pd(p.d); if (dd < pp[2] || dd > pp[3]) continue; if (per === 'w' && !wkOk(dd)) continue; if (per === 'd' && !dS.includes(p.d)) continue; if (per === 'm' && !mkS.includes(p.d.slice(3))) continue; if (per === 'y' && !yS.includes(+p.d.slice(6))) continue;
+  for (const p of CAL.p) { const dd = pd(p.d); if (!sAll) { if (dd < pp[2] || dd > pp[3]) continue; if (per === 'w' && !wkOk(dd)) continue; if (per === 'd' && !dS.includes(p.d)) continue; if (per === 'm' && !mkS.includes(p.d.slice(3))) continue; if (per === 'y' && !yS.includes(+p.d.slice(6))) continue; }
     for (const x of p.a || []) { if (!billNo(x[0])) continue; const bv = billVote(x[0], p.d); if (!bv) continue; const v = parse(DATA[bv[0]] || '').find((z) => z.id === bv[1]); if (!v) continue;
       byNo[x[0]] = { x, d: p.d, bv, v, g: ZTAG[x[0]] || [[], [], []], ty: billType(x[0], p.d, x[2] || '', x[4] || x[1] || '') }; } }
   const L0 = Object.values(byNo).filter((b: any) => !MY.on || myOk(b.g)); const L = iq.trim() ? L0.filter((b: any) => mqOk(iq, `${b.x[0]} ${b.x[1]} ${b.x[4] || ''} ${agShort(b.x[0], b.x[1])}`)) : L0; const okG = (b: any, skip: number) => [0, 1, 2].every((i) => i === skip || !zs[i].length || zs[i].some((v) => (b.g[i] || []).includes(v)));
@@ -4278,7 +4281,7 @@ function Itogi({ m, peek }: { m: boolean; peek?: boolean }) {
   const tags = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a] || a.localeCompare(b)); const tg = nSel ? zs.map((a) => a.join(' или ')).filter(Boolean).join(' · ') : 'Законопроекты';
   const sel = L.filter((b: any) => okG(b, -1)); const okL = sel.filter((b: any) => b.v.ok), noL = sel.filter((b: any) => !b.v.ok);
   /* 18.11.2026: вопросы повестки дней периода, по которым голосования не было («Не рассматривались») */
-  const nrRaw: any[] = []; { const seenN: Record<string, boolean> = {}; for (const p of CAL.p) { const dd = pd(p.d); if (dd < pp[2] || dd > pp[3] || !DAYS.includes(p.d)) continue; if (per === 'w' && !wkOk(dd)) continue; if (per === 'd' && !dS.includes(p.d)) continue; if (per === 'm' && !mkS.includes(p.d.slice(3))) continue; if (per === 'y' && !yS.includes(+p.d.slice(6))) continue;
+  const nrRaw: any[] = []; { const seenN: Record<string, boolean> = {}; for (const p of CAL.p) { const dd = pd(p.d); if (!DAYS.includes(p.d)) continue; if (!sAll) { if (dd < pp[2] || dd > pp[3]) continue; if (per === 'w' && !wkOk(dd)) continue; if (per === 'd' && !dS.includes(p.d)) continue; if (per === 'm' && !mkS.includes(p.d.slice(3))) continue; if (per === 'y' && !yS.includes(+p.d.slice(6))) continue; }
     for (const x of p.a || []) { if (!billNo(x[0]) || seenN[x[0]] || byNo[x[0]] || billVote(x[0], p.d)) continue; seenN[x[0]] = true; nrRaw.push({ x, d: p.d, nr: true, g: ZTAG[x[0]] || [[], [], []], ty: billType(x[0], p.d, x[2] || '', x[4] || x[1] || '') }); } } }
   const nrL = (iq.trim() ? nrRaw.filter((b: any) => mqOk(iq, `${b.x[0]} ${b.x[1]} ${b.x[4] || ''} ${agShort(b.x[0], b.x[1])}`)) : nrRaw).filter((b: any) => okG(b, -1) && (!MY.on || myOk(b.g)));
   const list = rf === 'ok' ? okL : rf === 'no' ? noL : rf === 'nr' ? nrL : [...okL, ...noL, ...nrL]; const anyZ = zs.some((x: string[]) => x.length > 0); /* 15.11.2026: при выбранных метках показываем все законопроекты сразу, без «Показать все» */ const shown = list; /* 16.11.2026: все законопроекты периода сразу, без «Показать все» (решение владельца) */ void all; void anyZ;
@@ -5129,6 +5132,8 @@ function CalendarApp() {
   const [cview, setCview] = useState<'map' | 'days'>(() => (QS && (QS.get('view') === 'days' || QS.get('d') || QS.get('v') || QS.get('w') || QS.get('t') || QS.get('c')) || DLK ? 'days' : 'map'));
   const [lmk, setLmk] = useState(LMK0); const [lq, setLq] = useState('');
   const [cmk, setCmk] = useState(() => calCk(DLK ? new Date(+DLD!.slice(6), +DLD!.slice(3, 5) - 1, +DLD!.slice(0, 2)) : new Date()));
+  /* 22.11.2026: поиск не переходит с вкладки на вкладку: при смене раздела строка поиска очищается везде */
+  const pm = useRef(mode); useEffect(() => { if (pm.current === mode) return; pm.current = mode; setQ(''); setLq(''); setCq(''); setCqIn(''); clearTimeout(cqT.current); try { window.dispatchEvent(new Event('gd-search-reset')); } catch (e) {} }, [mode]);
   useEffect(() => { const h = () => { if (CSNAP) setMode('c'); }; window.addEventListener('popstate', h); return () => window.removeEventListener('popstate', h); }, []);
   const [view, setView] = useState<'v' | 's'>(PIN && QS && QS.get('d') === day ? 'v' : COUNT[day] ? 'v' : 's');
   const [topH, setTopH] = useState(0);
