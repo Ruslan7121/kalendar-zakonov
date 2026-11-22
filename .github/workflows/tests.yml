@@ -16,10 +16,11 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       TZ: Europe/Moscow
       GD_REQUIRE_BROWSER: '1'
+      GD_REQUIRE_WEBKIT: '1'
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -35,6 +36,11 @@ jobs:
           CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
           test -n "$CHROME" && "$CHROME" --version
           echo "CHROME=$CHROME" >> "$GITHUB_ENV"
+      # 22.11.2026: WebKit (движок Safari/Telegram на iPhone) для tests/js/test_webkit.browser.mjs; версия Playwright закреплена
+      - name: WebKit (Playwright)
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.63.0
+          npx playwright install --with-deps webkit
       # 19.11.2026: pipeline/ci_tests.sh — проверка типов и тесты; код 3 («тексты не готовы»: SHORT, «Суть», метки) — предупреждение, не ошибка
       - name: Проверка типов и тесты (pipeline/ci_tests.sh)
         run: bash pipeline/ci_tests.sh; rc=$?; [ $rc = 0 ] || [ $rc = 3 ]
