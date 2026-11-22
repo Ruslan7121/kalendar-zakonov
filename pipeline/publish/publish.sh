@@ -6,9 +6,9 @@
 #   → проверка живой страницы.
 #
 # Запуск из корня клона (main должен быть чистым и уже отправленным в origin):
-#   ./pipeline/publish.sh "короткое описание изменений"
-#   ./pipeline/publish.sh --dry-run          # только собрать и показать, что уйдёт в gh-pages
-#   PUBLISH_NO_VERIFY=1 ./pipeline/publish.sh "…"   # не ждать живую страницу
+#   ./pipeline/publish/publish.sh "короткое описание изменений"
+#   ./pipeline/publish/publish.sh --dry-run          # только собрать и показать, что уйдёт в gh-pages
+#   PUBLISH_NO_VERIFY=1 ./pipeline/publish/publish.sh "…"   # не ждать живую страницу
 #
 # Кэш: GitHub Pages отдаёт всё с Cache-Control: max-age=600, настроить это нельзя.
 # Поэтому JS называется по хешу содержимого (app.<hash>.js): новый index.html всегда тянет новый файл,
@@ -123,7 +123,7 @@ cat > README.md <<MD
 - **Сайт:** <$SITE>
 - **Исходный код и описание:** ветка [\`main\`](https://github.com/Ruslan7121/kalendar-zakonov/tree/main)
 
-Сборка из \`$SRCB\` $SRC_SHORT ($(date +%d.%m.%Y)) командой \`./pipeline/publish.sh\` (ветка main).
+Сборка из \`$SRCB\` $SRC_SHORT ($(date +%d.%m.%Y)) командой \`./pipeline/publish/publish.sh\` (ветка main).
 Вручную ветку не править.
 
 - \`index.html\` ссылается на \`$JS\` — имя по хешу содержимого, поэтому после выкладки браузер не может взять старый JS из кэша.

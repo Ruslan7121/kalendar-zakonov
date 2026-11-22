@@ -6,23 +6,23 @@
 
 ## Где что лежит (канон, см. docs/PIPELINE.md)
 - Рабочий каталог — git-клон https://github.com/Ruslan7121/kalendar-zakonov (`GD_ROOT`, например `/workspace/kalendar-zakonov`). Перед работой: `git pull --ff-only`.
-- Единственный файл кода и данных сайта — `src/canvas.tsx` (`CANVAS`). Его пишут скрипты и бот; `src/canvas.code-only.tsx` — копия для чтения кода (в git не хранится), ее пересобирает `strip_code_only.py` (руками не править).
-- С 12.11.2026 (пункт 10) сайт читает данные не из JS, а из `data/core.json` и `data/months/ГГГГ-ММ.json` — их раскладывает из `src/canvas.tsx` `pipeline/merge/split_data.mjs` (вызывают `run_daily.sh`, `commit.sh`, `web/build.sh`). Данные по-прежнему правят только в `src/canvas.tsx` (скриптами), `data/` руками не править; `commit.sh` коммитит и `data/`, `publish.sh` не опубликует, если `data/` устарела.
+- Единственный файл кода и данных сайта — `src/canvas.tsx` (`CANVAS`). Его пишут скрипты и бот; `src/canvas.code-only.tsx` — копия для чтения кода (в git не хранится), ее пересобирает `merge/strip_code_only.py` (руками не править).
+- С 12.11.2026 (пункт 10) сайт читает данные не из JS, а из `data/core.json` и `data/months/ГГГГ-ММ.json` — их раскладывает из `src/canvas.tsx` `pipeline/merge/split_data.mjs` (вызывают `run_daily.sh`, `publish/commit.sh`, `web/build.sh`). Данные по-прежнему правят только в `src/canvas.tsx` (скриптами), `data/` руками не править; `publish/commit.sh` коммитит и `data/`, `publish/publish.sh` не опубликует, если `data/` устарела.
 - `/workspace/out/canvas.tsx` и `/workspace/duma/pipeline/` устарели — не использовать. `/workspace/duma` (`GD_DUMA`) — только вспомогательный каталог: списки RU-прокси `lists/`, кэши sozd и календаря, `calendar_static.json`.
 - Публичный сайт — только https://ruslan7121.github.io/kalendar-zakonov/ (ветка `gh-pages`). Страницу Cursor не редактировать (EditCanvas/WriteCanvas не вызывать). Netlify не публичный сайт и не используется.
 
 ## Разделение работы
 Программа (`bash pipeline/run_daily.sh [ДД.ММ.ГГГГ]`), без участия бота:
-1. votes_day.py — голосования дня с vote.duma.gov.ru (список дня + страница каждого голосования) → `DATA` (только новые id) и время в `VT`. Не загрузилось — пробел в логе, в DATA ничего не выдумывается.
-2. calendar_update.py → out/calendar.json, затем cal_merge.py — строка `CAL` (пленарные дни, повестки, заседания Правительства, региональные недели); старые пункты не теряются.
-3. bills.py — все законопроекты дня: карточка sozd + пояснительная записка → extracts/bills/<номер>.json. Ошибки — out/logs/bills_fail.log.
-   bill_titles.py — полное официальное название с sozd → `INIC[номер].t` (в карточке без многоточия vote.duma.gov.ru).
-4. vote_times.py — недостающее время голосований → `VT`. Нет данных → «нет данных» и строка в out/logs/vote_time_fail.log.
-5. organs.py --day --embed — документы СФ, Минфина, Минтруда, Минюста, ЦБ → `ORG`/`ORGX`.
-6. track.py — путь закона (2-е чтение → 3-е → СФ → подписание → опубликование → вступление в силу) с sozd (+ kremlin.ru) → `TRACK`; закон с датой вступления в силу и номером ФЗ сам добавляется в `LAWS` (auto: 1, sut пустой).
-7. audit.py --day <день> --fix — дневной аудит (метка чтения, день, карточка и шаринг). Полный audit.py без --day в daily не запускать.
-8. todo.py — out/TODO.md: что именно должен написать бот. strip_code_only.py — производные копии. summary.sh — сводка логов.
-9. texts_check.py ДЕНЬ — правило 13: «ТЕКСТЫ НЕ ГОТОВЫ», пока у голосований дня нет своих SHORT (`SHORT_RAW`, id голосования → 2–5 слов), а у законопроектов — «Суть» и «Кого коснётся»; коммит прогона в Actions помечается «— тексты не готовы». День сдан, когда `python3 pipeline/check/texts_check.py ДД.ММ.ГГГГ` пишет «готовы». SHORT другого дня в карточке не показывается (вместо него полное название).
+1. collect/votes_day.py — голосования дня с vote.duma.gov.ru (список дня + страница каждого голосования) → `DATA` (только новые id) и время в `VT`. Не загрузилось — пробел в логе, в DATA ничего не выдумывается.
+2. collect/calendar_update.py → out/calendar.json, затем merge/cal_merge.py — строка `CAL` (пленарные дни, повестки, заседания Правительства, региональные недели); старые пункты не теряются.
+3. collect/bills.py — все законопроекты дня: карточка sozd + пояснительная записка → extracts/bills/<номер>.json. Ошибки — out/logs/bills_fail.log.
+   collect/bill_titles.py — полное официальное название с sozd → `INIC[номер].t` (в карточке без многоточия vote.duma.gov.ru).
+4. collect/vote_times.py — недостающее время голосований → `VT`. Нет данных → «нет данных» и строка в out/logs/vote_time_fail.log.
+5. collect/organs.py --day --embed — документы СФ, Минфина, Минтруда, Минюста, ЦБ → `ORG`/`ORGX`.
+6. collect/track.py — путь закона (2-е чтение → 3-е → СФ → подписание → опубликование → вступление в силу) с sozd (+ kremlin.ru) → `TRACK`; закон с датой вступления в силу и номером ФЗ сам добавляется в `LAWS` (auto: 1, sut пустой).
+7. check/audit.py --day <день> --fix — дневной аудит (метка чтения, день, карточка и шаринг). Полный check/audit.py без --day в daily не запускать.
+8. check/todo.py — out/TODO.md: что именно должен написать бот. merge/strip_code_only.py — производные копии. check/summary.sh — сводка логов.
+9. check/texts_check.py ДЕНЬ — правило 13: «ТЕКСТЫ НЕ ГОТОВЫ», пока у голосований дня нет своих SHORT (`SHORT_RAW`, id голосования → 2–5 слов), а у законопроектов — «Суть» и «Кого коснётся»; коммит прогона в Actions помечается «— тексты не готовы». День сдан, когда `python3 pipeline/check/texts_check.py ДД.ММ.ГГГГ` пишет «готовы». SHORT другого дня в карточке не показывается (вместо него полное название).
 
 Бот (только эти шаги):
 0. `git pull --ff-only`. Если в `git log` уже есть «Ежедневный прогон ДД.ММ.ГГГГ», сбор за день сделал GitHub Actions (будни, 21:17 МСК). Тогда `run_daily.sh` не запускать, а только `python3 pipeline/check/todo.py`: выжимки `extracts/bills/*.json` с 15.11.2026 лежат в git. Подробно в AGENTS.md, раздел 2.
@@ -33,19 +33,19 @@
    - метки фильтров ZTAG [«Для кого», «Тема», «Что меняется»] — только по официальному содержанию; у каждого законопроекта дня — все три группы (иначе падает tests/js/test_search_tags.mjs); постановление с предметом — ключ «Пост. номер»; новая метка — сначала в списки ZW/ZT/ZC (панель «Фильтры»), затем в ZTAG; после правки — `node pipeline/merge/split_data.mjs` (data/core.json);
    - для автодобавленных законов в LAWS — title, sut, who и tg (метки [«Для кого», «Тема», «Что меняется»] из ZW/ZT/ZC; по ним закон попадает в RSS-ленты меток); в src только официальные ссылки (kremlin.ru/acts/bank, publication.pravo.gov.ru/document, *.gov.ru);
    - временные метки: номера в ZAUTO разметил pipeline/merge/auto_ztag.py по словам названия; уточнить ZTAG по записке и убрать номер из ZAUTO;
-   - тексты вносить только в BP, ZTAG и LAWS. Свои блоки данных не заводить (бывшие BP1112 и TRACK1112 скрипты и TODO не видели). bp_merge.py сливает поля по одному: файл с одними bs не стирает sut.
+   - тексты вносить только в BP, ZTAG и LAWS. Свои блоки данных не заводить (бывшие BP1112 и TRACK1112 скрипты и TODO не видели). merge/bp_merge.py сливает поля по одному: файл с одними bs не стирает sut.
 3. Проверить: нет выдуманных чисел, дат и фамилий; у каждого факта есть официальный источник.
 4. Коммит в main (обычный коммит, без --force, --amend и --no-verify):
    ```bash
    bash pipeline/publish/commit.sh "Обновление календаря за ДД.ММ"
    ```
-   (сам запускает clean_yo.py и strip_code_only.py; сайт не публикует).
-5. Публикация на GitHub Pages: после `commit.sh` — `./pipeline/publish.sh "что изменилось"` (сборка, `app.<hash>.js`, коммит в `gh-pages`, push, проверка живого сайта). Ветку `gh-pages` руками не править. Подробно — docs/PIPELINE.md, раздел «Публикация».
+   (сам запускает merge/clean_yo.py и merge/strip_code_only.py; сайт не публикует).
+5. Публикация на GitHub Pages: после `publish/commit.sh` — `./pipeline/publish/publish.sh "что изменилось"` (сборка, `app.<hash>.js`, коммит в `gh-pages`, push, проверка живого сайта). Ветку `gh-pages` руками не править. Подробно — docs/PIPELINE.md, раздел «Публикация».
 6. Короткий отчет: что обновлено, что осталось «нет данных» и почему (по out/logs/*.log), SHA main и gh-pages.
 
 ## Правила
 - Источники — только официальные (vote.duma.gov.ru, sozd.duma.gov.ru, duma.gov.ru, council.gov.ru, government.ru, kremlin.ru, publication.pravo.gov.ru, сайты министерств и ЦБ). Ничего не придумывать: нет источника — «нет данных» или пустое поле, которое попадает в TODO.
-- Интерфейс и тексты — по-русски. Очистка «ё» делается автоматически (clean_yo.py).
+- Интерфейс и тексты — по-русски. Очистка «ё» делается автоматически (merge/clean_yo.py).
 - Не публиковать ключ статистики и логины.
 - Не использовать matchMedia: тема — через m / эффективную тему.
 - Не допускать сдвига страницы при раскрытии карточек (не более 3 px).
