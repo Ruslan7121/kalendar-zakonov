@@ -48,7 +48,7 @@ jobs:
           BILL: ${{ github.event.inputs.bill }}
         run: |
           [[ "$BILL" =~ ^[0-9]+-[0-9]+$ ]] || { echo "неверный номер: $BILL"; exit 1; }
-          cd pipeline && python3 amend_tables.py "$BILL" 2>&1 | tee ../amend.log
+          python3 pipeline/collect/amend_tables.py "$BILL" 2>&1 | tee amend.log
       - name: Коммит extracts/amend в main
         run: |
           git add extracts/amend/*.json 2>/dev/null || true

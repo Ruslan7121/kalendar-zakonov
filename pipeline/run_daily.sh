@@ -16,24 +16,24 @@ echo "[канон] GD_ROOT=$GD_ROOT CANVAS=$CANVAS GD_DUMA=${GD_DUMA:-/workspace
 DAY="${1:-$(date +%d.%m.%Y)}"
 echo "[голосования vote.duma.gov.ru → days/$DAY.json → DATA, VT] $DAY"
 # Шаг 1: всё дальнейшее (bills, vote_times, track, audit) опирается на DATA этого дня.
-python3 votes_day.py "$DAY"; rc=$?
+python3 collect/votes_day.py "$DAY"; rc=$?
 case $rc in
   0) ;;
   1) echo "votes_day: день загружен с пробелами — см. out/logs/votes_day_$DAY.json, logs/votes_day_fail.log" >&2;;
   *) echo "votes_day: ОШИБКА — список голосований за $DAY не загружен, DATA не изменён (logs/votes_day_fail.log)" >&2;;
 esac
 echo "[календарь] $DAY"
-if python3 calendar_update.py; then
-  python3 cal_merge.py || echo "cal_merge: ошибка — CAL не изменён" >&2
+if python3 collect/calendar_update.py; then
+  python3 merge/cal_merge.py || echo "cal_merge: ошибка — CAL не изменён" >&2
 else
   echo "calendar_update: ошибка — CAL не изменён" >&2
-  python3 cal_merge.py --status-only || true
+  python3 merge/cal_merge.py --status-only || true
 fi
 echo "[проверка пропусков DATA/CAL по рабочим дням] до $DAY"
 # Только отчёт (out/logs/gaps_<дата>.txt): canvas не меняется, прогон не останавливается. Дни без DATA — votes_day.py ДЕНЬ,
 # без CAL — calendar_update.py + cal_merge.py. GAP_ONLINE=0 — без запросов к vote.duma.gov.ru.
 GAP_ARGS="--to $DAY"; [ "${GAP_ONLINE:-1}" = 0 ] || GAP_ARGS="$GAP_ARGS --online"
-python3 gap_check.py $GAP_ARGS; rc=$?
+python3 check/gap_check.py $GAP_ARGS; rc=$?
 case $rc in
   0) ;;
   1) echo "gap_check: ВНИМАНИЕ — есть дни без DATA и/или CAL, см. out/logs/gaps_*.txt" >&2;;
@@ -52,42 +52,42 @@ PY
 )
 for MD in $MISS; do
   echo "[дозагрузка пропущенного дня] $MD"
-  python3 votes_day.py "$MD" || echo "votes_day $MD: не загружен (см. logs/votes_day_fail.log)" >&2
-  python3 bills.py "$MD" || true
-  python3 bill_titles.py "$MD" || true
-  python3 vote_times.py "$MD" || true
+  python3 collect/votes_day.py "$MD" || echo "votes_day $MD: не загружен (см. logs/votes_day_fail.log)" >&2
+  python3 collect/bills.py "$MD" || true
+  python3 collect/bill_titles.py "$MD" || true
+  python3 collect/vote_times.py "$MD" || true
 done
 echo "[законопроекты] $DAY"
-python3 bills.py "$DAY"
+python3 collect/bills.py "$DAY"
 # 19.11.2026: полное официальное название с sozd → INIC.t (в карточке — без многоточия vote.duma.gov.ru)
-python3 bill_titles.py "$DAY" || echo "bill_titles: ошибка (см. out/logs/bill_titles.log)" >&2
+python3 collect/bill_titles.py "$DAY" || echo "bill_titles: ошибка (см. out/logs/bill_titles.log)" >&2
 echo "[время голосований] $DAY"
-python3 vote_times.py "$DAY"
+python3 collect/vote_times.py "$DAY"
 echo "[органы власти: СФ, Минфин, Минтруд, Минюст, ЦБ] $DAY"
 # 14.11.2026: документы органов — за три дня до DAY включительно, чтобы пропущенный или опоздавший прогон не терял публикации
 OFROM=$(python3 -c "import datetime as d,sys; x=d.datetime.strptime(sys.argv[1],'%d.%m.%Y')-d.timedelta(days=3); print(x.strftime('%d.%m.%Y'))" "$DAY")
-python3 organs.py --from "$OFROM" --to "$DAY" --embed || echo "organs: ошибка (см. out/organs/status.json)" >&2
+python3 collect/organs.py --from "$OFROM" --to "$DAY" --embed || echo "organs: ошибка (см. out/organs/status.json)" >&2
 echo "[путь закона]"
-python3 track.py
+python3 collect/track.py
 # 14.11.2026: прямые ссылки на официальный текст законов «Вступают в силу» (kremlin.ru/acts/bank), где их ещё нет
 echo "[законы: официальные ссылки]"
-python3 laws_src.py || echo "laws_src: ошибка (см. out/logs/laws_src.log)" >&2
+python3 collect/laws_src.py || echo "laws_src: ошибка (см. out/logs/laws_src.log)" >&2
 echo "[временные метки законопроектов без ZTAG]"
-python3 auto_ztag.py || echo "auto_ztag: ошибка" >&2
+python3 merge/auto_ztag.py || echo "auto_ztag: ошибка" >&2
 echo "[аудит] $DAY"
-python3 audit.py --day "$DAY" --fix
+python3 check/audit.py --day "$DAY" --fix
 echo "[список задач]"
-python3 todo.py
+python3 check/todo.py
 # 19.11.2026 (правило 13): тексты дня пишет бот; прогон только сообщает, готовы ли они (код 1 — «тексты не готовы»)
-python3 texts_check.py "$DAY" || true
+python3 check/texts_check.py "$DAY" || true
 echo "[копия для чтения кода: src/canvas.code-only.tsx]"
-python3 strip_code_only.py || echo "strip_code_only: ошибка" >&2
+python3 merge/strip_code_only.py || echo "strip_code_only: ошибка" >&2
 echo "[данные сайта по месяцам: data/core.json, data/months/*.json, data/index.json]"
 # 12.11.2026 (п. 10): сайт берёт данные не из JS, а из data/*.json — после любых правок canvas их пересобирает split_data.mjs.
-node split_data.mjs || echo "split_data: ОШИБКА — data/*.json не обновлены, публиковать нельзя (docs/PIPELINE.md)" >&2
-python3 todo.py >/dev/null || true   # Т5: docs/STATUS.md — по уже пересобранным data/
-node validate_data.mjs || echo "validate_data: ОШИБКА — данные не прошли проверку схемы, публиковать нельзя (out/logs/validate_data.txt)" >&2
+node merge/split_data.mjs || echo "split_data: ОШИБКА — data/*.json не обновлены, публиковать нельзя (docs/PIPELINE.md)" >&2
+python3 check/todo.py >/dev/null || true   # Т5: docs/STATUS.md — по уже пересобранным data/
+node check/validate_data.mjs || echo "validate_data: ОШИБКА — данные не прошли проверку схемы, публиковать нельзя (out/logs/validate_data.txt)" >&2
 echo ""
 echo "=== Сводка ==="
-bash summary.sh "$DAY"
+bash check/summary.sh "$DAY"
 echo "Готово: out/TODO.md, out/logs/ (в $GD_ROOT). Дальше: тексты бота → commit.sh → публикация gh-pages (docs/PIPELINE.md)"

@@ -1,5 +1,5 @@
 # П1 (12.11.2026): автопубликация сайта. После зелёных тестов на main (workflow «tests») собирает сайт
-# и публикует его в ветку gh-pages тем же pipeline/publish.sh, что и при ручной выкладке
+# и публикует его в ветку gh-pages тем же pipeline/publish/publish.sh, что и при ручной выкладке
 # (app.<hash>.js, data/*.<hash>.json, статика, обычный коммит без --force, проверка живой страницы).
 # Вручную: Actions → deploy → Run workflow. Если сборка не изменилась, publish.sh коммит не делает.
 name: deploy
@@ -35,7 +35,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Публикация (pipeline/publish.sh)
+      - name: Публикация (pipeline/publish/publish.sh)
         run: |
           MSG="$(git log -1 --format=%s | cut -c1-120)"
-          bash pipeline/publish.sh "$MSG"
+          bash pipeline/publish/publish.sh "$MSG"

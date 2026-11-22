@@ -1,6 +1,6 @@
 # Тесты «Календаря законов» (12.11.2026, пункт 8): Python-тесты конвейера, инварианты сайта в Node
 # (каждый законопроект из DATA виден в календаре, формат ссылки «Поделиться») и правило 11 в headless Chrome.
-# Только проверка: CI ничего не публикует, не пушит в gh-pages и не запускает pipeline/publish.sh или commit.sh.
+# Только проверка: CI ничего не публикует, не пушит в gh-pages и не запускает pipeline/publish/publish.sh или commit.sh.
 name: tests
 on:
   push:
@@ -41,6 +41,6 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.63.0
           npx playwright install --with-deps webkit
-      # 19.11.2026: pipeline/ci_tests.sh — проверка типов и тесты; код 3 («тексты не готовы»: SHORT, «Суть», метки) — предупреждение, не ошибка
-      - name: Проверка типов и тесты (pipeline/ci_tests.sh)
-        run: bash pipeline/ci_tests.sh; rc=$?; [ $rc = 0 ] || [ $rc = 3 ]
+      # 19.11.2026: pipeline/check/ci_tests.sh — проверка типов и тесты; код 3 («тексты не готовы»: SHORT, «Суть», метки) — предупреждение, не ошибка
+      - name: Проверка типов и тесты (pipeline/check/ci_tests.sh)
+        run: bash pipeline/check/ci_tests.sh; rc=$?; [ $rc = 0 ] || [ $rc = 3 ]

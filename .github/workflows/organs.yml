@@ -1,5 +1,5 @@
 # 14.11.2026: сбор только органов — документы и новости Совета Федерации, Банка России, Минфина, Минтруда, Минюста
-# (pipeline/organs.py за последние 7 дней, --embed) → проверка данных и тесты → коммит в main → публикация сайта.
+# (pipeline/collect/organs.py за последние 7 дней, --embed) → проверка данных и тесты → коммит в main → публикация сайта.
 # Голосования Госдумы, календарь и законопроекты не собирает. По расписанию 4 раза днем (10:13–19:13 МСК) и вручную: Actions → organs → Run workflow.
 # 16.11.2026: + указы и распоряжения Президента, постановления и распоряжения Правительства (API publication.pravo.gov.ru).
 name: organs
@@ -58,7 +58,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Сбор органов (pipeline/organs.py)
+      - name: Сбор органов (pipeline/collect/organs.py)
         id: collect
         env:
           IN_FROM: ${{ github.event.inputs.from }}
@@ -68,30 +68,30 @@ jobs:
           # 17.11.2026: длинный сбор вручную (например, указы Президента с 1 октября): даты и «только» — из полей запуска, в команду как аргументы
           [[ "$IN_FROM" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{4}$ ]] && { FROM="$IN_FROM"; XARGS+=(--pages 60); }
           [[ "$IN_ONLY" =~ ^(pres|gov)(,(pres|gov))?$ ]] && XARGS+=(--only "$IN_ONLY")
-          cd pipeline && python3 organs.py --from "$FROM" --to "$TO" "${XARGS[@]}" --embed 2>&1 | tee ../organs.log
+          python3 pipeline/collect/organs.py --from "$FROM" --to "$TO" "${XARGS[@]}" --embed 2>&1 | tee organs.log
           # 19.11.2026: официальные тексты новых документов → extracts/organs/ (по ним ИИ пишет «Суть»; без текста — пометка в out/TODO.md)
-          timeout 12m python3 organ_texts.py --from "$FROM" 2>&1 | tail -n 30 | tee -a ../organs.log || echo 'organ_texts: не завершен, продолжим в следующий запуск'
-          cd .. && python3 pipeline/strip_code_only.py && node pipeline/split_data.mjs
+          timeout 12m python3 pipeline/collect/organ_texts.py --from "$FROM" 2>&1 | tail -n 30 | tee -a organs.log || echo 'organ_texts: не завершен, продолжим в следующий запуск'
+          python3 pipeline/merge/strip_code_only.py && node pipeline/merge/split_data.mjs
       - name: Проверка схемы данных
-        run: node pipeline/validate_data.mjs
+        run: node pipeline/check/validate_data.mjs
       - name: Проверка типов и тесты
         id: tests
-        # 19.11.2026: pipeline/ci_tests.sh — непрошедшая проверка готовности текстов («Суть»/«Кого коснётся», метки; код 3)
+        # 19.11.2026: pipeline/check/ci_tests.sh — непрошедшая проверка готовности текстов («Суть»/«Кого коснётся», метки; код 3)
         # коммит и публикацию не блокирует: новые документы органов с ORG_HIDE_FROM без текстов и так скрыты. Любой другой тест — блокирует.
-        run: bash pipeline/ci_tests.sh || true
-      - name: Коммит в main (pipeline/commit.sh)
+        run: bash pipeline/check/ci_tests.sh || true
+      - name: Коммит в main (pipeline/publish/commit.sh)
         if: steps.tests.outputs.ok == '1'
-        run: bash pipeline/commit.sh "Документы и новости органов (автоматически)"
-      - name: Публикация (pipeline/publish.sh)
+        run: bash pipeline/publish/commit.sh "Документы и новости органов (автоматически)"
+      - name: Публикация (pipeline/publish/publish.sh)
         if: steps.tests.outputs.ok == '1'
-        run: bash pipeline/publish.sh "Документы и новости органов"
+        run: bash pipeline/publish/publish.sh "Документы и новости органов"
       # 19.11.2026: если тесты или проверка схемы упали, собранное не теряется: в main уходят только сырые данные сбора
       # (out/organs/events.json, status.json, тексты extracts/organs) — без canvas и data/, сайт не публикуется, прогон помечается ошибкой.
       # Следующий прогон (organs.py --embed) или агент встраивает их в canvas.
       - name: Коммит собранных данных без публикации (тесты не прошли)
         if: always() && steps.collect.outcome == 'success' && steps.tests.outputs.ok != '1'
         run: |
-          bash pipeline/commit_raw.sh "Органы: собранные документы и тексты без публикации (тесты не прошли)"
+          bash pipeline/publish/commit_raw.sh "Органы: собранные документы и тексты без публикации (тесты не прошли)"
           echo 'Тесты или проверка схемы не прошли: сырые данные органов в main, сайт не опубликован'; exit 1
       - name: Сводка
         if: always()

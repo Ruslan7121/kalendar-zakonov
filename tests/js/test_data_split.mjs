@@ -1,4 +1,4 @@
-// Пункт 10 (12.11.2026): данные сайта вынесены из JS в data/*.json и грузятся по месяцам (pipeline/split_data.mjs, web/gdx.ts).
+// Пункт 10 (12.11.2026): данные сайта вынесены из JS в data/*.json и грузятся по месяцам (pipeline/merge/split_data.mjs, web/gdx.ts).
 // Проверяется без сети и браузера (fetch подменён чтением файлов):
 //  1) data/ в git совпадает с тем, что генератор получает из src/canvas.tsx (конвейер не оставил данные только в canvas);
 //  2) после подгрузки всех месяцев код сайта видит те же DATA, CAL, ORG, SUM, FULL, … что и canvas (по содержимому;
@@ -19,7 +19,7 @@ import { loadCanvas, ROOT } from './load_canvas.mjs';
 import { loadSite, need, buildData } from './load_site.mjs';
 
 // 1) data/ актуальна
-execFileSync('node', [path.join(ROOT, 'pipeline/split_data.mjs'), '--check'], { stdio: 'inherit' });
+execFileSync('node', [path.join(ROOT, 'pipeline/merge/split_data.mjs'), '--check'], { stdio: 'inherit' });
 
 const DAYREC = ['DATA', 'SUM', 'FULL', 'GOVA', 'SFN'], BILLREC = ['SHORT', 'TX', 'VT', 'TRACK', 'INFO', 'BP'];
 const NAMES = [...DAYREC, ...BILLREC, 'CAL', 'ORG', 'ORGNEWS', 'DEP_RAW', 'DEP8', 'DEP', 'PLAIN', 'PROC', 'LAWS', 'LKEYS', 'RES_T', 'ZTAG', 'BUDGET', 'SFM', 'DAYS', 'COUNT', 'DLD', 'DLB', 'DLK'];

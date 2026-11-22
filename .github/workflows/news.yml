@@ -1,9 +1,9 @@
 # 16.11.2026: оперативные новости для вкладки «Новости» — каждые 20 минут с 8:00 до 22:00 по Москве, каждый день.
-# pipeline/news_live.py собирает заголовки и ссылки с официальных сайтов (Госдума, Правительство, СФ, ЦБ, Минфин, Минтруд, Минюст),
-# сливает с уже опубликованным data/live.json (7 дней) и pipeline/publish.sh --live выкладывает только этот файл в gh-pages.
+# pipeline/collect/news_live.py собирает заголовки и ссылки с официальных сайтов (Госдума, Правительство, СФ, ЦБ, Минфин, Минтруд, Минюст),
+# сливает с уже опубликованным data/live.json (7 дней) и pipeline/publish/publish.sh --live выкладывает только этот файл в gh-pages.
 # main не меняется, сайт не пересобирается. Свою очередь (news-live) не делит с daily/laws/organs — вечерний сбор не вытесняется.
 # 17.11.2026: расписание GitHub задерживает запуски на часы и пропускает их (утром 17.11 сбор стоял с 21:44 до 12:33), поэтому цепочка
-# запусков не прерывается и ночью: один запуск (pipeline/news_loop.sh) сам повторяет сбор — днем каждые 20 минут, ночью раз в час,
+# запусков не прерывается и ночью: один запуск (pipeline/collect/news_loop.sh) сам повторяет сбор — днем каждые 20 минут, ночью раз в час,
 # в 10/13/16/19 МСК запускает organs, по будням с 21:17 МСК — daily, а перед лимитом 6 часов запускает следующий news.
 # Cron раз в час остался запасным: если цепочка порвалась, он ее поднимает; лишние запуски ждут в очереди news-live (в ней один ожидающий).
 # Запуск вручную: Actions → news → Run workflow.
@@ -40,10 +40,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Сбор каждые 20 минут до 22:00 МСК (pipeline/news_loop.sh)
+      - name: Сбор каждые 20 минут до 22:00 МСК (pipeline/collect/news_loop.sh)
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash pipeline/news_loop.sh 2>&1 | tee news.log
+        run: bash pipeline/collect/news_loop.sh 2>&1 | tee news.log
       - name: Сводка
         if: always()
         run: |
