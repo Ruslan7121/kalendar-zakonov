@@ -5,10 +5,20 @@
 Отклонённый этап: дата = дата голосования (sozd «отклонить» или день из DATA).
 Запуск: python3 track.py [номер ...]  (без аргументов — все законопроекты из DATA).
 """
+
 import sys, os, re, json, datetime
-sys.path[:0] = [os.path.dirname(os.path.abspath(__file__)), os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib')]; import common as C
+
+sys.path[:0] = [
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'),
+]
+import common as C
 import sozd_cache as S
-MON = {m: i + 1 for i, m in enumerate('января февраля марта апреля мая июня июля августа сентября октября ноября декабря'.split())}
+
+MON = {
+    m: i + 1
+    for i, m in enumerate('января февраля марта апреля мая июня июля августа сентября октября ноября декабря'.split())
+}
 STAGES = ('in', 'kom', 'r1', 'r2', 'r3', 'sf', 'sign', 'pub', 'force')
 BILLS_DIR = S.DIR  # единый кэш HTML sozd (sozd_cache.py)
 # sozd: "19.09.2023 19.09.23 16:30 действие" или "22.10.2026 22.10.26 действие"
@@ -71,19 +81,24 @@ def load_sozd(n, refresh=False, day=''):
     """HTML sozd из единого кэша sozd_cache ($GD_DUMA/bills/, общий с bills.py): моложе TTL — без сети,
     старше — перезапрос; при 504 — последняя хорошая страница. TRACK_QUICK=1 — только кэш, без сети."""
     quick = bool(os.environ.get('TRACK_QUICK'))
-    raw, st = S.get(n, refresh=refresh, offline=quick and not refresh, deadline=120, log='track_fail.log',
-                    ttl=S.ttl_for_day(day))
+    raw, st = S.get(
+        n, refresh=refresh, offline=quick and not refresh, deadline=120, log='track_fail.log', ttl=S.ttl_for_day(day)
+    )
     if not raw:
-        C.log('track_fail.log', f'{n}: ' + ('нет локального sozd html (TRACK_QUICK)' if quick and not refresh else 'sozd не ответил, кэша нет'))
+        C.log(
+            'track_fail.log',
+            f'{n}: '
+            + ('нет локального sozd html (TRACK_QUICK)' if quick and not refresh else 'sozd не ответил, кэша нет'),
+        )
         return None
     if st == 'stale' and not quick:
         C.log('track_fail.log', f'{n}: sozd fetch fail, using cache')
     t = re.sub(r'\s+', ' ', C.text(raw))
-    pp = passport(t[:t.find('По событиям')] if 'По событиям' in t else t)
+    pp = passport(t[: t.find('По событиям')] if 'По событиям' in t else t)
     if pp:
         PASS[n] = pp
     if 'По событиям' in t:
-        t = t[t.find('По событиям'):]
+        t = t[t.find('По событиям') :]
     return t
 
 
@@ -147,7 +162,13 @@ def one(n, vote_day='', vote_rd='', rejected=False, refresh=False):
     if not m:
         m = re.search(r'(\d+-ФЗ)', t)
         # только если рядом «подписан»/«опубликован»
-        if m and not re.search(r'.{0,40}' + re.escape(m.group(1)) + r'.{0,20}(подписан|опубликован)|(подписан|опубликован).{0,40}' + re.escape(m.group(1)), t):
+        if m and not re.search(
+            r'.{0,40}'
+            + re.escape(m.group(1))
+            + r'.{0,20}(подписан|опубликован)|(подписан|опубликован).{0,40}'
+            + re.escape(m.group(1)),
+            t,
+        ):
             m = None
     if m:
         r['law'] = m.group(1) if m.lastindex else m.group(0)
@@ -157,7 +178,7 @@ def one(n, vote_day='', vote_rd='', rejected=False, refresh=False):
             r['law'] = law_m.group(1)
 
     if r.get('law') and r.get('sign') and not os.environ.get('TRACK_QUICK'):
-        f, u = force_date(f"№ {r['law']}", r.get('pub', ''), r['sign'])
+        f, u = force_date(f'№ {r["law"]}', r.get('pub', ''), r['sign'])
         if f:
             r['force'] = f
         if u:
@@ -195,12 +216,22 @@ def add_law(src, n, tr, title):
     L = json.loads(src[i:j])
     d = tr['force']
     mk = d[3:]
-    law = f"Федеральный закон от {tr['sign']} № {tr['law']}"
+    law = f'Федеральный закон от {tr["sign"]} № {tr["law"]}'
     arr = L['months'].setdefault(mk, [])
     if any(tr['law'] in x.get('law', '') for x in arr):
         return src
     # added — когда закон появился в ленте «Вступают в силу»: по нему бот присылает «Новый закон» (feed/events.json)
-    arr.append({'d': d, 'law': law, 'title': title, 'sut': '', 'auto': 1, 'bill': n, 'added': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')})
+    arr.append(
+        {
+            'd': d,
+            'law': law,
+            'title': title,
+            'sut': '',
+            'auto': 1,
+            'bill': n,
+            'added': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        }
+    )
     arr.sort(key=lambda x: x['d'][:2])
     C.log('laws_auto.log', f'{n}: {law}, вступает {d}')
     return src[:i] + json.dumps(L, ensure_ascii=False) + src[j:]
@@ -260,20 +291,30 @@ if __name__ == '__main__':
     if '--refresh' in ns:
         ns = [x for x in ns if x != '--refresh']
         refresh_set = set(ns) if ns else set(bill_meta)
-        ns = sorted(refresh_set) if not sys.argv[1:] or sys.argv[1:] == ['--refresh'] else [x for x in sys.argv[1:] if x != '--refresh']
+        ns = (
+            sorted(refresh_set)
+            if not sys.argv[1:] or sys.argv[1:] == ['--refresh']
+            else [x for x in sys.argv[1:] if x != '--refresh']
+        )
 
     # 13.11.2026: ежедневный прогон (CI) — TRACK_DAYS=N: только законопроекты, голосовавшиеся за последние N дней, и «в пути»
     # (есть r3/sf/sign/law, но нет force); у остальных TRACK уже есть. TRACK_BUDGET_SEC=S: после S секунд цикл
     # останавливается, собранное записывается, остальное — в следующий прогон (прогон не упирается в лимит времени CI).
     import time, datetime as _dt
+
     days_lim = int(os.environ.get('TRACK_DAYS', '0') or 0)
     if days_lim > 0 and not sys.argv[1:]:
         today = _dt.date.today()
+
         def _recent(d):
-            try: return (today - _dt.datetime.strptime(d, '%d.%m.%Y').date()).days <= days_lim
-            except ValueError: return False
+            try:
+                return (today - _dt.datetime.strptime(d, '%d.%m.%Y').date()).days <= days_lim
+            except ValueError:
+                return False
+
         moving = {n for n, v in T.items() if not v.get('force') and any(v.get(k) for k in ('r3', 'sf', 'sign', 'law'))}
         ns = [n for n in ns if _recent(bill_meta.get(n, {}).get('day', '')) or n in moving or n not in T]
+
     # 13.11.2026: первыми — законопроекты без инициатора/комитета (в INFO данных сайта и в INIC), чтобы раздел «Инициатор» заполнялся быстрее
     def _has_ini():
         have = set(C.get_block(src, 'INIC').keys()) if '/* INIC:start */' in src else set()
@@ -283,37 +324,70 @@ if __name__ == '__main__':
             for f in ['core.json'] + list(idx.get('file', {}).values()):
                 if f == 'core.json' or f.startswith('months/'):
                     for k, v in (json.load(open(os.path.join(dd, f))).get('INFO') or {}).items():
-                        if v.get('ini'): have.add(k)
+                        if v.get('ini'):
+                            have.add(k)
         except (OSError, ValueError):
             pass
         return have
+
     _hi = _has_ini()
     ns = [n for n in ns if n not in _hi] + [n for n in ns if n in _hi]
     print(f'track: без инициатора — {sum(1 for n in ns if n not in _hi)}, они первыми', flush=True)
-    budget = float(os.environ.get('TRACK_BUDGET_SEC', '0') or 0); t0 = time.time()
-    print(f'track: {len(ns)} bills' + (f' (последние {days_lim} дн. и «в пути»)' if days_lim > 0 else '') + (f', бюджет {int(budget)} с' if budget else ''), flush=True)
+    budget = float(os.environ.get('TRACK_BUDGET_SEC', '0') or 0)
+    t0 = time.time()
+    print(
+        f'track: {len(ns)} bills'
+        + (f' (последние {days_lim} дн. и «в пути»)' if days_lim > 0 else '')
+        + (f', бюджет {int(budget)} с' if budget else ''),
+        flush=True,
+    )
     # 15.11.2026: страницы sozd загружаются параллельно (TRACK_WORKERS, по умолчанию 6): по одному законопроекту прогон шел
     # больше часа (~27 с на законопроект) и упирался в бюджет. Сведение результатов — по порядку, как раньше.
     from concurrent.futures import ThreadPoolExecutor
+
     def fetch_one(n):
-        if budget and time.time() - t0 > budget: return n, None, True
-        meta = bill_meta.get(n, {}); old = T.get(n, {}); need_refresh = n in refresh_set
-        tr = one(n, vote_day=meta.get('day', ''), vote_rd=meta.get('rd', ''), rejected=meta.get('rejected', False), refresh=need_refresh)
-        if not tr: return n, None, False
+        if budget and time.time() - t0 > budget:
+            return n, None, True
+        meta = bill_meta.get(n, {})
+        old = T.get(n, {})
+        need_refresh = n in refresh_set
+        tr = one(
+            n,
+            vote_day=meta.get('day', ''),
+            vote_rd=meta.get('rd', ''),
+            rejected=meta.get('rejected', False),
+            refresh=need_refresh,
+        )
+        if not tr:
+            return n, None, False
         merged = merge_track(old, tr)
         # если после кэша нет sf/sign/pub, а голос уже 3-е/закон — refresh
-        if (not os.environ.get('TRACK_QUICK') and not need_refresh
-                and not any(merged.get(k) for k in ('sf', 'sign', 'pub'))):
+        if (
+            not os.environ.get('TRACK_QUICK')
+            and not need_refresh
+            and not any(merged.get(k) for k in ('sf', 'sign', 'pub'))
+        ):
             if re.search(r'3\s*чтен|3-е', meta.get('rd', ''), re.I) or old.get('sf') or old.get('law'):
-                tr2 = one(n, vote_day=meta.get('day', ''), vote_rd=meta.get('rd', ''), rejected=meta.get('rejected', False), refresh=True)
-                if tr2: merged = merge_track(merged, tr2)
+                tr2 = one(
+                    n,
+                    vote_day=meta.get('day', ''),
+                    vote_rd=meta.get('rd', ''),
+                    rejected=meta.get('rejected', False),
+                    refresh=True,
+                )
+                if tr2:
+                    merged = merge_track(merged, tr2)
         return n, merged, False
-    workers = max(1, int(os.environ.get('TRACK_WORKERS', '6') or 6)); done = 0; over = False
+
+    workers = max(1, int(os.environ.get('TRACK_WORKERS', '6') or 6))
+    done = 0
+    over = False
     with ThreadPoolExecutor(workers) as ex:
         res = list(ex.map(fetch_one, ns))
     for i, (n, merged, late) in enumerate(res, 1):
         if late:
-            over = True; continue
+            over = True
+            continue
         done += 1
         if merged is None:
             continue

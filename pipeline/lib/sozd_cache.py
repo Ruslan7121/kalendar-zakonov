@@ -14,7 +14,8 @@
     со статусом 'stale'; запись идёт атомарно (tmp + os.replace) только после проверки valid().
 Ничего не выдумывается: нет страницы — возвращается None, вызывающий оставляет поле пустым.
 """
-import os, re, json, time, shutil, tempfile
+
+import os, json, time, shutil, tempfile
 import common as C
 
 DIR = os.environ.get('GD_SOZD_HTML') or os.path.join(C.DUMA, 'bills')
@@ -38,8 +39,12 @@ def fail_path(n):
 
 
 def urls(n):
-    return [f'https://sozd.duma.gov.ru/bill/{n}', f'http://sozd.duma.gov.ru/bill/{n}',
-            f'https://sozd.duma.gov.ru/bill/{n}/', f'https://www.duma.gov.ru/legislative/consideration/{n}/']
+    return [
+        f'https://sozd.duma.gov.ru/bill/{n}',
+        f'http://sozd.duma.gov.ru/bill/{n}',
+        f'https://sozd.duma.gov.ru/bill/{n}/',
+        f'https://www.duma.gov.ru/legislative/consideration/{n}/',
+    ]
 
 
 def valid(src):
@@ -69,6 +74,7 @@ def _migrate(n):
 def ttl_for_day(day):
     """TTL для законопроекта по дню последнего голосования DD.MM.YYYY: недавний — TTL_OK, старый — NEVER."""
     import datetime as dt
+
     try:
         d = dt.datetime.strptime(day, '%d.%m.%Y')
     except (TypeError, ValueError):
@@ -101,16 +107,20 @@ def recent_fail(n):
 def _mark_fail(n, why):
     try:
         os.makedirs(DIR, exist_ok=True)
-        json.dump({'n': n, 'at': time.strftime('%Y-%m-%d %H:%M:%S'), 'why': why}, open(fail_path(n), 'w'), ensure_ascii=False)
+        json.dump(
+            {'n': n, 'at': time.strftime('%Y-%m-%d %H:%M:%S'), 'why': why}, open(fail_path(n), 'w'), ensure_ascii=False
+        )
     except OSError:
         pass
 
 
 def _store(n, src):
     os.makedirs(DIR, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=DIR, suffix='.tmp'); os.close(fd)
+    fd, tmp = tempfile.mkstemp(dir=DIR, suffix='.tmp')
+    os.close(fd)
     open(tmp, 'w').write(src)
-    os.chmod(tmp, 0o644); os.replace(tmp, path(n))
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, path(n))
     if os.path.exists(fail_path(n)):
         os.remove(fail_path(n))
 
@@ -140,7 +150,8 @@ def get(n, refresh=False, offline=False, deadline=90, fetcher=None, log='sozd_ca
         if os.path.exists(tmp):
             os.remove(tmp)
         if NOT_FOUND in src:
-            saw404 = True; continue
+            saw404 = True
+            continue
         if valid(src):
             _store(n, src)
             return src, 'fetched'

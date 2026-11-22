@@ -10,15 +10,26 @@ const T = await loadCanvas(['ORG_HIDE_FROM', 'orgPub', 'orgNoText', 'orgHasTexts
 assert.equal(T.ORG_HIDE_FROM, '19.11.2026');
 assert.equal(T.orgHideFrom('18.11.2026'), false);
 assert.equal(T.orgHideFrom('19.11.2026'), true);
-assert.equal(T.orgPub({ ty: 'решение', d: '18.11.2026', sut: '', who: '' }), true, 'до границы плитка без текстов видна');
+assert.equal(
+  T.orgPub({ ty: 'решение', d: '18.11.2026', sut: '', who: '' }),
+  true,
+  'до границы плитка без текстов видна',
+);
 assert.equal(T.orgPub({ ty: 'решение', d: '05.11.2026', sut: 'Есть суть.', who: '' }), true);
-assert.equal(T.orgPub({ ty: 'решение', d: '19.11.2026', sut: '', who: '' }), false, 'с границы плитка без текстов скрыта');
+assert.equal(
+  T.orgPub({ ty: 'решение', d: '19.11.2026', sut: '', who: '' }),
+  false,
+  'с границы плитка без текстов скрыта',
+);
 assert.equal(T.orgPub({ ty: 'решение', d: '19.11.2026', sut: 'Суть.', who: 'Все.' }), true);
 assert.equal(T.orgPub({ ty: 'заседание', d: '19.11.2026' }), true);
 assert.equal(T.orgPub({ ty: 'решение', d: '18.11.2026', nt: 1, sut: '', who: '' }), false, 'nt — строка, не плитка');
 assert.equal(T.orgNoText({ ty: 'решение', d: '18.11.2026', nt: 1 }), true);
 
-const orgSut = (x) => (Array.isArray(x.sut) ? x.sut : typeof x.sut === 'string' ? x.sut.split(/\n\s*\n|\n/) : []).map((q) => String(q).trim()).filter(Boolean);
+const orgSut = (x) =>
+  (Array.isArray(x.sut) ? x.sut : typeof x.sut === 'string' ? x.sut.split(/\n\s*\n|\n/) : [])
+    .map((q) => String(q).trim())
+    .filter(Boolean);
 const orgWho = (x) => (typeof x.who === 'string' ? x.who : Array.isArray(x.who) ? x.who.join('\n') : '').trim();
 const orgIsDoc = (x) => x.ty !== 'новость' && x.ty !== 'заседание';
 const orgHasTexts = (x) => orgSut(x).length > 0 && !!orgWho(x);
@@ -36,7 +47,10 @@ const shown = docs.filter((x) => T.orgPub(x));
 const hidden = docs.filter((x) => !T.orgPub(x));
 assert.ok(docs.length > 0, 'в data/ нет документов ORG');
 const p131 = docs.find((x) => x.d === '05.11.2026' && /131н/.test(x.t || ''));
-assert.ok(p131 && orgSut(p131).length, 'ожидался приказ № 131н за 05.11 с «Сутью» (22.11.2026: «Кого коснётся» дописано, поэтому его наличие не проверяется)');
+assert.ok(
+  p131 && orgSut(p131).length,
+  'ожидался приказ № 131н за 05.11 с «Сутью» (22.11.2026: «Кого коснётся» дописано, поэтому его наличие не проверяется)',
+);
 assert.equal(T.orgPub(p131), true, 'приказ № 131н за 05.11 должен быть виден как плитка');
 for (const x of hidden) {
   assert.ok(T.orgHideFrom(x.d) || T.orgNoText(x), `скрыт документ до границы без nt: ${x.d} ${x.t}`);
@@ -59,9 +73,11 @@ for (const [mk, os] of Object.entries(idx.cnt || {})) {
 }
 for (const [mk, os] of Object.entries(by)) {
   for (const [o, days] of Object.entries(os)) {
-    const got = [...((idx.cnt[mk] || {}).o || {})[o] || []].sort();
+    const got = [...(((idx.cnt[mk] || {}).o || {})[o] || [])].sort();
     assert.deepEqual(got, [...days].sort(), `в cnt нет дней ${mk} ${o}: ${[...days]} vs ${got}`);
   }
 }
 
-console.log(`OK test_org_texts: документов ${docs.length}, плиток ${shown.length}, долг без текстов ${debt.length}, скрыто с ${T.ORG_HIDE_FROM} ${hiddenFrom.length}; cnt совпадает`);
+console.log(
+  `OK test_org_texts: документов ${docs.length}, плиток ${shown.length}, долг без текстов ${debt.length}, скрыто с ${T.ORG_HIDE_FROM} ${hiddenFrom.length}; cnt совпадает`,
+);

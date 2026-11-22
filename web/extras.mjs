@@ -23,50 +23,128 @@ const rd = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8')
 const IDX = rd('index.json');
 const CORE = rd('core.json');
 const M = {}; // имя блока → объединённые значения всех месяцев
-const CALP = []; const ORGA = []; // ORG — массивы по месяцам (документы и новости органов)
+const CALP = [];
+const ORGA = []; // ORG — массивы по месяцам (документы и новости органов)
 for (const mk of IDX.months) {
   const J = rd(IDX.file[mk]);
   for (const [k, v] of Object.entries(J)) {
-    if (k === 'CAL.p') { CALP.push(...v); continue; }
-    if (k === 'ORG' && Array.isArray(v)) { ORGA.push(...v); continue; }
+    if (k === 'CAL.p') {
+      CALP.push(...v);
+      continue;
+    }
+    if (k === 'ORG' && Array.isArray(v)) {
+      ORGA.push(...v);
+      continue;
+    }
     if (Array.isArray(v)) continue;
     if (v && typeof v === 'object') M[k] = Object.assign(M[k] || {}, v);
   }
 }
 const pick = (n) => Object.assign({}, CORE[n] || {}, M[n] || {});
-const DATA = M.DATA || {}; const SHORTN = pick('SHORT'); const VT = pick('VT'); const BP = pick('BP'); const INFO = pick('INFO'); const PLAIN = pick('PLAIN');
-const TRACK = pick('TRACK'); const ZTAG = CORE.ZTAG || {}; const LAWS = CORE.LAWS || { months: {} };
+const DATA = M.DATA || {};
+const SHORTN = pick('SHORT');
+const VT = pick('VT');
+const BP = pick('BP');
+const INFO = pick('INFO');
+const PLAIN = pick('PLAIN');
+const TRACK = pick('TRACK');
+const ZTAG = CORE.ZTAG || {};
+const LAWS = CORE.LAWS || { months: {} };
 
-const pd = (d) => { const [a, b, c] = d.split('.').map(Number); return new Date(Date.UTC(c, b - 1, a)); };
-const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-const hd = (d) => { const x = pd(d); return `${x.getUTCDate()} ${MON[x.getUTCMonth()]} ${x.getUTCFullYear()}`; };
-const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const pd = (d) => {
+  const [a, b, c] = d.split('.').map(Number);
+  return new Date(Date.UTC(c, b - 1, a));
+};
+const MON = [
+  'января',
+  'февраля',
+  'марта',
+  'апреля',
+  'мая',
+  'июня',
+  'июля',
+  'августа',
+  'сентября',
+  'октября',
+  'ноября',
+  'декабря',
+];
+const hd = (d) => {
+  const x = pd(d);
+  return `${x.getUTCDate()} ${MON[x.getUTCMonth()]} ${x.getUTCFullYear()}`;
+};
+const esc = (s) =>
+  String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 const RDW = { '1-е': '1-е чтение', '2-е': '2-е чтение', '3-е': '3-е чтение' };
-const readW = (r) => { r = (r || '').replace(/ё/g, 'е').trim(); if (/^к отклонению/.test(r)) return 'отклонение';
-  const m = r.match(/^(\d)(?:-е)? чтение(?: таб\. \d+ (принятые|отклоненные) поправки)?$/); if (m) return `${m[1]}-е чтение${m[2] ? `: ${m[2]} поправки` : ''}`;
-  for (const k of Object.keys(RDW)) if (r.startsWith(k)) return RDW[k]; return r && r !== '—' ? r : ''; };
+const readW = (r) => {
+  r = (r || '').replace(/ё/g, 'е').trim();
+  if (/^к отклонению/.test(r)) return 'отклонение';
+  const m = r.match(/^(\d)(?:-е)? чтение(?: таб\. \d+ (принятые|отклоненные) поправки)?$/);
+  if (m) return `${m[1]}-е чтение${m[2] ? `: ${m[2]} поправки` : ''}`;
+  for (const k of Object.keys(RDW)) if (r.startsWith(k)) return RDW[k];
+  return r && r !== '—' ? r : '';
+};
 
 // голосования по законопроектам
 const BILLS = {}; // номер → { votes: [...], agenda: {short, full, url} }
 for (const day of Object.keys(DATA).sort((a, b) => pd(a) - pd(b))) {
   for (const ln of String(DATA[day]).split('\n')) {
-    const f = ln.split('|'); if (f.length < 6 || !/^\d+$/.test(f[0])) continue;
-    const no = f[1]; if (!/^\d+-\d+$/.test(no)) continue;
+    const f = ln.split('|');
+    if (f.length < 6 || !/^\d+$/.test(f[0])) continue;
+    const no = f[1];
+    if (!/^\d+-\d+$/.test(no)) continue;
     const [za, pr, vz, ng] = (f[5] || '').split('/').map((x) => +x);
-    (BILLS[no] = BILLS[no] || { no, votes: [] }).votes.push({ id: f[0], day, time: VT[f[0]] || '', q: f[2], read: readW(f[3]), ok: f[4] === '1', za, pr, vz, ng });
+    (BILLS[no] = BILLS[no] || { no, votes: [] }).votes.push({
+      id: f[0],
+      day,
+      time: VT[f[0]] || '',
+      q: f[2],
+      read: readW(f[3]),
+      ok: f[4] === '1',
+      za,
+      pr,
+      vz,
+      ng,
+    });
   }
 }
-for (const p of CALP) for (const a of p.a || []) { const b = BILLS[a[0]]; if (b && !b.ag) b.ag = { short: a[1], url: a[3], full: a[4] }; }
+for (const p of CALP)
+  for (const a of p.a || []) {
+    const b = BILLS[a[0]];
+    if (b && !b.ag) b.ag = { short: a[1], url: a[3], full: a[4] };
+  }
 const billOf = (no) => {
-  const b = BILLS[no]; const inf = INFO[no] || {}; const bp = BP[no] || {}; const last = b.votes[b.votes.length - 1];
+  const b = BILLS[no];
+  const inf = INFO[no] || {};
+  const bp = BP[no] || {};
+  const last = b.votes[b.votes.length - 1];
   const pl = b.votes.map((v) => PLAIN[v.id]).find((x) => x && (x.sut || x.title)) || {};
   const full = (b.ag && b.ag.full) || inf.t || pl.title || last.q;
   const short = (b.ag && b.ag.short) || '';
   const sut = (bp.sut && bp.sut.length ? bp.sut : inf.sut && inf.sut.length ? inf.sut : pl.sut) || [];
   const who = bp.who || inf.who || pl.who || '';
-  return { ...b, last, full, short, title: short || full, sut: Array.isArray(sut) ? sut : [sut], bs: Array.isArray(bp.bs) ? bp.bs : [], who, ini: inf.ini || '', com: inf.com || '', tags: ZTAG[no] || [[], [], []], tr: TRACK[no] || null };
+  return {
+    ...b,
+    last,
+    full,
+    short,
+    title: short || full,
+    sut: Array.isArray(sut) ? sut : [sut],
+    bs: Array.isArray(bp.bs) ? bp.bs : [],
+    who,
+    ini: inf.ini || '',
+    com: inf.com || '',
+    tags: ZTAG[no] || [[], [], []],
+    tr: TRACK[no] || null,
+  };
 };
-const ALL = Object.keys(BILLS).map(billOf).sort((a, b) => pd(b.last.day) - pd(a.last.day) || +b.last.id - +a.last.id);
+const ALL = Object.keys(BILLS)
+  .map(billOf)
+  .sort((a, b) => pd(b.last.day) - pd(a.last.day) || +b.last.id - +a.last.id);
 
 // ---------- оформление ----------
 const CSS = `:root{--bg:#fff;--sub:#F4F4F6;--bd:#E2E2E7;--tx:#1D1D1F;--tx2:#4E4E55;--tx3:#6E6E73;--ac:#0A66D6;--ok:#1B7A3A;--okb:#E3F4E8;--no:#C42B2B;--nob:#FDE8E8}
@@ -93,30 +171,117 @@ const page = ({ title, desc, url, body, depth }) => {
 };
 const cut = (s, n) => (s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : s);
 /* «Законопроект о выплате …»: берется оборот «(о …)» из полного названия или само название «О …», если он не длиннее 75 знаков; иначе — «Законопроект «Короткое название»» */
-const billName = (b, v) => { const m = b.full.match(/\((о[б]?\s[^()]+)\)\s*$/i); let c = m ? m[1].trim() : /^Об?\s/.test(b.full) && !/внесени/i.test(b.full) ? b.full.replace(/^О/, 'о') : '';
-  c = c.split(/\s+(?:в связи|в целях|для того)\s/)[0]; return c && c.length <= 75 ? `Законопроект ${c}` : `Законопроект «${(v && SHORTN[v.id]) || b.title}»`; };
+const billName = (b, v) => {
+  const m = b.full.match(/\((о[б]?\s[^()]+)\)\s*$/i);
+  let c = m ? m[1].trim() : /^Об?\s/.test(b.full) && !/внесени/i.test(b.full) ? b.full.replace(/^О/, 'о') : '';
+  c = c.split(/\s+(?:в связи|в целях|для того)\s/)[0];
+  return c && c.length <= 75 ? `Законопроект ${c}` : `Законопроект «${(v && SHORTN[v.id]) || b.title}»`;
+};
 const share = (v) => `${SITE}?d=${v.day}&v=${v.id}`;
 
 // ---------- slug для меток ----------
-const TR = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'c', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya' };
-const slug = (s) => s.toLowerCase().split('').map((c) => (c in TR ? TR[c] : /[a-z0-9]/.test(c) ? c : '-')).join('').replace(/-+/g, '-').replace(/^-|-$/g, '');
-const GRP = [['w', 'Для кого'], ['t', 'Тема'], ['c', 'Что меняется']];
+const TR = {
+  а: 'a',
+  б: 'b',
+  в: 'v',
+  г: 'g',
+  д: 'd',
+  е: 'e',
+  ё: 'e',
+  ж: 'zh',
+  з: 'z',
+  и: 'i',
+  й: 'y',
+  к: 'k',
+  л: 'l',
+  м: 'm',
+  н: 'n',
+  о: 'o',
+  п: 'p',
+  р: 'r',
+  с: 's',
+  т: 't',
+  у: 'u',
+  ф: 'f',
+  х: 'h',
+  ц: 'c',
+  ч: 'ch',
+  ш: 'sh',
+  щ: 'sch',
+  ъ: '',
+  ы: 'y',
+  ь: '',
+  э: 'e',
+  ю: 'yu',
+  я: 'ya',
+};
+const slug = (s) =>
+  s
+    .toLowerCase()
+    .split('')
+    .map((c) => (c in TR ? TR[c] : /[a-z0-9]/.test(c) ? c : '-'))
+    .join('')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+const GRP = [
+  ['w', 'Для кого'],
+  ['t', 'Тема'],
+  ['c', 'Что меняется'],
+];
 const TAGS = {}; // slug → { name, grp, bills }
-for (const b of ALL) b.tags.forEach((g, gi) => (g || []).forEach((v) => { const k = slug(v); (TAGS[k] = TAGS[k] || { name: v, grp: GRP[gi][1], q: GRP[gi][0], bills: [] }).bills.push(b); }));
+for (const b of ALL)
+  b.tags.forEach((g, gi) =>
+    (g || []).forEach((v) => {
+      const k = slug(v);
+      (TAGS[k] = TAGS[k] || { name: v, grp: GRP[gi][1], q: GRP[gi][0], bills: [] }).bills.push(b);
+    }),
+  );
 
 // ---------- запись ----------
 const files = [];
-const put = (rel, s) => { const f = path.join(OUT, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, s); files.push(rel); };
-for (const d of ['bill', 'feed', 'ics', 'day', 'fractions', 'law', 'v']) fs.rmSync(path.join(OUT, d), { recursive: true, force: true });
+const put = (rel, s) => {
+  const f = path.join(OUT, rel);
+  fs.mkdirSync(path.dirname(f), { recursive: true });
+  fs.writeFileSync(f, s);
+  files.push(rel);
+};
+for (const d of ['bill', 'feed', 'ics', 'day', 'fractions', 'law', 'v'])
+  fs.rmSync(path.join(OUT, d), { recursive: true, force: true });
 
 // страницы законопроектов
-const TRK = [['in', 'Внесен'], ['kom', 'Комитет'], ['r1', '1-е чтение'], ['r2', '2-е чтение'], ['r3', '3-е чтение'], ['sf', 'Совет Федерации'], ['pr', 'Подписан']];
+const TRK = [
+  ['in', 'Внесен'],
+  ['kom', 'Комитет'],
+  ['r1', '1-е чтение'],
+  ['r2', '2-е чтение'],
+  ['r3', '3-е чтение'],
+  ['sf', 'Совет Федерации'],
+  ['pr', 'Подписан'],
+];
 for (const b of ALL) {
-  const url = `${SITE}bill/${b.no}/`; const v = b.last;
+  const url = `${SITE}bill/${b.no}/`;
+  const v = b.last;
   const desc = cut(b.sut.join(' ') || b.full, 220);
-  const tags = b.tags.flatMap((g, gi) => (g || []).map((x) => `<a class="chip" href="../../feed/${slug(x)}.xml" title="${esc(GRP[gi][1])}: RSS по метке">${esc(x)}</a>`)).join('');
-  const rows = [...b.votes].reverse().map((x) => `<tr><td>${esc(hd(x.day))}${x.time ? `<br><span class="meta">${esc(x.time)}</span>` : ''}</td><td>${esc(x.read || '—')}</td><td><span class="st ${x.ok ? 'ok' : 'rej'}">${x.ok ? 'принят' : 'отклонен'}</span></td><td>за ${x.za}, против ${x.pr}, возд. ${x.vz}</td><td><a href="${esc(share(x))}">в календаре</a> · <a href="http://vote.duma.gov.ru/vote/${x.id}" rel="noopener">vote.duma.gov.ru</a></td></tr>`).join('');
-  const tr = b.tr ? TRK.filter(([k]) => b.tr[k]).map(([k, l]) => `<span class="chip">${esc(l)}: ${esc(b.tr[k])}</span>`).join('') : '';
+  const tags = b.tags
+    .flatMap((g, gi) =>
+      (g || []).map(
+        (x) =>
+          `<a class="chip" href="../../feed/${slug(x)}.xml" title="${esc(GRP[gi][1])}: RSS по метке">${esc(x)}</a>`,
+      ),
+    )
+    .join('');
+  const rows = [...b.votes]
+    .reverse()
+    .map(
+      (x) =>
+        `<tr><td>${esc(hd(x.day))}${x.time ? `<br><span class="meta">${esc(x.time)}</span>` : ''}</td><td>${esc(x.read || '—')}</td><td><span class="st ${x.ok ? 'ok' : 'rej'}">${x.ok ? 'принят' : 'отклонен'}</span></td><td>за ${x.za}, против ${x.pr}, возд. ${x.vz}</td><td><a href="${esc(share(x))}">в календаре</a> · <a href="http://vote.duma.gov.ru/vote/${x.id}" rel="noopener">vote.duma.gov.ru</a></td></tr>`,
+    )
+    .join('');
+  const tr = b.tr
+    ? TRK.filter(([k]) => b.tr[k])
+        .map(([k, l]) => `<span class="chip">${esc(l)}: ${esc(b.tr[k])}</span>`)
+        .join('')
+    : '';
   const body = `<div class="top"><span class="no">${esc(b.no)}</span>${v.read ? `<span>${esc(v.read)}</span>` : ''}<span class="st ${v.ok ? 'ok' : 'rej'}">${v.ok ? 'принят' : 'отклонен'}</span><span class="meta">последнее голосование ${esc(hd(v.day))}</span></div>
 <h1>${esc(b.title)}</h1>${b.short ? `<p class="full">${esc(b.full)}</p>` : ''}${tags ? `<div class="chips">${tags}</div>` : ''}
 ${b.sut.length || b.who ? `<h2>${b.votes.every((x) => !x.ok) ? 'Суть (предлагалось)' : 'Суть'}</h2><div class="box">${b.sut.map((p) => `<p>${esc(p)}</p>`).join('')}${b.who ? `<p><b>${b.votes.every((x) => !x.ok) ? 'Кого коснулось бы' : 'Кого коснётся'}:</b> ${esc(b.who)}</p>` : ''}</div>` : ''}
@@ -129,86 +294,293 @@ ${b.ini || b.com ? `<h2>Кто внёс и ведёт</h2><div class="box">${b.i
 // 15.11.2026: v/<id голосования>/ — ссылка «Поделиться» с превью: в Telegram, WhatsApp, VK видно название законопроекта, итог,
 // голоса и суть (og:title / og:description); человека страница сразу переводит в карточку календаря (?d=…&v=…).
 // Поисковикам эти страницы не нужны (noindex, в sitemap их нет) — для них есть bill/<номер>/.
-for (const b of ALL) for (const v of b.votes) {
-  const to = `../../?d=${v.day}&v=${v.id}`;
-  /* 18.11.2026 (решение владельца): карточка-превью сообщения — «Календарь законов» (og:site_name), «Законопроект о … — отклонен»,
+for (const b of ALL)
+  for (const v of b.votes) {
+    const to = `../../?d=${v.day}&v=${v.id}`;
+    /* 18.11.2026 (решение владельца): карточка-превью сообщения — «Календарь законов» (og:site_name), «Законопроект о … — отклонен»,
      «1-е чтение · 17 ноября 2026», затем «Что предлагалось изменить:» (первые пары из BP.bs) или, если пар нет, «Суть:» */
-  const nm = billName(b, v); const title = `${nm} — ${v.ok ? 'принят' : 'отклонен'}`;
-  const pairs = b.bs.map((p) => (Array.isArray(p) ? p[1] : '')).filter(Boolean).slice(0, 2);
-  const tail = pairs.length ? `Что предлагалось изменить:\n${pairs.map((x) => cut(x, 140)).join('\n')}` : b.sut.length ? `Суть:\n${cut(b.sut.join(' '), 180)}` : '';
-  const desc = [`${v.read ? v.read + ' · ' : ''}${hd(v.day)}`, tail].filter(Boolean).join('\n');
-  const body = `<script>location.replace(${JSON.stringify(to)})</script><div class="top"><span class="no">${esc(b.no)}</span>${v.read ? `<span>${esc(v.read)}</span>` : ''}<span class="st ${v.ok ? 'ok' : 'rej'}">${v.ok ? 'принят' : 'отклонен'}</span><span class="meta">${esc(hd(v.day))}</span></div>
+    const nm = billName(b, v);
+    const title = `${nm} — ${v.ok ? 'принят' : 'отклонен'}`;
+    const pairs = b.bs
+      .map((p) => (Array.isArray(p) ? p[1] : ''))
+      .filter(Boolean)
+      .slice(0, 2);
+    const tail = pairs.length
+      ? `Что предлагалось изменить:\n${pairs.map((x) => cut(x, 140)).join('\n')}`
+      : b.sut.length
+        ? `Суть:\n${cut(b.sut.join(' '), 180)}`
+        : '';
+    const desc = [`${v.read ? v.read + ' · ' : ''}${hd(v.day)}`, tail].filter(Boolean).join('\n');
+    const body = `<script>location.replace(${JSON.stringify(to)})</script><div class="top"><span class="no">${esc(b.no)}</span>${v.read ? `<span>${esc(v.read)}</span>` : ''}<span class="st ${v.ok ? 'ok' : 'rej'}">${v.ok ? 'принят' : 'отклонен'}</span><span class="meta">${esc(hd(v.day))}</span></div>
 <h1>${esc(b.title)}</h1><p>За ${v.za}, против ${v.pr}, воздержались ${v.vz}, не голосовали ${v.ng}.</p>${b.sut.length ? `<div class="box">${b.sut.map((p) => `<p>${esc(p)}</p>`).join('')}</div>` : ''}
 <p><a href="${esc(to)}">Открыть карточку в календаре</a> · <a href="../../bill/${esc(b.no)}/">Страница законопроекта</a></p>`;
-  put(`v/${v.id}/index.html`, page({ title, desc, url: `${SITE}v/${v.id}/?p=2`, body, depth: 2 }).replace('<link rel="canonical"', '<meta name="robots" content="noindex"><link rel="canonical"'));
-}
-put('bill/index.html', page({ title: 'Все законопроекты', desc: `Законопроекты, по которым голосовала Госдума: ${ALL.length}.`, url: `${SITE}bill/`, depth: 1,
-  body: `<h1>Все законопроекты</h1><p class="meta">${ALL.length} законопроектов, по которым есть голосования в календаре; последнее голосование — сверху.</p><div class="list">${ALL.map((b) => `<a class="row" href="${esc(b.no)}/"><span class="no">${esc(b.no)}</span> · ${esc(b.last.read || '')} · <span class="st ${b.last.ok ? 'ok' : 'rej'}">${b.last.ok ? 'принят' : 'отклонен'}</span> · <span class="meta">${esc(hd(b.last.day))}</span><b>${esc(b.title)}</b></a>`).join('')}</div>` }));
+    put(
+      `v/${v.id}/index.html`,
+      page({ title, desc, url: `${SITE}v/${v.id}/?p=2`, body, depth: 2 }).replace(
+        '<link rel="canonical"',
+        '<meta name="robots" content="noindex"><link rel="canonical"',
+      ),
+    );
+  }
+put(
+  'bill/index.html',
+  page({
+    title: 'Все законопроекты',
+    desc: `Законопроекты, по которым голосовала Госдума: ${ALL.length}.`,
+    url: `${SITE}bill/`,
+    depth: 1,
+    body: `<h1>Все законопроекты</h1><p class="meta">${ALL.length} законопроектов, по которым есть голосования в календаре; последнее голосование — сверху.</p><div class="list">${ALL.map((b) => `<a class="row" href="${esc(b.no)}/"><span class="no">${esc(b.no)}</span> · ${esc(b.last.read || '')} · <span class="st ${b.last.ok ? 'ok' : 'rej'}">${b.last.ok ? 'принят' : 'отклонен'}</span> · <span class="meta">${esc(hd(b.last.day))}</span><b>${esc(b.title)}</b></a>`).join('')}</div>`,
+  }),
+);
 
 // RSS
-const rfc = (day, time) => { const [h, m, s] = (time || '12:00:00').split(':').map(Number); const x = pd(day); x.setUTCHours(h - 3, m, s || 0); return x.toUTCString(); };
-const items = (bs, n) => bs.flatMap((b) => b.votes.map((v) => ({ b, v }))).sort((x, y) => pd(y.v.day) - pd(x.v.day) || +y.v.id - +x.v.id).slice(0, n);
+const rfc = (day, time) => {
+  const [h, m, s] = (time || '12:00:00').split(':').map(Number);
+  const x = pd(day);
+  x.setUTCHours(h - 3, m, s || 0);
+  return x.toUTCString();
+};
+const items = (bs, n) =>
+  bs
+    .flatMap((b) => b.votes.map((v) => ({ b, v })))
+    .sort((x, y) => pd(y.v.day) - pd(x.v.day) || +y.v.id - +x.v.id)
+    .slice(0, n);
 // 14.11.2026: запись ленты — общий вид для голосований и законов: заголовок, ссылка, guid, дата, описание
 // (в описании «Суть», «Кого коснётся» и официальный источник).
-const voteItem = ({ b, v }) => ({ t: `${b.title} — ${v.read ? v.read + ', ' : ''}${v.ok ? 'принят' : 'отклонен'}`, l: `${SITE}bill/${b.no}/`, g: `kalendar-zakonov:vote:${v.id}`, ts: +pd(v.day) + +(v.id), p: rfc(v.day, v.time),
-  d: [`${b.no}. ${b.sut.join(' ') || b.full}`, b.who ? `Кого коснётся: ${b.who}` : '', `За ${v.za}, против ${v.pr}, воздержались ${v.vz}.`, `Официальный источник: https://sozd.duma.gov.ru/bill/${b.no}`].filter(Boolean).join('\n') });
+const voteItem = ({ b, v }) => ({
+  t: `${b.title} — ${v.read ? v.read + ', ' : ''}${v.ok ? 'принят' : 'отклонен'}`,
+  l: `${SITE}bill/${b.no}/`,
+  g: `kalendar-zakonov:vote:${v.id}`,
+  ts: +pd(v.day) + +v.id,
+  p: rfc(v.day, v.time),
+  d: [
+    `${b.no}. ${b.sut.join(' ') || b.full}`,
+    b.who ? `Кого коснётся: ${b.who}` : '',
+    `За ${v.za}, против ${v.pr}, воздержались ${v.vz}.`,
+    `Официальный источник: https://sozd.duma.gov.ru/bill/${b.no}`,
+  ]
+    .filter(Boolean)
+    .join('\n'),
+});
 const rss = (title, desc, link, self, list) => `<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>${esc(title)}</title><link>${esc(link)}</link><description>${esc(desc)}</description><language>ru</language><atom:link href="${esc(self)}" rel="self" type="application/rss+xml"/>
-${list.map((x) => (x.b ? voteItem(x) : x)).map((x) => `<item><title>${esc(x.t)}</title><link>${esc(x.l)}</link><guid isPermaLink="false">${esc(x.g)}</guid><pubDate>${x.p}</pubDate><description>${esc(x.d)}</description></item>`).join('\n')}
+${list
+  .map((x) => (x.b ? voteItem(x) : x))
+  .map(
+    (x) =>
+      `<item><title>${esc(x.t)}</title><link>${esc(x.l)}</link><guid isPermaLink="false">${esc(x.g)}</guid><pubDate>${x.p}</pubDate><description>${esc(x.d)}</description></item>`,
+  )
+  .join('\n')}
 </channel></rss>`;
-put('feed/gd.xml', rss('Календарь законов: голосования Госдумы', 'Голосования Госдумы по законопроектам: стадия, итог, суть — по официальным данным.', SITE, `${SITE}feed/gd.xml`, items(ALL, 100)));
+put(
+  'feed/gd.xml',
+  rss(
+    'Календарь законов: голосования Госдумы',
+    'Голосования Госдумы по законопроектам: стадия, итог, суть — по официальным данным.',
+    SITE,
+    `${SITE}feed/gd.xml`,
+    items(ALL, 100),
+  ),
+);
 // 14.11.2026: ленты органов — feed/org-<орган>.xml: новости и документы Правительства, Совета Федерации, Банка России и министерств
 // (для «Моей ленты» из фильтров). Ссылки только официальные; новые сверху, до 100 материалов.
 const offU = (u) => /^https?:\/\/([a-z0-9-]+\.)*(gov\.ru|kremlin\.ru|government\.ru|cbr\.ru)(\/|$)/i.test(u || '');
-const ORGF = { gov: 'Правительство РФ', sf: 'Совет Федерации', cbr: 'Банк России', minfin: 'Минфин России', mintrud: 'Минтруд России', minjust: 'Минюст России', economy: 'Минэкономразвития России', promtorg: 'Минпромторг России', minzdrav: 'Минздрав России', mintrans: 'Минтранс России', digital: 'Минцифры России', mvd: 'МВД России', mnr: 'Минприроды России', minstroy: 'Минстрой России' };
+const ORGF = {
+  gov: 'Правительство РФ',
+  sf: 'Совет Федерации',
+  cbr: 'Банк России',
+  minfin: 'Минфин России',
+  mintrud: 'Минтруд России',
+  minjust: 'Минюст России',
+  economy: 'Минэкономразвития России',
+  promtorg: 'Минпромторг России',
+  minzdrav: 'Минздрав России',
+  mintrans: 'Минтранс России',
+  digital: 'Минцифры России',
+  mvd: 'МВД России',
+  mnr: 'Минприроды России',
+  minstroy: 'Минстрой России',
+};
 const oItems = Object.fromEntries(Object.keys(ORGF).map((o) => [o, []]));
-for (const x of ORGA) if (oItems[x.o] && offU(x.u)) oItems[x.o].push({ d: x.d, t: x.st || x.t, x: x.sut || x.x || x.full || '', u: x.u, k: x.kind || x.k || '' });
-for (const [d, arr] of Object.entries(pick('SFN'))) for (const x of arr || []) if (offU(x.u)) oItems.sf.push({ d, t: x.st || x.t, x: x.sut || x.x || '', u: x.u, k: x.k || 'Новость' });
-for (const [d, sm] of Object.entries(pick('SUM'))) for (const g of (sm && sm.g) || []) { const u = /^https?:/.test(g[2] || '') ? g[2] : `http://government.ru/news/${g[2]}/`; if (offU(u)) oItems.gov.push({ d, t: `${g[0]}: ${g[1]}`, x: g[1], u, k: 'Новость' }); }
-const orss = (o) => { const seen = new Set(); const list = oItems[o].filter((x) => x.t && !seen.has(x.u + x.d) && seen.add(x.u + x.d)).sort((a, b) => pd(b.d) - pd(a.d)).slice(0, 100);
+for (const x of ORGA)
+  if (oItems[x.o] && offU(x.u))
+    oItems[x.o].push({ d: x.d, t: x.st || x.t, x: x.sut || x.x || x.full || '', u: x.u, k: x.kind || x.k || '' });
+for (const [d, arr] of Object.entries(pick('SFN')))
+  for (const x of arr || [])
+    if (offU(x.u)) oItems.sf.push({ d, t: x.st || x.t, x: x.sut || x.x || '', u: x.u, k: x.k || 'Новость' });
+for (const [d, sm] of Object.entries(pick('SUM')))
+  for (const g of (sm && sm.g) || []) {
+    const u = /^https?:/.test(g[2] || '') ? g[2] : `http://government.ru/news/${g[2]}/`;
+    if (offU(u)) oItems.gov.push({ d, t: `${g[0]}: ${g[1]}`, x: g[1], u, k: 'Новость' });
+  }
+const orss = (o) => {
+  const seen = new Set();
+  const list = oItems[o]
+    .filter((x) => x.t && !seen.has(x.u + x.d) && seen.add(x.u + x.d))
+    .sort((a, b) => pd(b.d) - pd(a.d))
+    .slice(0, 100);
   return `<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>${esc(`Календарь законов: ${ORGF[o]}`)}</title><link>${SITE}</link><description>${esc(`Новости и документы: ${ORGF[o]} — по официальным источникам.`)}</description><language>ru</language><atom:link href="${SITE}feed/org-${o}.xml" rel="self" type="application/rss+xml"/>
 ${list.map((x) => `<item><title>${esc((x.k && x.k !== 'Новость' ? x.k + ': ' : '') + x.t)}</title><link>${esc(x.u)}</link><guid isPermaLink="false">kalendar-zakonov:${o}:${esc(x.u)}#${x.d}</guid><pubDate>${rfc(x.d)}</pubDate><description>${esc(x.x)}</description></item>`).join('\n')}
-</channel></rss>`; };
+</channel></rss>`;
+};
 for (const o of Object.keys(ORGF)) put(`feed/org-${o}.xml`, orss(o));
-put('feed/index.html', page({ title: 'Подписки', desc: 'RSS-ленты и календари .ics «Календаря законов».', url: `${SITE}feed/`, depth: 1,
-  body: `<h1>Подписки</h1><p>Добавьте адрес ленты в RSS-читалку (Feedly, Inoreader, NetNewsWire, Telegram-бот для RSS) или календарь .ics в Google / Apple / Яндекс Календарь (пункт «Подписаться по URL»).</p>
+put(
+  'feed/index.html',
+  page({
+    title: 'Подписки',
+    desc: 'RSS-ленты и календари .ics «Календаря законов».',
+    url: `${SITE}feed/`,
+    depth: 1,
+    body: `<h1>Подписки</h1><p>Добавьте адрес ленты в RSS-читалку (Feedly, Inoreader, NetNewsWire, Telegram-бот для RSS) или календарь .ics в Google / Apple / Яндекс Календарь (пункт «Подписаться по URL»).</p>
 <h2>Календари .ics</h2><div class="list"><a class="row" href="../ics/laws.ics"><b>Законы вступают в силу</b><span class="meta">${SITE}ics/laws.ics</span></a><a class="row" href="../ics/plenary.ics"><b>Пленарные заседания Госдумы</b><span class="meta">${SITE}ics/plenary.ics</span></a></div>
-<h2>RSS</h2><div class="list"><a class="row" href="gd.xml"><b>Все голосования Госдумы по законопроектам</b><span class="meta">${SITE}feed/gd.xml</span></a>${Object.entries(ORGF).map(([o, n]) => `<a class="row" href="org-${o}.xml"><b>${esc(n)}: новости и документы</b><span class="meta">${SITE}feed/org-${o}.xml</span></a>`).join('')}</div>
+<h2>RSS</h2><div class="list"><a class="row" href="gd.xml"><b>Все голосования Госдумы по законопроектам</b><span class="meta">${SITE}feed/gd.xml</span></a>${Object.entries(
+      ORGF,
+    )
+      .map(
+        ([o, n]) =>
+          `<a class="row" href="org-${o}.xml"><b>${esc(n)}: новости и документы</b><span class="meta">${SITE}feed/org-${o}.xml</span></a>`,
+      )
+      .join('')}</div>
 <p>Ленты по меткам: принятые законопроекты, законы с этой меткой, вступающие в силу (за неделю до даты), и документы органов (СФ, Правительство, министерства, ЦБ) с этой меткой. Все голосования, включая отклоненные (и те же законы и документы органов), — в ленте с окончанием <code>-all.xml</code>, например <code>${SITE}feed/pensionery-all.xml</code>.</p>
-${GRP.map(([q, l]) => `<h2>${esc(l)}</h2><div class="chips">${Object.entries(TAGS).filter(([, x]) => x.q === q).sort((a, b) => b[1].bills.length - a[1].bills.length).map(([k, x]) => `<a class="chip" href="${k}.xml">${esc(x.name)} · ${x.bills.length}</a>`).join('')}</div>`).join('')}` }));
+${GRP.map(
+  ([q, l]) =>
+    `<h2>${esc(l)}</h2><div class="chips">${Object.entries(TAGS)
+      .filter(([, x]) => x.q === q)
+      .sort((a, b) => b[1].bills.length - a[1].bills.length)
+      .map(([k, x]) => `<a class="chip" href="${k}.xml">${esc(x.name)} · ${x.bills.length}</a>`)
+      .join('')}</div>`,
+).join('')}`,
+  }),
+);
 
 // .ics
-const icsEsc = (s) => String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
-const fold = (l) => { const out = []; let cur = ''; for (const ch of l) { if (Buffer.byteLength(cur + ch) > 73) { out.push(cur); cur = ' ' + ch; } else cur += ch; } out.push(cur); return out.join('\r\n'); };
+const icsEsc = (s) =>
+  String(s || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r?\n/g, '\\n');
+const fold = (l) => {
+  const out = [];
+  let cur = '';
+  for (const ch of l) {
+    if (Buffer.byteLength(cur + ch) > 73) {
+      out.push(cur);
+      cur = ' ' + ch;
+    } else cur += ch;
+  }
+  out.push(cur);
+  return out.join('\r\n');
+};
 const ymd = (d) => d.split('.').reverse().join('');
-const nextDay = (d) => { const x = pd(d); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10).replace(/-/g, ''); };
-const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
-const ics = (name, evs) => ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//kalendar-zakonov//RU', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', fold(`X-WR-CALNAME:${icsEsc(name)}`), 'X-WR-TIMEZONE:Europe/Moscow',
-  ...evs.flatMap((e) => ['BEGIN:VEVENT', fold(`UID:${e.uid}@kalendar-zakonov`), `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${ymd(e.d)}`, `DTEND;VALUE=DATE:${nextDay(e.d)}`, fold(`SUMMARY:${icsEsc(e.s)}`), fold(`DESCRIPTION:${icsEsc(e.x)}`), ...(e.u ? [fold(`URL:${e.u}`)] : []), 'TRANSP:TRANSPARENT', 'END:VEVENT']),
-  'END:VCALENDAR'].join('\r\n') + '\r\n';
+const nextDay = (d) => {
+  const x = pd(d);
+  x.setUTCDate(x.getUTCDate() + 1);
+  return x.toISOString().slice(0, 10).replace(/-/g, '');
+};
+const stamp = new Date()
+  .toISOString()
+  .replace(/[-:]/g, '')
+  .replace(/\.\d+Z$/, 'Z');
+const ics = (name, evs) =>
+  [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//kalendar-zakonov//RU',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    fold(`X-WR-CALNAME:${icsEsc(name)}`),
+    'X-WR-TIMEZONE:Europe/Moscow',
+    ...evs.flatMap((e) => [
+      'BEGIN:VEVENT',
+      fold(`UID:${e.uid}@kalendar-zakonov`),
+      `DTSTAMP:${stamp}`,
+      `DTSTART;VALUE=DATE:${ymd(e.d)}`,
+      `DTEND;VALUE=DATE:${nextDay(e.d)}`,
+      fold(`SUMMARY:${icsEsc(e.s)}`),
+      fold(`DESCRIPTION:${icsEsc(e.x)}`),
+      ...(e.u ? [fold(`URL:${e.u}`)] : []),
+      'TRANSP:TRANSPARENT',
+      'END:VEVENT',
+    ]),
+    'END:VCALENDAR',
+  ].join('\r\n') + '\r\n';
 // постоянный номер закона — тот же расчёт, что lawId в src/canvas.tsx (FNV-1a от даты, реквизитов и названия)
-const lawId = (x) => { if (x.lid) return String(x.lid); /* 17.11.2026: как в canvas — заголовок можно менять без смены адреса */ let h = 0x811c9dc5; for (const ch of `${x.d}|${x.law || ''}|${x.title || ''}`) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
+const lawId = (x) => {
+  if (x.lid) return String(x.lid);
+  /* 17.11.2026: как в canvas — заголовок можно менять без смены адреса */ let h = 0x811c9dc5;
+  for (const ch of `${x.d}|${x.law || ''}|${x.title || ''}`) {
+    h ^= ch.codePointAt(0);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
+};
 // только официальные источники (правило проекта): *.gov.ru, kremlin.ru, government.ru, cbr.ru — тот же список, что isOff в canvas.tsx
-const isOff = (u) => { const h = String(u || '').replace(/^https?:\/\//i, '').split(/[/?#]/)[0].toLowerCase().replace(/^www\./, ''); return /\.gov\.ru$/.test(h) || h === 'kremlin.ru' || h === 'government.ru' || h === 'cbr.ru' || h === 'xn--b1aew.xn--p1ai'; };
+const isOff = (u) => {
+  const h = String(u || '')
+    .replace(/^https?:\/\//i, '')
+    .split(/[/?#]/)[0]
+    .toLowerCase()
+    .replace(/^www\./, '');
+  return (
+    /\.gov\.ru$/.test(h) || h === 'kremlin.ru' || h === 'government.ru' || h === 'cbr.ru' || h === 'xn--b1aew.xn--p1ai'
+  );
+};
 // ссылка события — официальный источник закона (kremlin.ru, pravo.gov.ru, duma.gov.ru…), если его нет — поиск закона по номеру на kremlin.ru
-const lawSearch = (x) => { const n = /№\s*(\d+-ФЗ)/.exec(x.law || ''); return n ? 'http://kremlin.ru/acts/bank/search?query=' + encodeURIComponent('№ ' + n[1]) : ''; };
+const lawSearch = (x) => {
+  const n = /№\s*(\d+-ФЗ)/.exec(x.law || '');
+  return n ? 'http://kremlin.ru/acts/bank/search?query=' + encodeURIComponent('№ ' + n[1]) : '';
+};
 const isAct = (u) => /kremlin\.ru\/acts\/bank\/\d+|publication\.pravo\.gov\.ru\/document\/\d+/.test(u || '');
-const lawSrc = (x) => ((x.src || []).find((l) => l && isAct(l.u)) || (x.src || []).find((l) => l && isOff(l.u)) || {}).u || lawSearch(x) || 'http://publication.pravo.gov.ru/';
-const LAWL = Object.values(LAWS.months || {}).flat().filter((x) => x && x.d && x.title);
-const lawEv = LAWL.map((x) => ({ uid: `law-${lawId(x)}`, d: x.d, s: `Вступает в силу: ${x.title}`, x: [x.law, x.sut, x.who ? `Кого коснётся: ${x.who}` : '', `Официальный источник: ${lawSrc(x)}`].filter(Boolean).join('\n'), u: lawSrc(x) }));
+const lawSrc = (x) =>
+  ((x.src || []).find((l) => l && isAct(l.u)) || (x.src || []).find((l) => l && isOff(l.u)) || {}).u ||
+  lawSearch(x) ||
+  'http://publication.pravo.gov.ru/';
+const LAWL = Object.values(LAWS.months || {})
+  .flat()
+  .filter((x) => x && x.d && x.title);
+const lawEv = LAWL.map((x) => ({
+  uid: `law-${lawId(x)}`,
+  d: x.d,
+  s: `Вступает в силу: ${x.title}`,
+  x: [x.law, x.sut, x.who ? `Кого коснётся: ${x.who}` : '', `Официальный источник: ${lawSrc(x)}`]
+    .filter(Boolean)
+    .join('\n'),
+  u: lawSrc(x),
+}));
 // ics/law/<номер>.ics — один закон: кнопка «Добавить в календарь» в карточке; в событии ссылка на карточку
 lawEv.forEach((e, i) => put(`ics/law/${lawId(LAWL[i])}.ics`, ics(LAWL[i].title, [e])));
 // 15.11.2026: события — от поздних дат к ранним (по просьбе владельца; часть программ показывает их в порядке файла)
-put('ics/laws.ics', ics('Законы вступают в силу', [...lawEv].sort((a, b) => +pd(b.d) - +pd(a.d))));
+put(
+  'ics/laws.ics',
+  ics(
+    'Законы вступают в силу',
+    [...lawEv].sort((a, b) => +pd(b.d) - +pd(a.d)),
+  ),
+);
 // 15.11.2026: страница закона со своим адресом — law/<номер>/ (номер = lawId): дата, суть, кого коснется, метки, «Официальный текст»,
 // «Добавить в календарь», «Поделиться». Путь закона не показываем (решение владельца). law/ — список всех законов «Вступают в силу».
-const LBTN = 'display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:12px;background:var(--sub);border:1px solid var(--bd);font-weight:600;text-decoration:none;cursor:pointer;font:inherit;color:inherit';
+const LBTN =
+  'display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:12px;background:var(--sub);border:1px solid var(--bd);font-weight:600;text-decoration:none;cursor:pointer;font:inherit;color:inherit';
 const lawSorted = [...LAWL].sort((a, b) => +pd(b.d) - +pd(a.d));
 for (const x of LAWL) {
-  const id = lawId(x); const url = `${SITE}law/${id}/`; const src = lawSrc(x); const act = isAct(src);
-  const tags = (x.tg || []).flatMap((g, gi) => (g || []).map((v) => `<a class="chip" href="../../feed/${slug(v)}.xml" title="${esc(GRP[gi][1])}: RSS по метке">${esc(v)}</a>`)).join('');
-  const more = (x.src || []).filter((l) => l && isOff(l.u) && l.u !== src).map((l) => `<a href="${esc(l.u)}" rel="noopener">${esc(l.t || l.u)}</a>`).join(' · ');
+  const id = lawId(x);
+  const url = `${SITE}law/${id}/`;
+  const src = lawSrc(x);
+  const act = isAct(src);
+  const tags = (x.tg || [])
+    .flatMap((g, gi) =>
+      (g || []).map(
+        (v) =>
+          `<a class="chip" href="../../feed/${slug(v)}.xml" title="${esc(GRP[gi][1])}: RSS по метке">${esc(v)}</a>`,
+      ),
+    )
+    .join('');
+  const more = (x.src || [])
+    .filter((l) => l && isOff(l.u) && l.u !== src)
+    .map((l) => `<a href="${esc(l.u)}" rel="noopener">${esc(l.t || l.u)}</a>`)
+    .join(' · ');
   /* 15.11.2026: страница закона — ссылка «Поделиться» с превью; человека сразу переводит в карточку закона на сайте */
   const body = `<script>location.replace(${JSON.stringify(`../../?tab=l&law=${id}`)})</script><div class="top"><span class="st ok">вступает в силу ${esc(hd(x.d))}</span></div>
 <h1>${esc(x.title)}</h1>${x.law ? `<p class="full">${esc(x.law)}</p>` : ''}${tags ? `<div class="chips">${tags}</div>` : ''}
@@ -217,63 +589,257 @@ ${x.was || x.now ? `<h2>Что изменилось</h2><div class="box">${x.was
 <p style="display:flex;flex-wrap:wrap;gap:8px;margin-top:18px"><a style="${LBTN};background:#0a64d6;color:#fff;border-color:#0a64d6" href="${esc(src)}" rel="noopener">${act ? 'Официальный текст' : 'Найти официальный текст'} ↗</a><a style="${LBTN}" href="../../ics/law/${id}.ics">Добавить в календарь</a><button type="button" style="${LBTN}" onclick="var u=location.href;if(navigator.share){navigator.share({title:document.title,url:u}).catch(function(){})}else if(navigator.clipboard){navigator.clipboard.writeText(u).then(function(){alert('Ссылка скопирована')})}">Поделиться</button></p>
 ${more ? `<h2>Источники</h2><p>${more}</p>` : ''}
 <p class="meta"><a href="../">Все законы «Вступают в силу»</a></p>`;
-  put(`law/${id}/index.html`, page({ title: x.title, desc: cut([x.sut, x.who].filter(Boolean).join(' '), 220) || x.title, url, body, depth: 2 }));
+  put(
+    `law/${id}/index.html`,
+    page({ title: x.title, desc: cut([x.sut, x.who].filter(Boolean).join(' '), 220) || x.title, url, body, depth: 2 }),
+  );
 }
-put('law/index.html', page({ title: 'Законы вступают в силу', desc: 'Законы, которые вступили и вступают в силу: суть, кого коснётся, официальный текст.', url: `${SITE}law/`, depth: 1,
-  body: `<h1>Законы вступают в силу</h1><div class="list">${lawSorted.map((x) => `<a class="row" href="${lawId(x)}/"><b>${esc(x.title)}</b><span class="meta">${esc(hd(x.d))}</span></a>`).join('')}</div>` }));
+put(
+  'law/index.html',
+  page({
+    title: 'Законы вступают в силу',
+    desc: 'Законы, которые вступили и вступают в силу: суть, кого коснётся, официальный текст.',
+    url: `${SITE}law/`,
+    depth: 1,
+    body: `<h1>Законы вступают в силу</h1><div class="list">${lawSorted.map((x) => `<a class="row" href="${lawId(x)}/"><b>${esc(x.title)}</b><span class="meta">${esc(hd(x.d))}</span></a>`).join('')}</div>`,
+  }),
+);
 // 14.11.2026: ленты по меткам. feed/<метка>.xml — главное: принятые законопроекты (голосования «принят») и законы с этой меткой,
 // вступающие в силу (запись появляется за 7 дней до даты, ссылка — официальный источник). feed/<метка>-all.xml — все голосования,
 // включая отклоненные (прежний вид ленты).
-const NOWMS = Date.now(); const WEEK = 7 * 864e5;
-const lawItem = (x) => { const due = +pd(x.d); const ts = Math.min(NOWMS, due - WEEK);
-  return { t: `С ${hd(x.d)} вступает в силу: ${x.title}`, l: lawSrc(x), g: `kalendar-zakonov:law:${lawId(x)}`, ts, p: new Date(ts).toUTCString(),
-    d: [x.law, x.sut, x.who ? `Кого коснётся: ${x.who}` : '', `Официальный источник: ${lawSrc(x)}`].filter(Boolean).join('\n') }; };
+const NOWMS = Date.now();
+const WEEK = 7 * 864e5;
+const lawItem = (x) => {
+  const due = +pd(x.d);
+  const ts = Math.min(NOWMS, due - WEEK);
+  return {
+    t: `С ${hd(x.d)} вступает в силу: ${x.title}`,
+    l: lawSrc(x),
+    g: `kalendar-zakonov:law:${lawId(x)}`,
+    ts,
+    p: new Date(ts).toUTCString(),
+    d: [x.law, x.sut, x.who ? `Кого коснётся: ${x.who}` : '', `Официальный источник: ${lawSrc(x)}`]
+      .filter(Boolean)
+      .join('\n'),
+  };
+};
 // 15.11.2026: документы и новости органов (СФ, Правительство, министерства, ЦБ) в лентах меток — с теми же метками, что на сайте:
 // правила AUTOZ (слова в официальном названии и описании) берутся из src/canvas.tsx как есть, без копии. Только официальные ссылки.
 const CANV = fs.readFileSync(path.join(ROOT, 'src', 'canvas.tsx'), 'utf8');
-const AUTOZ = (() => { const a = CANV.indexOf('const AUTOZ: [number, string, RegExp][] = ['); if (a < 0) return []; const i = CANV.indexOf('= [', a) + 2; return new Function(`return ${CANV.slice(i, CANV.indexOf('\n];', i) + 2)}`)(); })();
-const CONN = { sf: 'Совет Федерации', gov: 'Правительство', pres: 'Президент', minfin: 'Минфин', mintrud: 'Минтруд', minjust: 'Минюст', cbr: 'Банк России', economy: 'Минэкономразвития', promtorg: 'Минпромторг', minzdrav: 'Минздрав', mintrans: 'Минтранс', digital: 'Минцифры', mvd: 'МВД', mnr: 'Минприроды', minstroy: 'Минстрой' };
-const oTags = (x) => { const txt = [x.t, x.st, x.no, x.full, x.sut, x.x, x.who, x.kind, x.k, x.stt, CONN[x.o] || ''].filter((z) => typeof z === 'string').join(' ');
-  const g = [[], [], []]; for (const [i, v, re] of AUTOZ) if (re.test(txt) && !g[i].includes(v)) g[i].push(v); if (!g[0].length) g[0].push('Все граждане'); return g; };
-const orgItem = (x) => { const ts = +pd(x.d) + 12 * 36e5; const k = x.kind || x.k || ''; return { t: `${ORGF[x.o]}: ${(k && k !== 'Новость' && k !== 'новость' ? k + ': ' : '') + (x.st || x.t)}`, l: x.u, g: `kalendar-zakonov:${x.o}:${x.u}#${x.d}`, ts, p: new Date(ts).toUTCString(),
-  d: [x.sut || x.x || x.full || '', `Официальный источник: ${x.u}`].filter(Boolean).join('\n') }; };
-for (const x of ORGA) if (ORGF[x.o] && offU(x.u) && x.d && (x.st || x.t)) oTags(x).forEach((g, gi) => g.forEach((v) => { const k = slug(v); (TAGS[k] = TAGS[k] || { name: v, grp: GRP[gi][1], q: GRP[gi][0], bills: [] }); (TAGS[k].org = TAGS[k].org || []).push(x); }));
-for (const x of LAWL) (x.tg || []).forEach((g, gi) => (g || []).forEach((v) => { const k = slug(v); (TAGS[k] = TAGS[k] || { name: v, grp: GRP[gi][1], q: GRP[gi][0], bills: [] }); (TAGS[k].laws = TAGS[k].laws || []).push(x); }));
+const AUTOZ = (() => {
+  const a = CANV.indexOf('const AUTOZ: [number, string, RegExp][] = [');
+  if (a < 0) return [];
+  const i = CANV.indexOf('= [', a) + 2;
+  return new Function(`return ${CANV.slice(i, CANV.indexOf('\n];', i) + 2)}`)();
+})();
+const CONN = {
+  sf: 'Совет Федерации',
+  gov: 'Правительство',
+  pres: 'Президент',
+  minfin: 'Минфин',
+  mintrud: 'Минтруд',
+  minjust: 'Минюст',
+  cbr: 'Банк России',
+  economy: 'Минэкономразвития',
+  promtorg: 'Минпромторг',
+  minzdrav: 'Минздрав',
+  mintrans: 'Минтранс',
+  digital: 'Минцифры',
+  mvd: 'МВД',
+  mnr: 'Минприроды',
+  minstroy: 'Минстрой',
+};
+const oTags = (x) => {
+  const txt = [x.t, x.st, x.no, x.full, x.sut, x.x, x.who, x.kind, x.k, x.stt, CONN[x.o] || '']
+    .filter((z) => typeof z === 'string')
+    .join(' ');
+  const g = [[], [], []];
+  for (const [i, v, re] of AUTOZ) if (re.test(txt) && !g[i].includes(v)) g[i].push(v);
+  if (!g[0].length) g[0].push('Все граждане');
+  return g;
+};
+const orgItem = (x) => {
+  const ts = +pd(x.d) + 12 * 36e5;
+  const k = x.kind || x.k || '';
+  return {
+    t: `${ORGF[x.o]}: ${(k && k !== 'Новость' && k !== 'новость' ? k + ': ' : '') + (x.st || x.t)}`,
+    l: x.u,
+    g: `kalendar-zakonov:${x.o}:${x.u}#${x.d}`,
+    ts,
+    p: new Date(ts).toUTCString(),
+    d: [x.sut || x.x || x.full || '', `Официальный источник: ${x.u}`].filter(Boolean).join('\n'),
+  };
+};
+for (const x of ORGA)
+  if (ORGF[x.o] && offU(x.u) && x.d && (x.st || x.t))
+    oTags(x).forEach((g, gi) =>
+      g.forEach((v) => {
+        const k = slug(v);
+        TAGS[k] = TAGS[k] || { name: v, grp: GRP[gi][1], q: GRP[gi][0], bills: [] };
+        (TAGS[k].org = TAGS[k].org || []).push(x);
+      }),
+    );
+for (const x of LAWL)
+  (x.tg || []).forEach((g, gi) =>
+    (g || []).forEach((v) => {
+      const k = slug(v);
+      TAGS[k] = TAGS[k] || { name: v, grp: GRP[gi][1], q: GRP[gi][0], bills: [] };
+      (TAGS[k].laws = TAGS[k].laws || []).push(x);
+    }),
+  );
 for (const [k, tg] of Object.entries(TAGS)) {
-  const ok = items(tg.bills, 400).filter(({ v }) => v.ok).map(voteItem);
+  const ok = items(tg.bills, 400)
+    .filter(({ v }) => v.ok)
+    .map(voteItem);
   const lw = (tg.laws || []).filter((x) => +pd(x.d) - WEEK <= NOWMS).map(lawItem);
   const og = (tg.org || []).map(orgItem);
-  put(`feed/${k}.xml`, rss(`Календарь законов: ${tg.name}`, `Принятые законопроекты, законы, вступающие в силу, и документы органов с меткой «${tg.name}» (${tg.grp}).`, `${SITE}?${tg.q}=${encodeURIComponent(tg.name)}`, `${SITE}feed/${k}.xml`, [...ok, ...lw, ...og].sort((a, b) => b.ts - a.ts).slice(0, 60)));
-  put(`feed/${k}-all.xml`, rss(`Календарь законов: ${tg.name} — все голосования`, `Все голосования Госдумы по законопроектам с меткой «${tg.name}» (${tg.grp}), включая отклоненные, законы, вступающие в силу, и документы органов.`, `${SITE}?${tg.q}=${encodeURIComponent(tg.name)}`, `${SITE}feed/${k}-all.xml`, [...items(tg.bills, 400).map(voteItem), ...lw, ...og].sort((a, b) => b.ts - a.ts).slice(0, 80)));
+  put(
+    `feed/${k}.xml`,
+    rss(
+      `Календарь законов: ${tg.name}`,
+      `Принятые законопроекты, законы, вступающие в силу, и документы органов с меткой «${tg.name}» (${tg.grp}).`,
+      `${SITE}?${tg.q}=${encodeURIComponent(tg.name)}`,
+      `${SITE}feed/${k}.xml`,
+      [...ok, ...lw, ...og].sort((a, b) => b.ts - a.ts).slice(0, 60),
+    ),
+  );
+  put(
+    `feed/${k}-all.xml`,
+    rss(
+      `Календарь законов: ${tg.name} — все голосования`,
+      `Все голосования Госдумы по законопроектам с меткой «${tg.name}» (${tg.grp}), включая отклоненные, законы, вступающие в силу, и документы органов.`,
+      `${SITE}?${tg.q}=${encodeURIComponent(tg.name)}`,
+      `${SITE}feed/${k}-all.xml`,
+      [...items(tg.bills, 400).map(voteItem), ...lw, ...og].sort((a, b) => b.ts - a.ts).slice(0, 80),
+    ),
+  );
 }
 // 21.11.2026: события для уведомлений бота (bot/worker.mjs) — feed/events.json: результаты рассмотрения законопроектов (каждое чтение: итог, голоса, суть) за 7 дней
 // законы «новый закон в ленте» (по полю added у закона) и «завтра вступает в силу», с метками «Для кого» и «Тема». У события: id (guid), k (vote / new / soon), ts (мс), t, x, u (ссылка), tg (имена меток),
 // tw (метки «Для кого»), tt («Тема»); у vote ещё r (чтение), ok (принят), z ([за, против, воздержались]). Бот сверяет с метками подписчика.
-{ const EVM = new Map(); const NOW = Date.now();
-  const addEv = (ev, name, q) => { const e = EVM.get(ev.id) || EVM.set(ev.id, { ...ev, tg: [], tw: [], tt: [] }).get(ev.id); const gk = q === 'w' ? 'tw' : 'tt'; if (!e.tg.includes(name)) e.tg.push(name); if (!e[gk].includes(name)) e[gk].push(name); };
-  for (const tg of Object.values(TAGS)) { if (tg.q !== 'w' && tg.q !== 't') continue;
-    for (const it of items(tg.bills, 600)) { if (!/^\d-е чтение$/.test(it.v.read || '')) continue; const x = voteItem(it); const ts = Date.parse(x.p); if (!(ts >= NOW - 7 * 864e5)) continue;
-      addEv({ id: x.g, k: 'vote', ts, t: it.b.title, x: String((it.b.sut || [])[0] || '').slice(0, 280), r: it.v.read, ok: !!it.v.ok, z: [it.v.za, it.v.pr, it.v.vz], u: `${SITE}?d=${it.v.day}&v=${it.v.id}` }, tg.name, tg.q); }
-    for (const x of tg.laws || []) { const ad = Date.parse(x.added || ''); if (ad >= NOW - 7 * 864e5 && +pd(x.d) >= NOW - 864e5)
-      addEv({ id: `kalendar-zakonov:new:${lawId(x)}`, k: 'new', ts: ad, t: x.title, x: String(x.sut || '').slice(0, 280), due: hd(x.d), u: `${SITE}law/${lawId(x)}/` }, tg.name, tg.q); }
-    for (const x of tg.laws || []) { const ts = +pd(x.d) - 864e5; if (!(ts >= NOW - 2 * 864e5 && ts <= NOW + 10 * 864e5)) continue;
-      addEv({ id: `kalendar-zakonov:soon:${lawId(x)}`, k: 'soon', ts, t: x.title, x: x.sut || '', u: `${SITE}law/${lawId(x)}/` }, tg.name, tg.q); } }
-  put('feed/events.json', JSON.stringify({ u: new Date().toISOString(), ev: [...EVM.values()].sort((a, b) => b.ts - a.ts).slice(0, 300) })); }
+{
+  const EVM = new Map();
+  const NOW = Date.now();
+  const addEv = (ev, name, q) => {
+    const e = EVM.get(ev.id) || EVM.set(ev.id, { ...ev, tg: [], tw: [], tt: [] }).get(ev.id);
+    const gk = q === 'w' ? 'tw' : 'tt';
+    if (!e.tg.includes(name)) e.tg.push(name);
+    if (!e[gk].includes(name)) e[gk].push(name);
+  };
+  for (const tg of Object.values(TAGS)) {
+    if (tg.q !== 'w' && tg.q !== 't') continue;
+    for (const it of items(tg.bills, 600)) {
+      if (!/^\d-е чтение$/.test(it.v.read || '')) continue;
+      const x = voteItem(it);
+      const ts = Date.parse(x.p);
+      if (!(ts >= NOW - 7 * 864e5)) continue;
+      addEv(
+        {
+          id: x.g,
+          k: 'vote',
+          ts,
+          t: it.b.title,
+          x: String((it.b.sut || [])[0] || '').slice(0, 280),
+          r: it.v.read,
+          ok: !!it.v.ok,
+          z: [it.v.za, it.v.pr, it.v.vz],
+          u: `${SITE}?d=${it.v.day}&v=${it.v.id}`,
+        },
+        tg.name,
+        tg.q,
+      );
+    }
+    for (const x of tg.laws || []) {
+      const ad = Date.parse(x.added || '');
+      if (ad >= NOW - 7 * 864e5 && +pd(x.d) >= NOW - 864e5)
+        addEv(
+          {
+            id: `kalendar-zakonov:new:${lawId(x)}`,
+            k: 'new',
+            ts: ad,
+            t: x.title,
+            x: String(x.sut || '').slice(0, 280),
+            due: hd(x.d),
+            u: `${SITE}law/${lawId(x)}/`,
+          },
+          tg.name,
+          tg.q,
+        );
+    }
+    for (const x of tg.laws || []) {
+      const ts = +pd(x.d) - 864e5;
+      if (!(ts >= NOW - 2 * 864e5 && ts <= NOW + 10 * 864e5)) continue;
+      addEv(
+        {
+          id: `kalendar-zakonov:soon:${lawId(x)}`,
+          k: 'soon',
+          ts,
+          t: x.title,
+          x: x.sut || '',
+          u: `${SITE}law/${lawId(x)}/`,
+        },
+        tg.name,
+        tg.q,
+      );
+    }
+  }
+  put(
+    'feed/events.json',
+    JSON.stringify({ u: new Date().toISOString(), ev: [...EVM.values()].sort((a, b) => b.ts - a.ts).slice(0, 300) }),
+  );
+}
 const PST = { held: 'состоялось', confirmed: 'назначено', expected: 'ожидается по распорядку' };
-const plEv = CALP.filter((p) => p && p.d).map((p) => ({ uid: `gd-${ymd(p.d)}`, d: p.d, s: `Пленарное заседание Госдумы${p.s && p.s !== 'held' ? ` (${PST[p.s] || p.s})` : ''}`, x: [(p.a || []).length ? `Законопроектов в повестке: ${p.a.length}` : '', p.src ? `Источник: ${p.src}` : ''].filter(Boolean).join('\n'), u: `${SITE}?d=${p.d}` }));
+const plEv = CALP.filter((p) => p && p.d).map((p) => ({
+  uid: `gd-${ymd(p.d)}`,
+  d: p.d,
+  s: `Пленарное заседание Госдумы${p.s && p.s !== 'held' ? ` (${PST[p.s] || p.s})` : ''}`,
+  x: [(p.a || []).length ? `Законопроектов в повестке: ${p.a.length}` : '', p.src ? `Источник: ${p.src}` : '']
+    .filter(Boolean)
+    .join('\n'),
+  u: `${SITE}?d=${p.d}`,
+}));
 // 15.11.2026: только сегодняшние и будущие заседания (прошедшие не нужны в календаре), от поздних к ранним; файл пересобирается при каждой публикации
-const TODAY0 = (() => { const n = new Date(Date.now() + 3 * 36e5); return Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()); })();
-put('ics/plenary.ics', ics('Пленарные заседания Госдумы', plEv.filter((e) => +pd(e.d) >= TODAY0).sort((a, b) => +pd(b.d) - +pd(a.d))));
+const TODAY0 = (() => {
+  const n = new Date(Date.now() + 3 * 36e5);
+  return Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate());
+})();
+put(
+  'ics/plenary.ics',
+  ics(
+    'Пленарные заседания Госдумы',
+    plEv.filter((e) => +pd(e.d) >= TODAY0).sort((a, b) => +pd(b.d) - +pd(a.d)),
+  ),
+);
 
 // ---------- Ф3 (13.11.2026): страницы дней day/ГГГГ-ММ-ДД/ — что рассмотрела Госдума в этот день ----------
-const MONN = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
+const MONN = [
+  'январь',
+  'февраль',
+  'март',
+  'апрель',
+  'май',
+  'июнь',
+  'июль',
+  'август',
+  'сентябрь',
+  'октябрь',
+  'ноябрь',
+  'декабрь',
+];
 const iso = (d) => d.split('.').reverse().join('-');
 const DAYB = {}; // день → [{b, v}] — последнее голосование дня по каждому законопроекту
-for (const b of ALL) { const by = {}; for (const v of b.votes) by[v.day] = v; for (const [d, v] of Object.entries(by)) (DAYB[d] = DAYB[d] || []).push({ b, v }); }
+for (const b of ALL) {
+  const by = {};
+  for (const v of b.votes) by[v.day] = v;
+  for (const [d, v] of Object.entries(by)) (DAYB[d] = DAYB[d] || []).push({ b, v });
+}
 const DAYS = Object.keys(DAYB).sort((a, b) => pd(b) - pd(a));
-const dayRow = ({ b, v }) => `<a class="row" href="../../bill/${b.no}/"><b>${esc(b.title)}</b><span class="meta"><span class="no">${esc(b.no)}</span>${v.read ? ` · ${esc(v.read)}` : ''} · за ${v.za}, против ${v.pr}</span></a>`;
+const dayRow = ({ b, v }) =>
+  `<a class="row" href="../../bill/${b.no}/"><b>${esc(b.title)}</b><span class="meta"><span class="no">${esc(b.no)}</span>${v.read ? ` · ${esc(v.read)}` : ''} · за ${v.za}, против ${v.pr}</span></a>`;
 for (const d of DAYS) {
-  const L = DAYB[d]; const acc = L.filter((x) => x.v.ok); const rej = L.filter((x) => !x.v.ok);
+  const L = DAYB[d];
+  const acc = L.filter((x) => x.v.ok);
+  const rej = L.filter((x) => !x.v.ok);
   const title = `Госдума ${hd(d)}: что приняли и что отклонили`;
   const desc = `${hd(d)} Госдума голосовала по ${L.length} законопроектам: принято — ${acc.length}, отклонено — ${rej.length}.`;
   const body = `<h1>${esc(hd(d))}: голосования Госдумы</h1><p class="meta">Законопроектов: ${L.length}. Принято — ${acc.length}, отклонено — ${rej.length}. <a href="${SITE}?d=${d}">Открыть день в календаре</a></p>
@@ -282,33 +848,94 @@ ${rej.length ? `<h2>Отклонено (${rej.length})</h2><div class="list">${r
 <h2>Источник</h2><p><a href="http://vote.duma.gov.ru/?from=${d}&amp;to=${d}" rel="noopener">Голосования за ${esc(hd(d))} на vote.duma.gov.ru</a></p>`;
   put(`day/${iso(d)}/index.html`, page({ title, desc, url: `${SITE}day/${iso(d)}/`, body, depth: 2 }));
 }
-put('day/index.html', page({ title: 'Голосования Госдумы по дням', desc: `Дни, за которые в календаре есть голосования по законопроектам: ${DAYS.length}.`, url: `${SITE}day/`, depth: 1,
-  body: `<h1>Голосования Госдумы по дням</h1><div class="list">${DAYS.map((d) => { const L = DAYB[d]; return `<a class="row" href="${iso(d)}/"><b>${esc(hd(d))}</b><span class="meta">законопроектов: ${L.length} · принято ${L.filter((x) => x.v.ok).length} · отклонено ${L.filter((x) => !x.v.ok).length}</span></a>`; }).join('')}</div>` }));
+put(
+  'day/index.html',
+  page({
+    title: 'Голосования Госдумы по дням',
+    desc: `Дни, за которые в календаре есть голосования по законопроектам: ${DAYS.length}.`,
+    url: `${SITE}day/`,
+    depth: 1,
+    body: `<h1>Голосования Госдумы по дням</h1><div class="list">${DAYS.map((d) => {
+      const L = DAYB[d];
+      return `<a class="row" href="${iso(d)}/"><b>${esc(hd(d))}</b><span class="meta">законопроектов: ${L.length} · принято ${L.filter((x) => x.v.ok).length} · отклонено ${L.filter((x) => !x.v.ok).length}</span></a>`;
+    }).join('')}</div>`,
+  }),
+);
 
 // ---------- Ф5 (13.11.2026): fractions/ — как голосовали фракции по законопроектам, по месяцам ----------
 const FR = ['ЕР', 'КПРФ', 'ЛДПР', 'НЛ', 'СРЗП', 'Вне фракций'];
 const FV = []; // голосования по законопроектам с разбивкой по фракциям
-for (const day of Object.keys(DATA)) for (const ln of String(DATA[day]).split('\n')) {
-  const f = ln.split('|'); if (f.length < 7 || !/^\d+-\d+$/.test(f[1]) || !f[6]) continue;
-  const fr = f[6].split(';').map((x) => x.split(':')[0].split('/').map(Number)); if (fr.length < 5) continue;
-  FV.push({ id: f[0], day, no: f[1], ok: f[4] === '1', read: readW(f[3]), fr });
-}
-const pos = (q) => { const [za, pr, vz] = q; if (za + pr + vz === 0) return 'n'; return za > pr + vz ? 'y' : 'x'; };
-const frMonths = [...new Set(FV.map((v) => v.day.slice(3)))].sort((a, b) => (b.slice(3) + b.slice(0, 2)).localeCompare(a.slice(3) + a.slice(0, 2)));
+for (const day of Object.keys(DATA))
+  for (const ln of String(DATA[day]).split('\n')) {
+    const f = ln.split('|');
+    if (f.length < 7 || !/^\d+-\d+$/.test(f[1]) || !f[6]) continue;
+    const fr = f[6].split(';').map((x) => x.split(':')[0].split('/').map(Number));
+    if (fr.length < 5) continue;
+    FV.push({ id: f[0], day, no: f[1], ok: f[4] === '1', read: readW(f[3]), fr });
+  }
+const pos = (q) => {
+  const [za, pr, vz] = q;
+  if (za + pr + vz === 0) return 'n';
+  return za > pr + vz ? 'y' : 'x';
+};
+const frMonths = [...new Set(FV.map((v) => v.day.slice(3)))].sort((a, b) =>
+  (b.slice(3) + b.slice(0, 2)).localeCompare(a.slice(3) + a.slice(0, 2)),
+);
 const PL = { y: 'за', x: 'против или воздержалась', n: 'не голосовала' };
-const frBody = frMonths.map((mk) => {
-  const L = FV.filter((v) => v.day.slice(3) === mk);
-  const rows = FR.map((n, i) => { const c = { y: 0, x: 0, n: 0 }; let za = 0, all = 0; for (const v of L) { const q = v.fr[i]; if (!q) continue; c[pos(q)]++; za += q[0]; all += q[0] + q[1] + q[2] + q[3]; } return `<tr><td>${esc(n)}</td><td>${c.y}</td><td>${c.x}</td><td>${c.n}</td><td>${all ? Math.round((za / all) * 100) : 0}%</td></tr>`; }).join('');
-  const split = L.filter((v) => { const p = v.fr.slice(0, 5).map(pos); return p.includes('y') && p.includes('x'); }).sort((a, b) => pd(b.day) - pd(a.day) || +b.id - +a.id);
-  const sp = split.slice(0, 40).map((v) => { const b = BILLS[v.no] ? billOf(v.no) : null; return `<a class="row" href="../bill/${v.no}/"><b>${esc(b ? b.title : v.no)}</b><span class="meta"><span class="no">${esc(v.no)}</span> · ${esc(hd(v.day))}${v.read ? ` · ${esc(v.read)}` : ''} · ${v.ok ? 'принят' : 'отклонен'}<br>${FR.slice(0, 5).map((n, i) => `${esc(n)}: ${PL[pos(v.fr[i])]}`).join('; ')}</span></a>`; }).join('');
-  return `<h2>${MONN[+mk.slice(0, 2) - 1]} ${mk.slice(3)}: голосований по законопроектам — ${L.length}</h2>
+const frBody = frMonths
+  .map((mk) => {
+    const L = FV.filter((v) => v.day.slice(3) === mk);
+    const rows = FR.map((n, i) => {
+      const c = { y: 0, x: 0, n: 0 };
+      let za = 0,
+        all = 0;
+      for (const v of L) {
+        const q = v.fr[i];
+        if (!q) continue;
+        c[pos(q)]++;
+        za += q[0];
+        all += q[0] + q[1] + q[2] + q[3];
+      }
+      return `<tr><td>${esc(n)}</td><td>${c.y}</td><td>${c.x}</td><td>${c.n}</td><td>${all ? Math.round((za / all) * 100) : 0}%</td></tr>`;
+    }).join('');
+    const split = L.filter((v) => {
+      const p = v.fr.slice(0, 5).map(pos);
+      return p.includes('y') && p.includes('x');
+    }).sort((a, b) => pd(b.day) - pd(a.day) || +b.id - +a.id);
+    const sp = split
+      .slice(0, 40)
+      .map((v) => {
+        const b = BILLS[v.no] ? billOf(v.no) : null;
+        return `<a class="row" href="../bill/${v.no}/"><b>${esc(b ? b.title : v.no)}</b><span class="meta"><span class="no">${esc(v.no)}</span> · ${esc(hd(v.day))}${v.read ? ` · ${esc(v.read)}` : ''} · ${v.ok ? 'принят' : 'отклонен'}<br>${FR.slice(
+          0,
+          5,
+        )
+          .map((n, i) => `${esc(n)}: ${PL[pos(v.fr[i])]}`)
+          .join('; ')}</span></a>`;
+      })
+      .join('');
+    return `<h2>${MONN[+mk.slice(0, 2) - 1]} ${mk.slice(3)}: голосований по законопроектам — ${L.length}</h2>
 <table><thead><tr><th>Фракция</th><th>Большинство «за»</th><th>Против или воздержались</th><th>Не голосовали</th><th>Доля голосов «за»</th></tr></thead><tbody>${rows}</tbody></table>
 ${split.length ? `<p class="meta" style="margin-top:14px">Фракции разошлись в ${split.length} голосованиях${split.length > 40 ? ' (показаны последние 40)' : ''}:</p><div class="list">${sp}</div>` : '<p class="meta" style="margin-top:14px">Голосований, где фракции разошлись, нет.</p>'}`;
-}).join('');
-put('fractions/index.html', page({ title: 'Как голосуют фракции', desc: 'Голосования фракций Госдумы по законопроектам: как часто фракция голосовала «за» и где фракции разошлись.', url: `${SITE}fractions/`, depth: 1,
-  body: `<h1>Как голосуют фракции</h1><p class="meta">Считаются только голосования по законопроектам. Позиция фракции — «за», если «за» проголосовало больше её депутатов, чем «против» и «воздержались» вместе. «За» — как записано в итогах голосования на vote.duma.gov.ru: в голосованиях об отклонении законопроекта это «за отклонение».</p>${frBody}` }));
+  })
+  .join('');
+put(
+  'fractions/index.html',
+  page({
+    title: 'Как голосуют фракции',
+    desc: 'Голосования фракций Госдумы по законопроектам: как часто фракция голосовала «за» и где фракции разошлись.',
+    url: `${SITE}fractions/`,
+    depth: 1,
+    body: `<h1>Как голосуют фракции</h1><p class="meta">Считаются только голосования по законопроектам. Позиция фракции — «за», если «за» проголосовало больше её депутатов, чем «против» и «воздержались» вместе. «За» — как записано в итогах голосования на vote.duma.gov.ru: в голосованиях об отклонении законопроекта это «за отклонение».</p>${frBody}`,
+  }),
+);
 
 // sitemap, robots
-put('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[SITE, `${SITE}bill/`, `${SITE}day/`, `${SITE}fractions/`, `${SITE}law/`, ...DAYS.map((d) => `${SITE}day/${iso(d)}/`), ...ALL.map((b) => `${SITE}bill/${b.no}/`), ...LAWL.map((x) => `${SITE}law/${lawId(x)}/`)].map((u) => `<url><loc>${u}</loc></url>`).join('\n')}\n</urlset>\n`);
+put(
+  'sitemap.xml',
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[SITE, `${SITE}bill/`, `${SITE}day/`, `${SITE}fractions/`, `${SITE}law/`, ...DAYS.map((d) => `${SITE}day/${iso(d)}/`), ...ALL.map((b) => `${SITE}bill/${b.no}/`), ...LAWL.map((x) => `${SITE}law/${lawId(x)}/`)].map((u) => `<url><loc>${u}</loc></url>`).join('\n')}\n</urlset>\n`,
+);
 put('robots.txt', `User-agent: *\nAllow: /\nSitemap: ${SITE}sitemap.xml\n`);
-console.log(`extras: ${ALL.length} страниц законопроектов, ${Object.keys(TAGS).length + 1} лент RSS, ${lawEv.length} законов и ${plEv.length} заседаний в .ics → ${path.relative(ROOT, OUT)}`);
+console.log(
+  `extras: ${ALL.length} страниц законопроектов, ${Object.keys(TAGS).length + 1} лент RSS, ${lawEv.length} законов и ${plEv.length} заседаний в .ics → ${path.relative(ROOT, OUT)}`,
+);

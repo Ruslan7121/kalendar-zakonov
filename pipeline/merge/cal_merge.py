@@ -4,60 +4,111 @@
 объединение пунктов (старые short сохраняются), заседания Правительства — объединение старых и новых; статус дня
 не понижается. Проверка (assert): ни один старый пункт не потерян. Сериализация компактная — как в текущей строке CAL.
 Нет out/calendar.json — выход 1, canvas не меняется. Заменяет устаревший embed_calendar.py (pipeline/legacy/)."""
-import json,sys,os
-sys.path[:0] = [os.path.dirname(os.path.abspath(__file__)), os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib')]; import common as C
-P=sys.argv[1] if len(sys.argv)>1 else C.CANVAS
-CJ=os.path.join(C.OUT,'calendar.json')
-ONLY='--status-only' in sys.argv
-if ONLY: P=C.CANVAS
-s=open(P).read(); pre='const CAL: any = '
-i=s.find(pre); e=s.find('\n',i); old=json.loads(s[i+len(pre):e].rstrip(';'))
+
+import json, sys, os
+
+sys.path[:0] = [
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'),
+]
+import common as C
+
+P = sys.argv[1] if len(sys.argv) > 1 else C.CANVAS
+CJ = os.path.join(C.OUT, 'calendar.json')
+ONLY = '--status-only' in sys.argv
+if ONLY:
+    P = C.CANVAS
+s = open(P).read()
+pre = 'const CAL: any = '
+i = s.find(pre)
+e = s.find('\n', i)
+old = json.loads(s[i + len(pre) : e].rstrip(';'))
 # Т6 (13.11.2026): день, за который в DATA уже есть голосования, — состоявшееся заседание (held), даже если календарь
 # duma.gov.ru не обновился. --status-only: только эта правка, без out/calendar.json (когда calendar_update.py не отработал).
-VD={v[0] for v in C.votes(s)}
+VD = {v[0] for v in C.votes(s)}
 if ONLY:
-    ch=[p['d'] for p in old['p'] if p['d'] in VD and p.get('s')!='held']
-    if not ch: print('CAL: статусы без изменений'); sys.exit(0)
+    ch = [p['d'] for p in old['p'] if p['d'] in VD and p.get('s') != 'held']
+    if not ch:
+        print('CAL: статусы без изменений')
+        sys.exit(0)
     for p in old['p']:
-        if p['d'] in VD: p['s']='held'
-    C.write_canvas(s[:i]+pre+json.dumps(old,ensure_ascii=False,separators=(',',':'))+';'+s[e:], P); print('CAL: held —', ', '.join(ch)); sys.exit(0)
-if not os.path.exists(CJ): print('cal_merge: нет', CJ, '— CAL не изменён', file=sys.stderr); sys.exit(1)
-c=json.load(open(CJ))
-O={p['d']:p for p in old['p']}
-def key(d): return d[6:]+d[3:5]+d[:2]
-ps={}
+        if p['d'] in VD:
+            p['s'] = 'held'
+    C.write_canvas(s[:i] + pre + json.dumps(old, ensure_ascii=False, separators=(',', ':')) + ';' + s[e:], P)
+    print('CAL: held —', ', '.join(ch))
+    sys.exit(0)
+if not os.path.exists(CJ):
+    print('cal_merge: нет', CJ, '— CAL не изменён', file=sys.stderr)
+    sys.exit(1)
+c = json.load(open(CJ))
+O = {p['d']: p for p in old['p']}
+
+
+def key(d):
+    return d[6:] + d[3:5] + d[:2]
+
+
+ps = {}
 for d in c['days']:
-    na=[[a['doc'],a['short'],a.get('reading'),a['url'],a['title']] for a in d['agenda']]
-    o=O.get(d['date'])
+    na = [[a['doc'], a['short'], a.get('reading'), a['url'], a['title']] for a in d['agenda']]
+    o = O.get(d['date'])
     if o:
         # 20.11.2026: пункт с номером документа уже есть в дне — не добавлять второй раз, даже если название в повестке
         # duma.gov.ru записано иначе (19.11: семь законопроектов внесены вручную с полными названиями sozd, а повестка
         # дала их же с другим написанием — получилось по два пункта на законопроект, тест test_calendar_visible падал)
-        oa=o['a']; od={(x[0],x[4]) for x in oa}; odoc={x[0] for x in oa if x[0]}
-        a=list(oa)
+        oa = o['a']
+        od = {(x[0], x[4]) for x in oa}
+        odoc = {x[0] for x in oa if x[0]}
+        a = list(oa)
         for x in na:
-            if (x[0],x[4]) in od or (x[0] and x[0] in odoc): continue
-            a.append(x); od.add((x[0],x[4]))
-            if x[0]: odoc.add(x[0])
-        st=d['status']
-        if o['s']=='held' or (o['s']=='confirmed' and st=='expected'): st=o['s']   # не понижать статус
-        ps[d['date']]={'d':d['date'],'s':st,'t':d.get('time') or o.get('t'),'src':d['source'] if len(a)==len(na) or not oa else o['src'],'a':a}
-        if a==oa: ps[d['date']]['src']=o['src']; ps[d['date']]['t']=o.get('t')
+            if (x[0], x[4]) in od or (x[0] and x[0] in odoc):
+                continue
+            a.append(x)
+            od.add((x[0], x[4]))
+            if x[0]:
+                odoc.add(x[0])
+        st = d['status']
+        if o['s'] == 'held' or (o['s'] == 'confirmed' and st == 'expected'):
+            st = o['s']  # не понижать статус
+        ps[d['date']] = {
+            'd': d['date'],
+            's': st,
+            't': d.get('time') or o.get('t'),
+            'src': d['source'] if len(a) == len(na) or not oa else o['src'],
+            'a': a,
+        }
+        if a == oa:
+            ps[d['date']]['src'] = o['src']
+            ps[d['date']]['t'] = o.get('t')
     else:
-        seen=set(); na=[x for x in na if not (x[0] and (x[0] in seen or seen.add(x[0])))]  # один пункт на документ
-        ps[d['date']]={'d':d['date'],'s':d['status'],'t':d.get('time'),'src':d['source'],'a':na}
-for k,o in O.items():
-    if k not in ps: ps[k]=o
+        seen = set()
+        na = [x for x in na if not (x[0] and (x[0] in seen or seen.add(x[0])))]  # один пункт на документ
+        ps[d['date']] = {'d': d['date'], 's': d['status'], 't': d.get('time'), 'src': d['source'], 'a': na}
+for k, o in O.items():
+    if k not in ps:
+        ps[k] = o
 for k in ps:
-    if k in VD: ps[k]['s']='held'
-g={x[0]:x for x in old['g']}
-for x in c['gov_meetings']: g[x['date']]=[x['date'],x['title'],x['url']]
-cal={'u':c['updated'],'w':[[w['from'],w['to'],w['type']] for w in c['weeks']],
-     'p':[ps[k] for k in sorted(ps,key=key)],'g':[g[k] for k in sorted(g,key=key)],'n':old.get('n',[])}
+    if k in VD:
+        ps[k]['s'] = 'held'
+g = {x[0]: x for x in old['g']}
+for x in c['gov_meetings']:
+    g[x['date']] = [x['date'], x['title'], x['url']]
+cal = {
+    'u': c['updated'],
+    'w': [[w['from'], w['to'], w['type']] for w in c['weeks']],
+    'p': [ps[k] for k in sorted(ps, key=key)],
+    'g': [g[k] for k in sorted(g, key=key)],
+    'n': old.get('n', []),
+}
 # проверка: ничего из старых повесток не потеряно
-for k,o in O.items():
-    for x in o['a']: assert x in ps[k]['a'], (k,x)
-for x in old['g']: assert x[0] in g
-new=s[:i]+pre+json.dumps(cal,ensure_ascii=False,separators=(',',':'))+';'+s[e:]
-if new==s: print('CAL: без изменений'); sys.exit(0)
-C.write_canvas(new, P); print('CAL ok: days',len(cal['p']),'items',sum(len(p['a']) for p in cal['p']),'gov',len(cal['g']))
+for k, o in O.items():
+    for x in o['a']:
+        assert x in ps[k]['a'], (k, x)
+for x in old['g']:
+    assert x[0] in g
+new = s[:i] + pre + json.dumps(cal, ensure_ascii=False, separators=(',', ':')) + ';' + s[e:]
+if new == s:
+    print('CAL: без изменений')
+    sys.exit(0)
+C.write_canvas(new, P)
+print('CAL ok: days', len(cal['p']), 'items', sum(len(p['a']) for p in cal['p']), 'gov', len(cal['g']))

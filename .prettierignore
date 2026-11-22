@@ -1,0 +1,18 @@
+# Данные и производные файлы не форматируются: конвейер разбирает src/canvas.tsx по тексту (блоки данных — одной строкой)
+src/canvas.tsx
+src/canvas.code-only.tsx
+web/gen/
+web/dist/
+data/
+extracts/
+out/
+docs/
+node_modules/
+package-lock.json
+*.md
+*.html
+*.json
+*.yml
+*.sh
+*.py
+tests/fixtures/

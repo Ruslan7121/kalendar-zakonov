@@ -7,9 +7,14 @@
 Ежедневно: только новый день — python3 audit.py --day DD.MM.YYYY [--fix]
 Полный прогон вручную: python3 audit.py [--fix]  (не в run_daily)
 """
+
 from __future__ import annotations
 import sys, os, re, json, html as H
-sys.path[:0] = [os.path.dirname(os.path.abspath(__file__)), os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib')]
+
+sys.path[:0] = [
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'),
+]
 import common as C
 import sozd_cache as S
 
@@ -23,9 +28,14 @@ VOTE_DIRS = [
 ]
 DT = r'(\d\d\.\d\d\.\d{4}) \d\d\.\d\d\.\d\d(?: \d\d:\d\d)?'
 RD_MAP = {
-    'первое чтение': '1-е', 'второе чтение': '2-е', 'третье чтение': '3-е',
-    'за основу': 'за основу', 'в целом': 'в целом', 'процедура': 'процедура',
-    'выбор способа голосования': 'способ голос.', 'способ голосования - открытое': 'способ голос.',
+    'первое чтение': '1-е',
+    'второе чтение': '2-е',
+    'третье чтение': '3-е',
+    'за основу': 'за основу',
+    'в целом': 'в целом',
+    'процедура': 'процедура',
+    'выбор способа голосования': 'способ голос.',
+    'способ голосования - открытое': 'способ голос.',
     'отклонение': 'отклонение',
 }
 
@@ -62,7 +72,7 @@ def sozd_text(n: str) -> str | None:
     raw = open(local, errors='ignore').read()
     t = re.sub(r'\s+', ' ', C.text(raw))
     if 'По событиям' in t:
-        t = t[t.find('По событиям'):]
+        t = t[t.find('По событиям') :]
     return t
 
 
@@ -79,13 +89,25 @@ def stage_date(t: str, pat: str) -> str:
 def parse_sozd_stages(t: str) -> dict:
     r = {}
     r['in'] = act_date(t, r'зарегистрирован и направлен Председателю')
-    r['kom'] = act_date(t, r'направлен в комитет\(ы\) Государственной Думы') or act_date(t, r'назначить ответственный комитет')
+    r['kom'] = act_date(t, r'направлен в комитет\(ы\) Государственной Думы') or act_date(
+        t, r'назначить ответственный комитет'
+    )
     r['r1'] = act_date(t, r'принять законопроект в первом чтении')
     r['r2'] = act_date(t, r'принять законопроект во втором чтении')
-    r['r3'] = stage_date(t, r'третьем чтении Рассмотрение законопроекта Государственной Думой') or act_date(t, r'принять закон\b')
+    r['r3'] = stage_date(t, r'третьем чтении Рассмотрение законопроекта Государственной Думой') or act_date(
+        t, r'принять закон\b'
+    )
     r['sf'] = stage_date(t, r'Рассмотрение закона на заседании Совета Федерации') or act_date(t, r'одобрить закон')
-    r['sign'] = stage_date(t, r'Рассмотрение закона Президентом Российской Федерации') or act_date(t, r'закон подписан Президентом') or act_date(t, r'подписан Президентом')
-    r['pub'] = stage_date(t, r'Опубликование закона Опубликование закона') or act_date(t, r'закон опубликован') or stage_date(t, r'Опубликование закона')
+    r['sign'] = (
+        stage_date(t, r'Рассмотрение закона Президентом Российской Федерации')
+        or act_date(t, r'закон подписан Президентом')
+        or act_date(t, r'подписан Президентом')
+    )
+    r['pub'] = (
+        stage_date(t, r'Опубликование закона Опубликование закона')
+        or act_date(t, r'закон опубликован')
+        or stage_date(t, r'Опубликование закона')
+    )
     rej = act_date(t, r'отклонить законопроект')
     rej_stage = None
     if rej:
@@ -132,7 +154,9 @@ def sozd_day_actions(t: str, day: str) -> list[str]:
     for m in re.finditer(re.escape(day) + r'[^\d]{0,5}\d\d\.\d\d\.\d\d(?: \d\d:\d\d)? ([^.]{5,160})', t):
         out.append(m.group(1).strip())
     # fallback: DATE near action without short-date
-    for m in re.finditer(re.escape(day) + r'.{0,120}?(принять законопроект в[^\d]{0,40}|принять закон\b|отклонить[^\d]{0,80})', t, re.I):
+    for m in re.finditer(
+        re.escape(day) + r'.{0,120}?(принять законопроект в[^\d]{0,40}|принять закон\b|отклонить[^\d]{0,80})', t, re.I
+    ):
         out.append(m.group(0))
     return out
 
@@ -142,7 +166,7 @@ def expected_reading_from_vote_title(title: str) -> str | None:
         return None
     m = re.match(r'\(([^)]*)\)\s*', title)
     paren = m.group(1).strip().lower() if m else ''
-    body = title[m.end():] if m else title
+    body = title[m.end() :] if m else title
     body_l = body.lower()
     if 'принятый во втором чтении' in body_l or 'принятого во втором чтении' in body_l:
         return '3-е'
@@ -222,7 +246,7 @@ def fix_reading_in_src(src: str, day: str, vid: str, new_rd: str) -> str:
         if i < 0:
             return src
     j = src.find('`', i + len(a))
-    block = src[i + len(a):j]
+    block = src[i + len(a) : j]
     lines = block.split('\n')
     out = []
     for ln in lines:
@@ -231,7 +255,7 @@ def fix_reading_in_src(src: str, day: str, vid: str, new_rd: str) -> str:
             p[3] = new_rd
             ln = '|'.join(p)
         out.append(ln)
-    return src[:i + len(a)] + '\n'.join(out) + src[j:]
+    return src[: i + len(a)] + '\n'.join(out) + src[j:]
 
 
 def reading_mismatch(have: str, ok: bool, title: str, sozd: str | None, day: str) -> dict | None:
@@ -247,8 +271,11 @@ def reading_mismatch(have: str, ok: bool, title: str, sozd: str | None, day: str
             if cur == exp_c:
                 return None
             return {
-                'have_canon': cur, 'expected': exp_vote, 'exp_canon': exp_c,
-                'from': 'vote_title', 'title': title[:160],
+                'have_canon': cur,
+                'expected': exp_vote,
+                'exp_canon': exp_c,
+                'from': 'vote_title',
+                'title': title[:160],
             }
         return None
 
@@ -264,8 +291,11 @@ def reading_mismatch(have: str, ok: bool, title: str, sozd: str | None, day: str
             # не переписывать корректное 1-е, если sozd говорит отклонить без «принятый»
             # (rej_lab уже только от «принятый в …»)
             return {
-                'have_canon': cur, 'expected': rej_lab, 'exp_canon': exp_c,
-                'from': 'sozd_rejection_wording', 'title': '',
+                'have_canon': cur,
+                'expected': rej_lab,
+                'exp_canon': exp_c,
+                'from': 'sozd_rejection_wording',
+                'title': '',
             }
     return None
 
@@ -284,11 +314,17 @@ def norm_read_js(r: str) -> str:
 
 # Как на карточке (RD) и на share-картинке (READW) — один ключ normRead.
 CARD_RD = {
-    '1-е': '1-е чтение', '2-е': '2-е чтение', '3-е': '3-е чтение',
-    '2-е, поправки': '2-е чтение', 'отклонение': 'отклонение', 'ратификация': 'ратификация',
+    '1-е': '1-е чтение',
+    '2-е': '2-е чтение',
+    '3-е': '3-е чтение',
+    '2-е, поправки': '2-е чтение',
+    'отклонение': 'отклонение',
+    'ратификация': 'ратификация',
 }
 SHARE_RD = {
-    '1-е': 'первое чтение', '2-е': 'второе чтение', '3-е': 'третье чтение',
+    '1-е': 'первое чтение',
+    '2-е': 'второе чтение',
+    '3-е': 'третье чтение',
     '2-е, поправки': 'второе чтение',
 }
 
@@ -299,7 +335,6 @@ def card_share_stage(rd: str) -> tuple[str, str, str]:
     card = CARD_RD.get(key, '')
     share = SHARE_RD.get(key, '')
     return key, card, share
-
 
 
 def main():
@@ -334,10 +369,18 @@ def main():
         key, card_l, share_l = card_share_stage(rd)
         if key in ('1-е', '2-е', '3-е', '2-е, поправки'):
             if key not in SHARE_RD or key not in CARD_RD:
-                report['mismatches']['card_vs_share'].append({
-                    'day': day, 'vid': vid, 'doc': doc, 'have': rd, 'key': key,
-                    'card': card_l, 'share': share_l, 'kind': 'missing_map',
-                })
+                report['mismatches']['card_vs_share'].append(
+                    {
+                        'day': day,
+                        'vid': vid,
+                        'doc': doc,
+                        'have': rd,
+                        'key': key,
+                        'card': card_l,
+                        'share': share_l,
+                        'kind': 'missing_map',
+                    }
+                )
         is_bill = bool(re.fullmatch(r'\d+-\d+', doc))
         title = ''
         vote_day_src = None
@@ -357,26 +400,39 @@ def main():
                 if fix:
                     new_rd = mm['exp_canon'] if mm['exp_canon'] in ('1-е', '2-е', '3-е') else mm['expected']
                     src = fix_reading_in_src(src, day, vid, new_rd)
-                    report['fixed'].append({
-                        'doc': doc, 'vid': vid,
-                        'what': f"reading {rd!r} → {new_rd!r}",
-                        'evidence': mm['from'],
-                    })
+                    report['fixed'].append(
+                        {
+                            'doc': doc,
+                            'vid': vid,
+                            'what': f'reading {rd!r} → {new_rd!r}',
+                            'evidence': mm['from'],
+                        }
+                    )
             elif not raw and not sozd and re.search(r'чтен|отклон|1-е|2-е|3-е', rd, re.I):
                 report['unverifiable'].append({'doc': doc, 'vid': vid, 'why': 'no vote/sozd html for reading'})
 
         if vote_day_src and vote_day_src != day:
-            report['mismatches']['vote_day'].append({
-                'vid': vid, 'doc': doc, 'data_day': day, 'vote_page_day': vote_day_src,
-            })
+            report['mismatches']['vote_day'].append(
+                {
+                    'vid': vid,
+                    'doc': doc,
+                    'data_day': day,
+                    'vote_page_day': vote_day_src,
+                }
+            )
         elif is_bill and not raw and not sozd:
             report['unverifiable'].append({'doc': doc, 'vid': vid, 'why': 'vote day unverifiable'})
 
         if is_bill:
-            bill_votes.setdefault(doc, []).append({
-                'day': day, 'vid': vid, 'rd': rd, 'ok': ok,
-                'rejected': (not ok) and bool(re.search(r'чтен|1-е|2-е|3-е|отклон', rd, re.I)),
-            })
+            bill_votes.setdefault(doc, []).append(
+                {
+                    'day': day,
+                    'vid': vid,
+                    'rd': rd,
+                    'ok': ok,
+                    'rejected': (not ok) and bool(re.search(r'чтен|1-е|2-е|3-е|отклон', rd, re.I)),
+                }
+            )
 
     # bill-level: agenda card (first vote) vs share of billVote (must be same vote/stage)
     by_bill_day = {}
@@ -393,18 +449,22 @@ def main():
         lk = norm_read_js(last_rd)
         if canon_rd(fk) != canon_rd(lk) and (fk in CARD_RD or fk in SHARE_RD):
             # after billVote→first fix this is resolved in UI; still report if DATA would diverge
-            report['mismatches']['card_vs_share'].append({
-                'day': day, 'doc': doc, 'kind': 'multi_vote_first_vs_last',
-                'first': {'vid': first_vid, 'rd': first_rd, 'stage': canon_rd(fk)},
-                'last': {'vid': last_vid, 'rd': last_rd, 'stage': canon_rd(lk)},
-                'note': 'agenda/share must use first (same as billType); billVote was .pop()=last',
-            })
+            report['mismatches']['card_vs_share'].append(
+                {
+                    'day': day,
+                    'doc': doc,
+                    'kind': 'multi_vote_first_vs_last',
+                    'first': {'vid': first_vid, 'rd': first_rd, 'stage': canon_rd(fk)},
+                    'last': {'vid': last_vid, 'rd': last_rd, 'stage': canon_rd(lk)},
+                    'note': 'agenda/share must use first (same as billType); billVote was .pop()=last',
+                }
+            )
 
     if day_only:
         # ежедневно — только голоса нового дня; TRACK целиком не гоняем
         pass
     else:
-      _TRACK_LOOP = True
+        _TRACK_LOOP = True
     for doc, tr in TRACK.items():
         if day_only:
             break
@@ -422,27 +482,46 @@ def main():
             have = (tr or {}).get(k, '')
             exp = parsed.get(k, '')
             if have and exp and have != exp:
-                report['mismatches']['track_date'].append({
-                    'doc': doc, 'stage': k, 'have': have, 'sozd': exp,
-                })
+                report['mismatches']['track_date'].append(
+                    {
+                        'doc': doc,
+                        'stage': k,
+                        'have': have,
+                        'sozd': exp,
+                    }
+                )
                 if fix:
                     tr = dict(tr)
                     tr[k] = exp
                     TRACK[doc] = {kk: vv for kk, vv in tr.items() if vv}
-                    report['fixed'].append({
-                        'doc': doc, 'what': f'TRACK.{k} {have} → {exp}', 'evidence': 'sozd',
-                    })
+                    report['fixed'].append(
+                        {
+                            'doc': doc,
+                            'what': f'TRACK.{k} {have} → {exp}',
+                            'evidence': 'sozd',
+                        }
+                    )
             elif exp and not have:
-                report['mismatches']['track_date'].append({
-                    'doc': doc, 'stage': k, 'have': '', 'sozd': exp, 'kind': 'missing_in_track',
-                })
+                report['mismatches']['track_date'].append(
+                    {
+                        'doc': doc,
+                        'stage': k,
+                        'have': '',
+                        'sozd': exp,
+                        'kind': 'missing_in_track',
+                    }
+                )
                 if fix:
                     tr = dict(tr or {})
                     tr[k] = exp
                     TRACK[doc] = {kk: vv for kk, vv in tr.items() if vv}
-                    report['fixed'].append({
-                        'doc': doc, 'what': f'TRACK.{k} filled {exp}', 'evidence': 'sozd',
-                    })
+                    report['fixed'].append(
+                        {
+                            'doc': doc,
+                            'what': f'TRACK.{k} filled {exp}',
+                            'evidence': 'sozd',
+                        }
+                    )
 
     if fix:
         src = C.set_block(src, 'TRACK', 'const TRACK: Record<string, Record<string, string>>', TRACK)
@@ -450,14 +529,16 @@ def main():
 
     out_path = os.path.join(C.LOGS, 'audit_report.json')
     json.dump(report, open(out_path, 'w'), ensure_ascii=False, indent=2)
-    print(f"checked_votes={report['checked_votes']} checked_track_bills={report['checked_bills_track']}")
-    print(f"day_only={day_only} mismatches: reading={len(report['mismatches']['reading'])} track_date={len(report['mismatches']['track_date'])} vote_day={len(report['mismatches']['vote_day'])} card_vs_share={len(report['mismatches']['card_vs_share'])}")
-    print(f"fixed={len(report['fixed'])} unverifiable={len(report['unverifiable'])}")
+    print(f'checked_votes={report["checked_votes"]} checked_track_bills={report["checked_bills_track"]}')
+    print(
+        f'day_only={day_only} mismatches: reading={len(report["mismatches"]["reading"])} track_date={len(report["mismatches"]["track_date"])} vote_day={len(report["mismatches"]["vote_day"])} card_vs_share={len(report["mismatches"]["card_vs_share"])}'
+    )
+    print(f'fixed={len(report["fixed"])} unverifiable={len(report["unverifiable"])}')
     for kind, items in report['mismatches'].items():
         for it in items[:40]:
             print(f'  [{kind}]', it)
         if len(items) > 40:
-            print(f'  [{kind}] ... +{len(items)-40} more')
+            print(f'  [{kind}] ... +{len(items) - 40} more')
     for it in report['fixed']:
         print('  FIXED', it)
     print('report:', out_path)

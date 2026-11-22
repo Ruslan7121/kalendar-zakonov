@@ -22,9 +22,14 @@ VT: время берётся со страницы самого голосов�
   запасной путь через страницу депутата остаётся в vote_times.py.
 Формат строки DATA: id|номер|краткое название|чтение|1/0 принят|за/против/возд/не голос.|фракции ЕР;КПРФ;ЛДПР;НЛ;СРЗП;Вне
 """
+
 import sys, os, re, json, time, argparse, datetime as dt, html as H
 from concurrent.futures import ThreadPoolExecutor
-sys.path[:0] = [os.path.dirname(os.path.abspath(__file__)), os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib')]
+
+sys.path[:0] = [
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'),
+]
 import common as C
 
 BASE = 'http://vote.duma.gov.ru'
@@ -33,28 +38,40 @@ DEF = {'ЕР': 350, 'КПРФ': 37, 'ЛДПР': 24, 'НЛ': 20, 'СРЗП': 17, 
 FMAP = {'ЕР': 'ЕР', 'КПРФ': 'КПРФ', 'ЛДПР': 'ЛДПР', 'НЛ': 'НЛ', 'СР': 'СРЗП', 'СРЗП': 'СРЗП', 'Вне фракций': 'Вне'}
 SEATS = 450
 DAYS_DIR = os.environ.get('GD_DAYS') or os.path.join(C.DUMA, 'days')
-CACHE = os.path.join(C.OUT, 'cache', 'vote')   # итоги голосований неизменны → кэшируем только разобранные страницы
+CACHE = os.path.join(C.OUT, 'cache', 'vote')  # итоги голосований неизменны → кэшируем только разобранные страницы
+
 
 # ---------- разбор ----------
 def parse_list(h):
     """Страница списка дня → (rows, max_page, empty). rows: dict(day,time,id,title,ok,for,against,abst)."""
     empty = 'ничего не найдено' in h
     rows, cur = [], None
-    for m in re.finditer(r'class="date-head"><div>(\d\d\.\d\d\.\d{4})</div>|<div class="item[^"]*"><div>(.*?)</div></div>', h, re.S):
+    for m in re.finditer(
+        r'class="date-head"><div>(\d\d\.\d\d\.\d{4})</div>|<div class="item[^"]*"><div>(.*?)</div></div>', h, re.S
+    ):
         if m.group(1):
-            cur = m.group(1); continue
+            cur = m.group(1)
+            continue
         b = m.group(2)
         t = re.search(r'class="time">(\d\d:\d\d:\d\d)</div>\s*<a href="/vote/(\d+)">(.*?)</a>', b, re.S)
         if not (t and cur):
             continue
-        r = {'day': cur, 'time': t.group(1), 'id': t.group(2), 'title': H.unescape(re.sub(r'\s+', ' ', t.group(3))).strip()}
+        r = {
+            'day': cur,
+            'time': t.group(1),
+            'id': t.group(2),
+            'title': H.unescape(re.sub(r'\s+', ' ', t.group(3))).strip(),
+        }
         okm = re.search(r'<b>(Принят|Не принят|Отклонен|Отклонён)[^<]*</b>', b)
         r['ok'] = (okm.group(1) == 'Принят') if okm else None
-        n = re.search(r'За:\s*(\d+)', b); a = re.search(r'Против:\s*(\d+)', b); w = re.search(r'Воздержалось:\s*(\d+)', b)
+        n = re.search(r'За:\s*(\d+)', b)
+        a = re.search(r'Против:\s*(\d+)', b)
+        w = re.search(r'Воздержалось:\s*(\d+)', b)
         r['for'], r['against'], r['abst'] = [int(x.group(1)) if x else None for x in (n, a, w)]
         rows.append(r)
     pages = [int(x) for x in re.findall(r'[?&](?:amp;)?page=(\d+)', h)]
     return rows, (max(pages) if pages else 1), empty
+
 
 def parse_vote(h):
     """Страница /vote/<id> → dict(day,time,title,ok,total[4],fr{F:{v[4],size}}) или None, если это не справка о голосовании."""
@@ -69,9 +86,11 @@ def parse_vote(h):
     d['title'] = H.unescape(re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', '', t.group(1)))).strip() if t else ''
     r = re.search(r'Результат голосования:\s*<b class="(\w+)">\s*([^<(]+)', h)
     d['ok'] = None if not r else r.group(2).strip().lower().startswith('принят')
+
     def num(lbl):
         x = re.search(r'<b>' + lbl + r':</b>\s*(\d+)', h)
         return int(x.group(1)) if x else None
+
     tot = [num('За'), num('Против'), num('Воздержалось'), num('Не голосовало')]
     if None in tot:
         return None
@@ -86,12 +105,13 @@ def parse_vote(h):
         for x in deps:
             k = FMAP.get(x.get('faction', ''))
             if not k:
-                fr.setdefault('?', 0); continue
+                fr.setdefault('?', 0)
+                continue
             e = fr.setdefault(k, {'v': [0, 0, 0, 0], 'size': 0})
             e['size'] += 1
             i = {'for': 0, 'against': 1, 'abstain': 2}.get(x.get('result'), 3)
             e['v'][i] += 1
-        if '?' in fr:          # неизвестная фракция — разбивку не публикуем, чтобы не врать
+        if '?' in fr:  # неизвестная фракция — разбивку не публикуем, чтобы не врать
             fr = {}
         # сверка с общим итогом (за/против/возд. должны совпасть)
         if fr and [sum(fr[k]['v'][i] for k in fr) for i in range(3)] != tot[:3]:
@@ -99,16 +119,25 @@ def parse_vote(h):
     d['fr'] = {k: fr[k] for k in F if k in fr} if fr and all(k in fr for k in F) else {}
     return d
 
+
 # ---------- поля строки DATA ----------
-QRE = re.compile(r'^О проекте (федерального закона|постановления Государственной Думы|федерального конституционного закона)\s*(№\s*([\d-]+))?\s*')
+QRE = re.compile(
+    r'^О проекте (федерального закона|постановления Государственной Думы|федерального конституционного закона)\s*(№\s*([\d-]+))?\s*'
+)
+
+
 def split_title(title):
     """'(первое чтение) О проекте федерального закона № 1-9 "…"' → (reading, doc, short, q)."""
     m = re.match(r'^\(([^)]*)\)\s*', title)
     reading = m.group(1).strip() if m else ''
-    q = title[m.end():] if m else title
-    if reading == 'к отклонению':            # как в DATA: чтение законопроекта, ok=0 (отклонён), UI покажет «За отклонение»
+    q = title[m.end() :] if m else title
+    if reading == 'к отклонению':  # как в DATA: чтение законопроекта, ok=0 (отклонён), UI покажет «За отклонение»
         reading = 'к отклонению:' + ('2-е' if re.search(r'принят в 1 чтении', q) else '1-е')
-    reading = {'первое чтение': '1-е', 'второе чтение': '2-е', 'третье чтение': '3-е', '': '—'}.get(reading, reading).replace('ё', 'е').replace('Ё', 'Е')
+    reading = (
+        {'первое чтение': '1-е', 'второе чтение': '2-е', 'третье чтение': '3-е', '': '—'}.get(reading, reading)
+        .replace('ё', 'е')
+        .replace('Ё', 'Е')
+    )
     qm = QRE.match(q)
     if qm and qm.group(3):
         doc = ('Пост. ' if qm.group(1).startswith('постановления') else '') + qm.group(3)
@@ -116,21 +145,35 @@ def split_title(title):
         doc = '—'
     return reading, doc, short(q), q
 
+
 def short(q, n=97):
     m = QRE.match(q)
-    s = q[m.end():] if m else q
-    s = re.sub(r'\s*\((?:первое|второе|третье) чтение\)\s*$', '', s.strip())   # дубль чтения в конце названия
-    if s[:1] in '"«“':                       # внешние кавычки названия: «"Название" (в части …)» → «Название (в части …)»
+    s = q[m.end() :] if m else q
+    s = re.sub(r'\s*\((?:первое|второе|третье) чтение\)\s*$', '', s.strip())  # дубль чтения в конце названия
+    if s[:1] in '"«“':  # внешние кавычки названия: «"Название" (в части …)» → «Название (в части …)»
         s = s[1:]
-        if s.count('"') % 2:                 # непарная закрывающая кавычка — снять последнюю
-            k = s.rfind('"'); s = s[:k] + s[k + 1:]
+        if s.count('"') % 2:  # непарная закрывающая кавычка — снять последнюю
+            k = s.rfind('"')
+            s = s[:k] + s[k + 1 :]
         s = s.rstrip('»”')
     s = re.sub(r'\s+', ' ', s).strip().replace('|', '/').replace('`', "'").replace('${', '$ {')
-    return (s[:n - 2].rstrip() + '…') if len(s) > n else s
+    return (s[: n - 2].rstrip() + '…') if len(s) > n else s
+
 
 def data_line(v):
-    fr = ';'.join('/'.join(map(str, v['fr'][k]['v'])) + ('' if v['fr'][k]['size'] == DEF[k] else ':' + str(v['fr'][k]['size'])) for k in F) if v.get('fr') else ''
-    return '|'.join([v['id'], v['doc'], v['short'], v['reading'], '1' if v['ok'] else '0', '/'.join(map(str, v['total'])), fr])
+    fr = (
+        ';'.join(
+            '/'.join(map(str, v['fr'][k]['v']))
+            + ('' if v['fr'][k]['size'] == DEF[k] else ':' + str(v['fr'][k]['size']))
+            for k in F
+        )
+        if v.get('fr')
+        else ''
+    )
+    return '|'.join(
+        [v['id'], v['doc'], v['short'], v['reading'], '1' if v['ok'] else '0', '/'.join(map(str, v['total'])), fr]
+    )
+
 
 # ---------- загрузка ----------
 def get(url, out, deadline=150, tries=2):
@@ -139,6 +182,7 @@ def get(url, out, deadline=150, tries=2):
             return open(out, errors='ignore').read()
         time.sleep(2 * (a + 1))
     return ''
+
 
 def fetch_list(day):
     """Все страницы списка дня. Возвращает (rows, status) ; rows=None — список недоступен."""
@@ -164,6 +208,7 @@ def fetch_list(day):
     st = f'ok pages={maxp} votes={len(uniq)}' + (f' LOST pages={lost}' if lost else '')
     return list(uniq.values()), st
 
+
 def fetch_vote(vid):
     os.makedirs(CACHE, exist_ok=True)
     cp = os.path.join(CACHE, f'{vid}.html')
@@ -178,11 +223,15 @@ def fetch_vote(vid):
         open(cp, 'w').write(h)
     return d
 
+
 # ---------- DATA в canvas ----------
 DAY_RE = r"(?:^DATA\['{d}'\] = |^'{d}': )(`(?:[^`]*)`|'')"
+
+
 def day_segment(src, day):
     m = re.search(DAY_RE.format(d=re.escape(day)), src, re.M)
     return m
+
 
 def merge_day(src, day, votes):
     """Аддитивно добавить строки голосований дня в DATA. → (src, added_ids, kept_ids, diffs)."""
@@ -202,45 +251,59 @@ def merge_day(src, day, votes):
                 diffs.append({'id': vid, 'DATA': '|'.join(a[4:7]), 'vote.duma.gov.ru': '|'.join(b[4:7])})
     add = sorted((v for v in new_lines if v not in have), key=int)
     for vid in add:
-        pos = next((i for i, ln in enumerate(lines) if ln.split('|')[0].isdigit() and int(ln.split('|')[0]) > int(vid)), len(lines))
+        pos = next(
+            (i for i, ln in enumerate(lines) if ln.split('|')[0].isdigit() and int(ln.split('|')[0]) > int(vid)),
+            len(lines),
+        )
         lines.insert(pos, new_lines[vid])
     if not add:
         return src, [], list(have), diffs
     val = '`' + '\n'.join(lines) + '`'
     if m:
-        src = src[:m.start(1)] + val + src[m.end(1):]
+        src = src[: m.start(1)] + val + src[m.end(1) :]
     else:
         last = None
         for mm in re.finditer(r"^DATA\['\d\d\.\d\d\.\d{4}'\] = (?:`[^`]*`|'');", src, re.M):
             last = mm
         stmt = f"DATA['{day}'] = {val};"
         if last:
-            src = src[:last.end()] + '\n' + stmt + src[last.end():]
+            src = src[: last.end()] + '\n' + stmt + src[last.end() :]
         else:
             i = src.index('const DATA: Record<string,string> = {')
             j = src.index('\n};', i) + 3
             src = src[:j] + '\n' + stmt + src[j:]
     return src, add, list(have), diffs
 
+
 def daterange(a, b):
     p = lambda s: dt.datetime.strptime(s, '%d.%m.%Y').date()
     x, y = p(a), p(b)
     while x <= y:
-        yield x.strftime('%d.%m.%Y'); x += dt.timedelta(days=1)
+        yield x.strftime('%d.%m.%Y')
+        x += dt.timedelta(days=1)
+
 
 def nv_mark(src, day, url):
     """15.11.2026: официально «ничего не найдено» → запись в NV («голосований не было»); без нее сайт держал такой день
     в «еще собирается». Уже стоящую запись (в т. ч. с новостями дня, написанную вручную) не трогаем."""
-    pre = 'const NV: Record<string, any> = '; i = src.find(pre)
-    if i < 0: return src
-    j = src.index('\n', i); nv = json.loads(src[i + len(pre):j].rstrip(';'))
-    if day in nv: return src
+    pre = 'const NV: Record<string, any> = '
+    i = src.find(pre)
+    if i < 0:
+        return src
+    j = src.index('\n', i)
+    nv = json.loads(src[i + len(pre) : j].rstrip(';'))
+    if day in nv:
+        return src
     nv[day] = {'nv': 1, 'd': [['Голосований не было', f'На vote.duma.gov.ru за {day} голосований не найдено.', url]]}
     return src[:i] + pre + json.dumps(nv, ensure_ascii=False) + ';' + src[j:]
 
 
 def run_day(day, args, src, VT):
-    report = {'day': day, 'source': f'{BASE}/?from={day}&to={day}', 'fetched_at': dt.datetime.now().isoformat(timespec='seconds')}
+    report = {
+        'day': day,
+        'source': f'{BASE}/?from={day}&to={day}',
+        'fetched_at': dt.datetime.now().isoformat(timespec='seconds'),
+    }
     rows, st = fetch_list(day)
     report['list_status'] = st
     if rows is None:
@@ -249,8 +312,19 @@ def run_day(day, args, src, VT):
         return src, report, 2
     if not rows:
         os.makedirs(DAYS_DIR, exist_ok=True)
-        json.dump({'date': day, 'novotes': 1, 'source': report['source'], 'fetched_at': report['fetched_at'], 'votes': [], 'gaps': []},
-                  open(os.path.join(DAYS_DIR, f'{day}.json'), 'w'), ensure_ascii=False, indent=1)
+        json.dump(
+            {
+                'date': day,
+                'novotes': 1,
+                'source': report['source'],
+                'fetched_at': report['fetched_at'],
+                'votes': [],
+                'gaps': [],
+            },
+            open(os.path.join(DAYS_DIR, f'{day}.json'), 'w'),
+            ensure_ascii=False,
+            indent=1,
+        )
         print(f'[{day}] голосований нет (официально: «ничего не найдено»)')
         return nv_mark(src, day, report['source']), report, 0
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
@@ -259,39 +333,85 @@ def run_day(day, args, src, VT):
     for r in sorted(rows, key=lambda r: int(r['id'])):
         d = det.get(r['id'])
         if not d or d['day'] != day:
-            gaps.append({'id': r['id'], 'time_list': r['time'], 'why': 'страница голосования не загрузилась/не разобралась' if not d else f"дата на странице {d['day']}"})
+            gaps.append(
+                {
+                    'id': r['id'],
+                    'time_list': r['time'],
+                    'why': 'страница голосования не загрузилась/не разобралась'
+                    if not d
+                    else f'дата на странице {d["day"]}',
+                }
+            )
             continue
         reading, doc, sh, q = split_title(d['title'] or r['title'])
         ok = d['ok'] if d['ok'] is not None else bool(r['ok'])
-        if reading.startswith('к отклонению:'):   # принято предложение отклонить → законопроект отклонён
+        if reading.startswith('к отклонению:'):  # принято предложение отклонить → законопроект отклонён
             reading, ok = reading.split(':', 1)[1], (not ok)
-        v = {'id': r['id'], 'doc': doc, 'short': sh, 'reading': reading, 'ok': ok,
-             'total': d['total'], 'fr': d['fr'], 'q': q, 'time': d['time'], 'time_src': 'vote', 'time_list': r['time']}
+        v = {
+            'id': r['id'],
+            'doc': doc,
+            'short': sh,
+            'reading': reading,
+            'ok': ok,
+            'total': d['total'],
+            'fr': d['fr'],
+            'q': q,
+            'time': d['time'],
+            'time_src': 'vote',
+            'time_list': r['time'],
+        }
         if not d['fr']:
             gaps.append({'id': r['id'], 'why': 'нет поимённой разбивки по фракциям — строка без фракций'})
         votes.append(v)
     os.makedirs(DAYS_DIR, exist_ok=True)
     jpath = os.path.join(DAYS_DIR, f'{day}.json')
-    json.dump({'date': day, 'source': report['source'], 'fetched_at': report['fetched_at'], 'list_status': st,
-               'votes': votes, 'gaps': gaps}, open(jpath, 'w'), ensure_ascii=False, indent=1)
+    json.dump(
+        {
+            'date': day,
+            'source': report['source'],
+            'fetched_at': report['fetched_at'],
+            'list_status': st,
+            'votes': votes,
+            'gaps': gaps,
+        },
+        open(jpath, 'w'),
+        ensure_ascii=False,
+        indent=1,
+    )
     src2, added, kept, diffs = merge_day(src, day, votes)
     vt_new, vt_diff = 0, []
     for v in votes:
         if VT.get(v['id']) != v['time']:
             if v['id'] in VT:
                 vt_diff.append({'id': v['id'], 'было': VT[v['id']], 'vote.duma.gov.ru': v['time']})
-            VT[v['id']] = v['time']; vt_new += 1
-    report.update({'json': jpath, 'list_votes': len(rows), 'parsed': len(votes), 'gaps': gaps, 'data_existing': len(kept),
-                   'data_added': added, 'data_diffs': diffs, 'vt_set': vt_new, 'vt_diffs': vt_diff})
+            VT[v['id']] = v['time']
+            vt_new += 1
+    report.update(
+        {
+            'json': jpath,
+            'list_votes': len(rows),
+            'parsed': len(votes),
+            'gaps': gaps,
+            'data_existing': len(kept),
+            'data_added': added,
+            'data_diffs': diffs,
+            'vt_set': vt_new,
+            'vt_diffs': vt_diff,
+        }
+    )
     for g in gaps:
-        C.log('votes_day_fail.log', f"{day} {g['id']}: {g['why']}")
-    print(f"[{day}] {st}; разобрано {len(votes)}/{len(rows)}; в DATA было {len(kept)}, добавлено {len(added)}"
-          f"{' ' + str(added) if added else ''}; расхождений цифр {len(diffs)}; VT +{vt_new} (изменено {len(vt_diff)}); пробелы {len(gaps)}")
+        C.log('votes_day_fail.log', f'{day} {g["id"]}: {g["why"]}')
+    print(
+        f'[{day}] {st}; разобрано {len(votes)}/{len(rows)}; в DATA было {len(kept)}, добавлено {len(added)}'
+        f'{" " + str(added) if added else ""}; расхождений цифр {len(diffs)}; VT +{vt_new} (изменено {len(vt_diff)}); пробелы {len(gaps)}'
+    )
     return src2, report, (1 if gaps else 0)
+
 
 def main():
     ap = argparse.ArgumentParser(description='vote.duma.gov.ru → days/*.json → DATA')
-    ap.add_argument('day_from'); ap.add_argument('day_to', nargs='?')
+    ap.add_argument('day_from')
+    ap.add_argument('day_to', nargs='?')
     ap.add_argument('--dry-run', action='store_true', help='не записывать canvas (days/*.json и отчёт пишутся)')
     ap.add_argument('--canvas', default=C.CANVAS)
     ap.add_argument('--workers', type=int, default=6)
@@ -310,9 +430,10 @@ def main():
     elif a.dry_run:
         print('canvas: --dry-run, изменения НЕ записаны (см. out/logs/votes_day_<день>.json)')
     else:
-        C.write_canvas(src, a.canvas)   # П6: проверка блоков + атомарная запись
+        C.write_canvas(src, a.canvas)  # П6: проверка блоков + атомарная запись
         print('canvas: записан', a.canvas)
     sys.exit(rc)
+
 
 if __name__ == '__main__':
     main()

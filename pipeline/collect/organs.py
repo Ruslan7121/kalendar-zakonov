@@ -16,30 +16,80 @@
 Только прямые запросы к официальным сайтам. Прокси и обход блокировок не используются:
 если сайт недоступен или отвечает страницей ограничения доступа, источник помечается blocked.
 """
-import os, re, sys, json, html, argparse, datetime as dt, subprocess, hashlib
+
+import os, re, sys, json, html, argparse, datetime as dt, subprocess
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
-sys.path[:0] = [os.path.dirname(os.path.abspath(__file__)), os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib')]
+
+sys.path[:0] = [
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'),
+]
 import common as C
 
 MSK = dt.timezone(dt.timedelta(hours=3))
 UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
 ODIR = os.path.join(C.OUT, 'organs')
-ORGS = {'minfin': 'Минфин', 'mintrud': 'Минтруд', 'minjust': 'Минюст', 'cbr': 'Банк России', 'sf': 'Совет Федерации', 'pres': 'Президент', 'gov': 'Правительство',
-        'economy': 'Минэкономразвития', 'promtorg': 'Минпромторг', 'minzdrav': 'Минздрав', 'mintrans': 'Минтранс', 'digital': 'Минцифры',
-        'mvd': 'МВД', 'mnr': 'Минприроды', 'minstroy': 'Минстрой'}
+ORGS = {
+    'minfin': 'Минфин',
+    'mintrud': 'Минтруд',
+    'minjust': 'Минюст',
+    'cbr': 'Банк России',
+    'sf': 'Совет Федерации',
+    'pres': 'Президент',
+    'gov': 'Правительство',
+    'economy': 'Минэкономразвития',
+    'promtorg': 'Минпромторг',
+    'minzdrav': 'Минздрав',
+    'mintrans': 'Минтранс',
+    'digital': 'Минцифры',
+    'mvd': 'МВД',
+    'mnr': 'Минприроды',
+    'minstroy': 'Минстрой',
+}
 # 18.11.2026: восемь министерств — приказы с официального опубликования (API publication.pravo.gov.ru, блок «ФОИВ и ФГО РФ»,
 # идентификаторы органов — из справочника /api/SignatoryAuthorities)
-MIN8 = {'economy': '59ad7c35-7d14-424e-b305-f964615734bd', 'promtorg': '852b803d-4d5b-4ed1-aaca-03284c0bc35e', 'minzdrav': 'a2b99d08-29c7-4a3f-901a-d1a7174428f8',
-        'mintrans': 'd87efe50-9a6f-4ad5-aa06-452d4cd2e772', 'digital': '1ac1ee36-2621-4c4f-917f-9bffc35d4671', 'mvd': 'ff850c93-e869-42ec-9547-a63dad38c204',
-        'mnr': 'd67a404e-260a-4a5b-b340-d34558da8bd6', 'minstroy': 'efa6da4b-4c1a-4fa8-8caf-860c17b205fd'}
+MIN8 = {
+    'economy': '59ad7c35-7d14-424e-b305-f964615734bd',
+    'promtorg': '852b803d-4d5b-4ed1-aaca-03284c0bc35e',
+    'minzdrav': 'a2b99d08-29c7-4a3f-901a-d1a7174428f8',
+    'mintrans': 'd87efe50-9a6f-4ad5-aa06-452d4cd2e772',
+    'digital': '1ac1ee36-2621-4c4f-917f-9bffc35d4671',
+    'mvd': 'ff850c93-e869-42ec-9547-a63dad38c204',
+    'mnr': 'd67a404e-260a-4a5b-b340-d34558da8bd6',
+    'minstroy': 'efa6da4b-4c1a-4fa8-8caf-860c17b205fd',
+}
 # 19.11.2026: Минтруд и Минюст — их зарегистрированные приказы тоже берем с официального опубликования (раньше у Минтруда был только
 # RSS сайта, у Минюста — только лента событий, поэтому Минюст № 325 и Минтруд № 482н/483н от 19.11.2026 не попали). Идентификаторы —
 # signatoryAuthorityId из ответа API (лента /documents/daily за 19.11.2026).
 FOIV = {**MIN8, 'mintrud': '2c4929b0-9323-4541-9705-76185b9e284b', 'minjust': 'f69ec43f-3fa5-4611-a286-52acdcc77334'}
 FOIV_BY_ID = {v: k for k, v in FOIV.items()}
-TYPES = ('заседание', 'проект', 'решение', 'разъяснение', 'новость')  # «новость» — во вкладку «Новости» (ORGNEWS), не в календарь
-MONTHS = {m: i + 1 for i, m in enumerate(['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'])}
+TYPES = (
+    'заседание',
+    'проект',
+    'решение',
+    'разъяснение',
+    'новость',
+)  # «новость» — во вкладку «Новости» (ORGNEWS), не в календарь
+MONTHS = {
+    m: i + 1
+    for i, m in enumerate(
+        [
+            'января',
+            'февраля',
+            'марта',
+            'апреля',
+            'мая',
+            'июня',
+            'июля',
+            'августа',
+            'сентября',
+            'октября',
+            'ноября',
+            'декабря',
+        ]
+    )
+}
 SOURCES = {
     'cbr_news': 'https://www.cbr.ru/rss/RssNews',
     'cbr_events': 'https://www.cbr.ru/rss/eventrss',
@@ -57,38 +107,76 @@ SOURCES = {
     # Президента, постановления и распоряжения Правительства — каждый день, не только с заседаний
     'pres_pravo': 'http://publication.pravo.gov.ru/api/Documents?block=president',
     'gov_pravo': 'http://publication.pravo.gov.ru/api/Documents?block=government',
-    **{f'{o}_pravo': f'http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId={i}' for o, i in FOIV.items()},
+    **{
+        f'{o}_pravo': f'http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId={i}'
+        for o, i in FOIV.items()
+    },
     # 19.11.2026: страховка — все приказы ФОИВ, опубликованные сегодня (как страница /documents/daily), одним запросом; берем органы из FOIV
     'foiv_daily': 'http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&periodType=daily',
 }
-FIX = {'cbr_news': 'cbr_RssNews.xml', 'cbr_events': 'cbr_eventrss.xml', 'mintrud_docs': 'mintrud_document_rss.xml', 'mintrud_news': 'mintrud_news_list.html',
-       'minjust_events': 'minjust_events_list.html', 'minjust_projects': 'minjust_projects.html',
-       'minfin_pravo': 'minfin_pravo_monthly.webfetch.md', 'sf_meetings': 'sf_meetings.webfetch.md'}
+FIX = {
+    'cbr_news': 'cbr_RssNews.xml',
+    'cbr_events': 'cbr_eventrss.xml',
+    'mintrud_docs': 'mintrud_document_rss.xml',
+    'mintrud_news': 'mintrud_news_list.html',
+    'minjust_events': 'minjust_events_list.html',
+    'minjust_projects': 'minjust_projects.html',
+    'minfin_pravo': 'minfin_pravo_monthly.webfetch.md',
+    'sf_meetings': 'sf_meetings.webfetch.md',
+}
 
-def d2s(d): return d.strftime('%d.%m.%Y')
-def s2d(s): return dt.datetime.strptime(s, '%d.%m.%Y').date()
-def clean(s): return re.sub(r'\s+', ' ', html.unescape(s or '')).strip().replace('ё', 'е').replace('Ё', 'Е')  # стиль страницы: без «ё»
+
+def d2s(d):
+    return d.strftime('%d.%m.%Y')
+
+
+def s2d(s):
+    return dt.datetime.strptime(s, '%d.%m.%Y').date()
+
+
+def clean(s):
+    return (
+        re.sub(r'\s+', ' ', html.unescape(s or '')).strip().replace('ё', 'е').replace('Ё', 'Е')
+    )  # стиль страницы: без «ё»
+
+
 def ru_date(s):
     m = re.search(r'(\d{1,2})\s+(' + '|'.join(MONTHS) + r')\s+(\d{4})', s)
     return dt.date(int(m.group(3)), MONTHS[m.group(2)], int(m.group(1))) if m else None
-def rss_date(s): return parsedate_to_datetime(s).astimezone(MSK).date()
+
+
+def rss_date(s):
+    return parsedate_to_datetime(s).astimezone(MSK).date()
+
+
 def cut(s, n):
     """Обрезать по границе слова/предложения, без разрыва слова; добавить «…» только если текст обрезан."""
     s = clean(s)
-    if len(s) <= n: return s
-    w = s[:n + 1]; i = max(w.rfind('. '), w.rfind('; '))
-    if i >= n * 0.6: return w[:i + 1].rstrip(' ;')
+    if len(s) <= n:
+        return s
+    w = s[: n + 1]
+    i = max(w.rfind('. '), w.rfind('; '))
+    if i >= n * 0.6:
+        return w[: i + 1].rstrip(' ;')
     j = w.rfind(' ')
     return (w[:j] if j > 0 else s[:n]).rstrip(' ,;:—–-') + '…'
+
 
 def ev(o, d, ty, t, u, k='', x=''):
     assert o in ORGS and ty in TYPES and u.startswith('http')
     e = {'id': f'{o}:{u}#{d2s(d)}', 'o': o, 'd': d2s(d), 'ty': ty, 'k': k, 't': cut(t, 220), 'u': u}
-    if e['t'] != clean(t): e['tf'] = clean(t)  # 19.11.2026 (правило 13): полное официальное название — для раскрытой карточки, без многоточия
-    if x: e['x'] = cut(x, 600)
+    if e['t'] != clean(t):
+        e['tf'] = clean(
+            t
+        )  # 19.11.2026 (правило 13): полное официальное название — для раскрытой карточки, без многоточия
+    if x:
+        e['x'] = cut(x, 600)
     return e
 
+
 BLOCK_MARKERS = ('Доступ временно ограничен', 'Access denied', 'UserGate', '<h1>Forbidden')
+
+
 def get(url, timeout=25):
     """GET. Возвращает (status, text). status: ok | blocked:<причина> | error:<код>.
     18.11.2026: если сайт министерства закрыт для серверов GitHub (503 «доступ ограничен», нет соединения) и задано ORGANS_PROXY=1
@@ -96,26 +184,55 @@ def get(url, timeout=25):
     st, body = _direct(url, timeout)
     if st.startswith('blocked') and os.environ.get('ORGANS_PROXY') == '1':
         import tempfile, hashlib
+
         f = os.path.join(tempfile.gettempdir(), 'organs_px_' + hashlib.md5(url.encode()).hexdigest() + '.html')
         try:
             if C.fetch(url, f, int(os.environ.get('ORGANS_PROXY_DEADLINE', '70'))):
                 b = open(f, encoding='utf-8', errors='replace').read()
-                if not any(m in b for m in BLOCK_MARKERS): return 'ok', b
-        except Exception: pass
+                if not any(m in b for m in BLOCK_MARKERS):
+                    return 'ok', b
+        except Exception:
+            pass
         finally:
-            try: os.remove(f)
-            except OSError: pass
+            try:
+                os.remove(f)
+            except OSError:
+                pass
     return st, body
+
 
 def _direct(url, timeout=25):
     """Прямой GET без прокси."""
-    r = subprocess.run(['curl', '-s', '-L', '--compressed', '-m', str(timeout), '-A', UA, '-H', 'Accept-Language: ru-RU,ru;q=0.9',
-                        '-w', '\n__HTTP__%{http_code}', url], capture_output=True)
-    out = r.stdout.decode('utf-8', 'replace'); i = out.rfind('\n__HTTP__'); code = out[i + 9:].strip() if i >= 0 else '000'; body = out[:i] if i >= 0 else out
-    if code == '000': return f'blocked:нет соединения (curl {r.returncode})', ''
-    if any(b in body for b in BLOCK_MARKERS): return f'blocked:HTTP {code}, страница ограничения доступа', body
-    if code != '200': return f'error:HTTP {code}', body
+    r = subprocess.run(
+        [
+            'curl',
+            '-s',
+            '-L',
+            '--compressed',
+            '-m',
+            str(timeout),
+            '-A',
+            UA,
+            '-H',
+            'Accept-Language: ru-RU,ru;q=0.9',
+            '-w',
+            '\n__HTTP__%{http_code}',
+            url,
+        ],
+        capture_output=True,
+    )
+    out = r.stdout.decode('utf-8', 'replace')
+    i = out.rfind('\n__HTTP__')
+    code = out[i + 9 :].strip() if i >= 0 else '000'
+    body = out[:i] if i >= 0 else out
+    if code == '000':
+        return f'blocked:нет соединения (curl {r.returncode})', ''
+    if any(b in body for b in BLOCK_MARKERS):
+        return f'blocked:HTTP {code}, страница ограничения доступа', body
+    if code != '200':
+        return f'error:HTTP {code}', body
     return 'ok', body
+
 
 # ---------- парсеры (принимают текст ответа, не ходят в сеть) ----------
 def parse_cbr_news(xml):
@@ -123,54 +240,105 @@ def parse_cbr_news(xml):
     for it in ET.fromstring(xml.encode()).iter('item'):
         t, u, d = clean(it.findtext('title')), it.findtext('link') or '', rss_date(it.findtext('pubDate'))
         m = re.match(r'Указание Банка России от (\d\d\.\d\d\.\d{4}) № (\S+)', t)
-        if m: res.append(ev('cbr', d, 'решение', f'Указание № {m.group(2)} от {m.group(1)}', u, 'Указание')); continue
-        if t.startswith('Решение Совета директоров'): res.append(ev('cbr', d, 'решение', t, u, 'Решение Совета директоров')); continue
+        if m:
+            res.append(ev('cbr', d, 'решение', f'Указание № {m.group(2)} от {m.group(1)}', u, 'Указание'))
+            continue
+        if t.startswith('Решение Совета директоров'):
+            res.append(ev('cbr', d, 'решение', t, u, 'Решение Совета директоров'))
+            continue
         m = re.match(r'Информационное письмо от (\d\d\.\d\d\.\d{4}) № (\S+)', t)
-        if m: res.append(ev('cbr', d, 'разъяснение', f'Информационное письмо № {m.group(2)} от {m.group(1)}', u, 'Информационное письмо')); continue
-        if t.startswith('Ответы на типовые запросы'): res.append(ev('cbr', d, 'разъяснение', t, u, 'Ответы на запросы'))
+        if m:
+            res.append(
+                ev(
+                    'cbr',
+                    d,
+                    'разъяснение',
+                    f'Информационное письмо № {m.group(2)} от {m.group(1)}',
+                    u,
+                    'Информационное письмо',
+                )
+            )
+            continue
+        if t.startswith('Ответы на типовые запросы'):
+            res.append(ev('cbr', d, 'разъяснение', t, u, 'Ответы на запросы'))
     return res
+
 
 def parse_cbr_events(xml):
     res = []
     for it in ET.fromstring(xml.encode()).iter('item'):
         t, u, d = clean(it.findtext('title')), it.findtext('link') or '', rss_date(it.findtext('pubDate'))
         lt = t.lower()
-        if re.search(r'ключев\w+ ставк', lt) and re.search(r'решени|повысил|понизил|сохранил|снизил', lt) and 'резюме' not in lt:
+        if (
+            re.search(r'ключев\w+ ставк', lt)
+            and re.search(r'решени|повысил|понизил|сохранил|снизил', lt)
+            and 'резюме' not in lt
+        ):
             res.append(ev('cbr', d, 'решение', t, u, 'Решение Совета директоров'))
-        elif re.search(r'\bуказани', lt): res.append(ev('cbr', d, 'решение', t, u, 'Указание'))
-        elif re.search(r'рекомендует|разъясн', lt): res.append(ev('cbr', d, 'разъяснение', t, u, 'Рекомендации'))
-        elif re.search(r'\bпроект', lt) and 'конференц' not in lt: res.append(ev('cbr', d, 'проект', t, u, 'Проект'))
+        elif re.search(r'\bуказани', lt):
+            res.append(ev('cbr', d, 'решение', t, u, 'Указание'))
+        elif re.search(r'рекомендует|разъясн', lt):
+            res.append(ev('cbr', d, 'разъяснение', t, u, 'Рекомендации'))
+        elif re.search(r'\bпроект', lt) and 'конференц' not in lt:
+            res.append(ev('cbr', d, 'проект', t, u, 'Проект'))
     return res
+
 
 def parse_mintrud_docs(xml):
     res = []
     for it in ET.fromstring(xml.encode()).iter('item'):
-        t, u, d, x = clean(it.findtext('title')), it.findtext('link') or '', rss_date(it.findtext('pubDate')), clean(it.findtext('description'))
+        t, u, d, x = (
+            clean(it.findtext('title')),
+            it.findtext('link') or '',
+            rss_date(it.findtext('pubDate')),
+            clean(it.findtext('description')),
+        )
         if re.search(r'профессиональн\w+ стандарт', t + ' ' + x, re.I) and re.search(r'проект', t, re.I):
-            res.append(ev('mintrud', d, 'проект', t, u, 'Проект профстандарта', x)); continue
+            res.append(ev('mintrud', d, 'проект', t, u, 'Проект профстандарта', x))
+            continue
         if t.startswith('Приказ'):
-            m = re.search(r'№\s*(\S+)', t); dm = ru_date(t)
-            short = (f"Приказ № {m.group(1)}" + (f" от {d2s(dm)}" if dm else '') if m else t) + (f': {x}' if x else '')
+            m = re.search(r'№\s*(\S+)', t)
+            dm = ru_date(t)
+            short = (f'Приказ № {m.group(1)}' + (f' от {d2s(dm)}' if dm else '') if m else t) + (f': {x}' if x else '')
             res.append(ev('mintrud', d, 'решение', short, u, 'Приказ'))
     return res
+
 
 def parse_minjust_events(h):
     """Лента /ru/events/list/: заголовки дат «6 ноября 2026 год» и ссылки /ru/events/N/. Коллегии — заседание,
     разработанные проекты — проект (они же в календаре); 14.11.2026: остальные материалы ленты — «новость» (вкладка «Новости»)."""
     res, cur = [], None
-    h = re.sub(r'<div class="day">\s*(\d{1,2})(?:&nbsp;|\s)+(\w+)\s*</div>\s*<div class="year">\s*(\d{4})\s*год', r'\1 \2 \3 год', h)
-    for m in re.finditer(r'(\d{1,2}\s+(?:' + '|'.join(MONTHS) + r')\s+\d{4})\s*год|<a[^>]+href="(/ru/events/\d+/)"[^>]*>(.*?)</a>', h, re.S):
-        if m.group(1): cur = ru_date(m.group(1)); continue
+    h = re.sub(
+        r'<div class="day">\s*(\d{1,2})(?:&nbsp;|\s)+(\w+)\s*</div>\s*<div class="year">\s*(\d{4})\s*год',
+        r'\1 \2 \3 год',
+        h,
+    )
+    for m in re.finditer(
+        r'(\d{1,2}\s+(?:' + '|'.join(MONTHS) + r')\s+\d{4})\s*год|<a[^>]+href="(/ru/events/\d+/)"[^>]*>(.*?)</a>',
+        h,
+        re.S,
+    ):
+        if m.group(1):
+            cur = ru_date(m.group(1))
+            continue
         t = clean(re.sub(r'<[^>]+>', ' ', m.group(3)))
-        if not cur or not t: continue
-        u = 'https://minjust.gov.ru' + m.group(2); lt = t.lower()
-        if 'коллеги' in lt: res.append(ev('minjust', cur, 'заседание', t, u, 'Коллегия'))
-        elif re.search(r'разработан\w* (законопроект|проект)|проект\w* приказ', lt): res.append(ev('minjust', cur, 'проект', t, u, 'Проект'))
-        else: res.append(ev('minjust', cur, 'новость', t, u, 'Новость'))
+        if not cur or not t:
+            continue
+        u = 'https://minjust.gov.ru' + m.group(2)
+        lt = t.lower()
+        if 'коллеги' in lt:
+            res.append(ev('minjust', cur, 'заседание', t, u, 'Коллегия'))
+        elif re.search(r'разработан\w* (законопроект|проект)|проект\w* приказ', lt):
+            res.append(ev('minjust', cur, 'проект', t, u, 'Проект'))
+        else:
+            res.append(ev('minjust', cur, 'новость', t, u, 'Новость'))
     seen, out = set(), []
     for e in res:
-        if e['id'] not in seen: seen.add(e['id']); out.append(e)
+        if e['id'] not in seen:
+            seen.add(e['id'])
+            out.append(e)
     return out
+
 
 def parse_mintrud_news(h):
     """14.11.2026: «Картина дня» Минтруда (mintrud.gov.ru/news/news/list). Каждая новость — ссылка, в тексте которой
@@ -179,249 +347,463 @@ def parse_mintrud_news(h):
     D = r'(\d{1,2}\s+(?:' + '|'.join(MONTHS) + r')\s+\d{4})'
     for m in re.finditer(r'(?is)<a[^>]+href="(/[^"#]+)"[^>]*>(.*?)</a>', h):
         href, t = m.group(1), clean(re.sub(r'<[^>]+>', ' ', m.group(2)))
-        if href.startswith(('/videobank', '/events/event-profi')) or href in seen: continue
+        if href.startswith(('/videobank', '/events/event-profi')) or href in seen:
+            continue
         a = re.match(r'^(.{15,}?)\s+' + D + r'$', t) or re.match(r'^' + D + r'\s+(.{15,})$', t)
-        if not a: continue
+        if not a:
+            continue
         title, d = (a.group(1), a.group(2)) if not re.match(D, t) else (a.group(2), a.group(1))
         dd = ru_date(d)
-        if not dd: continue
-        seen.add(href); res.append(ev('mintrud', dd, 'новость', title, 'https://mintrud.gov.ru' + href, 'Новость'))
+        if not dd:
+            continue
+        seen.add(href)
+        res.append(ev('mintrud', dd, 'новость', title, 'https://mintrud.gov.ru' + href, 'Новость'))
     return res
+
 
 def parse_minfin_list(h):
     """14.11.2026: пресс-центр Минфина (minfin.gov.ru/ru/press-center/): ссылки ?id_4=<номер>-<slug> с заголовком. Даты в списке нет —
     ее берем со страницы новости (parse_minfin_article). Возвращает [(адрес, заголовок)] без повторов, в порядке страницы."""
     out, seen = [], set()
     for m in re.finditer(r'(?is)<a[^>]+href="(/ru/press-center/\?id_4=\d+[^"]*)"[^>]*>(.*?)</a>', h):
-        u = 'https://minfin.gov.ru' + html.unescape(m.group(1)); t = clean(re.sub(r'<[^>]+>', ' ', m.group(2)))
-        if len(t) < 15 or u in seen: continue
-        seen.add(u); out.append((u, t))
+        u = 'https://minfin.gov.ru' + html.unescape(m.group(1))
+        t = clean(re.sub(r'<[^>]+>', ' ', m.group(2)))
+        if len(t) < 15 or u in seen:
+            continue
+        seen.add(u)
+        out.append((u, t))
     return out
+
 
 def parse_minfin_article(h):
     """Страница новости Минфина: заголовок <h1 class="page_title"> и дата <span class="presscenter_event_date">14 ноября 2026 13:48</span>."""
-    t = re.search(r'(?is)<h1[^>]*class="page_title"[^>]*>(.*?)</h1>', h); d = re.search(r'(?is)class="presscenter_event_date[^"]*"[^>]*>(.*?)</span>', h)
+    t = re.search(r'(?is)<h1[^>]*class="page_title"[^>]*>(.*?)</h1>', h)
+    d = re.search(r'(?is)class="presscenter_event_date[^"]*"[^>]*>(.*?)</span>', h)
     dd = ru_date(clean(d.group(1))) if d else None
     return (clean(re.sub(r'<[^>]+>', ' ', t.group(1))) if t else '', dd)
 
+
 def collect_minfin_news(body, fetch=None, limit=25):
     """Новости Минфина: список из пресс-центра + дата со страницы каждой новости (не больше limit страниц за запуск)."""
-    fetch = fetch or (lambda u: get(u)); res = []
+    fetch = fetch or (lambda u: get(u))
+    res = []
     for u, t in parse_minfin_list(body)[:limit]:
         st, a = fetch(u)
-        if st != 'ok': continue
+        if st != 'ok':
+            continue
         t2, d = parse_minfin_article(a)
-        if d: res.append(ev('minfin', d, 'новость', t2 or t, u, 'Новость'))
+        if d:
+            res.append(ev('minfin', d, 'новость', t2 or t, u, 'Новость'))
     return res
+
 
 def parse_pravo_list(txt, org='minfin'):
     """Список «Официальное опубликование правовых актов» по органу (HTML→текст или сохраненный текст страницы).
     Дата события — дата официального опубликования; в названии — дата и номер регистрации в Минюсте."""
-    t = clean(re.sub(r'<[^>]+>', ' ', txt)); res = []
-    for m in re.finditer(r'(Приказ [^"«]*?от (\d\d\.\d\d\.\d{4}) № (\S+?)\s*["«](.+?)["»]\s*\(Зарегистрирован (\d\d\.\d\d\.\d{4}) № (\d+)\))\s*Номер опубликования:\s*(\d{16})\s*Дата опубликования:\s*(\d\d\.\d\d\.\d{4})', t):
+    t = clean(re.sub(r'<[^>]+>', ' ', txt))
+    res = []
+    for m in re.finditer(
+        r'(Приказ [^"«]*?от (\d\d\.\d\d\.\d{4}) № (\S+?)\s*["«](.+?)["»]\s*\(Зарегистрирован (\d\d\.\d\d\.\d{4}) № (\d+)\))\s*Номер опубликования:\s*(\d{16})\s*Дата опубликования:\s*(\d\d\.\d\d\.\d{4})',
+        t,
+    ):
         u = f'http://publication.pravo.gov.ru/document/{m.group(7)}'
-        res.append(ev(org, s2d(m.group(8)), 'решение', f'Приказ № {m.group(3)} от {m.group(2)}: {m.group(4)}', u, 'Приказ',
-                      f'Зарегистрирован Минюстом {m.group(5)} № {m.group(6)}'))
+        res.append(
+            ev(
+                org,
+                s2d(m.group(8)),
+                'решение',
+                f'Приказ № {m.group(3)} от {m.group(2)}: {m.group(4)}',
+                u,
+                'Приказ',
+                f'Зарегистрирован Минюстом {m.group(5)} № {m.group(6)}',
+            )
+        )
     return res
 
-PRAVO_SKIP = ('Федеральный закон', 'Федеральный конституционный закон', 'Закон Российской Федерации о поправке')  # законы — во «Вступают в силу»
+
+PRAVO_SKIP = (
+    'Федеральный закон',
+    'Федеральный конституционный закон',
+    'Закон Российской Федерации о поправке',
+)  # законы — во «Вступают в силу»
 PRAVO_KIND = ('Указ', 'Распоряжение', 'Постановление', 'Приказ')
+
 
 def parse_pravo_api(js, org, by_pub=False):
     """16.11.2026: ответ API publication.pravo.gov.ru/api/Documents (блок president или government) → события «решение»:
     «Указ № 848 от 14.11.2026: О помиловании …», дата события — дата документа (documentDate), ссылка — страница официального
     опубликования http://publication.pravo.gov.ru/document/<eoNumber>. Федеральные законы пропускаем (они во «Вступают в силу»)."""
-    items = (json.loads(js) or {}).get('items') or []; res = []
+    items = (json.loads(js) or {}).get('items') or []
+    res = []
     for it in items:
-        cn = clean((it.get('complexName') or '').replace('\n', ' ')); eo = it.get('eoNumber') or ''; num = clean(it.get('number') or '')
+        cn = clean((it.get('complexName') or '').replace('\n', ' '))
+        eo = it.get('eoNumber') or ''
+        num = clean(it.get('number') or '')
         dd = (it.get('documentDate') or '')[:10]
-        if not cn or not eo or not re.match(r'\d{4}-\d\d-\d\d$', dd) or cn.startswith(PRAVO_SKIP): continue
+        if not cn or not eo or not re.match(r'\d{4}-\d\d-\d\d$', dd) or cn.startswith(PRAVO_SKIP):
+            continue
         kind = next((k for k in PRAVO_KIND if cn.startswith(k)), '')
-        if not kind: continue
+        if not kind:
+            continue
         name = clean(it.get('name') or '').strip(' "«»')
         d = dt.date(int(dd[:4]), int(dd[5:7]), int(dd[8:10]))
-        pub = (it.get('publishDateShort') or '')[:10]; ok = bool(re.match(r'\d{4}-\d\d-\d\d$', pub))
+        pub = (it.get('publishDateShort') or '')[:10]
+        ok = bool(re.match(r'\d{4}-\d\d-\d\d$', pub))
         x = f'Опубликован {pub[8:10]}.{pub[5:7]}.{pub[:4]}' if ok and pub != dd else ''
         reg = it.get('jdRegNumber')
         if by_pub:  # министерства: приказ подписан давно, а новостью он становится при опубликовании — на этот день и ставим событие
-            if reg: x = f'Зарегистрирован Минюстом {(it.get("jdRegDate") or "")[8:10]}.{(it.get("jdRegDate") or "")[5:7]}.{(it.get("jdRegDate") or "")[:4]} № {reg}. ' + x
-            if ok: ev_d = dt.date(int(pub[:4]), int(pub[5:7]), int(pub[8:10]))
-            else: ev_d = d
-            res.append(ev(org, ev_d, 'решение', f'{kind} № {num} от {d2s(d)}' + (f': {name}' if name else ''), f'http://publication.pravo.gov.ru/document/{eo}', kind, x.strip()))
+            if reg:
+                x = (
+                    f'Зарегистрирован Минюстом {(it.get("jdRegDate") or "")[8:10]}.{(it.get("jdRegDate") or "")[5:7]}.{(it.get("jdRegDate") or "")[:4]} № {reg}. '
+                    + x
+                )
+            if ok:
+                ev_d = dt.date(int(pub[:4]), int(pub[5:7]), int(pub[8:10]))
+            else:
+                ev_d = d
+            res.append(
+                ev(
+                    org,
+                    ev_d,
+                    'решение',
+                    f'{kind} № {num} от {d2s(d)}' + (f': {name}' if name else ''),
+                    f'http://publication.pravo.gov.ru/document/{eo}',
+                    kind,
+                    x.strip(),
+                )
+            )
             continue
-        res.append(ev(org, d, 'решение', f'{kind} № {num} от {d2s(d)}' + (f': {name}' if name else ''), f'http://publication.pravo.gov.ru/document/{eo}', kind, x))
+        res.append(
+            ev(
+                org,
+                d,
+                'решение',
+                f'{kind} № {num} от {d2s(d)}' + (f': {name}' if name else ''),
+                f'http://publication.pravo.gov.ru/document/{eo}',
+                kind,
+                x,
+            )
+        )
     return res
+
 
 WIN_FROM = None  # начало окна сбора (main): API листается по страницам, пока документы не станут старше окна
 
+
 def collect_pravo_api(key, org, fetch=None, pages=6):
     """Страницы API по 100 документов (если сервер не примет 100 — по 10), от новых к старым, пока не дойдем до начала окна."""
-    fetch = fetch or (lambda u: get(u, 40)); res = []; size = 100
+    fetch = fetch or (lambda u: get(u, 40))
+    res = []
+    size = 100
     for i in range(1, pages + 1):
         st, body = fetch(f'{SOURCES[key]}&PageSize={size}&Index={i}')
-        if st.startswith('error:HTTP 400') and size == 100 and i == 1: size = 10; st, body = fetch(f'{SOURCES[key]}&PageSize={size}&Index={i}')
-        if st != 'ok': return res, st
-        try: js = json.loads(body) or {}; items = js.get('items') or []
-        except Exception as e: return res, f'parse-error: {e}'
+        if st.startswith('error:HTTP 400') and size == 100 and i == 1:
+            size = 10
+            st, body = fetch(f'{SOURCES[key]}&PageSize={size}&Index={i}')
+        if st != 'ok':
+            return res, st
+        try:
+            js = json.loads(body) or {}
+            items = js.get('items') or []
+        except Exception as e:
+            return res, f'parse-error: {e}'
         bp = org in FOIV
         res += parse_pravo_api(body, org, bp)
-        old = [it.get('publishDateShort' if bp else 'documentDate', '')[:10] for it in items if it.get('publishDateShort' if bp else 'documentDate')]
-        if not items or (WIN_FROM and old and min(old) < WIN_FROM.isoformat()) or i >= int(js.get('pagesTotalCount') or pages): break
+        old = [
+            it.get('publishDateShort' if bp else 'documentDate', '')[:10]
+            for it in items
+            if it.get('publishDateShort' if bp else 'documentDate')
+        ]
+        if (
+            not items
+            or (WIN_FROM and old and min(old) < WIN_FROM.isoformat())
+            or i >= int(js.get('pagesTotalCount') or pages)
+        ):
+            break
     return res, 'ok'
+
 
 def parse_pravo_daily(js):
     """19.11.2026: ответ API за сегодня (periodType=daily, блок federal_authorities) → приказы органов из FOIV (по signatoryAuthorityId),
     дата события — день опубликования, как у сбора по органу (id совпадают, при слиянии дублей нет). Чужие органы пропускаются."""
-    items = (json.loads(js) or {}).get('items') or []; res = []
+    items = (json.loads(js) or {}).get('items') or []
+    res = []
     for it in items:
         org = FOIV_BY_ID.get(it.get('signatoryAuthorityId') or '')
-        if org: res += parse_pravo_api(json.dumps({'items': [it]}, ensure_ascii=False), org, True)
+        if org:
+            res += parse_pravo_api(json.dumps({'items': [it]}, ensure_ascii=False), org, True)
     return res
+
 
 def collect_pravo_daily(fetch=None, pages=3):
     """Лента «опубликовано сегодня» постранично по 200 (обычно одна страница)."""
-    fetch = fetch or (lambda u: get(u, 40)); res = []
+    fetch = fetch or (lambda u: get(u, 40))
+    res = []
     for i in range(1, pages + 1):
-        st, body = fetch(f"{SOURCES['foiv_daily']}&PageSize=200&Index={i}")
-        if st != 'ok': return res, st
-        try: js = json.loads(body) or {}
-        except Exception as e: return res, f'parse-error: {e}'
+        st, body = fetch(f'{SOURCES["foiv_daily"]}&PageSize=200&Index={i}')
+        if st != 'ok':
+            return res, st
+        try:
+            js = json.loads(body) or {}
+        except Exception as e:
+            return res, f'parse-error: {e}'
         res += parse_pravo_daily(body)
-        if i >= int(js.get('pagesTotalCount') or 1): break
+        if i >= int(js.get('pagesTotalCount') or 1):
+            break
     return res, 'ok'
 
+
 PRIKAZ_NO = re.compile(r'^Приказ № (\S+)')
+
+
 def drop_rss_dupes(events):
     """19.11.2026: приказ Минтруда, найденный и на официальном опубликовании, и в RSS сайта Минтруда, оставляем один раз — с опубликования."""
-    pub = {(e['o'], m.group(1)) for e in events if 'publication.pravo.gov.ru/document/' in e.get('u', '') and (m := PRIKAZ_NO.match(e['t']))}
-    return [e for e in events if not (e['ty'] == 'решение' and 'publication.pravo.gov.ru' not in e.get('u', '')
-                                      and (m := PRIKAZ_NO.match(e['t'])) and (e['o'], m.group(1)) in pub)]
+    pub = {
+        (e['o'], m.group(1))
+        for e in events
+        if 'publication.pravo.gov.ru/document/' in e.get('u', '') and (m := PRIKAZ_NO.match(e['t']))
+    }
+    return [
+        e
+        for e in events
+        if not (
+            e['ty'] == 'решение'
+            and 'publication.pravo.gov.ru' not in e.get('u', '')
+            and (m := PRIKAZ_NO.match(e['t']))
+            and (e['o'], m.group(1)) in pub
+        )
+    ]
+
 
 def parse_sf_meetings(txt):
     """Список заседаний СФ (HTML→текст или сохраненный текст): «622 заседание Совета Федерации 10 ноября 2026 г.», «621 28 октября 2026 г.»."""
-    t = clean(re.sub(r'<[^>]+>', ' ', txt)); res = []
-    for m in re.finditer(r'(?:^|\s|#)(\d{3})(?: заседание Совета Федерации)?\s+(\d{1,2}\s+(?:' + '|'.join(MONTHS) + r')\s+\d{4}) г\.', t):
-        d = ru_date(m.group(2)); n = m.group(1)
+    t = clean(re.sub(r'<[^>]+>', ' ', txt))
+    res = []
+    for m in re.finditer(
+        r'(?:^|\s|#)(\d{3})(?: заседание Совета Федерации)?\s+(\d{1,2}\s+(?:' + '|'.join(MONTHS) + r')\s+\d{4}) г\.', t
+    ):
+        d = ru_date(m.group(2))
+        n = m.group(1)
         u, x = SF_AGENDA.get(n, (SOURCES['sf_meetings'], ''))
-        res.append(ev('sf', d, 'заседание', f'{n}-е заседание Совета Федерации', u, 'Заседание, рассмотрение законов' if x else 'Заседание', x))
+        res.append(
+            ev(
+                'sf',
+                d,
+                'заседание',
+                f'{n}-е заседание Совета Федерации',
+                u,
+                'Заседание, рассмотрение законов' if x else 'Заседание',
+                x,
+            )
+        )
     return res
+
 
 # Повестки заседаний СФ: официальная страница повестки council.gov.ru и законы, вынесенные на рассмотрение.
 # 622: http://council.gov.ru/activity/meetings/178174/agenda/ (проект повестки от 09.11.2026) и анонс
 # http://council.gov.ru/events/smi/announcements/178175/ — прочитаны 10.11.2026 через публичный поиск, т. к. с box сайт недоступен.
-SF_AGENDA = {'622': ('http://council.gov.ru/activity/meetings/178174/agenda/',
-    'Рассмотрение законов о ратификации: договор с Зимбабве о правовой помощи по уголовным делам; соглашение с Камбоджей '
-    'о защите граждан в области международной уголовной юстиции; два договора с Никарагуа (о выдаче и о передаче осужденных); '
-    'протокол с Беларусью о косвенных налогах; соглашение с Южной Осетией о зачете выслуги в таможенных органах. '
-    'Консультации по кандидатуре заместителя Генпрокурора; «правительственный час» с министром внутренних дел.')}
+SF_AGENDA = {
+    '622': (
+        'http://council.gov.ru/activity/meetings/178174/agenda/',
+        'Рассмотрение законов о ратификации: договор с Зимбабве о правовой помощи по уголовным делам; соглашение с Камбоджей '
+        'о защите граждан в области международной уголовной юстиции; два договора с Никарагуа (о выдаче и о передаче осужденных); '
+        'протокол с Беларусью о косвенных налогах; соглашение с Южной Осетией о зачете выслуги в таможенных органах. '
+        'Консультации по кандидатуре заместителя Генпрокурора; «правительственный час» с министром внутренних дел.',
+    )
+}
 
-PARSERS = {'cbr_news': parse_cbr_news, 'cbr_events': parse_cbr_events, 'mintrud_docs': parse_mintrud_docs, 'mintrud_news': parse_mintrud_news,
-           'minfin_news': lambda body: collect_minfin_news(body),
-           'minjust_events': parse_minjust_events, 'minfin_pravo': parse_pravo_list, 'sf_meetings': parse_sf_meetings}
-NOT_PARSED = {'mintrud_profstandards': 'проекты профстандартов публикуются на regulation.gov.ru — с этой машины нет соединения',
-              'minjust_projects': 'страница проектов документов Минюста отдается без списка (пустая выдача)',
-              'minfin_projects': 'minfin.gov.ru отвечает HTTP 503 «Доступ временно ограничен»'}
+PARSERS = {
+    'cbr_news': parse_cbr_news,
+    'cbr_events': parse_cbr_events,
+    'mintrud_docs': parse_mintrud_docs,
+    'mintrud_news': parse_mintrud_news,
+    'minfin_news': lambda body: collect_minfin_news(body),
+    'minjust_events': parse_minjust_events,
+    'minfin_pravo': parse_pravo_list,
+    'sf_meetings': parse_sf_meetings,
+}
+NOT_PARSED = {
+    'mintrud_profstandards': 'проекты профстандартов публикуются на regulation.gov.ru — с этой машины нет соединения',
+    'minjust_projects': 'страница проектов документов Минюста отдается без списка (пустая выдача)',
+    'minfin_projects': 'minfin.gov.ru отвечает HTTP 503 «Доступ временно ограничен»',
+}
+
 
 def collect(args):
     status, events = {}, []
     snaps = dict(s.split('=', 1) for s in args.snapshot)
     only = {x.strip() for x in (args.only or '').split(',') if x.strip()}
     for key, org in (('pres_pravo', 'pres'), ('gov_pravo', 'gov'), *((f'{o}_pravo', o) for o in FOIV)):
-        if only and org not in only: continue
+        if only and org not in only:
+            continue
         if args.offline:
             p = os.path.join(args.offline, f'pravo_api_{org}.json')
-            if not os.path.exists(p): status[key] = {'url': SOURCES[key], 'status': 'no-fixture'}; continue
+            if not os.path.exists(p):
+                status[key] = {'url': SOURCES[key], 'status': 'no-fixture'}
+                continue
             got, st = parse_pravo_api(open(p).read(), org, org in FOIV), 'offline'
         else:
             got, st = collect_pravo_api(key, org, pages=args.pages)
-        status[key] = {'url': SOURCES[key], 'status': st, 'n': len(got)}; events += got
-        if st not in ('ok', 'offline'): C.log('organs.log', f'{key} {st}')
+        status[key] = {'url': SOURCES[key], 'status': st, 'n': len(got)}
+        events += got
+        if st not in ('ok', 'offline'):
+            C.log('organs.log', f'{key} {st}')
     if not only or only & set(FOIV):
         if args.offline:
             p = os.path.join(args.offline, 'pravo_api_daily.json')
             got, st = (parse_pravo_daily(open(p).read()), 'offline') if os.path.exists(p) else ([], 'no-fixture')
         else:
             got, st = collect_pravo_daily()
-        if only: got = [e for e in got if e['o'] in only]
-        status['foiv_daily'] = {'url': SOURCES['foiv_daily'], 'status': st, 'n': len(got)}; events += got
-        if st not in ('ok', 'offline', 'no-fixture'): C.log('organs.log', f'foiv_daily {st}')
-    if only: return events, status  # 17.11.2026: --only — остальные источники (СФ, ЦБ, министерства) не опрашиваются и не меняются
+        if only:
+            got = [e for e in got if e['o'] in only]
+        status['foiv_daily'] = {'url': SOURCES['foiv_daily'], 'status': st, 'n': len(got)}
+        events += got
+        if st not in ('ok', 'offline', 'no-fixture'):
+            C.log('organs.log', f'foiv_daily {st}')
+    if only:
+        return (
+            events,
+            status,
+        )  # 17.11.2026: --only — остальные источники (СФ, ЦБ, министерства) не опрашиваются и не меняются
     for key, fn in PARSERS.items():
         src = SOURCES[key]
         if key in snaps:
             body, st = open(snaps[key]).read(), 'snapshot:' + os.path.basename(snaps[key])
         elif args.offline:
-            if key not in FIX: status[key] = {'url': src, 'status': 'no-fixture'}; continue  # minfin_news ходит в сеть за каждой новостью — офлайн не собираем
+            if key not in FIX:
+                status[key] = {'url': src, 'status': 'no-fixture'}
+                continue  # minfin_news ходит в сеть за каждой новостью — офлайн не собираем
             p = os.path.join(args.offline, FIX[key])
-            if not os.path.exists(p): status[key] = {'url': src, 'status': 'no-fixture'}; continue
+            if not os.path.exists(p):
+                status[key] = {'url': src, 'status': 'no-fixture'}
+                continue
             body, st = open(p).read(), 'offline'
         else:
             st, body = get(src)
-            if st != 'ok': status[key] = {'url': src, 'status': st, 'n': 0}; C.log('organs.log', f'{key} {st} {src}'); continue
+            if st != 'ok':
+                status[key] = {'url': src, 'status': st, 'n': 0}
+                C.log('organs.log', f'{key} {st} {src}')
+                continue
         try:
             got = fn(body)
         except Exception as e:
-            status[key] = {'url': src, 'status': f'parse-error: {e}', 'n': 0}; C.log('organs.log', f'{key} parse-error {e}'); continue
-        status[key] = {'url': src, 'status': st, 'n': len(got)}; events += got
+            status[key] = {'url': src, 'status': f'parse-error: {e}', 'n': 0}
+            C.log('organs.log', f'{key} parse-error {e}')
+            continue
+        status[key] = {'url': src, 'status': st, 'n': len(got)}
+        events += got
     if not args.offline and 'minfin_projects' not in snaps:
-        st, _ = get(SOURCES['minfin_projects']); status['minfin_projects'] = {'url': SOURCES['minfin_projects'], 'status': st if st != 'ok' else 'ok (разбор не реализован)'}
-    for k, why in NOT_PARSED.items(): status.setdefault(k, {'url': SOURCES[k], 'status': 'not-collected', 'why': why})
+        st, _ = get(SOURCES['minfin_projects'])
+        status['minfin_projects'] = {
+            'url': SOURCES['minfin_projects'],
+            'status': st if st != 'ok' else 'ok (разбор не реализован)',
+        }
+    for k, why in NOT_PARSED.items():
+        status.setdefault(k, {'url': SOURCES[k], 'status': 'not-collected', 'why': why})
     return drop_rss_dupes(events), status
 
+
 ENRICH = os.path.join(ODIR, 'enrich.json')
+
+
 def load_enrich():
     """Проверенные вручную по первоисточникам поля (st, kind, stt, no, full, sut, who, dl, nb, ps) по ключу «орган:ссылка#дата».
     Файл ведется отдельно и сбором НЕ перезаписывается; события без записи показываются по данным ленты.
     Источник правды для ORGX — этот файл: правки «Сути» и т. п. вносятся сюда, затем organs.py --embed."""
     return json.load(open(ENRICH)) if os.path.exists(ENRICH) else {}
 
+
 def in_window(e, a, b, ahead):
     d = s2d(e['d'])
     return a <= d <= b or (e['ty'] == 'заседание' and b < d <= ahead)
 
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument('--day'); ap.add_argument('--from', dest='frm'); ap.add_argument('--to')
-    ap.add_argument('--snapshot', action='append', default=[]); ap.add_argument('--offline')
-    ap.add_argument('--only', help='17.11.2026: собирать только указанное, через запятую: pres (указы Президента), gov (акты Правительства); остальные источники не трогаются')
-    ap.add_argument('--pages', type=int, default=6, help='сколько страниц по 100 документов листать у API publication.pravo.gov.ru (для длинного окна — больше)')
-    ap.add_argument('--embed', action='store_true'); ap.add_argument('--ahead', type=int, default=3, help='дней вперед для объявленных заседаний')
+    ap.add_argument('--day')
+    ap.add_argument('--from', dest='frm')
+    ap.add_argument('--to')
+    ap.add_argument('--snapshot', action='append', default=[])
+    ap.add_argument('--offline')
+    ap.add_argument(
+        '--only',
+        help='17.11.2026: собирать только указанное, через запятую: pres (указы Президента), gov (акты Правительства); остальные источники не трогаются',
+    )
+    ap.add_argument(
+        '--pages',
+        type=int,
+        default=6,
+        help='сколько страниц по 100 документов листать у API publication.pravo.gov.ru (для длинного окна — больше)',
+    )
+    ap.add_argument('--embed', action='store_true')
+    ap.add_argument('--ahead', type=int, default=3, help='дней вперед для объявленных заседаний')
     args = ap.parse_args(argv)
     today = dt.datetime.now(MSK).date()
-    if args.day: a = b = s2d(args.day)
-    elif args.frm: a, b = s2d(args.frm), s2d(args.to) if args.to else today
-    else: a = b = today - dt.timedelta(days=1)
+    if args.day:
+        a = b = s2d(args.day)
+    elif args.frm:
+        a, b = s2d(args.frm), s2d(args.to) if args.to else today
+    else:
+        a = b = today - dt.timedelta(days=1)
     ahead = max(b, today) + dt.timedelta(days=args.ahead)
-    global WIN_FROM; WIN_FROM = a
+    global WIN_FROM
+    WIN_FROM = a
     found, status = collect(args)
     found = [e for e in found if in_window(e, a, b, ahead)]
-    os.makedirs(ODIR, exist_ok=True); fp = os.path.join(ODIR, 'events.json')
+    os.makedirs(ODIR, exist_ok=True)
+    fp = os.path.join(ODIR, 'events.json')
     old = json.load(open(fp)) if os.path.exists(fp) else []
-    by = {e['id']: e for e in old}; new = 0
+    by = {e['id']: e for e in old}
+    new = 0
     for e in found:
-        if e['id'] not in by: new += 1
+        if e['id'] not in by:
+            new += 1
         by[e['id']] = {**by.get(e['id'], {}), **e}
     allv = sorted(by.values(), key=lambda e: (s2d(e['d']), e['o'], e['t']), reverse=True)
     json.dump(allv, open(fp, 'w'), ensure_ascii=False, indent=1)
-    run = {'run': dt.datetime.now(MSK).strftime('%d.%m.%Y %H:%M МСК'), 'window': [d2s(a), d2s(b)], 'ahead_to': d2s(ahead), 'sources': status, 'new': new, 'total': len(allv)}
+    run = {
+        'run': dt.datetime.now(MSK).strftime('%d.%m.%Y %H:%M МСК'),
+        'window': [d2s(a), d2s(b)],
+        'ahead_to': d2s(ahead),
+        'sources': status,
+        'new': new,
+        'total': len(allv),
+    }
     json.dump(run, open(os.path.join(ODIR, 'status.json'), 'w'), ensure_ascii=False, indent=1)
-    C.log('organs.log', f"окно {d2s(a)}–{d2s(b)}: найдено {len(found)}, новых {new}, всего {len(allv)}")
-    for k, s in status.items(): print(f"  {k:24} {s['status']}" + (f"  n={s['n']}" if 'n' in s else '') + (f"  ({s['why']})" if 'why' in s else ''))
-    print(f'окно {d2s(a)}–{d2s(b)} (+заседания до {d2s(ahead)}): найдено {len(found)}, новых {new}, всего {len(allv)} → {fp}')
+    C.log('organs.log', f'окно {d2s(a)}–{d2s(b)}: найдено {len(found)}, новых {new}, всего {len(allv)}')
+    for k, s in status.items():
+        print(
+            f'  {k:24} {s["status"]}'
+            + (f'  n={s["n"]}' if 'n' in s else '')
+            + (f'  ({s["why"]})' if 'why' in s else '')
+        )
+    print(
+        f'окно {d2s(a)}–{d2s(b)} (+заседания до {d2s(ahead)}): найдено {len(found)}, новых {new}, всего {len(allv)} → {fp}'
+    )
     if args.embed:
-        src = C.read_canvas(); src = C.set_block(src, 'ORG', 'const ORG: any[]', [{k: v for k, v in e.items() if k != 'id'} for e in allv])
+        src = C.read_canvas()
+        src = C.set_block(src, 'ORG', 'const ORG: any[]', [{k: v for k, v in e.items() if k != 'id'} for e in allv])
         if '/* ORGX:start */' in src:
-            ids = {e['id'] for e in allv}; enr = load_enrich()
+            ids = {e['id'] for e in allv}
+            enr = load_enrich()
             # 12.11.2026 (п. 8): проверенные поля, внесенные прямо в ORGX canvas, но не перенесенные в enrich.json,
             # при --embed не теряются (раньше блок ORGX перестраивался только из enrich.json и молча стирал их).
-            old_x = C.get_block(src, 'ORGX'); keep = {k: v for k, v in old_x.items() if k in ids and k not in enr}
+            old_x = C.get_block(src, 'ORGX')
+            keep = {k: v for k, v in old_x.items() if k in ids and k not in enr}
             if keep:
-                msg = f"ORGX: {len(keep)} записей есть в canvas, но нет в {ENRICH} — оставлены; перенесите их в enrich.json: " + ', '.join(sorted(keep))
-                print('ВНИМАНИЕ: ' + msg, file=sys.stderr); C.log('organs.log', msg)
-            src = C.set_block(src, 'ORGX', 'const ORGX: Record<string, any>', {**{k: v for k, v in enr.items() if k in ids}, **keep})
+                msg = (
+                    f'ORGX: {len(keep)} записей есть в canvas, но нет в {ENRICH} — оставлены; перенесите их в enrich.json: '
+                    + ', '.join(sorted(keep))
+                )
+                print('ВНИМАНИЕ: ' + msg, file=sys.stderr)
+                C.log('organs.log', msg)
+            src = C.set_block(
+                src, 'ORGX', 'const ORGX: Record<string, any>', {**{k: v for k, v in enr.items() if k in ids}, **keep}
+            )
         C.write_canvas(src)
         print('canvas: блоки ORG/ORGX обновлены')
     return allv, run
+
 
 if __name__ == '__main__':
     main()

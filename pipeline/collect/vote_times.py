@@ -6,8 +6,14 @@
      фильтр from/to); работает, только если депутат был в списке (если отсутствовал — времени там нет).
 Не выдумывать: если ни один источник не дал время с совпадающей датой — лог vote_time_fail.log.
 Запуск: python3 vote_times.py [DD.MM.YYYY ...]"""
+
 import sys, os, re, time
-sys.path[:0] = [os.path.dirname(os.path.abspath(__file__)), os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib')]; import common as C
+
+sys.path[:0] = [
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'),
+]
+import common as C
 
 DEPUTY = '99113478'
 CONVOC = 'AAAAAAA9'
@@ -16,6 +22,7 @@ UAS = [
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
     'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0',
 ]
+
 
 def parse_page(html):
     """[(day, vid, time)] from deputy list HTML."""
@@ -30,6 +37,7 @@ def parse_page(html):
             rows.append((cur, m.group(3), m.group(2)))
     pages = [int(x) for x in re.findall(r'[?&]page=(\d+)', html)]
     return rows, (max(pages) if pages else 1)
+
 
 def fetch_deputy(page=1, day_from='', day_to='', tries=3):
     """Fetch one deputy page via http then https; UAs via env for fetch.sh (fixed UA inside).
@@ -52,6 +60,7 @@ def fetch_deputy(page=1, day_from='', day_to='', tries=3):
             time.sleep(1.5 * (attempt + 1))
     return ''
 
+
 def load_all(need_days=None):
     """Paginate deputy pages; optionally narrow by from/to covering need_days."""
     day_from = day_to = ''
@@ -60,6 +69,7 @@ def load_all(need_days=None):
         def key(d):
             dd, mm, yy = d.split('.')
             return (yy, mm, dd)
+
         days = sorted(need_days, key=key)
         day_from, day_to = days[0], days[-1]
     html = fetch_deputy(1, day_from, day_to)
@@ -79,9 +89,11 @@ def load_all(need_days=None):
     mp = {vid: (day, tm) for day, vid, tm in all_rows}
     return mp, f'ok pages~{max_page} rows={len(all_rows)} unique={len(mp)}'
 
+
 def from_vote_pages(need):
     """1) days/*.json от votes_day.py; 2) /vote/<id>. → {vid: (day, time, src)}"""
     import json, votes_day as V
+
     mp = {}
     for d in set(need.values()):
         jp = os.path.join(V.DAYS_DIR, f'{d}.json')
@@ -95,11 +107,13 @@ def from_vote_pages(need):
     rest = [vid for vid in need if vid not in mp]
     if rest:
         from concurrent.futures import ThreadPoolExecutor
+
         with ThreadPoolExecutor(max_workers=6) as ex:
             for vid, r in zip(rest, ex.map(V.fetch_vote, rest)):
                 if r:
                     mp[vid] = (r['day'], r['time'], 'vote/' + vid)
     return mp
+
 
 if __name__ == '__main__':
     src = C.read_canvas()
@@ -140,6 +154,15 @@ if __name__ == '__main__':
             n += 1
     C.write_canvas(C.set_block(src, 'VT', 'const VT: Record<string, string>', VT))
     print('status:', status)
-    print('новых/обновленных времен:', n, 'всего VT:', len(VT), 'нужно было:', len(need), 'без времени:', len(need) - len(mp))
+    print(
+        'новых/обновленных времен:',
+        n,
+        'всего VT:',
+        len(VT),
+        'нужно было:',
+        len(need),
+        'без времени:',
+        len(need) - len(mp),
+    )
     if need and not mp:
         sys.exit(1)

@@ -2,13 +2,21 @@
 """Автоочистка «ё» → «е» в готовых текстах бота.
 Обрабатывает out/days/*.json и блоки BP/PROC/ORG в canvas.tsx.
 Запуск: python3 clean_yo.py"""
-import os, json, glob, re, sys
-sys.path[:0] = [os.path.dirname(os.path.abspath(__file__)), os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib')]; import common as C
+
+import os, json, glob, sys
+
+sys.path[:0] = [
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'),
+]
+import common as C
+
 
 def clean(s):
     if not isinstance(s, str):
         return s
     return s.replace('ё', 'е').replace('Ё', 'Е')
+
 
 def clean_obj(obj):
     if isinstance(obj, str):
@@ -18,6 +26,7 @@ def clean_obj(obj):
     if isinstance(obj, dict):
         return {k: clean_obj(v) for k, v in obj.items()}
     return obj
+
 
 # очистка days/*.json
 n_files = 0
@@ -37,7 +46,9 @@ for name in ('BP', 'PROC', 'ORG', 'ORGX'):
         block = C.get_block(src, name)
         cleaned = clean_obj(block)
         if cleaned != block:
-            src = C.set_block(src, name, 'const ORG: any[]' if name == 'ORG' else f'const {name}: Record<string, any>', cleaned)
+            src = C.set_block(
+                src, name, 'const ORG: any[]' if name == 'ORG' else f'const {name}: Record<string, any>', cleaned
+            )
             changed = True
             print(f'cleaned block: {name}')
     except Exception:

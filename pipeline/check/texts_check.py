@@ -8,8 +8,13 @@
 показываются как раньше (без пустых блоков «Суть»/«Кого коснётся»). Суффикс коммита Actions «— тексты не готовы»
 из‑за документов органов ставится только для дней с этой даты; по законопроектам (правило 13) — как раньше.
 Этот шаг ничего не пишет в canvas. Запуск: python3 texts_check.py ДД.ММ.ГГГГ"""
+
 import sys, os, re, json
-sys.path[:0] = [os.path.dirname(os.path.abspath(__file__)), os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib')]
+
+sys.path[:0] = [
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'),
+]
 import common as C
 
 
@@ -29,7 +34,7 @@ def main(day):
     short = dict(l.split('|', 1) for l in (m.group(1).split('\n') if m else []) if '|' in l)
     pre = 'const BP: Record<string, { sut?: string[]; who?: string; bs?: [string, string][] }> = '
     bl = next((l for l in src.split('\n') if l.startswith(pre)), '')
-    bp = json.loads(bl[len(pre):].rstrip(';')) if bl else {}
+    bp = json.loads(bl[len(pre) :].rstrip(';')) if bl else {}
     vs = [(v, n) for d, v, n, q, r in C.votes(src, day) if re.fullmatch(r'\d+-\d+', n)]
     no_short = [v for v, n in vs if not short.get(v)]
     bills = sorted({n for v, n in vs})
@@ -39,10 +44,13 @@ def main(day):
     if no_short or no_sut or (og and org_block):
         parts = []
         if vs or no_short or no_sut:
-            parts.append(f"голосований без SHORT {len(no_short)} из {len(vs)}, законопроектов без «Сути»/«Кого коснётся» {len(no_sut)} из {len(bills)}")
-        parts.append(f"документов органов без «Сути»/«Кого коснётся» {len(og)}")
+            parts.append(
+                f'голосований без SHORT {len(no_short)} из {len(vs)}, законопроектов без «Сути»/«Кого коснётся» {len(no_sut)} из {len(bills)}'
+            )
+        parts.append(f'документов органов без «Сути»/«Кого коснётся» {len(og)}')
         msg = f'ТЕКСТЫ НЕ ГОТОВЫ за {day}: ' + ', '.join(parts)
-        print(msg, flush=True); C.log('texts_check.log', msg)
+        print(msg, flush=True)
+        C.log('texts_check.log', msg)
         return 1
     bits = []
     if vs:
@@ -50,8 +58,12 @@ def main(day):
     if og:
         msg = f'texts_check: за {day} долг документов органов без «Сути»/«Кого коснётся»: {len(og)} (до {C.ORG_HIDE_FROM}, на суффикс коммита не влияет)'
         if bits:
-            msg = f'texts_check: тексты законопроектов за {day} готовы ({", ".join(bits)}); ' + msg[len('texts_check: '):]
-        print(msg, flush=True); C.log('texts_check.log', msg)
+            msg = (
+                f'texts_check: тексты законопроектов за {day} готовы ({", ".join(bits)}); '
+                + msg[len('texts_check: ') :]
+            )
+        print(msg, flush=True)
+        C.log('texts_check.log', msg)
         return 0
     bits.append('документы органов готовы')
     print(f'texts_check: тексты за {day} готовы ({", ".join(bits)})')

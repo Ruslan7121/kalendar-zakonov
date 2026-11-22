@@ -1,0 +1,2 @@
+# Python-часть проекта (сбор и слияние данных, тесты) не требует внешних пакетов: только стандартная библиотека Python 3.10+.
+# Системные программы для сбора текстов: poppler-utils (pdftotext), tesseract-ocr и tesseract-ocr-rus, antiword, catdoc, curl.

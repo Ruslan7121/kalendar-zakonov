@@ -31,6 +31,11 @@ jobs:
           node-version: '22'
       - name: npm install (react, esbuild — версии закреплены в package.json)
         run: npm install --no-audit --no-fund
+      # 22.11.2026: проверка стиля — ESLint (скрипты .mjs), Prettier (код сайта и скрипты), ruff (Python); версии закреплены
+      - name: Установка ruff
+        run: pip install -q -r requirements-dev.txt
+      - name: Проверка стиля (ESLint, Prettier, ruff)
+        run: npm run check:style
       - name: Chrome
         run: |
           CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
