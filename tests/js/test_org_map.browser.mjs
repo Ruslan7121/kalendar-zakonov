@@ -220,7 +220,7 @@ try {
     { let p = await open('/?tab=i'); chk(await until(p.s, `!!document.querySelector('[data-itile]') && !!document.querySelector('[data-myfab]')`, 10000), 'на «Пленарных заседаниях» нет звёздочки «Мои интересы»');
       await ev(p.s, `localStorage.removeItem('kz_my_v1')`);
       await click(p, '[data-myfab]'); await until(p.s, `!!document.querySelector('[data-mysheet]')`, 6000); await sleep(400); // без меток звёздочка сразу открывает выбор
-      chk(await ev(p.s, `/Откройте приложение в боте/.test(document.querySelector('[data-mynotif]').innerText)`), 'вне Telegram нет подсказки про уведомления');
+      chk(await ev(p.s, `!document.querySelector('[data-mynotif]')`), 'в окне «Мои интересы» показаны настройки уведомлений, хотя служба не подключена');
       const tag = await ev(p.s, `(() => { const b = [...document.querySelectorAll('[data-mysheet] button[aria-pressed]')][0]; if (!b) return ''; b.click(); return b.textContent.trim(); })()`); await sleep(200);
       chk(!!tag, 'в окне «Мои интересы» нет меток');
       await click(p, '[data-mydone]'); await sleep(600);
