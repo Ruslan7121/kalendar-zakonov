@@ -838,9 +838,9 @@ try {
       chk(
         await ev(
           p.s,
-          `document.documentElement.hasAttribute('data-kb') && getComputedStyle(document.querySelector('[data-mnavbar]')).visibility === 'hidden'`,
+          `document.documentElement.hasAttribute('data-kb') && getComputedStyle(document.querySelector('[data-mnavbar]')).visibility === 'visible' && document.documentElement.style.getPropertyValue('--gd-kbo') === '0px'`,
         ),
-        'пока набирается поиск, нижняя панель не скрыта',
+        'пока набирается поиск, нижняя панель пропала или сдвинута без клавиатуры',
       );
       await ev(p.s, `document.activeElement.blur()`);
       await sleep(500);
@@ -849,7 +849,7 @@ try {
           p.s,
           `!document.documentElement.hasAttribute('data-kb') && getComputedStyle(document.querySelector('[data-mnavbar]')).visibility === 'visible'`,
         ),
-        'после поиска нижняя панель не вернулась',
+        'после поиска нижняя панель не на месте',
       );
       chk(
         await ev(p.s, `!/законопроектов: \\d+/.test(document.body.innerText)`),

@@ -1,8 +1,10 @@
 // Видимая область экрана и экранная клавиатура (iPhone, Telegram): единое место, где это определяется.
-// Зачем: на iPhone окно Telegram и «видимая область» (visualViewport) меняются не одновременно, поэтому закрепленные элементы
-// (нижняя панель вкладок, «Наверх», звёздочка) не сдвигаются вслед за клавиатурой, а скрываются и возвращаются, когда экран в норме.
-// Результат — атрибут data-kb на <html> (есть, пока набирается текст или область «съехала») и переменные CSS:
-//   --gd-vh  — высота видимой области, px;  --gd-kb — 1 или 0.
+// Зачем: на iPhone окно Telegram становится ниже на высоту клавиатуры, и закрепленные внизу элементы (нижняя панель вкладок,
+// «Наверх», звёздочка) поднимались бы над ней. Мы сдвигаем их вниз ровно на эту разницу: они остаются под клавиатурой.
+// Результат — переменные CSS на <html> и атрибут data-kb (есть, пока клавиатура открыта или закрывается):
+//   --gd-vh  — высота видимой области, px;  --gd-kb — 1 или 0;
+//   --gd-kbo — на сколько px сдвинуть вниз закрепленное у нижнего края (высота клавиатуры): панель остается под клавиатурой
+//              и не «выезжает» после нее, а стоит на месте, когда клавиатура уходит.
 // Источники событий: visualViewport (resize, scroll), прокрутка окна, события Telegram (viewportChanged, safeAreaChanged), фокус полей.
 import { useEffect } from 'react';
 import { TG } from './telegram';
@@ -24,14 +26,26 @@ export function useViewport(on: boolean) {
     const vv: any = window.visualViewport;
     const tg: any = TG;
     let focused = false;
+    let closing = false; // клавиатура закрывается: окно еще не вернулось к полной высоте
+    let base = window.innerHeight; // полная высота окна без клавиатуры
+    let baseW = window.innerWidth;
     const timers: any[] = [];
     const clearTimers = () => timers.splice(0).forEach(clearTimeout);
     const update = () => {
-      const h = vv ? vv.height : window.innerHeight;
-      const abnormal =
-        !!vv && vv.scale < 1.02 && (window.innerHeight - vv.height - vv.offsetTop > KB_GAP || vv.offsetTop > 2);
-      const kb = focused || abnormal;
-      de.style.setProperty('--gd-vh', Math.round(h) + 'px');
+      const h = window.innerHeight;
+      if (window.innerWidth !== baseW) {
+        baseW = window.innerWidth; // поворот экрана: старая высота не годится
+        base = h;
+      }
+      const active = focused || closing;
+      if (!active) base = h; // клавиатуры нет: следим за высотой (панели Safari, поворот)
+      if (closing && !focused && h >= base - 2) closing = false;
+      // Пока клавиатура открыта или закрывается, закрепленные внизу элементы остаются на своем месте под ней:
+      // окно Telegram стало ниже на высоту клавиатуры, и панель сдвигается вниз ровно на эту разницу.
+      const offset = active ? Math.max(0, base - h) : 0;
+      de.style.setProperty('--gd-vh', Math.round(vv ? vv.height : h) + 'px');
+      de.style.setProperty('--gd-kbo', Math.round(offset) + 'px');
+      const kb = focused || closing;
       de.style.setProperty('--gd-kb', kb ? '1' : '0');
       if (kb) de.setAttribute('data-kb', '1');
       else de.removeAttribute('data-kb');
@@ -42,21 +56,17 @@ export function useViewport(on: boolean) {
         timers.push(
           setTimeout(() => {
             if (focused) return;
+            if (ms === KB_RECHECK_MS[KB_RECHECK_MS.length - 1]) closing = false; // дольше не ждем: считаем текущую высоту нормой
             update();
-            if (ms === 450) {
-              try {
-                window.scrollTo(window.scrollX, window.scrollY);
-              } catch (e) {
-                /* прокрутка недоступна */
-              }
-            }
           }, ms),
         ),
       );
     };
     const onFocusIn = (e: any) => {
       if (!isTextInput(e.target)) return;
+      if (!focused && !closing) base = window.innerHeight;
       focused = true;
+      closing = false;
       clearTimers();
       update();
     };
@@ -64,6 +74,7 @@ export function useViewport(on: boolean) {
       setTimeout(() => {
         if (isTextInput(document.activeElement)) return;
         focused = false;
+        closing = true;
         update();
         recheck();
       }, 60);
@@ -73,7 +84,6 @@ export function useViewport(on: boolean) {
       vv.addEventListener('resize', update);
       vv.addEventListener('scroll', update);
     }
-    window.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
     document.addEventListener('focusin', onFocusIn);
     document.addEventListener('focusout', onFocusOut);
@@ -81,7 +91,7 @@ export function useViewport(on: boolean) {
     const tgEvents = ['viewportChanged', 'safeAreaChanged', 'contentSafeAreaChanged'];
     const tgHandler = () => {
       update();
-      if (!focused) recheck();
+      if (!focused && closing) recheck();
     };
     try {
       tgEvents.forEach((n) => tg && tg.onEvent && tg.onEvent(n, tgHandler));
@@ -93,7 +103,6 @@ export function useViewport(on: boolean) {
         vv.removeEventListener('resize', update);
         vv.removeEventListener('scroll', update);
       }
-      window.removeEventListener('scroll', update);
       window.removeEventListener('resize', update);
       document.removeEventListener('focusin', onFocusIn);
       document.removeEventListener('focusout', onFocusOut);
@@ -105,6 +114,7 @@ export function useViewport(on: boolean) {
       }
       de.removeAttribute('data-kb');
       de.style.removeProperty('--gd-kb');
+      de.style.removeProperty('--gd-kbo');
     };
   }, [on]);
 }
