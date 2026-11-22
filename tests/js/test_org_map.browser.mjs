@@ -639,6 +639,9 @@ try {
         await until(p.s, `!!document.querySelector('[data-omtile]')`, 8000),
         'нет плиток для проверки пустого состояния',
       );
+      // стрелка «›» в режиме «День» не заходит в дни без документов, поэтому пустое состояние проверяем на неделе без документов
+      await click(p, '[data-ommode="week"]');
+      await sleep(400);
       await click(p, '[data-omnext]');
       await sleep(500);
       chk(
@@ -648,22 +651,25 @@ try {
         ),
         'в день без документов нет пустого состояния',
       );
-      chk(
-        await ev(
-          p.s,
-          `/Открыть \\d+ [а-я]+/.test((document.querySelector('[data-empty="map"] [data-emptybtn]') || {}).innerText || '')`,
-        ),
-        'в пустом состоянии нет кнопки «Открыть <день>»',
-      );
-      await click(p, '[data-empty="map"] [data-emptybtn]');
-      await sleep(500);
-      chk(
-        await ev(
-          p.s,
-          `!document.querySelector('[data-empty="map"]') && document.querySelectorAll('[data-omtile]').length > 0`,
-        ),
-        'кнопка пустого состояния не открыла день с документами',
-      );
+      // у пустой недели кнопки «Открыть <день>» нет (она есть у пустого дня, куда стрелки больше не заходят); если кнопка есть — она работает
+      if (await ev(p.s, `!!document.querySelector('[data-empty="map"] [data-emptybtn]')`)) {
+        chk(
+          await ev(
+            p.s,
+            `/Открыть|К последнему дню/.test((document.querySelector('[data-empty="map"] [data-emptybtn]') || {}).innerText || '')`,
+          ),
+          'в пустом состоянии нет кнопки «Открыть <день>» или «К последнему дню»',
+        );
+        await click(p, '[data-empty="map"] [data-emptybtn]');
+        await sleep(500);
+        chk(
+          await ev(
+            p.s,
+            `!document.querySelector('[data-empty="map"]') && document.querySelectorAll('[data-omtile]').length > 0`,
+          ),
+          'кнопка пустого состояния не открыла день с документами',
+        );
+      }
       await p.close();
     }
     {
@@ -855,6 +861,39 @@ try {
         await ev(p.s, `!/законопроектов: \\d+/.test(document.body.innerText)`),
         'под выбором даты осталась строка «законопроектов: N»',
       );
+      await p.close();
+    }
+    /* стрелки «‹ ›» не показывают пропущенные даты: «Пленарные заседания» — только дни с голосованием по законопроектам, «Работа госорганов» — только дни с документами */
+    {
+      let p = await open('/?tab=i');
+      await until(p.s, `!!document.querySelector('[data-imprev]') && !!document.querySelector('[data-itile]')`, 12000);
+      let empty = 0;
+      for (let k = 0; k < 25; k++) {
+        const has = await ev(p.s, `!!document.querySelector('[data-itile]')`);
+        if (!has) empty++;
+        const ok = await ev(
+          p.s,
+          `(() => { const b = document.querySelector('[data-imprev]'); if (!b || b.disabled) return false; b.click(); return true; })()`,
+        );
+        if (!ok) break;
+        await sleep(250);
+      }
+      chk(empty === 0, `«Пленарные заседания»: стрелка «назад» показала ${empty} дн. без голосований`);
+      await p.close();
+      p = await open('/?tab=c');
+      await until(p.s, `!!document.querySelector('[data-omprev]') && !!document.querySelector('[data-omtile]')`, 12000);
+      let empty2 = 0;
+      for (let k = 0; k < 25; k++) {
+        const has = await ev(p.s, `!!document.querySelector('[data-omtile]')`);
+        if (!has) empty2++;
+        const ok = await ev(
+          p.s,
+          `(() => { const b = document.querySelector('[data-omprev]'); if (!b || b.disabled) return false; b.click(); return true; })()`,
+        );
+        if (!ok) break;
+        await sleep(250);
+      }
+      chk(empty2 === 0, `«Работа госорганов»: стрелка «назад» показала ${empty2} дн. без документов`);
       await p.close();
     }
     {
