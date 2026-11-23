@@ -1,5 +1,14 @@
 [
  {
+  "id": "sf:http://council.gov.ru/activity/meetings/#27.11.2026",
+  "o": "sf",
+  "d": "27.11.2026",
+  "ty": "заседание",
+  "k": "Заседание",
+  "t": "623-е заседание Совета Федерации",
+  "u": "http://council.gov.ru/activity/meetings/"
+ },
+ {
   "id": "mvd:http://publication.pravo.gov.ru/document/0001202611230002#23.11.2026",
   "o": "mvd",
   "d": "23.11.2026",

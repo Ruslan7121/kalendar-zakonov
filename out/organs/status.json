@@ -1,10 +1,10 @@
 {
- "run": "23.11.2026 22:40 МСК",
+ "run": "24.11.2026 01:06 МСК",
  "window": [
-  "16.11.2026",
-  "23.11.2026"
+  "17.11.2026",
+  "24.11.2026"
  ],
- "ahead_to": "26.11.2026",
+ "ahead_to": "27.11.2026",
  "sources": {
   "pres_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=president",
@@ -69,7 +69,7 @@
   "foiv_daily": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&periodType=daily",
    "status": "ok",
-   "n": 2
+   "n": 0
   },
   "cbr_news": {
    "url": "https://www.cbr.ru/rss/RssNews",
@@ -127,5 +127,5 @@
   }
  },
  "new": 1,
- "total": 1103
+ "total": 1104
 }
