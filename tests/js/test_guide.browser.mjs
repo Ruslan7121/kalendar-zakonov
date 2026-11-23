@@ -96,14 +96,20 @@ try {
         },
         6000,
       );
-      const s = await p.evaluate(state);
+      let s = await p.evaluate(state);
       if (!s) break;
       chk(hasSel, `${name}: шаг ${k} — рамки подсветки нет`);
-      if (s.sp)
+      // панель и рамка могут доезжать до места (плавная прокрутка, смена высоты панели): ждем, пока рамка встанет над панелью
+      for (let t = 0; t < 20 && s && s.sp && s.sp.bottom > s.dockTop + 6; t++) {
+        await sleep(200);
+        s = await p.evaluate(state);
+      }
+      if (s && s.sp)
         chk(
           s.sp.bottom <= s.dockTop + 6,
           `${name}: шаг ${k} — подсветка уходит под панель (${s.sp.bottom} > ${s.dockTop})`,
         );
+      if (!s) break;
       if (needCard.includes(k)) chk(s.dialogs >= 1, `${name}: шаг ${k} — карточка не открыта`);
       const last = await p.locator('[data-guide] button').last();
       await last.click();
