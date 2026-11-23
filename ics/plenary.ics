@@ -7,24 +7,25 @@ X-WR-CALNAME:Пленарные заседания Госдумы
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:gd-20261126@kalendar-zakonov
-DTSTAMP:20261123T171247Z
+DTSTAMP:20261123T193805Z
 DTSTART;VALUE=DATE:20261126
 DTEND;VALUE=DATE:20261127
 SUMMARY:Пленарное заседание Госдумы (ожида
  ется по распорядку)
-DESCRIPTION:Источник: по распорядку\; повестк
- а не опубликована
+DESCRIPTION:Законопроектов в повестке: 4\nИсто
+ чник: по распорядку\; повестка не опубли
+ кована
 URL:https://ruslan7121.github.io/kalendar-zakonov/?d=26.11.2026
 TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:gd-20261125@kalendar-zakonov
-DTSTAMP:20261123T171247Z
+DTSTAMP:20261123T193805Z
 DTSTART;VALUE=DATE:20261125
 DTEND;VALUE=DATE:20261126
 SUMMARY:Пленарное заседание Госдумы (ожида
  ется по распорядку)
-DESCRIPTION:Законопроектов в повестке: 1\nИсто
+DESCRIPTION:Законопроектов в повестке: 3\nИсто
  чник: по распорядку\; повестка не опубли
  кована\; «правительственный час» 25.11 — 
  постановление ГД (голосование 136300\, 10.11.2
@@ -34,14 +35,14 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:gd-20261124@kalendar-zakonov
-DTSTAMP:20261123T171247Z
+DTSTAMP:20261123T193805Z
 DTSTART;VALUE=DATE:20261124
 DTEND;VALUE=DATE:20261125
 SUMMARY:Пленарное заседание Госдумы (ожида
  ется по распорядку)
-DESCRIPTION:Законопроектов в повестке: 9\nИсто
- чник: по распорядку\; повестка не опубли
- кована
+DESCRIPTION:Законопроектов в повестке: 27\nИст
+ очник: по распорядку\; повестка не опубл
+ икована
 URL:https://ruslan7121.github.io/kalendar-zakonov/?d=24.11.2026
 TRANSP:TRANSPARENT
 END:VEVENT
