@@ -1,5 +1,5 @@
 {
- "run": "23.11.2026 15:23 МСК",
+ "run": "23.11.2026 16:04 МСК",
  "window": [
   "16.11.2026",
   "23.11.2026"
@@ -98,8 +98,8 @@
   },
   "minjust_events": {
    "url": "https://minjust.gov.ru/ru/events/list/",
-   "status": "blocked:нет соединения (curl 28)",
-   "n": 0
+   "status": "ok",
+   "n": 20
   },
   "minfin_pravo": {
    "url": "http://publication.pravo.gov.ru/documents/foiv283/monthly",
@@ -126,6 +126,6 @@
    "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
   }
  },
- "new": 5,
+ "new": 0,
  "total": 1082
 }
