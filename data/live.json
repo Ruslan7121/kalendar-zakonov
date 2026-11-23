@@ -1,5 +1,5 @@
 {
-"upd": "23.11.2026 19:34",
+"upd": "23.11.2026 19:55",
 "status": {
 "gd": "ok n=11",
 "gov": "ok n=20",
@@ -12,6 +12,13 @@
 "economy": "blocked:нет соединения (curl 28)"
 },
 "items": [
+{
+"o": "minfin",
+"d": "23.11.2026",
+"tm": "19:40",
+"t": "Начались выплаты в рамках механизмов компенсации ущерба и страхования от военных рисков",
+"u": "https://minfin.gov.ru/ru/press-center/?id_4=40777-nachalis_vyplaty_v_ramkakh_mekhanizmov_kompensatsii_ushcherba_i_strakhovaniya_ot_voennykh_riskov"
+},
 {
 "o": "gov",
 "d": "23.11.2026",
