@@ -1,284 +1,456 @@
-// Обучение по сайту (23.11.2026): кнопка «?» в шапке и окно с пятью разделами.
-// Первый раздел — обзор, остальные четыре — по одному на страницу. Код не зависит от данных сайта.
-import { useState, useEffect } from 'grok/canvas';
+// Обучение по сайту (23.11.2026): кнопка «?» в шапке и панель с пятью разделами.
+// Панель стоит внизу и ничего не перекрывает: страница получает снизу запас, а подсвеченное место
+// прокручивается в видимую область над панелью. Подсветка — отдельная рамка поверх элемента,
+// поэтому её не обрезают чужие границы. Код не зависит от данных сайта.
+import { useState, useEffect, useRef } from 'grok/canvas';
 import { useEscape } from './layers';
 
-type Step = { tx: string; sel?: string; tab?: string };
-type Part = { n: string; tab: string; steps: Step[] };
+/** sel: CSS-селектор, `tab:Название` (вкладка разделов) или `btn:Текст` (кнопка с таким текстом). */
+type Step = { h: string; tx: string; sel?: string; tab?: string };
+type Part = { n: string; d: string; tab: string; steps: Step[] };
 
 export const GUIDE: Part[] = [
   {
-    n: 'Зачем это приложение и что на каждой странице',
+    n: 'Зачем это приложение',
+    d: 'Для чего сайт и что на каждой странице',
     tab: 'i',
     steps: [
       {
-        tx: 'Госдума, Совет Федерации, Правительство, министерства и Банк России публикуют решения в виде таблиц и PDF-файлов. Приложение собирает их в одном месте, раскладывает по дням и объясняет простым языком. Только официальные источники: если данных нет, поле остаётся пустым.',
+        h: 'Для чего это приложение',
+        tx: 'Госдума, Совет Федерации, Правительство, министерства и Банк России публикуют решения в таблицах и PDF. Здесь они собраны в одном месте, разложены по дням и объяснены простым языком. Только официальные источники: если данных нет, поле остаётся пустым.',
       },
       {
+        h: 'Пленарные заседания',
         tab: 'i',
-        tx: 'Пленарные заседания: что рассматривала Госдума, как голосовала и что из этого коснётся лично вас.',
+        sel: 'tab:Пленарные заседания',
+        tx: 'Что рассматривала Госдума, как голосовала и кого это коснётся.',
       },
       {
+        h: 'Работа госорганов',
         tab: 'c',
-        tx: 'Работа госорганов: документы Правительства, министерств и Банка России, с кратким объяснением сути каждого.',
+        sel: 'tab:Работа госорганов',
+        tx: 'Документы Правительства, министерств и Банка России с кратким объяснением сути.',
       },
-      { tab: 'l', tx: 'Вступают в силу: когда принятый закон начнёт действовать и кого он коснётся.' },
       {
+        h: 'Вступают в силу',
+        tab: 'l',
+        sel: 'tab:Вступают в силу',
+        tx: 'Когда принятый закон начнёт действовать и на кого он распространяется.',
+      },
+      {
+        h: 'Новости',
         tab: 'd',
-        tx: 'Новости: оперативные официальные новости органов власти с заголовком, временем и ссылкой на источник.',
+        sel: 'tab:Новости',
+        tx: 'Оперативные официальные новости органов власти: заголовок, время, ссылка на источник.',
       },
     ],
   },
   {
-    n: 'Пленарные заседания: подробно',
+    n: 'Пленарные заседания',
+    d: 'Заседания Госдумы, голосования, законопроекты',
     tab: 'i',
     steps: [
       {
+        h: 'Выбор дня',
         tab: 'i',
         sel: '[data-periodhead]',
-        tx: 'Здесь выбирается период: день, неделя, месяц или год. Стрелки «‹ ›» листают дни, в которые были заседания.',
+        tx: 'Период: день, неделя, месяц или год. Стрелки «‹ ›» листают дни, в которые были заседания.',
+      },
+      { h: 'Поиск', tab: 'i', sel: '[data-iq]', tx: 'Находит законопроект по номеру, названию или слову.' },
+      {
+        h: 'Фильтры',
+        tab: 'i',
+        sel: 'btn:Фильтры',
+        tx: 'Оставляют законопроекты по меткам: «Для кого», «Тема», «Что меняется».',
       },
       {
+        h: 'Итоги периода',
         tab: 'i',
-        sel: '[data-iq]',
-        tx: 'Поиск находит законопроект по номеру, названию или слову. Строка очищается при смене страницы.',
+        sel: '[data-itot]',
+        tx: 'Сколько законопроектов рассмотрено, принято и отклонено за выбранный период.',
       },
+      { h: 'Фракции', tab: 'i', sel: '[data-ifr]', tx: 'Сколько голосований поддержала каждая фракция.' },
       {
+        h: 'Законопроект',
         tab: 'i',
-        tx: 'В каждой карточке законопроекта: номер, название, метки «Для кого», «Тема», «Что меняется», итог голосования и его время.',
+        sel: '[data-itile]',
+        tx: 'Номер, название, метки, итог голосования и его время. Нажмите карточку: откроются «Суть», «Кого коснётся», голоса фракций и «Путь закона». «Поделиться» отправляет ссылку на это голосование.',
       },
-      {
-        tab: 'i',
-        tx: 'Нажмите карточку: откроются «Суть», «Кого коснётся», голоса фракций и «Путь закона» — пройденные шаги отмечены сплошной линией, следующий шаг пунктиром.',
-      },
-      { tab: 'i', tx: 'Кнопка «Поделиться карточкой» отправляет ссылку именно на это голосование.' },
     ],
   },
   {
-    n: 'Работа госорганов: подробно',
+    n: 'Работа госорганов',
+    d: 'Документы Правительства, министерств, ЦБ',
     tab: 'c',
     steps: [
       {
+        h: 'Карта органов',
         tab: 'c',
         sel: '[data-orgmap]',
-        tx: 'Карта органов: каждая плитка — один орган, число — сколько документов за выбранный период (день, неделя, месяц).',
-      },
-      { tab: 'c', tx: 'Нажмите плитку: откроется лента документов этого органа.' },
-      {
-        tab: 'c',
-        tx: 'Документ показан коротким названием. В его окне: суть, кого коснётся и ссылка на официальный текст.',
+        tx: 'Плитка — один орган, число — сколько у него документов за период: день, неделя или месяц.',
       },
       {
+        h: 'Лента органа',
         tab: 'c',
-        tx: 'Режим «По дням» показывает документы и заседания, сгруппированные по датам, включая заседания Госдумы.',
+        sel: '[data-orgmap]',
+        tx: 'Нажмите плитку: откроется лента документов этого органа, новые сверху.',
+      },
+      {
+        h: 'Документ',
+        tab: 'c',
+        tx: 'Показан коротким названием. В его окне: суть, кого коснётся и ссылка на официальный текст.',
+      },
+      {
+        h: 'Режим «По дням»',
+        tab: 'c',
+        tx: 'Показывает документы и заседания по датам, в том числе заседания и голосования Госдумы.',
       },
     ],
   },
   {
-    n: 'Вступают в силу: подробно',
+    n: 'Вступают в силу',
+    d: 'Когда закон начнёт действовать',
     tab: 'l',
     steps: [
       {
+        h: 'Лента по месяцам',
         tab: 'l',
         sel: '[data-lmonth]',
-        tx: 'Лента законов по месяцам: у каждого закона дата, с которой он начинает действовать.',
+        tx: 'Законы по датам вступления в силу. Метка «действует» — закон уже в силе, «через N дней» — скоро начнёт.',
       },
-      { tab: 'l', sel: '[data-lq]', tx: 'Поиск по названию, номеру или слову помогает быстро найти нужный закон.' },
+      { h: 'Поиск', tab: 'l', sel: '[data-lq]', tx: 'Находит закон по названию, номеру или слову.' },
       {
+        h: 'Фильтры',
         tab: 'l',
-        tx: 'В карточке закона: суть, кого коснётся и ссылки на официальный текст. Уже действующие законы отмечены.',
+        sel: 'btn:Фильтры',
+        tx: 'Оставляют законы, подходящие вам: «Для кого», «Тема», «Что меняется».',
       },
-      { tab: 'l', tx: 'Фильтры «Для кого», «Тема», «Что меняется» оставляют только подходящие вам законы.' },
+      { h: 'Карточка закона', tab: 'l', tx: 'Нажмите закон: суть, кого коснётся и ссылки на официальный текст.' },
     ],
   },
   {
-    n: 'Новости: подробно',
+    n: 'Новости',
+    d: 'Официальные новости органов власти',
     tab: 'd',
     steps: [
       {
+        h: 'Лента новостей',
         tab: 'd',
         sel: '[data-nq]',
-        tx: 'Новости собираются с официальных сайтов органов власти в течение дня. Поиск находит нужную по слову.',
+        tx: 'Собирается с официальных сайтов в течение дня. Поиск находит новость по слову.',
       },
       {
+        h: 'Органы',
         tab: 'd',
-        tx: 'У каждой новости: заголовок, время и ссылка на источник. Документ органа в календаре и новость о нём не дублируются.',
+        sel: '[data-nchips]',
+        tx: 'Выберите органы, чьи новости нужны. «Убрать все» сбрасывает выбор.',
       },
-      { tab: 'd', sel: '[data-nchips]', tx: 'Фильтры оставляют новости нужных органов.' },
+      {
+        h: 'Новость',
+        tab: 'd',
+        sel: '[data-newsitem]',
+        tx: 'Заголовок, время и ссылка на источник. Документ органа и новость о нём не дублируются: документ в календаре, новость здесь.',
+      },
     ],
   },
 ];
 
-const CLR = () => {
-  document.querySelectorAll('[data-gdhl]').forEach((e) => {
-    const h = e as HTMLElement;
-    h.style.outline = '';
-    h.style.outlineOffset = '';
-    h.removeAttribute('data-gdhl');
-  });
+const find = (sel: string): HTMLElement | null => {
+  const vis = (e: Element | null) =>
+    e && (e as HTMLElement).getBoundingClientRect().width > 0 ? (e as HTMLElement) : null;
+  if (sel.startsWith('tab:')) {
+    const n = sel.slice(4);
+    return vis(
+      [...document.querySelectorAll('[role="tab"], header button, [data-gdbar] button')].find((e) =>
+        (e.textContent || '').replace(/\s+/g, '').startsWith(n.replace(/\s+/g, '')),
+      ) || null,
+    );
+  }
+  if (sel.startsWith('btn:')) {
+    const n = sel.slice(4);
+    return vis(
+      [...document.querySelectorAll('button')].find(
+        (e) => (e.textContent || '').trim().includes(n) && !e.closest('[data-guide]'),
+      ) || null,
+    );
+  }
+  return vis(document.querySelector(sel));
 };
 
-/** Окно обучения. go — переход на страницу сайта, t — цвета темы, m — телефон. */
+/** Панель обучения. go — переход на страницу сайта, t — цвета темы, m — телефон. */
 export function Guide({ t, m, go, onClose }: { t: any; m: boolean; go: (k: string) => void; onClose: () => void }) {
   const [g, setG] = useState(-1);
   const [st, setSt] = useState(0);
+  const [lift, setLift] = useState(0);
+  const dock = useRef<HTMLDivElement | null>(null);
+  const spot = useRef<HTMLDivElement | null>(null);
+  const tgt = useRef<HTMLElement | null>(null);
+  const dir = useRef(1);
   useEscape(true, onClose);
-  const step = g >= 0 ? GUIDE[g].steps[st] : null;
+  const part = g >= 0 ? GUIDE[g] : null;
+  const step = part ? part.steps[st] : null;
+
+  // запас снизу под панель, чтобы она не закрывала конец страницы
   useEffect(() => {
-    CLR();
+    const b = document.body;
+    const old = b.style.paddingBottom;
+    const upd = () => {
+      const d = dock.current;
+      const nv = m ? (document.querySelector('[data-mnavbar]') as HTMLElement | null) : null;
+      const nh = nv ? Math.max(0, window.innerHeight - nv.getBoundingClientRect().top) : 0;
+      setLift(nh);
+      if (d) b.style.paddingBottom = `${Math.round(d.offsetHeight + nh + 16)}px`;
+    };
+    upd();
+    const ro = new ResizeObserver(upd);
+    if (dock.current) ro.observe(dock.current);
+    window.addEventListener('resize', upd);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', upd);
+      b.style.paddingBottom = old;
+    };
+  }, [m]);
+
+  // переход на страницу и поиск места для подсветки (страница может подгружаться)
+  useEffect(() => {
+    tgt.current = null;
     if (!step) return;
     if (step.tab) go(step.tab);
     if (!step.sel) return;
-    const id = setTimeout(() => {
-      const el = document.querySelector(step.sel!) as HTMLElement | null;
-      if (!el) return;
-      el.setAttribute('data-gdhl', '1');
-      el.style.outline = `2px solid ${t.text.accent}`;
-      el.style.outlineOffset = '2px';
-      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }, 350);
-    return () => clearTimeout(id);
+    let n = 0;
+    const id = setInterval(() => {
+      const el = find(step.sel!);
+      if (el || ++n > 20) {
+        clearInterval(id);
+        if (!el) {
+          /* на этой ширине экрана такого элемента нет — шаг пропускается */
+          if (dir.current > 0) mv(1);
+          else if (st > 0) mv(-1);
+          return;
+        }
+        tgt.current = el;
+        const d = dock.current;
+        const top = headerBottom() + 10;
+        const bot = (d ? d.getBoundingClientRect().top : window.innerHeight) - 10;
+        const r = el.getBoundingClientRect();
+        const fixed = pinned(el);
+        if (!fixed && (r.top < top || r.bottom > bot))
+          window.scrollTo({ top: window.scrollY + r.top - top, behavior: 'smooth' });
+      }
+    }, 100);
+    return () => clearInterval(id);
   }, [g, st]);
-  useEffect(() => CLR, []);
-  const btn = (primary: boolean): any => ({
-    flex: 1,
-    border: primary ? 'none' : `1px solid ${t.border.default}`,
-    borderRadius: 12,
-    padding: '11px 10px',
-    fontSize: 14,
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-    background: primary ? t.text.accent : t.bg.subtle,
-    color: primary ? '#fff' : t.text.primary,
-    WebkitTapHighlightColor: 'transparent',
-  });
-  const part = g >= 0 ? GUIDE[g] : null;
+
+  // рамка-подсветка поверх элемента: следует за ним при прокрутке, обрезается по видимой области
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const s = spot.current;
+      const el = tgt.current;
+      if (s) {
+        if (!el || !el.isConnected) s.style.display = 'none';
+        else {
+          const r = el.getBoundingClientRect();
+          const d = dock.current;
+          const top = pinned(el) ? r.top : Math.max(r.top, headerBottom() + 2);
+          const bot = el.closest('[data-mnavbar]')
+            ? r.bottom
+            : Math.min(r.bottom, (d ? d.getBoundingClientRect().top : window.innerHeight) - 4);
+          if (bot - top < 8 || r.width < 4) s.style.display = 'none';
+          else {
+            const rad = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 8;
+            s.style.display = 'block';
+            s.style.left = `${r.left - 4}px`;
+            s.style.top = `${top - 4}px`;
+            s.style.width = `${r.width + 8}px`;
+            s.style.height = `${bot - top + 8}px`;
+            s.style.borderRadius = `${Math.min(rad + 4, 18)}px`;
+          }
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   const mv = (d: number) => {
     if (!part) return;
+    dir.current = d;
     if (st + d >= part.steps.length) {
       setG(-1);
       return;
     }
     setSt(Math.max(0, st + d));
   };
+  const btn = (primary: boolean, off?: boolean): any => ({
+    flex: primary ? 1.3 : 1,
+    border: primary ? 'none' : `1px solid ${t.border.default}`,
+    borderRadius: 12,
+    height: 42,
+    padding: '0 10px',
+    fontSize: 14,
+    fontWeight: primary ? 600 : 500,
+    fontFamily: 'inherit',
+    cursor: off ? 'default' : 'pointer',
+    opacity: off ? 0.45 : 1,
+    background: primary ? t.text.accent : t.bg.subtle,
+    color: primary ? '#fff' : t.text.primary,
+    WebkitTapHighlightColor: 'transparent',
+  });
   return (
-    <div
-      data-guide="1"
-      role="dialog"
-      aria-label="Как пользоваться сайтом"
-      style={{
-        position: 'fixed',
-        zIndex: 2147483000,
-        left: m ? 0 : undefined,
-        right: m ? 0 : 20,
-        bottom: m ? 0 : 20,
-        width: m ? undefined : 380,
-        boxSizing: 'border-box',
-        background: t.bg.base,
-        color: t.text.primary,
-        border: `1px solid ${t.border.default}`,
-        borderRadius: m ? '18px 18px 0 0' : 18,
-        boxShadow: '0 10px 40px rgba(0,0,0,.35)',
-        padding: `14px 14px ${m ? 'calc(16px + env(safe-area-inset-bottom, 0px))' : '16px'}`,
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-        <b style={{ fontSize: 16 }}>{part ? part.n : 'Как пользоваться сайтом'}</b>
-        <button
-          aria-label="Закрыть"
-          onClick={onClose}
-          style={{
-            flex: 'none',
-            width: 30,
-            height: 30,
-            borderRadius: 9999,
-            border: 'none',
-            background: t.bg.subtle,
-            color: t.text.primary,
-            fontSize: 16,
-            cursor: 'pointer',
-          }}
+    <>
+      <div
+        ref={spot}
+        aria-hidden
+        style={{
+          position: 'fixed',
+          zIndex: 2147482999,
+          display: 'none',
+          pointerEvents: 'none',
+          boxSizing: 'border-box',
+          border: `3px solid ${t.text.accent}`,
+          boxShadow: '0 0 0 9999px rgba(0,0,0,.42)',
+          transition: 'left .15s, top .15s, width .15s, height .15s',
+        }}
+      />
+      <div
+        ref={dock}
+        data-guide="1"
+        role="dialog"
+        aria-label="Как пользоваться сайтом"
+        style={{
+          position: 'fixed',
+          zIndex: 2147483000,
+          left: m ? 0 : '50%',
+          right: m ? 0 : undefined,
+          width: m ? undefined : 'min(640px, calc(100% - 32px))',
+          transform: m ? undefined : 'translateX(-50%)',
+          bottom: m ? lift : 16,
+          boxSizing: 'border-box',
+          background: t.bg.base,
+          color: t.text.primary,
+          border: `1px solid ${t.border.default}`,
+          borderRadius: m ? '18px 18px 0 0' : 18,
+          boxShadow: '0 -6px 30px rgba(0,0,0,.25)',
+          padding: '12px 14px 14px',
+        }}
+      >
+        <div
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}
         >
-          ✕
-        </button>
-      </div>
-      {!part && (
-        <div>
-          {GUIDE.map((x, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setG(i);
-                setSt(0);
-              }}
-              style={{
-                display: 'flex',
-                gap: 10,
-                alignItems: 'center',
-                width: '100%',
-                textAlign: 'left',
-                border: 'none',
-                background: t.bg.subtle,
-                color: t.text.primary,
-                borderRadius: 12,
-                padding: '11px 12px',
-                marginBottom: 8,
-                fontSize: 14,
-                fontFamily: 'inherit',
-                cursor: 'pointer',
-              }}
-            >
-              <span
+          <span
+            style={{
+              fontSize: 12,
+              color: t.text.tertiary,
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {part ? `${part.n} · шаг ${st + 1} из ${part.steps.length}` : 'Как пользоваться сайтом'}
+          </span>
+          <button
+            aria-label="Закрыть"
+            onClick={onClose}
+            style={{
+              flex: 'none',
+              width: 28,
+              height: 28,
+              borderRadius: 9999,
+              border: 'none',
+              background: t.bg.subtle,
+              color: t.text.primary,
+              fontSize: 14,
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+        {!part && (
+          <div style={{ display: 'grid', gap: 6 }}>
+            {GUIDE.map((x, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  dir.current = 1;
+                  setG(i);
+                  setSt(0);
+                }}
                 style={{
-                  flex: 'none',
-                  width: 26,
-                  height: 26,
-                  borderRadius: 9999,
-                  background: t.text.accent,
-                  color: '#fff',
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontSize: 13,
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'center',
+                  width: '100%',
+                  textAlign: 'left',
+                  border: 'none',
+                  background: t.bg.subtle,
+                  color: t.text.primary,
+                  borderRadius: 12,
+                  padding: '8px 10px',
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
                 }}
               >
-                {i + 1}
-              </span>
-              {x.n}
-            </button>
-          ))}
-        </div>
-      )}
-      {part && step && (
-        <div>
-          <div style={{ minHeight: 84, fontSize: 14, lineHeight: 1.45 }}>{step.tx}</div>
-          <div style={{ display: 'flex', gap: 5, justifyContent: 'center', margin: '8px 0' }}>
-            {part.steps.map((_, i) => (
-              <span
-                key={i}
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: 9999,
-                  background: i === st ? t.text.accent : t.border.default,
-                }}
-              />
+                <span
+                  style={{
+                    flex: 'none',
+                    width: 26,
+                    height: 26,
+                    borderRadius: 9999,
+                    background: t.text.accent,
+                    color: '#fff',
+                    display: 'grid',
+                    placeItems: 'center',
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >
+                  {i + 1}
+                </span>
+                <span style={{ minWidth: 0 }}>
+                  <span style={{ display: 'block', fontSize: 14, fontWeight: 600 }}>{x.n}</span>
+                  <span style={{ display: 'block', fontSize: 12, color: t.text.tertiary }}>{x.d}</span>
+                </span>
+              </button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => setG(-1)} style={btn(false)}>
-              ☰ Меню
-            </button>
-            <button onClick={() => mv(-1)} disabled={st === 0} style={{ ...btn(false), opacity: st === 0 ? 0.5 : 1 }}>
-              ‹ Назад
-            </button>
-            <button onClick={() => mv(1)} style={btn(true)}>
-              {st === part.steps.length - 1 ? 'Готово' : 'Дальше ›'}
-            </button>
+        )}
+        {part && step && (
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{step.h}</div>
+            <div style={{ fontSize: 14, lineHeight: 1.45, marginBottom: 12 }}>{step.tx}</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setG(-1)} style={btn(false)}>
+                ☰ Разделы
+              </button>
+              <button onClick={() => st > 0 && mv(-1)} disabled={st === 0} style={btn(false, st === 0)}>
+                ‹ Назад
+              </button>
+              <button onClick={() => mv(1)} style={btn(true)}>
+                {st === part.steps.length - 1 ? 'Готово' : 'Дальше ›'}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
+}
+
+const pinned = (el: Element) =>
+  !!el.closest('[data-mnavbar],[data-gdbar]') || getComputedStyle(el).position === 'fixed';
+
+/** Нижняя граница закреплённой шапки (если она закреплена), иначе 0. */
+function headerBottom(): number {
+  const h = document.querySelector('[data-gdbar]') as HTMLElement | null;
+  if (!h) return 0;
+  const r = h.getBoundingClientRect();
+  return r.top <= 1 && r.height > 0 ? r.bottom : 0;
 }
 
 /** Круглая кнопка «?» — того же вида, что кнопка смены темы. */
