@@ -502,11 +502,18 @@ def collect_pravo_api(key, org, fetch=None, pages=6):
             st, body = fetch(f'{SOURCES[key]}&PageSize={size}&Index={i}')
         if st != 'ok':
             return res, st
-        try:
-            js = json.loads(body) or {}
-            items = js.get('items') or []
-        except Exception as e:
-            return res, f'parse-error: {e}'
+        # 23.11.2026: ответ через прокси иногда обрезан («Unterminated string») — та же страница еще до двух раз
+        for k in range(3):
+            try:
+                js = json.loads(body) or {}
+                items = js.get('items') or []
+                break
+            except Exception as e:
+                if k == 2:
+                    return res, f'parse-error: {e}'
+                st, body = fetch(f'{SOURCES[key]}&PageSize={size}&Index={i}')
+                if st != 'ok':
+                    return res, st
         bp = org in FOIV
         res += parse_pravo_api(body, org, bp)
         old = [
@@ -543,10 +550,16 @@ def collect_pravo_daily(fetch=None, pages=3):
         st, body = fetch(f'{SOURCES["foiv_daily"]}&PageSize=200&Index={i}')
         if st != 'ok':
             return res, st
-        try:
-            js = json.loads(body) or {}
-        except Exception as e:
-            return res, f'parse-error: {e}'
+        for k in range(3):  # 23.11.2026: обрезанный ответ — повтор, как в collect_pravo_api
+            try:
+                js = json.loads(body) or {}
+                break
+            except Exception as e:
+                if k == 2:
+                    return res, f'parse-error: {e}'
+                st, body = fetch(f'{SOURCES["foiv_daily"]}&PageSize=200&Index={i}')
+                if st != 'ok':
+                    return res, st
         res += parse_pravo_daily(body)
         if i >= int(js.get('pagesTotalCount') or 1):
             break

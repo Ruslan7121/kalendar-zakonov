@@ -243,6 +243,21 @@ def _fetch(u):
 O.WIN_FROM = O.dt.date(2026, 11, 12)
 _r, _st = O.collect_pravo_api('pres_pravo', 'pres', fetch=_fetch)
 assert _st == 'ok' and len(_r) == 2 and len(_calls) == 2 and 'PageSize=10&Index=1' in _calls[1], (_st, _calls)
+# 23.11.2026: обрезанный ответ через прокси («Unterminated string») — повтор той же страницы, а не parse-error и n=0
+_calls = []
+
+
+def _fetch_cut(u):
+    _calls.append(u)
+    body = open(os.path.join(_fx, 'pravo_api_pres.json')).read()
+    return 'ok', (body[: len(body) // 2] if len(_calls) == 1 else body)
+
+
+_r, _st = O.collect_pravo_api('pres_pravo', 'pres', fetch=_fetch_cut)
+assert _st == 'ok' and len(_r) == 2 and len(_calls) == 2 and _calls[0] == _calls[1], (_st, _calls)
+_calls = []
+_r, _st = O.collect_pravo_api('pres_pravo', 'pres', fetch=lambda u: (_calls.append(u), ('ok', '{"items": ["x'))[1])
+assert _st.startswith('parse-error') and len(_calls) == 3, (_st, _calls)
 # 17.11.2026: --only pres — длинный сбор только указов Президента (без Правительства и остальных органов), с уже имеющимися событиями не теряется
 _T2 = tempfile.mkdtemp(prefix='gd-organs-only-')
 try:
