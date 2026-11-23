@@ -79,20 +79,27 @@ try {
   await p.evaluate(() => document.getElementById('__cls_probe').remove());
   await sleep(400);
   const base = await cls(); // с учетом контрольного сдвига: он не входит в оценку
-  const tab = (name) =>
-    p.evaluate((n) => {
+  /* Настоящее нажатие мышью (как у человека): браузер не считает сдвиги в первые 500 мс после нажатия — так же
+     устроен замер CLS у реальных пользователей. Программный click() ввода не создает, и смена высоты страницы при
+     переключении вкладки засчитывалась бы как сдвиг. */
+  const tab = async (name) => {
+    const r = await p.evaluate((n) => {
       const b = [...document.querySelectorAll('[role=tab]')]
         .reverse()
         .find((e) => e.textContent.replace(/\s+/g, '') === n.replace(/\s+/g, ''));
-      if (b) b.click();
-      return !!b;
+      if (!b) return null;
+      const q = b.getBoundingClientRect();
+      return { x: q.left + q.width / 2, y: q.top + q.height / 2 };
     }, name);
+    if (r) await p.mouse.click(r.x, r.y);
+    return !!r;
+  };
   for (const n of ['Работа госорганов', 'Новости', 'Вступают в силу', 'Пленарные заседания']) {
     assert.ok(await tab(n), `нет вкладки «${n}»`);
     await sleep(1200);
   }
   const tabs = (await cls()) - base;
-  await p.evaluate(() => document.querySelector('[data-itile]').click());
+  await p.locator('[data-itile]').first().click();
   await p.waitForSelector('[data-gdwin]', { timeout: 8000 });
   await sleep(600);
   await p.keyboard.press('Escape');
