@@ -1,5 +1,5 @@
 {
- "run": "23.11.2026 16:04 МСК",
+ "run": "23.11.2026 19:18 МСК",
  "window": [
   "16.11.2026",
   "23.11.2026"
@@ -8,8 +8,8 @@
  "sources": {
   "pres_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=president",
-   "status": "ok",
-   "n": 83
+   "status": "parse-error: Unterminated string starting at: line 1 column 3836 (char 3835)",
+   "n": 0
   },
   "gov_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=government",
@@ -38,8 +38,8 @@
   },
   "digital_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=1ac1ee36-2621-4c4f-917f-9bffc35d4671",
-   "status": "ok",
-   "n": 100
+   "status": "parse-error: Unterminated string starting at: line 1 column 1743 (char 1742)",
+   "n": 0
   },
   "mvd_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=ff850c93-e869-42ec-9547-a63dad38c204",
@@ -53,8 +53,8 @@
   },
   "minstroy_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=efa6da4b-4c1a-4fa8-8caf-860c17b205fd",
-   "status": "ok",
-   "n": 100
+   "status": "parse-error: Unterminated string starting at: line 1 column 1419 (char 1418)",
+   "n": 0
   },
   "mintrud_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=2c4929b0-9323-4541-9705-76185b9e284b",
@@ -126,6 +126,6 @@
    "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
   }
  },
- "new": 0,
- "total": 1082
+ "new": 1,
+ "total": 1083
 }
