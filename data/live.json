@@ -1,5 +1,5 @@
 {
-"upd": "23.11.2026 20:59",
+"upd": "23.11.2026 21:21",
 "status": {
 "gd": "ok n=11",
 "gov": "ok n=20",
@@ -8,7 +8,7 @@
 "minfin": "ok n=18",
 "mintrud": "ok n=12",
 "minjust": "ok n=20",
-"minzdrav": "ok n=10",
+"minzdrav": "blocked:нет соединения (curl 28)",
 "economy": "blocked:нет соединения (curl 28)"
 },
 "items": [
