@@ -1,7 +1,7 @@
 {
-"upd": "24.11.2026 14:09",
+"upd": "24.11.2026 14:30",
 "status": {
-"gd": "ok n=12",
+"gd": "ok n=13",
 "gov": "ok n=20",
 "sf": "ok n=20",
 "cbr": "ok n=8",
@@ -12,6 +12,20 @@
 "economy": "blocked:нет соединения (curl 28)"
 },
 "items": [
+{
+"o": "gd",
+"d": "24.11.2026",
+"tm": "14:08",
+"t": "Приняты законы о бюджетах Фонда пенсионного и социального страхования и ФОМС на 2027–2029 годы",
+"u": "http://duma.gov.ru/news/64568/"
+},
+{
+"o": "minfin",
+"d": "24.11.2026",
+"tm": "14:05",
+"t": "Владимир Колычев: Сбалансированная бюджетная политика создает условия для экономического роста и инвестиций",
+"u": "https://minfin.gov.ru/ru/press-center/?id_4=40778-vladimir_kolychev_sbalansirovannaya_byudzhetnaya_politika_sozdaet_usloviya_dlya_ekonomicheskogo_rosta_i_investitsii"
+},
 {
 "o": "gd",
 "d": "24.11.2026",
