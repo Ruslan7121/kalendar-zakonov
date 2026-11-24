@@ -1,10 +1,10 @@
 {
- "run": "24.11.2026 22:27 МСК",
+ "run": "25.11.2026 01:04 МСК",
  "window": [
-  "17.11.2026",
-  "24.11.2026"
+  "18.11.2026",
+  "25.11.2026"
  ],
- "ahead_to": "27.11.2026",
+ "ahead_to": "28.11.2026",
  "sources": {
   "pres_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=president",
@@ -69,7 +69,7 @@
   "foiv_daily": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&periodType=daily",
    "status": "ok",
-   "n": 11
+   "n": 0
   },
   "cbr_news": {
    "url": "https://www.cbr.ru/rss/RssNews",
@@ -126,6 +126,6 @@
    "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
   }
  },
- "new": 1,
+ "new": 0,
  "total": 1140
 }
