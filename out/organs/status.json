@@ -1,7 +1,7 @@
 {
- "run": "24.11.2026 19:12 МСК",
+ "run": "24.11.2026 21:43 МСК",
  "window": [
-  "17.11.2026",
+  "21.11.2026",
   "24.11.2026"
  ],
  "ahead_to": "27.11.2026",
@@ -74,7 +74,7 @@
   "cbr_news": {
    "url": "https://www.cbr.ru/rss/RssNews",
    "status": "ok",
-   "n": 11
+   "n": 10
   },
   "cbr_events": {
    "url": "https://www.cbr.ru/rss/eventrss",
@@ -88,13 +88,13 @@
   },
   "mintrud_news": {
    "url": "https://mintrud.gov.ru/news/news/list",
-   "status": "ok",
-   "n": 12
+   "status": "blocked:нет соединения (curl 28)",
+   "n": 0
   },
   "minfin_news": {
    "url": "https://minfin.gov.ru/ru/press-center/",
-   "status": "ok",
-   "n": 18
+   "status": "blocked:HTTP 403, страница ограничения доступа",
+   "n": 0
   },
   "minjust_events": {
    "url": "https://minjust.gov.ru/ru/events/list/",
@@ -113,7 +113,7 @@
   },
   "minfin_projects": {
    "url": "https://minfin.gov.ru/ru/document/npa_projects/",
-   "status": "ok (разбор не реализован)"
+   "status": "blocked:HTTP 403, страница ограничения доступа"
   },
   "mintrud_profstandards": {
    "url": "https://regulation.gov.ru/",
@@ -126,6 +126,6 @@
    "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
   }
  },
- "new": 1,
- "total": 1132
+ "new": 7,
+ "total": 1139
 }

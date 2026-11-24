@@ -216,6 +216,33 @@
   "u": "https://minfin.gov.ru/ru/press-center/?id_4=40779-v_rossii_prodolzhaet_rasti_uroven_finansovoi_kultury_grazhdan"
  },
  {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611240032#24.11.2026",
+  "o": "gov",
+  "d": "24.11.2026",
+  "ty": "решение",
+  "k": "Распоряжение",
+  "t": "Распоряжение № 3488-р от 24.11.2026: Об объявлении благодарности Правительства Российской Федерации",
+  "u": "http://publication.pravo.gov.ru/document/0001202611240032"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611240030#24.11.2026",
+  "o": "gov",
+  "d": "24.11.2026",
+  "ty": "решение",
+  "k": "Постановление",
+  "t": "Постановление № 1569 от 24.11.2026: О внесении изменений в постановление Правительства Российской Федерации от 6 ноября 2024 г. № 1487",
+  "u": "http://publication.pravo.gov.ru/document/0001202611240030"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611240031#24.11.2026",
+  "o": "gov",
+  "d": "24.11.2026",
+  "ty": "решение",
+  "k": "Постановление",
+  "t": "Постановление № 1568 от 24.11.2026: О внесении изменений в некоторые акты Правительства Российской Федерации",
+  "u": "http://publication.pravo.gov.ru/document/0001202611240031"
+ },
+ {
   "id": "economy:http://publication.pravo.gov.ru/document/0001202611240023#24.11.2026",
   "o": "economy",
   "d": "24.11.2026",
@@ -347,6 +374,36 @@
   "u": "https://minfin.gov.ru/ru/press-center/?id_4=40774-v_moskve_sostoyalos_zasedanie_finansovogo_dialoga_mezhdu_rossiei_i_kitaem"
  },
  {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611240035#23.11.2026",
+  "o": "gov",
+  "d": "23.11.2026",
+  "ty": "решение",
+  "k": "Распоряжение",
+  "t": "Распоряжение № 3480-р от 23.11.2026",
+  "u": "http://publication.pravo.gov.ru/document/0001202611240035",
+  "x": "Опубликован 24.11.2026"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611240034#23.11.2026",
+  "o": "gov",
+  "d": "23.11.2026",
+  "ty": "решение",
+  "k": "Распоряжение",
+  "t": "Распоряжение № 3479-р от 23.11.2026",
+  "u": "http://publication.pravo.gov.ru/document/0001202611240034",
+  "x": "Опубликован 24.11.2026"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611240033#23.11.2026",
+  "o": "gov",
+  "d": "23.11.2026",
+  "ty": "решение",
+  "k": "Распоряжение",
+  "t": "Распоряжение № 3478-р от 23.11.2026",
+  "u": "http://publication.pravo.gov.ru/document/0001202611240033",
+  "x": "Опубликован 24.11.2026"
+ },
+ {
   "id": "gov:http://publication.pravo.gov.ru/document/0001202611230020#23.11.2026",
   "o": "gov",
   "d": "23.11.2026",
@@ -381,6 +438,16 @@
   "k": "Распоряжение",
   "t": "Распоряжение № 3470-р от 23.11.2026",
   "u": "http://publication.pravo.gov.ru/document/0001202611230021"
+ },
+ {
+  "id": "gov:http://publication.pravo.gov.ru/document/0001202611240036#23.11.2026",
+  "o": "gov",
+  "d": "23.11.2026",
+  "ty": "решение",
+  "k": "Постановление",
+  "t": "Постановление № 1565 от 23.11.2026: О внесении изменений в постановление Правительства Российской Федерации от 24 февраля 2009 г. № 159",
+  "u": "http://publication.pravo.gov.ru/document/0001202611240036",
+  "x": "Опубликован 24.11.2026"
  },
  {
   "id": "gov:http://publication.pravo.gov.ru/document/0001202611230026#23.11.2026",
