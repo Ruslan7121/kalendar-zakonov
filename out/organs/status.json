@@ -1,5 +1,5 @@
 {
- "run": "24.11.2026 16:22 МСК",
+ "run": "24.11.2026 16:38 МСК",
  "window": [
   "17.11.2026",
   "24.11.2026"
@@ -69,7 +69,7 @@
   "foiv_daily": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&periodType=daily",
    "status": "ok",
-   "n": 0
+   "n": 11
   },
   "cbr_news": {
    "url": "https://www.cbr.ru/rss/RssNews",
@@ -126,6 +126,6 @@
    "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
   }
  },
- "new": 15,
- "total": 1120
+ "new": 11,
+ "total": 1131
 }
