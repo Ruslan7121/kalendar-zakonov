@@ -7,7 +7,7 @@ X-WR-CALNAME:Пленарные заседания Госдумы
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:gd-20261126@kalendar-zakonov
-DTSTAMP:20261124T161947Z
+DTSTAMP:20261124T192430Z
 DTSTART;VALUE=DATE:20261126
 DTEND;VALUE=DATE:20261127
 SUMMARY:Пленарное заседание Госдумы (ожида
@@ -20,7 +20,7 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:gd-20261125@kalendar-zakonov
-DTSTAMP:20261124T161947Z
+DTSTAMP:20261124T192430Z
 DTSTART;VALUE=DATE:20261125
 DTEND;VALUE=DATE:20261126
 SUMMARY:Пленарное заседание Госдумы (ожида
@@ -35,12 +35,11 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:gd-20261124@kalendar-zakonov
-DTSTAMP:20261124T161947Z
+DTSTAMP:20261124T192430Z
 DTSTART;VALUE=DATE:20261124
 DTEND;VALUE=DATE:20261125
-SUMMARY:Пленарное заседание Госдумы (ожида
- ется по распорядку)
-DESCRIPTION:Законопроектов в повестке: 27\nИст
+SUMMARY:Пленарное заседание Госдумы
+DESCRIPTION:Законопроектов в повестке: 34\nИст
  очник: по распорядку\; повестка не опубл
  икована
 URL:https://ruslan7121.github.io/kalendar-zakonov/?d=24.11.2026
