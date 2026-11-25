@@ -1,5 +1,5 @@
 {
-"upd": "25.11.2026 21:22",
+"upd": "25.11.2026 21:44",
 "status": {
 "gd": "ok n=8",
 "gov": "ok n=20",
@@ -7,11 +7,18 @@
 "cbr": "ok n=8",
 "minfin": "ok n=18",
 "mintrud": "ok n=12",
-"minjust": "ok n=20",
+"minjust": "blocked:нет соединения (curl 28)",
 "minzdrav": "blocked:нет соединения (curl 28)",
 "economy": "blocked:нет соединения (curl 28)"
 },
 "items": [
+{
+"o": "minfin",
+"d": "25.11.2026",
+"tm": "21:40",
+"t": "Антон Силуанов провел рабочую встречу с губернатором Белгородской области Александром Шуваевым",
+"u": "https://minfin.gov.ru/ru/press-center/?id_4=40783-anton_siluanov_provel_rabochuyu_vstrechu_s_gubernatorom_belgorodskoi_oblasti_aleksandrom_shuvaevym"
+},
 {
 "o": "gov",
 "d": "25.11.2026",
