@@ -7,7 +7,7 @@ X-WR-CALNAME:Пленарные заседания Госдумы
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:gd-20261126@kalendar-zakonov
-DTSTAMP:20261125T201311Z
+DTSTAMP:20261125T221706Z
 DTSTART;VALUE=DATE:20261126
 DTEND;VALUE=DATE:20261127
 SUMMARY:Пленарное заседание Госдумы (ожида
@@ -16,20 +16,6 @@ DESCRIPTION:Законопроектов в повестке: 4\nИсто
  чник: по распорядку\; повестка не опубли
  кована
 URL:https://ruslan7121.github.io/kalendar-zakonov/?d=26.11.2026
-TRANSP:TRANSPARENT
-END:VEVENT
-BEGIN:VEVENT
-UID:gd-20261125@kalendar-zakonov
-DTSTAMP:20261125T201311Z
-DTSTART;VALUE=DATE:20261125
-DTEND;VALUE=DATE:20261126
-SUMMARY:Пленарное заседание Госдумы
-DESCRIPTION:Законопроектов в повестке: 4\nИсто
- чник: по распорядку\; повестка не опубли
- кована\; «правительственный час» 25.11 — 
- постановление ГД (голосование 136300\, 10.11.2
- 026)
-URL:https://ruslan7121.github.io/kalendar-zakonov/?d=25.11.2026
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR
