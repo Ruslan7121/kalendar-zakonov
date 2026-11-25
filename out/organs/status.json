@@ -1,5 +1,5 @@
 {
- "run": "25.11.2026 13:09 МСК",
+ "run": "25.11.2026 16:23 МСК",
  "window": [
   "18.11.2026",
   "25.11.2026"
@@ -69,12 +69,12 @@
   "foiv_daily": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&periodType=daily",
    "status": "ok",
-   "n": 0
+   "n": 2
   },
   "cbr_news": {
    "url": "https://www.cbr.ru/rss/RssNews",
    "status": "ok",
-   "n": 10
+   "n": 8
   },
   "cbr_events": {
    "url": "https://www.cbr.ru/rss/eventrss",
@@ -98,8 +98,8 @@
   },
   "minjust_events": {
    "url": "https://minjust.gov.ru/ru/events/list/",
-   "status": "ok",
-   "n": 20
+   "status": "blocked:нет соединения (curl 28)",
+   "n": 0
   },
   "minfin_pravo": {
    "url": "http://publication.pravo.gov.ru/documents/foiv283/monthly",
@@ -126,6 +126,6 @@
    "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
   }
  },
- "new": 0,
- "total": 1140
+ "new": 2,
+ "total": 1142
 }
