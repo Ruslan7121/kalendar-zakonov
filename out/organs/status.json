@@ -1,5 +1,5 @@
 {
- "run": "25.11.2026 08:05 МСК",
+ "run": "25.11.2026 10:18 МСК",
  "window": [
   "18.11.2026",
   "25.11.2026"
@@ -8,8 +8,8 @@
  "sources": {
   "pres_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=president",
-   "status": "parse-error: Unterminated string starting at: line 1 column 37582 (char 37581)",
-   "n": 0
+   "status": "ok",
+   "n": 86
   },
   "gov_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=government",
