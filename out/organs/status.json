@@ -1,7 +1,7 @@
 {
- "run": "25.11.2026 19:18 МСК",
+ "run": "25.11.2026 21:39 МСК",
  "window": [
-  "18.11.2026",
+  "22.11.2026",
   "25.11.2026"
  ],
  "ahead_to": "28.11.2026",
@@ -83,8 +83,8 @@
   },
   "mintrud_docs": {
    "url": "https://mintrud.gov.ru/document/rss",
-   "status": "blocked:нет соединения (curl 56)",
-   "n": 0
+   "status": "ok",
+   "n": 65
   },
   "mintrud_news": {
    "url": "https://mintrud.gov.ru/news/news/list",
@@ -126,6 +126,6 @@
    "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
   }
  },
- "new": 8,
- "total": 1150
+ "new": 11,
+ "total": 1161
 }
