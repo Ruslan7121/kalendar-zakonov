@@ -1,5 +1,5 @@
 {
-"upd": "25.11.2026 18:31",
+"upd": "25.11.2026 18:52",
 "status": {
 "gd": "ok n=8",
 "gov": "ok n=20",
@@ -7,11 +7,25 @@
 "cbr": "ok n=8",
 "minfin": "ok n=18",
 "mintrud": "ok n=12",
-"minjust": "blocked:нет соединения (curl 28)",
+"minjust": "ok n=20",
 "minzdrav": "ok n=10",
 "economy": "blocked:нет соединения (curl 28)"
 },
 "items": [
+{
+"o": "minfin",
+"d": "25.11.2026",
+"tm": "18:40",
+"t": "Антон Силуанов обозначил ключевые задачи ФНС России на ближайшую перспективу",
+"u": "https://minfin.gov.ru/ru/press-center/?id_4=40781-anton_siluanov_oboznachil_klyuchevye_zadachi_fns_rossii_na_blizhaishuyu_perspektivu"
+},
+{
+"o": "gov",
+"d": "25.11.2026",
+"tm": "18:30",
+"t": "Денис Мантуров встретился с губернатором Ставропольского края Владимиром Владимировым",
+"u": "http://government.ru/news/60548/"
+},
 {
 "o": "gov",
 "d": "25.11.2026",
