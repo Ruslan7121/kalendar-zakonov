@@ -1,7 +1,7 @@
 {
- "run": "25.11.2026 21:39 МСК",
+ "run": "25.11.2026 23:02 МСК",
  "window": [
-  "22.11.2026",
+  "18.11.2026",
   "25.11.2026"
  ],
  "ahead_to": "28.11.2026",
@@ -83,8 +83,8 @@
   },
   "mintrud_docs": {
    "url": "https://mintrud.gov.ru/document/rss",
-   "status": "ok",
-   "n": 65
+   "status": "blocked:нет соединения (curl 6)",
+   "n": 0
   },
   "mintrud_news": {
    "url": "https://mintrud.gov.ru/news/news/list",
@@ -98,8 +98,8 @@
   },
   "minjust_events": {
    "url": "https://minjust.gov.ru/ru/events/list/",
-   "status": "ok",
-   "n": 20
+   "status": "blocked:нет соединения (curl 28)",
+   "n": 0
   },
   "minfin_pravo": {
    "url": "http://publication.pravo.gov.ru/documents/foiv283/monthly",
@@ -126,6 +126,6 @@
    "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
   }
  },
- "new": 11,
- "total": 1161
+ "new": 2,
+ "total": 1163
 }
