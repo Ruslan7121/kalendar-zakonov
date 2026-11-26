@@ -255,10 +255,11 @@ try {
   const cnt = `document.querySelectorAll('[data-itile]').length`; /* 22.11.2026: считаем плитки законопроектов (строки «законопроектов: N» под датой больше нет) */
   const n1 = await ev(cnt);
   const nm = await ev(`document.querySelectorAll('[data-imitem]').length`);
-  if (nm > 1) {
-    await ev(
-      `[...document.querySelectorAll('[data-imitem]')].find((b) => b.getAttribute('aria-pressed') === 'false').click()`,
-    );
+  /* 27.11.2026: будущие месяцы с назначенными заседаниями (CAL.p, например декабрь по календарю ГД) есть в списке, но итогов
+     в них еще нет — для проверки суммирования берется прошедший или текущий месяц */
+  const pastM = `[...document.querySelectorAll('[data-imitem]')].find((b) => { const k = b.getAttribute('data-imitem'); const n = new Date(); return b.getAttribute('aria-pressed') === 'false' && k.slice(3) + k.slice(0, 2) <= String(n.getFullYear()) + String(n.getMonth() + 1).padStart(2, '0'); })`;
+  if (nm > 1 && (await ev(`!!${pastM}`))) {
+    await ev(`${pastM}.click()`);
     await sleep(400);
     const n2 = await ev(cnt);
     const on = await ev(`document.querySelectorAll('[data-imitem][aria-pressed=true]').length`);
