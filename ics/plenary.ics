@@ -7,14 +7,13 @@ X-WR-CALNAME:Пленарные заседания Госдумы
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
 UID:gd-20261126@kalendar-zakonov
-DTSTAMP:20261126T170949Z
+DTSTAMP:20261126T185824Z
 DTSTART;VALUE=DATE:20261126
 DTEND;VALUE=DATE:20261127
-SUMMARY:Пленарное заседание Госдумы (ожида
- ется по распорядку)
-DESCRIPTION:Законопроектов в повестке: 4\nИсто
- чник: по распорядку\; повестка не опубли
- кована
+SUMMARY:Пленарное заседание Госдумы
+DESCRIPTION:Законопроектов в повестке: 86\nИст
+ очник: по распорядку\; повестка не опубл
+ икована
 URL:https://ruslan7121.github.io/kalendar-zakonov/?d=26.11.2026
 TRANSP:TRANSPARENT
 END:VEVENT
