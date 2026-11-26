@@ -1,7 +1,7 @@
 {
-"upd": "26.11.2026 13:51",
+"upd": "26.11.2026 14:13",
 "status": {
-"gd": "ok n=20 pages=2",
+"gd": "ok n=19 pages=2",
 "gov": "ok n=20",
 "sf": "ok n=20",
 "cbr": "ok n=9",
@@ -12,6 +12,20 @@
 "economy": "blocked:нет соединения (curl 28)"
 },
 "items": [
+{
+"o": "minfin",
+"d": "26.11.2026",
+"tm": "14:00",
+"t": "Минфин России внес в Правительство РФ законопроект об оптимизации системы учета оборота пива и слабоалкогольных напитков",
+"u": "https://minfin.gov.ru/ru/press-center/?id_4=40787-minfin_rossii_vnes_v_pravitelstvo_rf_zakonoproekt_ob_optimizatsii_sistemy_ucheta_oborota_piva_i_slaboalkogolnykh_napitkov"
+},
+{
+"o": "gd",
+"d": "26.11.2026",
+"tm": "13:52",
+"t": "Вячеслав Володин: дополнительное регулирование семейного образования посчитали избыточным",
+"u": "http://duma.gov.ru/news/64600/"
+},
 {
 "o": "gov",
 "d": "26.11.2026",
