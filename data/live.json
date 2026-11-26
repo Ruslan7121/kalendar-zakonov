@@ -1,5 +1,5 @@
 {
-"upd": "26.11.2026 15:39",
+"upd": "26.11.2026 16:00",
 "status": {
 "gd": "ok n=18 pages=2",
 "gov": "ok n=20",
@@ -7,11 +7,18 @@
 "cbr": "ok n=9",
 "minfin": "ok n=18",
 "mintrud": "ok n=12",
-"minjust": "blocked:нет соединения (curl 28)",
+"minjust": "ok n=20",
 "minzdrav": "ok n=10",
 "economy": "blocked:нет соединения (curl 28)"
 },
 "items": [
+{
+"o": "gov",
+"d": "26.11.2026",
+"tm": "15:55",
+"t": "Заседание Правительства",
+"u": "http://government.ru/news/60558/"
+},
 {
 "o": "sf",
 "d": "26.11.2026",
