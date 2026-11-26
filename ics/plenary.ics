@@ -6,15 +6,131 @@ METHOD:PUBLISH
 X-WR-CALNAME:Пленарные заседания Госдумы
 X-WR-TIMEZONE:Europe/Moscow
 BEGIN:VEVENT
-UID:gd-20261126@kalendar-zakonov
-DTSTAMP:20261126T195815Z
-DTSTART;VALUE=DATE:20261126
-DTEND;VALUE=DATE:20261127
-SUMMARY:Пленарное заседание Госдумы
-DESCRIPTION:Законопроектов в повестке: 86\nИст
- очник: по распорядку\; повестка не опубл
- икована
-URL:https://ruslan7121.github.io/kalendar-zakonov/?d=26.11.2026
+UID:gd-20261224@kalendar-zakonov
+DTSTAMP:20261126T224620Z
+DTSTART;VALUE=DATE:20261224
+DTEND;VALUE=DATE:20261225
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Источник: Календарь рассмотрения
+  вопросов Государственной Думой в дека
+ бре 2026 года (постановление ГД от 26.11.2026 
+ № 560-9 ГД\; sozd.duma.gov.ru\, размещен 26.11.2026 16:44)
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=24.12.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261223@kalendar-zakonov
+DTSTAMP:20261126T224620Z
+DTSTART;VALUE=DATE:20261223
+DTEND;VALUE=DATE:20261224
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Источник: Календарь рассмотрения
+  вопросов Государственной Думой в дека
+ бре 2026 года (постановление ГД от 26.11.2026 
+ № 560-9 ГД\; sozd.duma.gov.ru\, размещен 26.11.2026 16:44)
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=23.12.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261222@kalendar-zakonov
+DTSTAMP:20261126T224620Z
+DTSTART;VALUE=DATE:20261222
+DTEND;VALUE=DATE:20261223
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Источник: Календарь рассмотрения
+  вопросов Государственной Думой в дека
+ бре 2026 года (постановление ГД от 26.11.2026 
+ № 560-9 ГД\; sozd.duma.gov.ru\, размещен 26.11.2026 16:44)
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=22.12.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261217@kalendar-zakonov
+DTSTAMP:20261126T224620Z
+DTSTART;VALUE=DATE:20261217
+DTEND;VALUE=DATE:20261218
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Источник: Календарь рассмотрения
+  вопросов Государственной Думой в дека
+ бре 2026 года (постановление ГД от 26.11.2026 
+ № 560-9 ГД\; sozd.duma.gov.ru\, размещен 26.11.2026 16:44)
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=17.12.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261216@kalendar-zakonov
+DTSTAMP:20261126T224620Z
+DTSTART;VALUE=DATE:20261216
+DTEND;VALUE=DATE:20261217
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Источник: Календарь рассмотрения
+  вопросов Государственной Думой в дека
+ бре 2026 года (постановление ГД от 26.11.2026 
+ № 560-9 ГД\; sozd.duma.gov.ru\, размещен 26.11.2026 16:44)
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=16.12.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261215@kalendar-zakonov
+DTSTAMP:20261126T224620Z
+DTSTART;VALUE=DATE:20261215
+DTEND;VALUE=DATE:20261216
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Источник: Календарь рассмотрения
+  вопросов Государственной Думой в дека
+ бре 2026 года (постановление ГД от 26.11.2026 
+ № 560-9 ГД\; sozd.duma.gov.ru\, размещен 26.11.2026 16:44)
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=15.12.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261210@kalendar-zakonov
+DTSTAMP:20261126T224620Z
+DTSTART;VALUE=DATE:20261210
+DTEND;VALUE=DATE:20261211
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Источник: Календарь рассмотрения
+  вопросов Государственной Думой в дека
+ бре 2026 года (постановление ГД от 26.11.2026 
+ № 560-9 ГД\; sozd.duma.gov.ru\, размещен 26.11.2026 16:44)
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=10.12.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261209@kalendar-zakonov
+DTSTAMP:20261126T224620Z
+DTSTART;VALUE=DATE:20261209
+DTEND;VALUE=DATE:20261210
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Источник: Календарь рассмотрения
+  вопросов Государственной Думой в дека
+ бре 2026 года (постановление ГД от 26.11.2026 
+ № 560-9 ГД\; sozd.duma.gov.ru\, размещен 26.11.2026 16:44)
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=09.12.2026
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:gd-20261208@kalendar-zakonov
+DTSTAMP:20261126T224620Z
+DTSTART;VALUE=DATE:20261208
+DTEND;VALUE=DATE:20261209
+SUMMARY:Пленарное заседание Госдумы (назна
+ чено)
+DESCRIPTION:Источник: Календарь рассмотрения
+  вопросов Государственной Думой в дека
+ бре 2026 года (постановление ГД от 26.11.2026 
+ № 560-9 ГД\; sozd.duma.gov.ru\, размещен 26.11.2026 16:44)\;
+  sozd.duma.gov.ru: «8 декабря 12:00 Заседание Госу
+ дарственной Думы»
+URL:https://ruslan7121.github.io/kalendar-zakonov/?d=08.12.2026
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR
