@@ -1,5 +1,5 @@
 {
- "run": "26.11.2026 13:10 МСК",
+ "run": "26.11.2026 16:04 МСК",
  "window": [
   "19.11.2026",
   "26.11.2026"
@@ -74,7 +74,7 @@
   "cbr_news": {
    "url": "https://www.cbr.ru/rss/RssNews",
    "status": "ok",
-   "n": 8
+   "n": 9
   },
   "cbr_events": {
    "url": "https://www.cbr.ru/rss/eventrss",
@@ -89,7 +89,7 @@
   "mintrud_news": {
    "url": "https://mintrud.gov.ru/news/news/list",
    "status": "ok",
-   "n": 12
+   "n": 8
   },
   "minfin_news": {
    "url": "https://minfin.gov.ru/ru/press-center/",
@@ -99,7 +99,7 @@
   "minjust_events": {
    "url": "https://minjust.gov.ru/ru/events/list/",
    "status": "ok",
-   "n": 0
+   "n": 20
   },
   "minfin_pravo": {
    "url": "http://publication.pravo.gov.ru/documents/foiv283/monthly",
@@ -126,6 +126,6 @@
    "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
   }
  },
- "new": 3,
- "total": 1166
+ "new": 7,
+ "total": 1173
 }
