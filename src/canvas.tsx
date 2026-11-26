@@ -3589,14 +3589,24 @@ function buildFS0(day: string, votes: Vote[]): Record<string, FSub[]> {
    Новость, уже собранная в данные дня (та же ссылка), второй раз не показывается; пришедшие после открытия (fresh) ждут нажатия плашки. */
 const liveAll = (): any[] => (GDX && GDX.live ? GDX.live.items : []);
 const liveFresh = (): Set<string> => (GDX && GDX.live ? GDX.live.fresh : new Set());
+/* 26.11.2026: акт или заседание, которые уже стоят в календаре (документ органа в ORG, заседание Правительства в CAL.g), не повторяются
+   оперативной новостью с той же ссылкой (http/https и «www.» не различаем): в календаре остается карточка, из новостей повтор убран. */
+const normU = (u: string) => (u || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/+$/, '');
+let calUK = ''; let calUS = new Set<string>();
+function calUrls(): Set<string> {
+  const k = ORG.length + ':' + CAL.g.length; if (k === calUK) return calUS;
+  const s = new Set<string>(); ORG.forEach((x: any) => { if (x && x.u) s.add(normU(x.u)); });
+  CAL.g.forEach((g: any) => (Array.isArray(g) ? g : []).forEach((v: any) => { if (typeof v === 'string' && /^https?:\/\//.test(v)) s.add(normU(v)); }));
+  calUK = k; calUS = s; return s;
+}
 function newsItems(d: string): NItem[] {
   const out: NItem[] = []; const fs = buildFS(d, DATA[d] ? parse(DATA[d]) : []);
   ([['gd', fs['Госдума'] || []], ['gov', fs['Правительство'] || []]] as [string, FSub[]][]).forEach(([o, subs]) => subs.forEach(([h, it]) => it.forEach(([x, u]) => {
     const [tg, tx] = /Главное|Постановления|Законопроекты/.test(h) ? splitTag(x) : [null, x];
     out.push({ o, sec: /^Главное/.test(h) ? '' : h, tag: tg, text: tx, sub: '', u: u || '' }); })));
   ORGK.forEach((o) => newsOrg(o, d).forEach((x: any) => out.push({ o, sec: '', tag: null, text: x.st || x.t || '', sub: orgSut(x)[0] || x.x || '', u: x.u && isOff(x.u) ? x.u : '' })));
-  const have = new Set(out.map((x) => x.u).filter(Boolean)); const fr = liveFresh();
-  const lv = liveAll().filter((x: any) => x.d === d && !have.has(x.u) && !fr.has(x.u) && isOff(x.u)).sort((a: any, b: any) => (b.tm || '').localeCompare(a.tm || ''));
+  const have = new Set(out.map((x) => x.u).filter(Boolean)); const fr = liveFresh(); const inCal = calUrls();
+  const lv = liveAll().filter((x: any) => x.d === d && !have.has(x.u) && !inCal.has(normU(x.u)) && !fr.has(x.u) && isOff(x.u)).sort((a: any, b: any) => (b.tm || '').localeCompare(a.tm || ''));
   /* 18.11.2026: текст новости (b) приходит из live.json; новость, уже попавшая в данные дня (та же ссылка), тоже получает его — нажатие открывает карточку */
   const lb = new Map<string, string[]>(); liveAll().forEach((x: any) => { if (x.u && Array.isArray(x.b) && x.b.length) lb.set(x.u, x.b); });
   return [...lv.map((x: any) => ({ o: x.o, sec: '', tag: null, text: x.t, sub: x.x || '', u: x.u, tm: x.tm || '', live: true, b: lb.get(x.u), d: x.d })), ...out.map((x) => (x.u && lb.has(x.u) ? { ...x, b: lb.get(x.u), d } : x))];

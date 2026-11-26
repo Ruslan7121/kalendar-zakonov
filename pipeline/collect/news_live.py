@@ -97,6 +97,37 @@ def p_gd(h):
     return res
 
 
+GD_PAGE = 'http://duma.gov.ru/news/page/{}/'
+GD_MAXP = 30
+
+
+def gd_all(fetch, lo, maxp=GD_MAXP):
+    """26.11.2026: лента duma.gov.ru/news/ отдает по 15 новостей на страницу, за день их бывает 20–40, и одна первая страница
+    теряла новости (21.11 и 24–25.11). Читаем страницы /news/, /news/page/2/, … пока на странице есть новости не старше lo
+    (дата; по умолчанию — вчера, чтобы весь вчерашний и сегодняшний день попали целиком), не больше maxp страниц.
+    fetch(n) → (статус, html) для страницы n (1 — сама /news/). Возвращает (новости без повторов, число прочитанных страниц, статус)."""
+    res, seen, n, st0 = [], set(), 0, 'ok'
+    for n in range(1, maxp + 1):
+        st, body = fetch(n)
+        if st != 'ok':
+            if n == 1:
+                return [], 0, st
+            st0 = f'page{n}: {st}'
+            n -= 1
+            break
+        page = p_gd(body)
+        if not page:
+            break
+        for x in page:
+            if x['u'] not in seen:
+                seen.add(x['u'])
+                res.append(x)
+        oldest = min(dt.datetime.strptime(x['d'], '%d.%m.%Y').date() for x in page)
+        if oldest < lo:
+            break
+    return res, n, st0
+
+
 def p_sf(h):
     """council.gov.ru/events/news/: карточки <div class="hentry_event …"> — <h3 class="hentry__title"><a href="/events/news/N/">заголовок</a></h3>
     и ниже <time class="dt-published" datetime="2026-11-13T19:28:00+04:00">. Время берем цифрами как есть (это московское время;
@@ -248,7 +279,7 @@ PARSE = {
 }
 
 
-def collect(prev, offline=None):
+def collect(prev, offline=None, today=None):
     known = {x['u']: x for x in prev}
     got, status = [], {}
     for o, url in SRC.items():
@@ -262,6 +293,21 @@ def collect(prev, offline=None):
                 st, body = O.get(url)
             if st != 'ok':
                 status[o] = st
+                continue
+            if o == 'gd':  # все страницы ленты за вчера и сегодня (см. gd_all)
+                first = body
+
+                def fetch(n):
+                    if n == 1:
+                        return 'ok', first
+                    if offline:
+                        f = os.path.join(offline, f'duma_news_p{n}.html')
+                        return ('ok', open(f, encoding='utf-8').read()) if os.path.exists(f) else ('no-fixture', '')
+                    return O.get(GD_PAGE.format(n))
+
+                r, pages, pst = gd_all(fetch, (today or dt.datetime.now(MSK).date()) - dt.timedelta(days=1))
+                status[o] = f'ok n={len(r)} pages={pages}' + ('' if pst == 'ok' else f' ({pst})')
+                got += r
                 continue
             r = p_minfin(body, known) if o == 'minfin' else PARSE[o](body)
             status[o] = f'ok n={len(r)}'
@@ -307,7 +353,7 @@ def main(argv=None):
         except Exception as e:
             print(f'прежний файл не прочитан: {e}', file=sys.stderr)
     today = dt.datetime.strptime(a.today, '%d.%m.%Y').date() if a.today else dt.datetime.now(MSK).date()
-    got, status = collect(prev, a.offline)
+    got, status = collect(prev, a.offline, today)
     items = merge(prev, got, a.days, today)
     old = {x['u'] for x in prev}
     new = [x for x in items if x['u'] not in old]
