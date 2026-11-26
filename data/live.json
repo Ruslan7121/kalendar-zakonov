@@ -1,5 +1,5 @@
 {
-"upd": "26.11.2026 09:14",
+"upd": "26.11.2026 09:35",
 "status": {
 "gd": "ok n=8",
 "gov": "ok n=20",
@@ -7,7 +7,7 @@
 "cbr": "ok n=8",
 "minfin": "ok n=18",
 "mintrud": "ok n=12",
-"minjust": "ok n=20",
+"minjust": "ok n=0",
 "minzdrav": "ok n=10",
 "economy": "blocked:нет соединения (curl 28)"
 },
@@ -53,6 +53,13 @@
 "tm": "21:40",
 "t": "Антон Силуанов провел рабочую встречу с губернатором Белгородской области Александром Шуваевым",
 "u": "https://minfin.gov.ru/ru/press-center/?id_4=40783-anton_siluanov_provel_rabochuyu_vstrechu_s_gubernatorom_belgorodskoi_oblasti_aleksandrom_shuvaevym"
+},
+{
+"o": "sf",
+"d": "25.11.2026",
+"tm": "21:00",
+"t": "Н. Кувшинова: Почти четверть населения России имеет право на получение бесплатной юридической помощи",
+"u": "http://council.gov.ru/events/news/178625/"
 },
 {
 "o": "gov",
