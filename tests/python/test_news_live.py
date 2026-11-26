@@ -104,3 +104,50 @@ assert {x['u'] for x in new2} == {x['u'] for x in J2['items']} - {x['u'] for x i
 print(
     f'OK test_news_live: {len(items)} новостей ({", ".join(f"{o} {len(v)}" for o, v in by.items())}); слияние и окно 7 дней'
 )
+
+# 26.11.2026: лента Госдумы читается постранично (/news/, /news/page/2/, …), пока на странице есть новости не старше lo;
+# раньше бралась только первая страница (15 новостей) и терялись новости дня (21.11, 24–25.11)
+import datetime as _dt
+
+
+def _page(items):
+    return ''.join(
+        f'<article class="article--post"><a href="/news/{i}/">x</a><time datetime="{d} {tm}:00"></time>'
+        f'<h6 class="article--post__title">Новость номер {i} для проверки</h6></article>'
+        for i, d, tm in items
+    )
+
+
+PAGES = {
+    1: _page([(64600 - k, '2026-11-25', f'{20 - k // 2:02d}:00') for k in range(15)]),
+    2: _page(
+        [(64585 - k, '2026-11-25', '09:00') for k in range(10)] + [(64575 - k, '2026-11-24', '18:00') for k in range(5)]
+    ),
+    3: _page(
+        [(64570 - k, '2026-11-24', '12:00') for k in range(10)] + [(64560 - k, '2026-11-23', '18:00') for k in range(5)]
+    ),
+    4: _page([(64555 - k, '2026-11-23', '10:00') for k in range(15)]),
+}
+calls = []
+
+
+def _fetch(n):
+    calls.append(n)
+    return ('ok', PAGES[n]) if n in PAGES else ('error 404', '')
+
+
+r, pages, st = N.gd_all(_fetch, _dt.date(2026, 11, 24))
+assert calls == [1, 2, 3] and pages == 3 and st == 'ok', (calls, pages, st)
+us = {x['u'] for x in r}
+assert len(r) == 45 == len(us), len(r)
+assert 'http://duma.gov.ru/news/64571/' in us and 'http://duma.gov.ru/news/64575/' in us  # вторая и третья страницы
+assert sum(x['d'] == '24.11.2026' for x in r) == 15 and sum(x['d'] == '25.11.2026' for x in r) == 25
+# страница не ответила — берем, что прочитано, и пишем это в статус; первая не ответила — источник недоступен
+calls.clear()
+r2, p2, st2 = N.gd_all(lambda n: _fetch(n) if n < 3 else ('error 500', ''), _dt.date(2026, 11, 20))
+assert p2 == 2 and len(r2) == 30 and st2 == 'page3: error 500', (p2, len(r2), st2)
+assert N.gd_all(lambda n: ('error 500', ''), _dt.date(2026, 11, 24)) == ([], 0, 'error 500')
+# пустая страница — конец ленты; предел страниц
+assert N.gd_all(lambda n: ('ok', PAGES.get(n, '')), _dt.date(2026, 1, 1))[1] == 5
+assert N.gd_all(lambda n: ('ok', PAGES[1]), _dt.date(2026, 1, 1), maxp=4)[1] == 4
+print('test_news_live: постраничный сбор Госдумы OK')
