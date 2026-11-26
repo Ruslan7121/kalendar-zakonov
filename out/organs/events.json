@@ -101,6 +101,15 @@
   "u": "http://publication.pravo.gov.ru/document/0001202611260020"
  },
  {
+  "id": "pres:http://publication.pravo.gov.ru/document/0001202611260037#26.11.2026",
+  "o": "pres",
+  "d": "26.11.2026",
+  "ty": "решение",
+  "k": "Указ",
+  "t": "Указ № 872 от 26.11.2026: О Стратегии развития Арктической зоны Российской Федерации и обеспечения национальной безопасности в Арктике",
+  "u": "http://publication.pravo.gov.ru/document/0001202611260037"
+ },
+ {
   "id": "pres:http://publication.pravo.gov.ru/document/0001202611260005#26.11.2026",
   "o": "pres",
   "d": "26.11.2026",
@@ -131,6 +140,17 @@
   "x": "Зарегистрирован Минюстом 25.11.2026 № 89278. Опубликован 26.11.2026"
  },
  {
+  "id": "mintrans:http://publication.pravo.gov.ru/document/0001202611260031#26.11.2026",
+  "o": "mintrans",
+  "d": "26.11.2026",
+  "ty": "решение",
+  "k": "Приказ",
+  "t": "Приказ № 452 от 30.10.2026: О внесении изменений в Федеральные авиационные правила «Требования к специалистам авиационного персонала, осуществляющим деятельность по организации использования воздушного пространства…",
+  "u": "http://publication.pravo.gov.ru/document/0001202611260031",
+  "tf": "Приказ № 452 от 30.10.2026: О внесении изменений в Федеральные авиационные правила «Требования к специалистам авиационного персонала, осуществляющим деятельность по организации использования воздушного пространства, организации и обслуживанию воздушного движения», утвержденные приказом Министерства транспорта Российской Федерации от 12 января 2026 г. № 10",
+  "x": "Зарегистрирован Минюстом 26.11.2026 № 89289. Опубликован 26.11.2026"
+ },
+ {
   "id": "minjust:http://publication.pravo.gov.ru/document/0001202611260021#26.11.2026",
   "o": "minjust",
   "d": "26.11.2026",
@@ -151,6 +171,26 @@
   "u": "https://minfin.gov.ru/ru/press-center/?id_4=40782-prodolzhayutsya_kompensatsionnye_vyplaty_za_ushcherb_ot_voennykh_riskov"
  },
  {
+  "id": "minfin:http://publication.pravo.gov.ru/document/0001202611260035#26.11.2026",
+  "o": "minfin",
+  "d": "26.11.2026",
+  "ty": "решение",
+  "k": "Приказ",
+  "t": "Приказ № 162н/989 от 21.10.2026: О внесении изменений в места международного почтового обмена, являющиеся объектами почтовой связи, на территории Российской Федерации, определенные приказом Министерства финансов…",
+  "u": "http://publication.pravo.gov.ru/document/0001202611260035",
+  "tf": "Приказ № 162н/989 от 21.10.2026: О внесении изменений в места международного почтового обмена, являющиеся объектами почтовой связи, на территории Российской Федерации, определенные приказом Министерства финансов Российской Федерации и Министерства цифрового развития, связи и массовых коммуникаций Российской Федерации от 28 декабря 2022 г. № 197н/1020",
+  "x": "Зарегистрирован Минюстом 25.11.2026 № 89284"
+ },
+ {
+  "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40789-pravitelstvo_rossii_odobrilo_ispolnenie_federalnogo_byudzheta_za_9_mesyatsev_2026_goda#26.11.2026",
+  "o": "minfin",
+  "d": "26.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Правительство России одобрило исполнение федерального бюджета за 9 месяцев 2026 года",
+  "u": "https://minfin.gov.ru/ru/press-center/?id_4=40789-pravitelstvo_rossii_odobrilo_ispolnenie_federalnogo_byudzheta_za_9_mesyatsev_2026_goda"
+ },
+ {
   "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40785-na_dalnem_vostoke_i_v_arktike_deistvuyut_pochti_400_tys._msp#26.11.2026",
   "o": "minfin",
   "d": "26.11.2026",
@@ -169,6 +209,15 @@
   "u": "https://minfin.gov.ru/ru/press-center/?id_4=40787-minfin_rossii_vnes_v_pravitelstvo_rf_zakonoproekt_ob_optimizatsii_sistemy_ucheta_oborota_piva_i_slaboalkogolnykh_napitkov"
  },
  {
+  "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40790-gosduma_prinyala_v_pervom_chtenii_zakonoproekt_o_konvertatsii_pensionnykh_nakoplenii_v_programmu_dolgosrochnykh_sberezhenii#26.11.2026",
+  "o": "minfin",
+  "d": "26.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Госдума приняла в первом чтении законопроект о конвертации пенсионных накоплений в Программу долгосрочных сбережений",
+  "u": "https://minfin.gov.ru/ru/press-center/?id_4=40790-gosduma_prinyala_v_pervom_chtenii_zakonoproekt_o_konvertatsii_pensionnykh_nakoplenii_v_programmu_dolgosrochnykh_sberezhenii"
+ },
+ {
   "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40786-v_finansovom_universitete_obsudili_novye_vyzovy_i_vozmozhnosti_dlya_mirovoi_ekonomiki#26.11.2026",
   "o": "minfin",
   "d": "26.11.2026",
@@ -176,6 +225,26 @@
   "k": "Новость",
   "t": "В Финансовом университете обсудили новые вызовы и возможности для мировой экономики",
   "u": "https://minfin.gov.ru/ru/press-center/?id_4=40786-v_finansovom_universitete_obsudili_novye_vyzovy_i_vozmozhnosti_dlya_mirovoi_ekonomiki"
+ },
+ {
+  "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40788-anton_siluanov_otvetil_na_voprosy_shkolnikov_i_studentov_o_finansovoi_ustoichivosti_strany_sovremennykh_tekhnologiyakh_i_professionalnom_razvitii#26.11.2026",
+  "o": "minfin",
+  "d": "26.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Антон Силуанов ответил на вопросы школьников и студентов о финансовой устойчивости страны, современных технологиях и профессиональном развитии",
+  "u": "https://minfin.gov.ru/ru/press-center/?id_4=40788-anton_siluanov_otvetil_na_voprosy_shkolnikov_i_studentov_o_finansovoi_ustoichivosti_strany_sovremennykh_tekhnologiyakh_i_professionalnom_razvitii"
+ },
+ {
+  "id": "digital:http://publication.pravo.gov.ru/document/0001202611260035#26.11.2026",
+  "o": "digital",
+  "d": "26.11.2026",
+  "ty": "решение",
+  "k": "Приказ",
+  "t": "Приказ № 162н/989 от 21.10.2026: О внесении изменений в места международного почтового обмена, являющиеся объектами почтовой связи, на территории Российской Федерации, определенные приказом Министерства финансов…",
+  "u": "http://publication.pravo.gov.ru/document/0001202611260035",
+  "tf": "Приказ № 162н/989 от 21.10.2026: О внесении изменений в места международного почтового обмена, являющиеся объектами почтовой связи, на территории Российской Федерации, определенные приказом Министерства финансов Российской Федерации и Министерства цифрового развития, связи и массовых коммуникаций Российской Федерации от 28 декабря 2022 г. № 197н/1020",
+  "x": "Зарегистрирован Минюстом 25.11.2026 № 89284. Опубликован 26.11.2026"
  },
  {
   "id": "cbr:https://www.cbr.ru/Queries/UniDbQuery/File/90134/8633#26.11.2026",
