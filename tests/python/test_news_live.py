@@ -151,3 +151,18 @@ assert N.gd_all(lambda n: ('error 500', ''), _dt.date(2026, 11, 24)) == ([], 0, 
 assert N.gd_all(lambda n: ('ok', PAGES.get(n, '')), _dt.date(2026, 1, 1))[1] == 5
 assert N.gd_all(lambda n: ('ok', PAGES[1]), _dt.date(2026, 1, 1), maxp=4)[1] == 4
 print('test_news_live: постраничный сбор Госдумы OK')
+
+# 26.11.2026: одинаковая новость одного органа за день под двумя адресами показывается один раз
+_a = {
+    'o': 'mintrud',
+    'd': '20.11.2026',
+    'tm': '',
+    't': 'Антон Котяков принял участие в заседании Комиссии',
+    'u': 'https://mintrud.gov.ru/social/608',
+}
+_b = {**_a, 'u': 'https://mintrud.gov.ru/social/609'}
+_c = {**_a, 'o': 'gov', 'u': 'http://government.ru/news/1/'}
+m1 = N.merge([_a, _b, _c], [], 7, _dt.date(2026, 11, 22))
+assert sorted(x['u'] for x in m1) == ['http://government.ru/news/1/', 'https://mintrud.gov.ru/social/609'], m1
+assert [x['u'] for x in N.merge([_b], [_a], 7, _dt.date(2026, 11, 22))] == [_a['u']]  # пришедшая в сборе важнее
+print('test_news_live: повторы одной новости под разными адресами OK')

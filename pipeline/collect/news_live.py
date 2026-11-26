@@ -334,8 +334,16 @@ def merge(prev, got, days, today):
         y = {**by.get(x['u'], {}), **{k: v for k, v in x.items() if v}}
         y.setdefault('tm', '')
         by[x['u']] = y
+    # 26.11.2026: одна и та же новость под двумя адресами (Минтруд 20.11: /social/608 и /social/609 с одним заголовком) —
+    # оставляем одну: ту, что пришла в этом сборе, иначе с большим адресом (более поздняя публикация)
+    fresh = {x['u'] for x in got}
+    one = {}
+    for y in by.values():
+        k = (y['o'], y['d'], re.sub(r'\W+', '', y['t'].lower()))
+        if k not in one or (y['u'] in fresh, y['u']) > (one[k]['u'] in fresh, one[k]['u']):
+            one[k] = y
     key = lambda x: (dt.datetime.strptime(x['d'], '%d.%m.%Y').date(), x.get('tm') or '')
-    return sorted(by.values(), key=key, reverse=True)
+    return sorted(one.values(), key=key, reverse=True)
 
 
 def main(argv=None):
