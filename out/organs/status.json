@@ -1,10 +1,10 @@
 {
- "run": "27.11.2026 22:16 МСК",
+ "run": "28.11.2026 00:09 МСК",
  "window": [
-  "20.11.2026",
-  "27.11.2026"
+  "21.11.2026",
+  "28.11.2026"
  ],
- "ahead_to": "30.11.2026",
+ "ahead_to": "01.12.2026",
  "sources": {
   "pres_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=president",
@@ -69,7 +69,7 @@
   "foiv_daily": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&periodType=daily",
    "status": "ok",
-   "n": 5
+   "n": 0
   },
   "cbr_news": {
    "url": "https://www.cbr.ru/rss/RssNews",
@@ -93,8 +93,8 @@
   },
   "minfin_news": {
    "url": "https://minfin.gov.ru/ru/press-center/",
-   "status": "blocked:HTTP 503, страница ограничения доступа",
-   "n": 0
+   "status": "ok",
+   "n": 18
   },
   "minjust_events": {
    "url": "https://minjust.gov.ru/ru/events/list/",
@@ -113,7 +113,7 @@
   },
   "minfin_projects": {
    "url": "https://minfin.gov.ru/ru/document/npa_projects/",
-   "status": "blocked:HTTP 503, страница ограничения доступа"
+   "status": "ok (разбор не реализован)"
   },
   "mintrud_profstandards": {
    "url": "https://regulation.gov.ru/",
@@ -126,6 +126,6 @@
    "why": "страница проектов документов Минюста отдается без списка (пустая выдача)"
   }
  },
- "new": 35,
- "total": 1252
+ "new": 2,
+ "total": 1254
 }
