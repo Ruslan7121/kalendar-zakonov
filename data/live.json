@@ -1,5 +1,5 @@
 {
-"upd": "27.11.2026 21:54",
+"upd": "27.11.2026 23:16",
 "status": {
 "gd": "ok n=15 pages=2",
 "gov": "ok n=20",
@@ -12,6 +12,13 @@
 "economy": "blocked:нет соединения (curl 28)"
 },
 "items": [
+{
+"o": "minfin",
+"d": "27.11.2026",
+"tm": "21:20",
+"t": "Павел Кадочников рассказал о применении ИИ в работе Большого Минфина",
+"u": "https://minfin.gov.ru/ru/press-center/?id_4=40794-pavel_kadochnikov_rasskazal_o_primenenii_ii_v_rabote_bolshogo_minfina"
+},
 {
 "o": "minfin",
 "d": "27.11.2026",
