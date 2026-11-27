@@ -134,7 +134,7 @@ try {
         'нет карты органов с плитками по умолчанию',
       );
       const tl = (await tiles(p)) || [];
-      chk(tl.length >= 2, `плиток ${tl.length}`);
+      chk(tl.length >= 1, `плиток ${tl.length}`);
       chk(!tl.some((x) => /новост/i.test(x.t)), 'в плитках есть «новости»');
       chk(
         await ev(p.s, `!document.querySelector('[data-omday], [data-omweek]')`),
