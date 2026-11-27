@@ -1,5 +1,5 @@
 {
-"upd": "27.11.2026 17:58",
+"upd": "27.11.2026 18:19",
 "status": {
 "gd": "ok n=15 pages=2",
 "gov": "ok n=20",
@@ -18,6 +18,13 @@
 "tm": "17:15",
 "t": "Алексей Оверчук принял участие в заседании Экономического совета Содружества Независимых Государств",
 "u": "http://government.ru/news/60582/"
+},
+{
+"o": "minfin",
+"d": "27.11.2026",
+"tm": "17:00",
+"t": "Курбан Курбанов: Почти 19 млн школьников и студентов охвачены программами финансовой грамотности",
+"u": "https://minfin.gov.ru/ru/press-center/?id_4=40792-kurban_kurbanov_pochti_19_mln_shkolnikov_i_studentov_okhvacheny_programmami_finansovoi_gramotnosti"
 },
 {
 "o": "sf",
@@ -482,6 +489,13 @@
 "tm": ""
 },
 {
+"o": "minzdrav",
+"d": "27.11.2026",
+"t": "Делегация Минздрава России приняла участие в заседании Российско-Турецкой межправкомиссии по торгово-экономическому сотрудничеству",
+"u": "https://minzdrav.gov.ru/news/2026/11/27/33535-delegatsiya-minzdrava-rossii-prinyala-uchastie-v-zasedanii-rossiysko-turetskoy-mezhpravkomissii-po-torgovo-ekonomicheskomu-sotrudnichestvu",
+"tm": ""
+},
+{
 "o": "gov",
 "d": "26.11.2026",
 "tm": "20:15",
@@ -760,6 +774,13 @@
 "tm": "00:00",
 "t": "Материалы к заседанию Правительства 26 ноября 2026 года",
 "u": "http://government.ru/announcements/60552/"
+},
+{
+"o": "minzdrav",
+"d": "26.11.2026",
+"t": "Российская школа челюстно-лицевой хирургии — одна из ведущих в мире",
+"u": "https://minzdrav.gov.ru/news/2026/11/26/33534-rossiyskaya-shkola-chelyustno-litsevoy-hirurgii-odna-iz-veduschih-v-mire",
+"tm": ""
 },
 {
 "o": "minfin",
