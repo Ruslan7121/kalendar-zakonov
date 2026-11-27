@@ -31,6 +31,15 @@
   "x": "Зарегистрирован Минюстом 26.11.2026 № 89304. Опубликован 27.11.2026"
  },
  {
+  "id": "mintrud:https://mintrud.gov.ru/docs/mintrud/orders/3279#27.11.2026",
+  "o": "mintrud",
+  "d": "27.11.2026",
+  "ty": "решение",
+  "k": "Приказ",
+  "t": "Приказ № 508 от 13.11.2026: О внесении изменений в приложение к приказу Министерства труда и социальной защиты Российской Федерации от 11 декабря 2025 г. № 700",
+  "u": "https://mintrud.gov.ru/docs/mintrud/orders/3279"
+ },
+ {
   "id": "mintrans:http://publication.pravo.gov.ru/document/0001202611270004#27.11.2026",
   "o": "mintrans",
   "d": "27.11.2026",
@@ -51,6 +60,15 @@
   "x": "Зарегистрирован Минюстом 26.11.2026 № 89303. Опубликован 27.11.2026"
  },
  {
+  "id": "minjust:https://minjust.gov.ru/ru/events/51498/#27.11.2026",
+  "o": "minjust",
+  "d": "27.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "О реестре иностранных агентов",
+  "u": "https://minjust.gov.ru/ru/events/51498/"
+ },
+ {
   "id": "minjust:https://minjust.gov.ru/ru/events/51497/#27.11.2026",
   "o": "minjust",
   "d": "27.11.2026",
@@ -58,6 +76,15 @@
   "k": "Коллегия",
   "t": "На заседании коллегии Минюста России обсудили вопросы, связанные с применением наказания в виде принудительных работ",
   "u": "https://minjust.gov.ru/ru/events/51497/"
+ },
+ {
+  "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40792-kurban_kurbanov_pochti_19_mln_shkolnikov_i_studentov_okhvacheny_programmami_finansovoi_gramotnosti#27.11.2026",
+  "o": "minfin",
+  "d": "27.11.2026",
+  "ty": "новость",
+  "k": "Новость",
+  "t": "Курбан Курбанов: Почти 19 млн школьников и студентов охвачены программами финансовой грамотности",
+  "u": "https://minfin.gov.ru/ru/press-center/?id_4=40792-kurban_kurbanov_pochti_19_mln_shkolnikov_i_studentov_okhvacheny_programmami_finansovoi_gramotnosti"
  },
  {
   "id": "minfin:https://minfin.gov.ru/ru/press-center/?id_4=40791-v_rossii_v_tretii_raz_vyberut_stolitsu_finansovoi_kultury#27.11.2026",
