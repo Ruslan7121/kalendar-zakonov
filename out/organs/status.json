@@ -1,7 +1,7 @@
 {
- "run": "28.11.2026 13:07 МСК",
+ "run": "28.11.2026 14:01 МСК",
  "window": [
-  "21.11.2026",
+  "16.11.2026",
   "28.11.2026"
  ],
  "ahead_to": "01.12.2026",
@@ -14,7 +14,7 @@
   "gov_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=government",
    "status": "ok",
-   "n": 100
+   "n": 200
   },
   "economy_pravo": {
    "url": "http://publication.pravo.gov.ru/api/Documents?block=federal_authorities&SignatoryAuthorityId=59ad7c35-7d14-424e-b305-f964615734bd",
@@ -127,5 +127,5 @@
   }
  },
  "new": 1,
- "total": 1255
+ "total": 1256
 }
