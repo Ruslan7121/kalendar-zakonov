@@ -516,11 +516,9 @@ def collect_pravo_api(key, org, fetch=None, pages=6):
                     return res, st
         bp = org in FOIV
         res += parse_pravo_api(body, org, bp)
-        old = [
-            it.get('publishDateShort' if bp else 'documentDate', '')[:10]
-            for it in items
-            if it.get('publishDateShort' if bp else 'documentDate')
-        ]
+        # 28.11.2026: API отдает документы по дню опубликования — и листаем по нему (по дате подписания листание обрывалось
+        # на первой странице, если на ней был поздно опубликованный акт со старой датой)
+        old = [it.get('publishDateShort', '')[:10] for it in items if it.get('publishDateShort')]
         if (
             not items
             or (WIN_FROM and old and min(old) < WIN_FROM.isoformat())
@@ -728,7 +726,12 @@ def load_enrich():
 
 def in_window(e, a, b, ahead):
     d = s2d(e['d'])
-    return a <= d <= b or (e['ty'] == 'заседание' and b < d <= ahead)
+    if a <= d <= b or (e['ty'] == 'заседание' and b < d <= ahead):
+        return True
+    # 28.11.2026: акт Президента/Правительства опубликован позже, чем через неделю после подписания (распоряжение № 3438-р от 19.11
+    # опубликовано 27.11) — дата события остается датой документа, а в окно он попадает по дню опубликования, иначе пропадал бы
+    m = re.search(r'Опубликован (\d\d\.\d\d\.\d{4})', e.get('x') or '')
+    return bool(m) and e['ty'] == 'решение' and a <= s2d(m.group(1)) <= b
 
 
 def main(argv=None):
